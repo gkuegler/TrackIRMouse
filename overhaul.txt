@@ -1,0 +1,9 @@
+
+
+
+
+From C++ core guilines
+
+Operation List:
+    load settings to a settings class
+        fail if core set is incorrect
