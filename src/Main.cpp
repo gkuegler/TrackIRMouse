@@ -1,6 +1,5 @@
 #pragma warning(disable : 4996)
 
-#include "Resource.h"
 #include <stdio.h>
 #include <string.h>
 #include <TCHAR.H>
@@ -24,7 +23,7 @@ HWND GetCurrentConsoleHwnd(void);
 int main(int argc, char* argv[])
 {
 
-
+	// Program flow
 	// first thing is ping windows for info
 	// load settings
 	// validate settings
