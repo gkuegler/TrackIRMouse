@@ -1,0 +1,33 @@
+
+
+# Notes:
+#   - Will crash if display bound values are not floats
+#     (need to make sure each follows format: "\d+\.\d+")
+#
+#
+#
+# 
+# 
+
+
+# PROFILE ID'S:
+  # FreeSpace2 = 13302
+profile_ID = 13302
+
+[default_padding]
+left = 3
+right = 3
+top = 0
+bottom = 0
+
+[display0]
+left = -43.00
+right = 50.00
+top = 19.00
+bottom = -19.00
+
+[display1]
+left = 62.00
+right = 180.00
+top = 19.00
+bottom = -19.00
