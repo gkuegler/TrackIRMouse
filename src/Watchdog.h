@@ -9,20 +9,23 @@
 
 namespace WatchDog {
 
-
     DWORD WINAPI WDInstanceThread(LPVOID);
     int WDServe(HANDLE);
-    void WDHandleMsg(const char*, char*, LPDWORD);
-
-    DWORD WINAPI WDInstanceThread(LPVOID inum)
+    void WDHandleMsg(const char*, char*, LPDWORD); 
+   
+    DWORD WINAPI WDInstanceThread(LPVOID param)
     {
-        //HANDLE hPipe = INVALID_HANDLE_VALUE;
+        // Signal event when set up of the pipe completes,
+        // allowing main program flow to continue
+        HANDLE* phEvent = reinterpret_cast<HANDLE*>(param);
+
+        HANDLE hPipe = INVALID_HANDLE_VALUE;
         HANDLE hHeap = GetProcessHeap();
-        HANDLE hPipe = (HANDLE)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(HANDLE));
+
         LPCSTR lpszPipename = "\\\\.\\pipe\\watchdog";
         DWORD dwServeRslt = -1;
         int lala = 0;
-
+        BOOL result = 0;
 
         // The main loop creates an instance of the named pipe and 
         // then waits for a client to connect to it. When the client 
@@ -30,77 +33,44 @@ namespace WatchDog {
         // with that client, and this loop is free to wait for the
         // next client connect request. It is an infinite loop.
 
-        PSID pEveryoneSID = NULL, pAdminSID = NULL;
-        PACL pACL = NULL;
-        PSECURITY_DESCRIPTOR pSD = NULL;
-        EXPLICIT_ACCESS ea[2];
-        SID_IDENTIFIER_AUTHORITY SIDAuthWorld = SECURITY_WORLD_SID_AUTHORITY;
-        SID_IDENTIFIER_AUTHORITY SIDAuthNT = SECURITY_NT_AUTHORITY;
+        //Security descriptor needs to go on the Heap
+        //PSECURITY_DESCRIPTOR pSD = (PSECURITY_DESCRIPTOR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, SECURITY_DESCRIPTOR_MIN_LENGTH);
+        std::unique_ptr<SECURITY_DESCRIPTOR> pSD(new SECURITY_DESCRIPTOR);
         SECURITY_ATTRIBUTES sa;
-        HKEY hkSub = NULL;
+        HKEY hkSub = NULL;  
 
-        ZeroMemory(&ea, 2 * sizeof(EXPLICIT_ACCESS));
-        ea[0].grfAccessPermissions = KEY_READ;
-        ea[0].grfAccessMode = SET_ACCESS;
-        ea[0].grfInheritance = NO_INHERITANCE;
-        ea[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
-        ea[0].Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
-        ea[0].Trustee.ptstrName = (LPTSTR)pEveryoneSID;
-
-        // Create a SID for the BUILTIN\Administrators group.
-        if (!AllocateAndInitializeSid(&SIDAuthNT, 2,
-            SECURITY_BUILTIN_DOMAIN_RID,
-            DOMAIN_ALIAS_RID_ADMINS,
-            0, 0, 0, 0, 0, 0,
-            &pAdminSID))
-        {
-            printf("AllocateAndInitializeSid Error %u\n", GetLastError());
-            goto Cleanup;
+        if (NULL == pSD) {
+            printf("Heap allocation for security descriptor failed. GLE=%u\n", GetLastError());
+            return 1;
+        }
+           
+        // The InitializeSecurityDescriptor function initializes a security descriptor to have no system
+        // access control list(SACL), no discretionary access control list(DACL), no owner, no primary group,
+        // and all control flags set to FALSE(NULL). Thus, except for its revision level, it is empty
+        if (NULL == InitializeSecurityDescriptor(pSD.get(), SECURITY_DESCRIPTOR_REVISION)) {
+            printf("InitializeSecurityDescriptor Error. GLE=%u\n", GetLastError());
+            //HeapFree(hHeap, 0, pSD);
+            return 1;
         }
 
-        // Initialize an EXPLICIT_ACCESS structure for an ACE.
-        // The ACE will allow the Administrators group full access to
-        // the key.
-        ea[1].grfAccessPermissions = KEY_ALL_ACCESS;
-        ea[1].grfAccessMode = SET_ACCESS;
-        ea[1].grfInheritance = NO_INHERITANCE;
-        ea[1].Trustee.TrusteeForm = TRUSTEE_IS_SID;
-        ea[1].Trustee.TrusteeType = TRUSTEE_IS_GROUP;
-        ea[1].Trustee.ptstrName = (LPTSTR)pAdminSID;
 
-        // Initialize a security descriptor.
-        //don't have a DACL, will grant access to everyone
-        //pSD = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
-        pSD = (PSECURITY_DESCRIPTOR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, SECURITY_DESCRIPTOR_MIN_LENGTH);
-
-        if (NULL == pSD)
-        {
-            printf("Security Descriptor Alloc Error %u\n", GetLastError());
-            goto Cleanup;
-        }
-
-        if (!InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION))
-        {
-            printf("InitializeSecurityDescriptor Error %u\n", GetLastError());
-            goto Cleanup;
-        }
-
-        // Add the ACL to the security descriptor. 
+        // Add the Access Control List (ACL) to the security descriptor. 
+//Allow all access to the pipe
 #pragma warning(disable:6248)
         if (!SetSecurityDescriptorDacl(
-            pSD,
-            TRUE,     // bDaclPresent flag   
-            (PACL)NULL,
-            FALSE))    // not a default DACL 
+            pSD.get(),
+            TRUE,        // bDaclPresent flag   
+            (PACL)NULL,  // if a NULL DACL is assigned to the security descriptor, all access is allowed
+            FALSE))      // not a default DACL 
         {
             printf("SetSecurityDescriptorDacl Error %u\n", GetLastError());
-            goto Cleanup;
+            //goto Cleanup;
         }
 #pragma warning(default:4700)
 
         // Initialize a security attributes structure.
         sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-        sa.lpSecurityDescriptor = pSD;
+        sa.lpSecurityDescriptor = pSD.get();
         sa.bInheritHandle = FALSE;
 
         printf("\nPipe Server: Main thread awaiting client connection on %s\n", lpszPipename);
@@ -122,15 +92,17 @@ namespace WatchDog {
             printf("CreateNamedPipe failed, GLE=%d.\n", GetLastError());
             return -1;
         }
+
+        result = SetEvent(*phEvent);
         lala = WDServe(hPipe);
 
-    Cleanup:
-        HeapFree(hHeap, 0, pSD);
+        //HeapFree(hHeap, 0, pSD);
         return 0;
     }
 
     int WDServe(HANDLE hPipe)
     {
+        // This is a lot of Windows boilerplate code
         HANDLE hHeap = GetProcessHeap();
         char* pchRequest = (char*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, BUFSIZE * sizeof(char));
         char* pchReply = (char*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, BUFSIZE * sizeof(char));

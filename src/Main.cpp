@@ -1,3 +1,9 @@
+/*
+* The release version is designed to run as an administrator
+* UAC Execution Level /level=requireAdministrator
+* The debug version leaves UAC alone.
+*/
+
 #pragma warning(disable : 4996)
 
 #include <stdio.h>
@@ -23,7 +29,8 @@ HWND GetCurrentConsoleHwnd(void);
 int main(int argc, char* argv[])
 {
 
-	// Program flow
+	// ## Program flow ##
+	// 
 	// first thing is ping windows for info
 	// load settings
 	// validate settings
@@ -60,15 +67,29 @@ int main(int argc, char* argv[])
 	HANDLE hThread = INVALID_HANDLE_VALUE;
 	BOOL bEnableWatchdog = TRUE;
 
+
 	if (bEnableWatchdog)
 	{
+		LPCSTR event_name = "WatchdogInitThread";
+
+		// Create an event to signal, to ensure pipe initialization
+		// occurs before continuing. This mostly matters so that the print statements
+		// of the pipe initialization are not mixed in with the rest of the program
+		HANDLE hEvent = CreateEventA(
+			NULL,
+			TRUE,
+			0,
+			event_name
+		);
+
 		hThread = CreateThread(
 			NULL,              // no security attribute 
 			0,                 // default stack size 
 			WatchDog::WDInstanceThread,  // thread proc
-			NULL,              // thread parameter
+			&hEvent,              // thread parameter
 			0,                 // not suspended 
-			&dwThreadId);      // returns thread ID
+			&dwThreadId			// returns thread ID
+		);      
 
 		if (hThread == NULL)
 		{
@@ -77,10 +98,22 @@ int main(int argc, char* argv[])
 		}
 
 		printf("Thread Created Successfully\n");
+
+		if (hEvent)
+		{
+			BOOL result = WaitForSingleObject(
+				hEvent,
+				3000		 // timeout in milliseconds
+			);
+
+		}
+		
+
 	}
 
 	printf("\n--------TrackIR Iinit Status--------------\n");
 	TCHAR sDll[MAX_PATH] = L"C:\\Program Files (x86)\\NaturalPoint\\TrackIR5";
+	// Array decay into pointer?
 	LPTSTR plsDLL = sDll;
 
 	// Load trackir dll and resolve function addresses

@@ -135,12 +135,13 @@ typedef struct tagTrackIRData
 // Typedef for pointer to the notify callback function that is implemented within
 // the client -- this function receives head tracker reports from the game client API
 //
-// MAY NEED TO ENABLE OTHER COMMENTED SETUPSTEPS LIKE STOP/START CURSOR
+// May need to enable other commented setupsteps like stop/start cursor - GK
 typedef NPRESULT (__stdcall *PF_NOTIFYCALLBACK)( unsigned short, unsigned short );
 
 // Typedefs for game client API functions (useful for declaring pointers to these
 // functions within the client for use during GetProcAddress() ops)
 //
+// "The syntax for creating a non-const function pointer is one of the ugliest things you will ever see in C++" - Alex @ LearnCPP.com
 typedef NPRESULT (__stdcall *PF_NP_REGISTERWINDOWHANDLE)( HWND );
 typedef NPRESULT (__stdcall *PF_NP_UNREGISTERWINDOWHANDLE)( void );
 typedef NPRESULT (__stdcall *PF_NP_REGISTERPROGRAMPROFILEID)( unsigned short );
