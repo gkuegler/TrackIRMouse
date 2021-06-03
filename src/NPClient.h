@@ -171,6 +171,8 @@ PF_NP_QUERYVERSION               gpfNP_QueryVersion = NULL;
 PF_NP_REQUESTDATA                gpfNP_RequestData = NULL;
 PF_NP_GETSIGNATURE               gpfNP_GetSignature = NULL;
 PF_NP_GETDATA                    gpfNP_GetData = NULL;
+PF_NP_REGISTERNOTIFY             gpfNP_RegisterNotify = NULL;
+PF_NP_UNREGISTERNOTIFY           gpfNP_UnregisterNotify = NULL;
 PF_NP_STARTCURSOR                gpfNP_StartCursor = NULL;
 PF_NP_STOPCURSOR                 gpfNP_StopCursor = NULL;
 PF_NP_RECENTER	                 gpfNP_ReCenter = NULL;
@@ -364,11 +366,28 @@ NPRESULT NPClient_Init(LPTSTR pszDLLPath)
 				gpfNP_QueryVersion = (PF_NP_QUERYVERSION)::GetProcAddress(ghNPClientDLL, "NP_QueryVersion");
 				gpfNP_RequestData = (PF_NP_REQUESTDATA)::GetProcAddress(ghNPClientDLL, "NP_RequestData");
 				gpfNP_GetData = (PF_NP_GETDATA)::GetProcAddress(ghNPClientDLL, "NP_GetData");
+				gpfNP_RegisterNotify = (PF_NP_REGISTERNOTIFY)::GetProcAddress(ghNPClientDLL, "NP_RegisterNotify");
+				gpfNP_UnregisterNotify = (PF_NP_UNREGISTERNOTIFY)::GetProcAddress(ghNPClientDLL, "NP_UnregisterNotify");
 				gpfNP_StartCursor = (PF_NP_STARTCURSOR)::GetProcAddress(ghNPClientDLL, "NP_StartCursor");
 				gpfNP_StopCursor = (PF_NP_STOPCURSOR)::GetProcAddress(ghNPClientDLL, "NP_StopCursor");
 				gpfNP_ReCenter = (PF_NP_RECENTER)::GetProcAddress(ghNPClientDLL, "NP_ReCenter");
 				gpfNP_StartDataTransmission = (PF_NP_STARTDATATRANSMISSION)::GetProcAddress(ghNPClientDLL, "NP_StartDataTransmission");
 				gpfNP_StopDataTransmission = (PF_NP_STOPDATATRANSMISSION)::GetProcAddress(ghNPClientDLL, "NP_StopDataTransmission");
+
+				typedef NPRESULT(__stdcall* PF_NP_REGISTERWINDOWHANDLE)(HWND);
+				typedef NPRESULT(__stdcall* PF_NP_UNREGISTERWINDOWHANDLE)(void);
+				typedef NPRESULT(__stdcall* PF_NP_REGISTERPROGRAMPROFILEID)(unsigned short);
+				typedef NPRESULT(__stdcall* PF_NP_QUERYVERSION)(unsigned short*);
+				typedef NPRESULT(__stdcall* PF_NP_REQUESTDATA)(unsigned short);
+				typedef NPRESULT(__stdcall* PF_NP_GETSIGNATURE)(LPTRACKIRSIGNATURE);
+				typedef NPRESULT(__stdcall* PF_NP_GETDATA)(LPTRACKIRDATA);
+				typedef NPRESULT(__stdcall* PF_NP_REGISTERNOTIFY)(PF_NOTIFYCALLBACK);
+				typedef NPRESULT(__stdcall* PF_NP_UNREGISTERNOTIFY)(void);
+				typedef NPRESULT(__stdcall* PF_NP_STARTCURSOR)(void);
+				typedef NPRESULT(__stdcall* PF_NP_STOPCURSOR)(void);
+				typedef NPRESULT(__stdcall* PF_NP_RECENTER)(void);
+				typedef NPRESULT(__stdcall* PF_NP_STARTDATATRANSMISSION)(void);
+				typedef NPRESULT(__stdcall* PF_NP_STOPDATATRANSMISSION)(void);
 			}
 			else
 			{

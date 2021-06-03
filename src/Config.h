@@ -17,10 +17,10 @@
 // };
 
 struct bounds_in_degrees {
-    int left;
-    int right;
-    int top;
-    int bottom;
+    float  left;
+    float  right;
+    float  top;
+    float  bottom;
 
     int pad_left;
     int pad_right;

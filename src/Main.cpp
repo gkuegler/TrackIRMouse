@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
 	if (iRsltNP == 7) {
 		NP_UnregisterWindowHandle();
 		printf("! Booted Control of Previous MouseTracker Instance\n");
-		Sleep(20);
+		Sleep(2);
 		iRsltNP = NP_RegisterWindowHandle(hConsole);
 	}
 	printf("Register Window Handle: %d\n", iRsltNP);
@@ -148,6 +148,9 @@ int main(int argc, char* argv[])
 	// I'm skipping query the software version, I don't think its necessary
 	
 	// NP_RequestData
+	//unsigned int DataFields = 0;
+	//DataFields |= NPPitch;
+	//DataFields |= NPYaw;
 	iRsltNP = NP_RequestData(119); // Request roll,pitch,yaw and x,y,z; See NPClient.h
 	printf("Request Data: %d\n", iRsltNP);
 
