@@ -147,6 +147,7 @@
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="core.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="NPClient.cpp" />
     <ClCompile Include="Watchdog.cpp" />
   </ItemGroup>
   <ItemGroup>
