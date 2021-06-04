@@ -1,21 +1,11 @@
-// *******************************************************************************
-// *
-// * Module Name:
-// *   NPClient.h
-// *
-// * Doyle Nickless -- 13 Jan, 2003 -- for Eye Control Technology.
-// *
-// * Abstract:
-// *   Header for NaturalPoint Game Client API.
-// *
-// * Environment:
-// *   Microsoft Windows -- User mode
-// *
-// *******************************************************************************
-#define _AFXDLL
-#include <afxwin.h>         // MFC core and standard components
-#include <afxext.h>         // MFC extensions
-#include <afxcmn.h>			// MFC support for Windows Common Controls
+
+//The trackIR DLL requires 
+//#define _AFXDLL
+//#include <afxwin.h>         // MFC core and standard components
+//#include <afxext.h>         // MFC extensions
+//#include <afxcmn.h>			// MFC support for Windows Common Controls
+
+#include <stdio.h>
 #include <Windows.h>
 
 #include "NPClient.h"

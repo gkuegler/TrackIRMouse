@@ -1,3 +1,6 @@
+#ifndef TRACKIRMOUSE_WATCHDOG_H
+#define TRACKIRMOUSE_WATCHDOG_H
+
 #include <windows.h> 
 #include <stdio.h> 
 #include <tchar.h>
@@ -259,6 +262,9 @@ namespace WatchDog {
 
 }
 #undef BUFSIZE
+
+#endif /* TRACKIRMOUSE_WATCHDOG_H */
+
 // DESIGN DECISIONS
 /*
 should I implement tcp where my program can ask for a reply? YES & YES
@@ -272,3 +278,4 @@ two messages are sent so fast that the server reads two messages in one go
 
 maybe I need to
 */
+

@@ -1,5 +1,6 @@
-#ifndef HEADTRACKER_CONFIG
-#define HEADTRACKER_CONFIG
+#ifndef TRACKIRMOUSE_CONFIG_H
+#define TRACKIRMOUSE_CONFIG_H
+
 #include <string>
 #include "Constants.h"
 
@@ -43,4 +44,4 @@ public:
 
 };
 
-#endif
+#endif /* TRACKIRMOUSE_CONFIG_H */

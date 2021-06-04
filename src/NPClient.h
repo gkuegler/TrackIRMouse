@@ -14,8 +14,8 @@
 // *******************************************************************************
 
 //#define DLL_NP_LOCATION "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5"
-#ifndef NP_CLIENT_H
-#define NP_CLIENT_H
+#ifndef TRACKIRMOUSE_NP_CLIENT_H
+#define TRACKIRMOUSE_NP_CLIENT_H
 
 #include <Windows.h>
 

@@ -10,14 +10,9 @@
 #include <string.h>
 #include <TCHAR.H>
 
-//#define _AFXDLL
-//#include <afxwin.h>         // MFC core and standard components
-//#include <afxext.h>         // MFC extensions
-//#include <afxcmn.h>			// MFC support for Windows Common Controls
-
 #include "Constants.h"
 #include "NPClient.h"
-#include "core.h"
+#include "Core.h"
 #include "Display.h"
 #include "Config.h"
 #include "Watchdog.h"
