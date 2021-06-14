@@ -18,7 +18,7 @@ void  CConfig::LoadSettings(int num_monitors)
 
     profile_ID = toml::find_or<int>(data, "profile_ID", 13302);
     bWatchdog = toml::find_or<bool>(data, "watchdog_enabled", 0);
-    sTrackIR_exe_location = toml::find_or<std::string>(data, "TrackIR_exe_location", "");
+    sTrackIR_dir_loc = toml::find_or<std::string>(data, "TrackIR_dll_directory", "C:\\Program Files(x86)\\NaturalPoint\\TrackIR5");
 
     // load in the default padding table if available
     try {

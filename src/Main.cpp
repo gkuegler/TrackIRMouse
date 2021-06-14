@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <locale>
 #include <TCHAR.H>
 
 #include "Constants.h"
@@ -60,7 +61,7 @@ int main(int argc, char* argv[])
 	// Start the watchdog thread
 	DWORD  dwThreadId = 0;
 	HANDLE hThread = INVALID_HANDLE_VALUE;
-	BOOL bEnableWatchdog = TRUE;
+	BOOL bEnableWatchdog = Config.bWatchdog;
 
 
 	if (bEnableWatchdog)
@@ -107,9 +108,21 @@ int main(int argc, char* argv[])
 	}
 
 	printf("\n--------TrackIR Iinit Status--------------\n");
-	TCHAR sDll[MAX_PATH] = L"C:\\Program Files (x86)\\NaturalPoint\\TrackIR5";
+	
+	TCHAR sDll[MAX_PATH];
+	
+
+	// TOML library only supports standard strings
+	std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> convert;
+	std::wstring wide_string = convert.from_bytes(Config.sTrackIR_dir_loc);
+	const wchar_t* temp_wide_string = wide_string.c_str();
+	wcscpy_s(sDll, MAX_PATH, temp_wide_string);
+	wprintf(L"%s\n", sDll);
+
+	
 	// Array decay into pointer?
 	LPTSTR plsDLL = sDll;
+	wprintf(L"%s\n", plsDLL);
 
 	// Load trackir dll and resolve function addresses
 	NPRESULT iRsltInit;

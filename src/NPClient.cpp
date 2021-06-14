@@ -181,6 +181,8 @@ NPRESULT NPClient_Init(LPTSTR pszDLLPath)
 		wcscat_s(szFullPath, MAX_PATH, L"NPClient.dll");
 	#endif
 
+		wprintf(L"%s\n", szFullPath);
+
 	ghNPClientDLL = LoadLibrary(szFullPath);
 
 	if (NULL != ghNPClientDLL)
