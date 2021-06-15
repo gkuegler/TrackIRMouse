@@ -32,9 +32,10 @@ struct bounds_in_degrees {
 
 class CConfig {
 public:
-    int profile_ID = 0;
-    bool bWatchdog = 0;
-    std::string sTrackIR_dir_loc = "";
+
+    int profile_ID;
+    bool bWatchdog;
+    std::string sTrackIR_dll_location;
 
     bounds_in_degrees bounds[DEFAULT_MAX_DISPLAYS];
 

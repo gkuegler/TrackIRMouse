@@ -108,25 +108,18 @@ int main(int argc, char* argv[])
 	}
 
 	printf("\n--------TrackIR Iinit Status--------------\n");
-	
-	TCHAR sDll[MAX_PATH];
-	
 
-	// TOML library only supports standard strings
+	// TCHAR sDll[MAX_PATH] = L"C:\\Program Files (x86)\\NaturalPoint\\TrackIR5\\NPClient.dll";
+	TCHAR sDll[MAX_PATH];
+
 	std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> convert;
-	std::wstring wide_string = convert.from_bytes(Config.sTrackIR_dir_loc);
+	std::wstring wide_string = convert.from_bytes(Config.sTrackIR_dll_location);
 	const wchar_t* temp_wide_string = wide_string.c_str();
 	wcscpy_s(sDll, MAX_PATH, temp_wide_string);
-	wprintf(L"%s\n", sDll);
-
 	
-	// Array decay into pointer?
-	LPTSTR plsDLL = sDll;
-	wprintf(L"%s\n", plsDLL);
-
 	// Load trackir dll and resolve function addresses
 	NPRESULT iRsltInit;
-	iRsltInit = NPClient_Init(plsDLL);
+	iRsltInit = NPClient_Init(sDll);
 	
 	if (NP_OK == iRsltInit) {
 		printf("NP Initialization Code: %d\n", iRsltInit);
