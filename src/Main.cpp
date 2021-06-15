@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <locale>
 #include <TCHAR.H>
 
 #include "Constants.h"
@@ -107,13 +108,19 @@ int main(int argc, char* argv[])
 	}
 
 	printf("\n--------TrackIR Iinit Status--------------\n");
-	TCHAR sDll[MAX_PATH] = L"C:\\Program Files (x86)\\NaturalPoint\\TrackIR5";
+	TCHAR sDll[MAX_PATH] = L"C:\\Program Files (x86)\\NaturalPoint\\TrackIR5\\NPClient.dll";
 	// Array decay into pointer?
-	LPTSTR plsDLL = sDll;
+	//LPTSTR plsDLL = sDll;
+
+	std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> convert;
+	std::wstring wide_string = convert.from_bytes(Config.sTrackIR_dll_location);
+	const wchar_t* temp_wide_string = wide_string.c_str();
+	wcscpy_s(sDll, MAX_PATH, temp_wide_string);
+	
 
 	// Load trackir dll and resolve function addresses
 	NPRESULT iRsltInit;
-	iRsltInit = NPClient_Init(plsDLL);
+	iRsltInit = NPClient_Init(sDll);
 	
 	if (NP_OK == iRsltInit) {
 		printf("NP Initialization Code: %d\n", iRsltInit);

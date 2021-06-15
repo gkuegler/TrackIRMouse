@@ -13,6 +13,9 @@
 # PROFILE ID'S:
   # FreeSpace2 = 13302
 profile_ID = 13302
+TrackIR_dll_directory = "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5"
+
+
 
 [default_padding]
 left = 3

@@ -162,26 +162,8 @@ NPRESULT __stdcall NP_StopDataTransmission()
 NPRESULT NPClient_Init(LPTSTR pszDLLPath)
 {
 	NPRESULT result = NP_OK;
-	TCHAR szFullPath[MAX_PATH];
 
-	wcscpy_s(szFullPath, MAX_PATH, pszDLLPath);
-
-	if (lstrlen(szFullPath) > 0)
-	{
-		
-		wcscat_s(szFullPath, MAX_PATH, L"\\");
-	}
-	else {
-		return NP_ERR_DLL_NOT_FOUND;
-	}
-
-	#if defined(_WIN64) || defined(__amd64__)
-		wcscat(szFullPath, "NPClient64.dll");
-	#else	    
-		wcscat_s(szFullPath, MAX_PATH, L"NPClient.dll");
-	#endif
-
-	ghNPClientDLL = LoadLibrary(szFullPath);
+	ghNPClientDLL = LoadLibrary(pszDLLPath);
 
 	if (NULL != ghNPClientDLL)
 	{
