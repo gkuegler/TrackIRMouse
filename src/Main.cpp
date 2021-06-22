@@ -2,6 +2,8 @@
 * The release version is designed to run as an administrator
 * UAC Execution Level /level=requireAdministrator
 * The debug version leaves UAC alone.
+* 
+* I'm building to x86 primarily because
 */
 
 #pragma warning(disable : 4996)
@@ -27,7 +29,7 @@ int main(int argc, char* argv[])
 
 	// ## Program flow ##
 	// 
-	// first thing is ping windows for info
+	// first thinrg is ping windows for info
 	// load settings
 	// validate settings
 	// start watchdog thread
@@ -68,8 +70,9 @@ int main(int argc, char* argv[])
 	{
 		LPCSTR event_name = "WatchdogInitThread";
 
-		// Create an event to signal, to ensure pipe initialization
-		// occurs before continuing. This mostly matters so that the print statements
+		// Create an event for the thread to signal on
+		// to ensure pipe initialization occurs before continuing.
+		// This mostly matters so that the print statements
 		// of the pipe initialization are not mixed in with the rest of the program
 		HANDLE hEvent = CreateEventA(
 			NULL,
@@ -92,9 +95,10 @@ int main(int argc, char* argv[])
 			printf("CreateThread failed, GLE=%d.\n", GetLastError());
 			return 1;
 		}
+		
 
-		printf("Thread Created Successfully\n");
-
+		// Wait for the thread to signal when
+		// it's completed initialization
 		if (hEvent)
 		{
 			BOOL result = WaitForSingleObject(
@@ -118,15 +122,17 @@ int main(int argc, char* argv[])
 	wcscpy_s(sDll, MAX_PATH, temp_wide_string);
 	
 	// Load trackir dll and resolve function addresses
-	NPRESULT iRsltInit;
-	iRsltInit = NPClient_Init(sDll);
+	NPRESULT iRslt = NP_OK;
+	iRslt = NPClient_Init(sDll);
 	
-	if (NP_OK == iRsltInit) {
-		printf("NP Initialization Code: %d\n", iRsltInit);
+	if (NP_OK == iRslt)
+	{
+		printf("NP Initialization Code: %d\n", iRslt);
 		std::atexit(DisconnectTrackIR); // this isn't really doing anything at the moment
 	}
-	else {
-		printf("NP Initialization Failed With Code: %d\n", iRsltInit);
+	else
+	{
+		printf("NP Initialization Failed With Code: %d\n", iRslt);
 		FnPressAnyKeyToExit();
 		return 1;
 	}
@@ -135,36 +141,36 @@ int main(int argc, char* argv[])
 	HWND hConsole = GetCurrentConsoleHwnd();
 	
 	// NP_RegisterWindowHandle
-	NPRESULT iRsltNP = NP_OK;
-	iRsltNP = NP_RegisterWindowHandle(hConsole);
+	iRslt = NP_OK;
+	iRslt = NP_RegisterWindowHandle(hConsole);
 
-	if (iRsltNP == 7) {
+	if (iRslt == 7)
+	{
 		NP_UnregisterWindowHandle();
 		printf("! Booted Control of Previous MouseTracker Instance\n");
 		Sleep(2);
-		iRsltNP = NP_RegisterWindowHandle(hConsole);
+		iRslt = NP_RegisterWindowHandle(hConsole);
 	}
-	printf("Register Window Handle: %d\n", iRsltNP);
+	printf("Register Window Handle: %d\n", iRslt);
 	
 	// I'm skipping query the software version, I don't think its necessary
 	
 	// NP_RequestData
-	//unsigned int DataFields = 0;
-	//DataFields |= NPPitch;
-	//DataFields |= NPYaw;
-	iRsltNP = NP_RequestData(119); // Request roll,pitch,yaw and x,y,z; See NPClient.h
-	printf("Request Data: %d\n", iRsltNP);
+	// Request roll, pitch. See NPClient.h
+	unsigned short data_fields = NPPitch | NPYaw;
+	iRslt = NP_RequestData(data_fields); 
+	printf("Request Data: %d\n", iRslt);
 
 	// NP_RegisterProgramProfileID: 13302
-	iRsltNP = NP_RegisterProgramProfileID(Config.profile_ID);
-	printf("Register Program Profile ID: %d\n", iRsltNP);
-	
+	iRslt = NP_RegisterProgramProfileID(Config.profile_ID);
+	printf("Register Program Profile ID: %d\n", iRslt);
+
 	// Skipping this too. I think this is for legacy games
 	// NP_StopCursor
 
 	// NP_StartDataTransmission
-	iRsltNP = NP_StartDataTransmission();
-	printf("Start Data Transmission: %d\n", iRsltNP);
+	iRslt = NP_StartDataTransmission();
+	printf("Start Data Transmission: %d\n", iRslt);
 
 	NPRESULT gdf;
 	tagTrackIRData *pTIRData, TIRData;
@@ -172,20 +178,25 @@ int main(int argc, char* argv[])
 
 	unsigned short last_frame = 0;
 	int dropped_frames = 0;
-	bool connected_to_host = true;
+	// bool connected_to_host = true;
 
 	printf("---------------------\n");
-	while(true) {
+	while(true)
+	{
 		gdf = NP_GetData(pTIRData);
-		if (NP_OK == gdf) {
+		if (NP_OK == gdf)
+		{
 			unsigned short status = (*pTIRData).wNPStatus;
 			unsigned short framesig = (*pTIRData).wPFrameSignature;
-			float yaw = -(*pTIRData).fNPYaw; // Future optimization to not need a negative sign
+			float yaw = -(*pTIRData).fNPYaw; // Make Future optimization to not need a negative sign
 			float pitch = -(*pTIRData).fNPPitch;
 
 			// Don't try to move the mouse when TrackIR is paused
-			if (framesig == last_frame) {
+			if (framesig == last_frame)
+			{
 				// printf("Tracking Paused\n");
+				// TrackIR5 supposedly operates at 120hz
+				// 8ms is approximately 1 frame
 				Sleep(8);
 				continue;
 			}
@@ -194,14 +205,16 @@ int main(int argc, char* argv[])
 			//printf("fNPYaw: %f\n", yaw);
 			//printf("fNPPitch: %f\n", pitch);
 
-			//if ((framesig != last_frame + 1) && (last_frame != 0)) {
+			//if ((framesig != last_frame + 1) && (last_frame != 0))
+			//{
 				//printf("drop");
 				//dropped_frames = dropped_frames + framesig - last_frame - 1;
 			//}
 
 			last_frame = framesig;
 		}
-		else if (NP_ERR_DEVICE_NOT_PRESENT == gdf) {
+		else if (NP_ERR_DEVICE_NOT_PRESENT == gdf)
+		{
 			printf("DEVICE NOT PRESENT");
 			break;
 		}
