@@ -3,6 +3,7 @@
 
 namespace WatchDog
 {
+    HANDLE startWatchdog();
     DWORD WINAPI WDInstanceThread(LPVOID);
     int WDServe(HANDLE);
     void WDHandleMsg(const char*, char*, LPDWORD);

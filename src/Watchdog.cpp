@@ -12,6 +12,54 @@
 namespace WatchDog
 {
 
+    HANDLE startWatchdog()
+    {
+        
+        HANDLE hThread = INVALID_HANDLE_VALUE;
+        DWORD  dwThreadId = 0;
+        LPCSTR event_name = "WatchdogInitThread";
+
+        // Create an event for the thread to signal on
+        // to ensure pipe initialization occurs before continuing.
+        // This mostly matters so that the print statements
+        // of the pipe initialization are not mixed in with the rest of the program
+        HANDLE hEvent = CreateEventA(
+            NULL,
+            TRUE,
+            0,
+            event_name
+        );
+
+        hThread = CreateThread(
+            NULL,              // no security attribute 
+            0,                 // default stack size 
+            WatchDog::WDInstanceThread,  // thread proc
+            &hEvent,              // thread parameter
+            0,                 // not suspended 
+            &dwThreadId         // returns thread ID
+        );      
+
+        if (hThread == NULL)
+        {
+            printf("CreateThread failed, GLE=%d.\n", GetLastError());
+            return NULL;
+        }
+        
+
+        // Wait for the thread to signal when
+        // it's completed initialization
+        if (hEvent)
+        {
+            BOOL result = WaitForSingleObject(
+                hEvent,
+                3000         // timeout in milliseconds
+            );
+
+        }
+
+        return hThread;
+    }
+
     DWORD WINAPI WDInstanceThread(LPVOID param)
     {
         // Signal event when set up of the pipe completes,
