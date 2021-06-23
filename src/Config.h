@@ -4,29 +4,16 @@
 #include <string>
 #include "Constants.h"
 
-
-// class CConfig
-// {
-// public:
-//     int profile_ID;
-
-//     bool bWatchdog;
-//     string sTrackIR_exe_location;
-
-//     CConfig::CConfig(int num_monitors, CDisplay[] displays);
-
-// };
-
 struct bounds_in_degrees {
-    float left;
-    float right;
-    float top;
-    float bottom;
+    float left = 0;
+    float right = 0;
+    float top = 0;
+    float bottom = 0;
 
-    int pad_left;
-    int pad_right;
-    int pad_top;
-    int pad_bottom;
+    int pad_left = 0;
+    int pad_right = 0;
+    int pad_top = 0;
+    int pad_bottom = 0;
 };
 
 
