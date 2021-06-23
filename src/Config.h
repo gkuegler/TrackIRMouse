@@ -10,12 +10,12 @@ struct bounds_in_degrees {
     float top = 0;
     float bottom = 0;
 
+    //These are actually in pixels
     int pad_left = 0;
     int pad_right = 0;
     int pad_top = 0;
     int pad_bottom = 0;
 };
-
 
 class CConfig {
 public:
