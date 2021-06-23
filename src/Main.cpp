@@ -3,7 +3,8 @@
 * UAC Execution Level /level=requireAdministrator
 * The debug version leaves UAC alone.
 * 
-* I'm building to x86 primarily because
+* I'm building to x86 primarily because I'm stuck using a
+* 32-bit version of Python.
 */
 
 #pragma warning(disable : 4996)
