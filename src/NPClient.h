@@ -172,8 +172,8 @@ NPRESULT __stdcall NP_QueryVersion(unsigned short* pwVersion);
 NPRESULT __stdcall NP_RequestData(unsigned short wDataReq);
 NPRESULT __stdcall NP_GetSignature(LPTRACKIRSIGNATURE pSignature);
 NPRESULT __stdcall NP_GetData(LPTRACKIRDATA pTID);
-NPRESULT __stdcall NP_RegisterNotify(PF_NOTIFYCALLBACK pfNotify);
-NPRESULT __stdcall NP_UnregisterNotify(void);
+//NPRESULT __stdcall NP_RegisterNotify(PF_NOTIFYCALLBACK pfNotify);
+//NPRESULT __stdcall NP_UnregisterNotify(void);
 NPRESULT __stdcall NP_StartCursor(void);
 NPRESULT __stdcall NP_StopCursor(void);
 NPRESULT __stdcall NP_ReCenter(void);
@@ -183,6 +183,9 @@ NPRESULT __stdcall NP_StopDataTransmission(void);
 /////////////////////////////////////////////////////////////////////////
 
 #pragma pack( pop, npclient_h ) // Ensure previous pack value is restored
+
+// added by GK
+NPRESULT NPClient_Init(LPTSTR pszDLLPath);
 
 #endif // #ifdef NPCLIENT_H_DEFINED_
 
