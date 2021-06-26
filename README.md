@@ -13,6 +13,27 @@ Every loop iteration, a simple linear interpolation between monitor edges determ
 
 ![monitor diagram](https://github.com/georgekuegler/TrackIRMouse/blob/master/docs/Windows%20Desktop%20Diagram-Model.png)
 
+Here's an example of my settings file to show you what's comfortable for me.
+```
+[default_padding]
+left = 3
+right = 3
+top = 0
+bottom = 0
+
+[display0]
+left = -43.00
+right = 50.00
+top = 19.00
+bottom = -19.00
+
+[display1]
+left = 62.00
+right = 180.00
+top = 19.00
+bottom = -19.00
+```
+
 # Notes On Related Software:
 
 FreePIE is an excellent tool. You might also want to check that out. It is the first piece of software I used to get going quickly.
