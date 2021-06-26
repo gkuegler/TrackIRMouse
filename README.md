@@ -34,12 +34,10 @@ top = 19.00
 bottom = -19.00
 ```
 
-# Notes On Related Software:
+# Notes On Similar Software:
 
-FreePIE is an excellent tool. You might also want to check that out. It is the first piece of software I used to get going quickly.
-Unfortunately, it does not support the Win32 call, SendInput. This is necessary for any pen enabled applications and some UWP applications to register drawing. These applications use the Windows messaging system to get updates about mouse movement within the application window. I believe the common FreePIE function for moving the mouse, SetCursorPosition, does not cause the appropriate Windows messages is to be sent to the target program.
-
-...TODO more on program choices...
+FreePIE is an excellent tool that I started with. It is the first piece of software I used to get going quickly.
+Unfortunately, it does not support the Win32 call, 'SendInput'. This is necessary for any pen enabled applications and some UWP applications to register drawing. These applications use the Windows messaging system to get updates about mouse movement within the application window. I believe the common FreePIE function for moving the mouse, SetCursorPosition, does not cause the appropriate Windows messages is to be sent to the target program. Thus I can't markups PDFs with some programs.
 
 # The Virtual Screen
 ...TODO explain Microsoft's quirky virtual desktop and the need to translate coordinates...
