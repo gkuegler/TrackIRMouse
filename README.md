@@ -11,6 +11,8 @@ The program poles Windows for the virtual desktop coordinates of each monitor an
 The rotational boundaries are mapped to each monitor's window in the virtual desktop.
 Every loop iteration, a simple linear interpolation between monitor edges determines the mouse position.
 
+![monitor diagram](https://github.com/georgekuegler/TrackIRMouse/blob/master/docs/Windows%20Desktop%20Diagram-Model.png)
+
 # Notes On Related Software:
 
 FreePIE is an excellent tool. You might also want to check that out. It is the first piece of software I used to get going quickly.
