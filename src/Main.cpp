@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 	std::wstring wide_string = convert.from_bytes(Config.sTrackIR_dll_location);
 	const wchar_t* temp_wide_string = wide_string.c_str();
 	wcscpy_s(sDll, MAX_PATH, temp_wide_string);
-	
+
 	// Load trackir dll and resolve function addresses
 	NPRESULT iRslt = NP_OK;
 	iRslt = NPClient_Init(sDll);
@@ -221,6 +221,46 @@ HWND GetCurrentConsoleHwnd(void)
 	}
 
 	return(HwndFound);
+}
+
+int getDllLocationFromRegistry()
+{
+	TCHAR szPath[MAX_PATH * 2];
+	HKEY pKey = NULL;
+	LPTSTR pszValue;
+	DWORD dwSize;
+	if (::RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\NaturalPoint\\NATURALPOINT\\NPClient Location"), 0, KEY_READ, &pKey) != ERROR_SUCCESS)
+	{
+		//MessageBox(hWnd, _T("DLL Location key not present"), _T("TrackIR Client"), MB_OK);
+		printf("Registry Error: DLL Location key not present");
+		return false;
+	}
+	if (RegQueryValueEx(pKey, _T("Path"), NULL, NULL, NULL, &dwSize) != ERROR_SUCCESS)
+	{
+		//MessageBox(hWnd, _T("Path value not present"), _T("TrackIR Client"), MB_OK);
+		printf("Registry Error: Path value not present");
+		return false;
+	}
+	pszValue = (LPTSTR)malloc(dwSize);
+	if (pszValue == NULL)
+	{
+		//MessageBox(hWnd, _T("Insufficient memory"), _T("TrackIR Client"), MB_OK);
+		printf("Registry Error: Insufficient memory");
+		return false;
+	}
+	if (RegQueryValueEx(pKey, _T("Path"), NULL, NULL, (LPBYTE)pszValue, &dwSize) != ERROR_SUCCESS)
+	{
+		::RegCloseKey(pKey);
+		//MessageBox(hWnd, _T("Error reading location key"), _T("TrackIR Client"), MB_OK);
+		printf("Registry Error: Error reading location key");
+		return false;
+	}
+	else
+	{
+		::RegCloseKey(pKey);
+		_tcscpy_s(szPath, pszValue);
+		free(pszValue);
+	}
 }
 
 /*
