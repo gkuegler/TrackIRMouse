@@ -12,7 +12,7 @@
 namespace WatchDog
 {
 
-    HANDLE startWatchdog()
+    HANDLE WD_StartWatchdog()
     {
         
         HANDLE hThread = INVALID_HANDLE_VALUE;
@@ -33,7 +33,7 @@ namespace WatchDog
         hThread = CreateThread(
             NULL,              // no security attribute 
             0,                 // default stack size 
-            WatchDog::WDInstanceThread,  // thread proc
+            WD_InstanceThread,  // thread proc
             &hEvent,              // thread parameter
             0,                 // not suspended 
             &dwThreadId         // returns thread ID
@@ -60,7 +60,7 @@ namespace WatchDog
         return hThread;
     }
 
-    DWORD WINAPI WDInstanceThread(LPVOID param)
+    DWORD WINAPI WD_InstanceThread(LPVOID param)
     {
         // Signal event when set up of the pipe completes,
         // allowing main program flow to continue
@@ -143,13 +143,13 @@ namespace WatchDog
         }
 
         result = SetEvent(*phEvent);
-        lala = WDServe(hPipe);
+        lala = WD_Serve(hPipe);
 
         //HeapFree(hHeap, 0, pSD);
         return 0;
     }
 
-    int WDServe(HANDLE hPipe)
+    int WD_Serve(HANDLE hPipe)
     {
         // This is a lot of Windows boilerplate code
         HANDLE hHeap = GetProcessHeap();
@@ -211,7 +211,7 @@ namespace WatchDog
                     }
                     else
                     {
-                        printf("WDInstanceThread ReadFile failed, GLE=%d.\n", GetLastError());
+                        printf("WD_InstanceThread ReadFile failed, GLE=%d.\n", GetLastError());
                         break;
                     }
                 }
@@ -219,7 +219,7 @@ namespace WatchDog
                 //printf("CLIENT MSG: %s\n", pchRequest);
 
                 // Process the incoming message.
-                WDHandleMsg(pchRequest, pchReply, &cbReplyBytes);
+                WD_HandleMsg(pchRequest, pchReply, &cbReplyBytes);
 
                 //_tcscpy_s(pchReply, BUFSIZE, TEXT("ACK"));
                 //cbReplyBytes = BUFSIZE * sizeof(char);
@@ -237,7 +237,7 @@ namespace WatchDog
 
                 if (!bSuccess || cbReplyBytes != cbWritten)
                 {
-                    printf("WDInstanceThread WriteFile failed, GLE=%d.\n", GetLastError());
+                    printf("WD_InstanceThread WriteFile failed, GLE=%d.\n", GetLastError());
                 }
                 else
                 {
@@ -263,11 +263,11 @@ namespace WatchDog
         HeapFree(hHeap, 0, pchRequest);
         HeapFree(hHeap, 0, pchReply);
 
-        printf("WDInstanceThread exiting.\n");
+        printf("WD_InstanceThread exiting.\n");
         return (DWORD)1;
     }
 
-    VOID WDHandleMsg(const char* pchRequest, char* pchReply, LPDWORD pchBytes)
+    VOID WD_HandleMsg(const char* pchRequest, char* pchReply, LPDWORD pchBytes)
         // Reads message and performs actions based on the content
         // Writes a reply into the reply char*
     {

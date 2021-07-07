@@ -16,6 +16,7 @@ void  CConfig::LoadSettings(int num_monitors)
     // TOML will throw a std::runtime_error if there's a problem opening the file 
     auto data = toml::parse("settings.toml");
 
+    // find_or will return a default if parameter not found
     profile_ID = toml::find_or<int>(data, "profile_ID", 13302);
     bWatchdog = toml::find_or<bool>(data, "watchdog_enabled", 0);
 

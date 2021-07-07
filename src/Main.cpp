@@ -21,9 +21,9 @@
 #include "Config.h"
 #include "Watchdog.h"
 
-void FnPressAnyKeyToExit(void);
-void DisconnectTrackIR(void);
-HWND GetCurrentConsoleHwnd(void);
+void pressAnyKeyToExit(void);
+void disconnectTrackIR(void);
+HWND getCurrentConsoleHwnd(void);
 
 int main(int argc, char* argv[])
 {
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	catch (std::runtime_error e)
 	{
 		printf("Load Settings Failed. See TOML error above.");
-		FnPressAnyKeyToExit();
+		pressAnyKeyToExit();
 	}
 	
 	DisplaySetup(iMonitorCount, Config);
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 	// Start the watchdog thread
 	if (Config.bWatchdog)
 	{
-		HANDLE hThread = WatchDog::startWatchdog();
+		HANDLE hThread = WatchDog::WD_StartWatchdog();
 	}
 
 	printf("\n--------TrackIR Iinit Status--------------\n");
@@ -78,55 +78,55 @@ int main(int argc, char* argv[])
 	wcscpy_s(sDll, MAX_PATH, temp_wide_string);
 
 	// Load trackir dll and resolve function addresses
-	NPRESULT iRslt = NP_OK;
-	iRslt = NPClient_Init(sDll);
+	NPRESULT rslt = NP_OK;
+	rslt = NPClient_Init(sDll);
 	
-	if (NP_OK == iRslt)
+	if (NP_OK == rslt)
 	{
-		printf("NP Initialization Code: %d\n", iRslt);
-		std::atexit(DisconnectTrackIR); // this isn't really doing anything at the moment
+		printf("NP Initialization Code: %d\n", rslt);
+		std::atexit(disconnectTrackIR); // this isn't really doing anything at the moment
 	}
 	else
 	{
-		printf("NP Initialization Failed With Code: %d\n", iRslt);
-		FnPressAnyKeyToExit();
+		printf("NP Initialization Failed With Code: %d\n", rslt);
+		pressAnyKeyToExit();
 		return 1;
 	}
 	
 	// NP needs a window handle to send data frames to
-	HWND hConsole = GetCurrentConsoleHwnd();
+	HWND hConsole = getCurrentConsoleHwnd();
 	
 	// NP_RegisterWindowHandle
-	iRslt = NP_OK;
-	iRslt = NP_RegisterWindowHandle(hConsole);
+	rslt = NP_OK;
+	rslt = NP_RegisterWindowHandle(hConsole);
 
-	if (iRslt == 7)
+	if (rslt == 7)
 	{
 		NP_UnregisterWindowHandle();
 		printf("! Booted Control of Previous MouseTracker Instance\n");
 		Sleep(2);
-		iRslt = NP_RegisterWindowHandle(hConsole);
+		rslt = NP_RegisterWindowHandle(hConsole);
 	}
-	printf("Register Window Handle: %d\n", iRslt);
+	printf("Register Window Handle: %d\n", rslt);
 	
 	// I'm skipping query the software version, I don't think its necessary
 	
 	// NP_RequestData
 	// Request roll, pitch. See NPClient.h
 	unsigned short data_fields = NPPitch | NPYaw;
-	iRslt = NP_RequestData(data_fields); 
-	printf("Request Data: %d\n", iRslt);
+	rslt = NP_RequestData(data_fields); 
+	printf("Request Data: %d\n", rslt);
 
 	// NP_RegisterProgramProfileID: 13302
-	iRslt = NP_RegisterProgramProfileID(Config.profile_ID);
-	printf("Register Program Profile ID: %d\n", iRslt);
+	rslt = NP_RegisterProgramProfileID(Config.profile_ID);
+	printf("Register Program Profile ID: %d\n", rslt);
 
 	// Skipping this too. I think this is for legacy games
 	// NP_StopCursor
 
 	// NP_StartDataTransmission
-	iRslt = NP_StartDataTransmission();
-	printf("Start Data Transmission: %d\n", iRslt);
+	rslt = NP_StartDataTransmission();
+	printf("Start Data Transmission: %d\n", rslt);
 
 	NPRESULT gdf;
 	tagTrackIRData *pTIRData, TIRData;
@@ -182,38 +182,38 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-void FnPressAnyKeyToExit()
+void pressAnyKeyToExit()
 {
-	char line[51]; // room for 20 chars + '\0'
+	char szLine[51]; // room for 20 chars + '\0'
 	printf("\n\nPress Enter Key to Exit -> ");
-	gets_s(line, 50);
+	gets_s(szLine, 50);
 }
 
-void DisconnectTrackIR()
+void disconnectTrackIR()
 {
 	NP_UnregisterWindowHandle();
 }
 
-HWND GetCurrentConsoleHwnd(void)
+HWND getCurrentConsoleHwnd(void)
 // Sets the Consol title to a known value
 // Uses the title to FindWindow
 // I guess Microsoft is phasing out GetConsoleWindow
 {
 	HWND HwndFound;
-	TCHAR version_no[13] = VERSION; // add version number to window title
-	TCHAR PszNewWindowTitle[CONSOL_TITLE_BUFF] = L"MouseTrackIR ";
+	TCHAR szVersionNumber[13] = VERSION; // add version number to window title
+	TCHAR szNewWindowTitle[CONSOL_TITLE_BUFF] = L"MouseTrackIR ";
 
-	wcscat_s(PszNewWindowTitle, version_no);
-	printf("Title: %ls\n", PszNewWindowTitle);
+	wcscat_s(szNewWindowTitle, szVersionNumber);
+	printf("Title: %ls\n", szNewWindowTitle);
 
 	// Change current window title
-	SetConsoleTitle(PszNewWindowTitle);
+	SetConsoleTitle(szNewWindowTitle);
 
 	// Ensure window title has been updated.
 	Sleep(40);
 
 	// Look for NewWindowTitle
-	HwndFound = FindWindow(NULL, PszNewWindowTitle);
+	HwndFound = FindWindow(NULL, szNewWindowTitle);
 
 	if (HwndFound == NULL)
 	{
