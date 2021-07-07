@@ -24,6 +24,21 @@ static signed int virt_origin_y = 0; // move to static class member
 static float x_PxToABS; // move to static class member
 static float y_PxToABS; // move to static class member
 
+static MOUSEINPUT mi = {
+    0,
+    0,
+    0,
+    MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK,
+    0,
+    0
+};
+
+static INPUT ip = {
+    INPUT_MOUSE,
+    mi
+};
+
+
 
 // Make a Windows API call to get the virtual boundaries of each monitor.
 // Assigned those values to parameters within each display object
@@ -137,18 +152,9 @@ void DisplaySetup(int num_monitors, CConfig& Config)
 
 inline void SendMyInput(float x, float y)
 {
-    static ULONG_PTR p_dwextra = 0;
-    static INPUT ip;
-
-    ip.type = INPUT_MOUSE;
-
+    
     ip.mi.dx = static_cast<LONG>(x);
     ip.mi.dy = static_cast<LONG>(y);
-
-    ip.mi.mouseData = 0;
-    ip.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK;
-    ip.mi.time = 0;
-    ip.mi.dwExtraInfo = p_dwextra;
 
     SendInput(1, &ip, sizeof(INPUT));
 
