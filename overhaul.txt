@@ -1,4 +1,6 @@
-
+implement scrolling ability with paused mouse, add to pipe server
+add profiles to settings files
+make graphical utility that can load separate profiles
 
 
 
