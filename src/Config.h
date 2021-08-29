@@ -23,6 +23,7 @@ public:
     int profile_ID = 0;
     bool bWatchdog = 0;
     std::string sTrackIR_dll_location;
+    int display_profile = 0;
 
     bounds_in_degrees bounds[DEFAULT_MAX_DISPLAYS];
 

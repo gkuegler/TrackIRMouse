@@ -1,22 +1,17 @@
-
-
 # Notes:
 #   - Will crash if display bound values are not floats
 #     (need to make sure each follows format: "\d+\.\d+")
 #
 #
-#
-# 
-# 
-
-
 # PROFILE ID'S:
   # FreeSpace2 = 13302
-profile_ID = 13302
+  # Aerofly = 2025
+
+[general]
+# profile_ID = 2025
 watchdog_enabled = true
 TrackIR_dll_directory = "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5"
-
-
+profile = 1
 
 [default_padding]
 left = 3
@@ -24,14 +19,30 @@ right = 3
 top = 0
 bottom = 0
 
-[display0]
-left = -43.00
-right = 50.00
-top = 19.00
-bottom = -19.00
+[profiles]
 
-[display1]
-left = 62.00
-right = 180.00
-top = 19.00
-bottom = -19.00
+  [profiles.1]
+  profile_ID = 13302
+
+  # Desktop Dual Monitor Setup
+  [profiles.1.display.0]
+  left = -43.00
+  right = 50.00
+  top = 19.00
+  bottom = -19.00
+
+  [profiles.1.display.1]
+  left = 62.00
+  right = 180.00
+  top = 19.00
+  bottom = -19.00
+
+  [profiles.2]
+  profile_ID = 2025
+
+  # Laptop Monitor
+  [profiles.2.display.0]
+  left = -50.00
+  right = 50.00
+  top = 35.00
+  bottom = -35.00

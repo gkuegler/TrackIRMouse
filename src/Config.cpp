@@ -1,8 +1,8 @@
 #include "Config.h"
 
 #include <string>
-#include "toml.hpp"
 
+#include "toml.hpp"
 
 void  CConfig::LoadSettings(int num_monitors)
 {
@@ -16,10 +16,15 @@ void  CConfig::LoadSettings(int num_monitors)
     // TOML will throw a std::runtime_error if there's a problem opening the file 
     auto data = toml::parse("settings.toml");
 
-    // find_or will return a default if parameter not found
-    profile_ID = toml::find_or<int>(data, "profile_ID", 13302);
-    bWatchdog = toml::find_or<bool>(data, "watchdog_enabled", 0);
+    // Find the general settings table
+    auto& general_settings_table = toml::find(data, "general");
 
+    // find_or will return a default if parameter not found
+    /*profile_ID = toml::find_or<int>(general_settings_table, "profile_ID", 13302);*/
+    bWatchdog = toml::find_or<bool>(general_settings_table, "watchdog_enabled", 0);
+    display_profile = toml::find<int>(general_settings_table, "profile");
+
+    //Optionally the user can specify the location to the trackIR dll
     sTrackIR_dll_location = toml::find_or<std::string>(data, "TrackIR_dll_directory", "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5");
 
     if (sTrackIR_dll_location.back() != '\\')
@@ -33,13 +38,13 @@ void  CConfig::LoadSettings(int num_monitors)
         sTrackIR_dll_location.append("NPClient.dll");
     #endif
 
-    // load in the default padding table if available
+    // load in the global default padding table if available
     try {
-        auto default_padding = toml::find(data, "default_padding");
-        default_left_padding = toml::find<int>(default_padding, "left");
-        default_right_padding = toml::find<int>(default_padding, "right");
-        default_top_padding = toml::find<int>(default_padding, "top");
-        default_bottom_padding = toml::find<int>(default_padding, "bottom");
+        auto& default_padding_table = toml::find(data, "default_padding");
+        default_left_padding = toml::find<int>(default_padding_table, "left");
+        default_right_padding = toml::find<int>(default_padding_table, "right");
+        default_top_padding = toml::find<int>(default_padding_table, "top");
+        default_bottom_padding = toml::find<int>(default_padding_table, "bottom");
 
     }
     catch (std::out_of_range e) {
@@ -48,18 +53,35 @@ void  CConfig::LoadSettings(int num_monitors)
     }
 
     printf("\n--------User Mapping Info----------------------\n");
+
+    // Find the profiles table that contains all profiles
+    auto& display_mapping_profiles = toml::find(data, "profiles");
+
+    // Find the profile table which is currently enabled enabled
+    std::string profile_table_name = std::to_string(display_profile);
+    auto& profile_data = toml::find(display_mapping_profiles, profile_table_name);
+
+    // Load in current profile dependent settings
+    profile_ID = toml::find_or<int>(general_settings_table, "profile_ID", 13302);
+
+    // Load in Display Mappings
+    // Find the display mapping table for the given profile
+    auto& display_mapping = toml::find(profile_data, "display");
+
     for (int i = 0; i < num_monitors; i++) {
-        std::string tname = d + std::to_string(i);
+        std::string tname = std::to_string(i);
         try {
-            const auto& toml_display = toml::find(data, tname);
+            const auto& toml_display = toml::find(display_mapping, tname);
 
             bounds[i].left = toml::find<float>(toml_display, "left");
             bounds[i].right = toml::find<float>(toml_display, "right");
             bounds[i].top = toml::find<float>(toml_display, "top");
             bounds[i].bottom = toml::find<float>(toml_display, "bottom");
 
-            // I return an ungodly fake high padding number
-            // So that I can tell of one was found in the toml config file
+            // I return an ungodly fake high padding number,
+            // so that I can tell of one was found in the toml config file
+            // without producing an exception if a value was not found.
+            // Padding values are not critical the program operation.
             int left_padding = toml::find_or<int>(toml_display, "left_padding", 5555);
             int right_padding = toml::find_or<int>(toml_display, "right_padding", 5555);
             int top_padding = toml::find_or<int>(toml_display, "top_padding", 5555);
@@ -103,6 +125,8 @@ void  CConfig::LoadSettings(int num_monitors)
         catch (std::out_of_range e)
         {
             printf("TOML Exception Thrown!\nIncorrect configuration of display:%d\n%s\n", i, e.what());
+            // I wanted to throw std::runtime_error, but i haven't figured out how yet
+            throw 23;
         }
     }
 
