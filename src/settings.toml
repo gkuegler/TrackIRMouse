@@ -8,10 +8,9 @@
   # Aerofly = 2025
 
 [general]
-# profile_ID = 2025
 watchdog_enabled = true
 TrackIR_dll_directory = "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5"
-profile = 1
+profile = 2
 
 [default_padding]
 left = 3

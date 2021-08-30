@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include <Windows.h>
 
@@ -90,6 +91,28 @@ int WinSetup()
     if (DEFAULT_MAX_DISPLAYS < num_monitors)
     {
         printf("More Than %d Displays Found.\nIncrease max number of displays.\n", DEFAULT_MAX_DISPLAYS);
+    }
+
+    DISPLAY_DEVICEA display_device_info;
+    display_device_info.cb = sizeof(DISPLAY_DEVICEA);
+
+    for (int i = 0; ; i++)
+    {
+        BOOL result = EnumDisplayDevicesA(
+            0,
+            i,
+            &display_device_info,
+            0
+        );
+
+        if (result)
+        {
+            std::cout << i << " Name: " << display_device_info.DeviceName << "  DeviceString: " << display_device_info.DeviceString << std::endl;
+        }
+        else
+        {
+            break;
+        }
     }
 
     x_PxToABS = USHORT_MAX_VAL / static_cast<float>(VM_width);

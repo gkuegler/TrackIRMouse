@@ -2,6 +2,18 @@ implement scrolling ability with paused mouse, add to pipe server
 add profiles to settings files
 make graphical utility that can load separate profiles
 
+Automatic Detection Of Display Configuration:
+"EnumDisplayDevicesA" to get device names and device strings
+"EnumDisplayMonitors" to get device names of active monitors
+do some sort of compare
+    if \\.\DISPLAY1 is active in the string is "Intel Graphics P530"
+    then I must be using a single monitor?
+    or if i find any "CalDigit" strings in the active device string
+    then i must be in a dual monitor setup
+This all seems too complicated and much work to implement correctly
+in addition i don't think this would scale to multiple other users easily
+
+
 
 
 From C++ core guilines
