@@ -62,7 +62,7 @@ void  CConfig::LoadSettings(int num_monitors)
     auto& profile_data = toml::find(display_mapping_profiles, profile_table_name);
 
     // Load in current profile dependent settings
-    profile_ID = toml::find_or<int>(general_settings_table, "profile_ID", 13302);
+    profile_ID = toml::find_or<int>(profile_data, "profile_ID", 13302);
 
     // Load in Display Mappings
     // Find the display mapping table for the given profile
