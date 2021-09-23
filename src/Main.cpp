@@ -9,7 +9,8 @@
 
 #pragma warning(disable : 4996)
 
-#include "spdlog/spdlog.h"
+//#include "spdlog/spdlog.h"
+//#include "spdlog/sinks/basic_file_sink.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,6 +23,8 @@
 #include "Display.h"
 #include "Config.h"
 #include "Watchdog.h"
+
+#define TEST_NO_TRACK
 
 void pressAnyKeyToExit(void);
 void disconnectTrackIR(void);
@@ -94,6 +97,13 @@ int main(int argc, char* argv[])
 		pressAnyKeyToExit();
 		return 1;
 	}
+
+#ifdef TEST_NO_TRACK
+	// In the program early after the DLL is loaded for testing
+	// so that this program doesn't boot control
+	// from my local copy.
+	pressAnyKeyToExit();
+#endif
 	
 	// NP needs a window handle to send data frames to
 	HWND hConsole = getCurrentConsoleHwnd();
