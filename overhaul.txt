@@ -1,23 +1,122 @@
-implement scrolling ability with paused mouse, add to pipe server
-add profiles to settings files
-make graphical utility that can load separate profiles
+# TOP LEVEL
+
+// add profiles to settings files
+// 64-bit support
+
+Convert To Graphical Utility:
+    Core Needs:
+        standard output log to large text control
+        remove press any key to exit
+        wxWidget logging (stdout but MessageBox on critical error?)
+        create separate hidden frame for track thread to register with trackIR?
+        wxFileInputStream to open file first, then hand off to toml library
+        
+
+    Features:
+        profile selection (drop down?)
+        settings reloads
+        find good display size default
+        edit configuration from gui
+        start button (attach to trackIR)
+        checkbox to automatically start
+        wxRegKey for TrackIR DLL location
+        multi-language support with wxTranslations & wxLocal (needs a file menu to change option)
+
+implement installer?
+implement scrolling ability with paused mouse (for AutoCAD), add to pipe server
 
 Automatic Detection Of Display Configuration:
-"EnumDisplayDevicesA" to get device names and device strings
-"EnumDisplayMonitors" to get device names of active monitors
-do some sort of compare
-    if \\.\DISPLAY1 is active in the string is "Intel Graphics P530"
-    then I must be using a single monitor?
-    or if i find any "CalDigit" strings in the active device string
-    then i must be in a dual monitor setup
-This all seems too complicated and much work to implement correctly
-in addition i don't think this would scale to multiple other users easily
+    "EnumDisplayDevicesA" to get device names and device strings
+    "EnumDisplayMonitors" to get device names of active monitors
+    do some sort of compare
+        if \\.\DISPLAY1 is active in the string is "Intel Graphics P530"
+        then I must be using a single monitor?
+        or if i find any "CalDigit" strings in the active device string
+        then i must be in a dual monitor setup
+    This all seems too complicated and much work to implement correctly
+    in addition I don't think this would scale to multiple other users easily
 
 
 
 
-From C++ core guilines
+# From C++ core guilines:
 
-Operation List:
-    load settings to a settings class
-        fail if core set is incorrect
+RAII:
+    load settings to a settings class, fail if core set is incorrect
+
+# SIZERS
+    //set portion of size: leftside & rightside(control)
+    drawpanel->SetSizer(leftside);
+    controlpanel->SetSizer(rightside);
+    sizer->Add(drawpanel, 7, wxEXPAND);
+    sizer->Add(controlpanel, 3, wxEXPAND);
+    rightside->Fit(controlpanel);
+    leftside->Fit(drawpanel);
+    SetSizer(sizer);
+
+    this->GetSizer()->Layout();
+    
+# SELECTING SETTINGS FILE
+
+wxFileDialog openFileDialog(this, _("Open image file"), "", "", "image files (*.bmp;*.png;*.jpg)|*.bmp;*.png;*.jpg",
+        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+wxFileInputStream input_stream(openFileDialog.GetPath());        
+wxFileOutputStream output_stream(saveFileDialog.GetPath());
+
+# CONSTANTS EXAMPLE
+namespace mmex
+{
+extern int MIN_DATAVERSION;
+extern const wxString DATAVERSION;
+
+extern const wxString DEFDATEFORMAT;
+extern const wxString DEFDELIMTER;
+
+/*
+        Uses for titles, reports, etc.
+        Do not use mmex::GetAppName() for such things.
+*/
+const wxString getProgramName();
+const wxString getTitleProgramVersion();
+const wxString getCaption(const wxString& caption);
+
+namespace version
+{
+    extern const wxString string;
+    extern bool isStable();
+    extern const wxString getProgramVersion();
+    int getDbLatestVersion();
+}
+
+# FINDING A GOOD DISPLAY SIZE DEFAULT
+// iterate through each display until the primary is found, default to display 0
+wxSharedPtr<wxDisplay> display(new wxDisplay(static_cast<unsigned int>(0)));
+for (unsigned int i = 0; i < wxDisplay::GetCount(); ++i) {
+    if (display->IsPrimary()) {
+        break;
+    }
+
+    display = new wxDisplay(i);
+}
+
+// Get a 'sensible' location on the primary display in case we can't fit it into the window
+wxRect rect = display->GetClientArea();
+int defValX = rect.GetX() + 50;
+int defValY = rect.GetY() + 50;
+int defValW = rect.GetWidth() / 4 * 3;
+int defValH = rect.GetHeight() / 4 * 3;
+
+app->m_frame = new mmGUIFrame(app, mmex::getProgramName(), wxPoint(valX, valY), wxSize(valW, valH));
+
+bool ok = app->m_frame->Show();
+
+/* Was App Maximized? */
+bool isMax = Model_Setting::instance().GetBoolSetting("ISMAXIMIZED", true);
+if (isMax) app->m_frame->Maximize(true);
+
+// success: wxApp::OnRun() will be called which will enter the main message
+// loop and the application will run. If we returned FALSE here, the
+// application would exit immediately.
+
+return ok;
