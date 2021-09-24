@@ -29,7 +29,8 @@ void pressAnyKeyToExit(void);
 void disconnectTrackIR(void);
 HWND getCurrentConsoleHwnd(void);
 
-int main(int argc, char* argv[])
+//int main(int argc, char* argv[])
+int trackStart(int argc, char* argv[])
 {
 
 	// ## Program flow ##
