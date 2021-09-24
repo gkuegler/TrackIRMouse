@@ -9,9 +9,6 @@
 
 #pragma warning(disable : 4996)
 
-//#include "spdlog/spdlog.h"
-//#include "spdlog/sinks/basic_file_sink.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <locale>
