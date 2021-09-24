@@ -10,7 +10,7 @@
 [general]
 watchdog_enabled = true
 TrackIR_dll_directory = "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5"
-profile = 2
+profile = 1
 
 [default_padding]
 left = 3
@@ -43,5 +43,5 @@ bottom = 0
   [profiles.2.display.0]
   left = -50.00
   right = 50.00
-  top = 35.00
-  bottom = -35.00
+  top = 30.00
+  bottom = -30.00

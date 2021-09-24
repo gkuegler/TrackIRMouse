@@ -24,7 +24,9 @@
 #include "Config.h"
 #include "Watchdog.h"
 
-#define TEST_NO_TRACK
+// Uncomment this line for testing to prevent program
+// from attaching to NPTrackIR and supersede control
+//#define TEST_NO_TRACK
 
 void pressAnyKeyToExit(void);
 void disconnectTrackIR(void);
