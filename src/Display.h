@@ -1,3 +1,7 @@
+#pragma once
+#ifndef TRACKIRMOUSE_DISPLAY_H
+#define TRACKIRMOUSE_DISPLAY_H
+
 class CDisplay {
 public:
 
@@ -77,3 +81,5 @@ public:
         return;
     }
 };
+
+#endif /* TRACKIRMOUSE_DISPLAY_H */

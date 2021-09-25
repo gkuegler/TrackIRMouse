@@ -243,7 +243,7 @@
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="GUI.cpp" />
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Track.cpp" />
     <ClCompile Include="NPClient.cpp" />
     <ClCompile Include="Watchdog.cpp" />
   </ItemGroup>
@@ -255,6 +255,7 @@
     <ClInclude Include="GUI.h" />
     <ClInclude Include="NPClient.h" />
     <ClInclude Include="toml.hpp" />
+    <ClInclude Include="Track.h" />
     <ClInclude Include="Watchdog.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

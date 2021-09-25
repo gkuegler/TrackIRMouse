@@ -1,4 +1,5 @@
 #include "GUI.h"
+#include "Track.h"
 
 wxIMPLEMENT_APP(CGUIApp);
 
@@ -94,3 +95,4 @@ cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200)
             m_panel->m_textrich->AppendText(ev.GetPayload<strData>().asString());
         });
 }
+

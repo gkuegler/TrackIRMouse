@@ -20,19 +20,8 @@ public:
 
     ExitCode Entry()
     {
-        for (unsigned n = 0; n < 10; n++)
-        {
-            wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
-            strData var;
-            var.int1 = n;
-            var.int2 = n * n;
-            var.f1 = std::sqrt(n);
-            evt->SetPayload(var);
-            m_parent->QueueEvent(evt);
-            //May use this in the future
-            //wxTheApp->QueueEvent(evt);
-            this->Sleep(1000);
-        }
+        trackStart(m_parent);
+
         return NULL;
     }
 protected:

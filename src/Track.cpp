@@ -8,11 +8,13 @@
 */
 
 #pragma warning(disable : 4996)
+#include <wx/wx.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <locale>
 #include <TCHAR.H>
+#include <format>
 
 #include "Constants.h"
 #include "NPClient.h"
@@ -21,16 +23,19 @@
 #include "Config.h"
 #include "Watchdog.h"
 
+
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
 //#define TEST_NO_TRACK
 
-void pressAnyKeyToExit(void);
+//void pressAnyKeyToExit(void);
 void disconnectTrackIR(void);
-HWND getCurrentConsoleHwnd(void);
+//HWND getCurrentConsoleHwnd(void);
+int trackStart(wxEvtHandler* m_parent);
+void logToWix(std::string msg);
 
 //int main(int argc, char* argv[])
-int trackStart(int argc, char* argv[])
+int trackStart(wxEvtHandler* m_parent, HWND hWnd)
 {
 
 	// ## Program flow ##
