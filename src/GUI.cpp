@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "GUI.h"
 #include "Track.h"
 
@@ -11,10 +13,20 @@ CGUIApp::~CGUIApp()
 
 bool CGUIApp::OnInit()
 {
-	m_frame = new cFrame();
-
-	m_frame->m_panel->m_textrich->AppendText("blah blah blah blah\n");
+    m_frame = new cFrame();
 	m_frame->Show();
+
+    MyThread* thread = new MyThread(this, m_frame -> GetHandle());
+
+    if (thread->Create() == wxTHREAD_NO_ERROR)
+    {
+        thread->Run();
+    }
+
+    Bind(wxEVT_THREAD, [this](wxThreadEvent& ev)
+        {
+            m_frame -> m_panel->m_textrich->AppendText(ev.GetString());
+        });
 
 	return true;
 }
@@ -29,7 +41,7 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
 //MyPanel::MyPanel(wxFrame* frame, int x, int y, int w, int h)
     //: wxPanel(frame, wxID_ANY, wxPoint(x, y), wxSize(w, h))
 {
-    m_textrich = new cTextCtrl(this, wxID_ANY, "Default Message\n",
+    m_textrich = new cTextCtrl(this, wxID_ANY, "-----MouseTrackIR Application-----",
         wxDefaultPosition, wxDefaultSize,
         wxTE_RICH | wxTE_MULTILINE);
 
@@ -76,23 +88,26 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
 }
 
 
-cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200), wxSize(500, 800))
+cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200), wxSize(700, 800))
 {
     m_panel = new cPanel(this);
     //m_panel = new MyPanel(this, 10, 10, 300, 100);
     m_panel->GetSizer()->Fit(this);
 
-    //Start a worker thread and bind result
-    MyThread* thread = new MyThread(this);
-
-    if (thread->Create() == wxTHREAD_NO_ERROR)
-    {
-        thread->Run();
-    }
-
-    Bind(wxEVT_THREAD, [this](wxThreadEvent& ev)
-        {
-            m_panel->m_textrich->AppendText(ev.GetPayload<strData>().asString());
-        });
 }
 
+
+
+MyThread::MyThread(wxEvtHandler* parent, HWND hWnd) : wxThread()
+{
+    m_parent = parent;
+    m_hWnd = hWnd;
+}
+
+wxThread::ExitCode MyThread::Entry()
+{
+    int result = trackInitialize(m_parent, m_hWnd);
+    result = trackStart();
+
+    return NULL;
+}

@@ -9,6 +9,9 @@
 #include "Display.h"
 #include "Config.h"
 #include "toml.hpp"
+#include "Log.h"
+#define FMT_HEADER_ONLY
+#include <fmt\format.h>
 
 #define USHORT_MAX_VAL 65535 // SendInput with absolute mouse movement takes a short int
 
@@ -56,11 +59,11 @@ BOOL CALLBACK PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPREC
     displays[count].pix_top = static_cast <unsigned int> (Monitor.rcMonitor.top); // from long
     displays[count].pix_bottom = static_cast <unsigned int> (Monitor.rcMonitor.bottom); // from long
 
-    printf("MON Name:      %ls\n", Monitor.szDevice);
-    printf("MON %d Left:   %13d\n", count, displays[count].pix_left);
-    printf("MON %d Right:  %13d\n", count, displays[count].pix_right);
-    printf("MON %d Top:    %13d\n", count, displays[count].pix_top);
-    printf("MON %d Bottom: %13d\n", count, displays[count].pix_bottom);
+    //logToWix(fmt::format("MON Name:      {}\n", Monitor.szDevice));
+    //logToWix(fmt::format("MON {} Left:   {:13}\n", count, displays[count].pix_left));
+    //logToWix(fmt::format("MON {} Right:  {:13}\n", count, displays[count].pix_right));
+    //logToWix(fmt::format("MON {} Top:    {:13}\n", count, displays[count].pix_top));
+    //logToWix(fmt::format("MON {} Bottom: {:13}\n", count, displays[count].pix_bottom));
 
     if (Monitor.rcMonitor.left < virt_origin_x)
     {
@@ -78,19 +81,19 @@ BOOL CALLBACK PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPREC
 int WinSetup()
 {
 
-    printf("\n--------Windows Environment Info----------\n");
+    //logToWix(fmt::format("\n--------Windows Environment Info----------\n"));
 
     int num_monitors = GetSystemMetrics(SM_CMONITORS);
     int VM_width = GetSystemMetrics(SM_CXVIRTUALSCREEN);  // width of total bounds of all screens
     int VM_height = GetSystemMetrics(SM_CYVIRTUALSCREEN); // height of total bounds of all screens
 
-    printf("%d Monitors Found\n", num_monitors);
-    printf("Width of Virtual Desktop: %d\n", VM_width);
-    printf("Height of Virtual Desktop: %d\n", VM_height);
+    //logToWix(fmt::format("{} Monitors Found\n", num_monitors));
+    //logToWix(fmt::format("Width of Virtual Desktop: {}\n", VM_width));
+    //logToWix(fmt::format("Height of Virtual Desktop: {}\n", VM_height));
 
     if (DEFAULT_MAX_DISPLAYS < num_monitors)
     {
-        printf("More Than %d Displays Found.\nIncrease max number of displays.\n", DEFAULT_MAX_DISPLAYS);
+        //logToWix(fmt::format("More Than {} Displays Found.\nIncrease max number of displays.\n", DEFAULT_MAX_DISPLAYS));
     }
 
     DISPLAY_DEVICEA display_device_info;
@@ -107,7 +110,8 @@ int WinSetup()
 
         if (result)
         {
-            std::cout << i << " Name: " << display_device_info.DeviceName << "  DeviceString: " << display_device_info.DeviceString << std::endl;
+            //std::cout << i << " Name: " << display_device_info.DeviceName << "  DeviceString: " << display_device_info.DeviceString << std::endl;
+            logToWix(fmt::format("{} Name: {} DeviceString: {}\n", i, display_device_info.DeviceName, display_device_info.DeviceString));
         }
         else
         {
@@ -118,11 +122,11 @@ int WinSetup()
     x_PxToABS = USHORT_MAX_VAL / static_cast<float>(VM_width);
     y_PxToABS = USHORT_MAX_VAL / static_cast<float>(VM_height);
 
-    printf("\nVirtual Desktop Pixel Bounds\n");
+    logToWix(fmt::format("\nVirtual Desktop Pixel Bounds\n"));
     EnumDisplayMonitors(NULL, NULL, PopulateVirtMonitorBounds, reinterpret_cast<LPARAM>(&displays));
 
-    printf("Virtual Origin Offset Horizontal: %5d\n", virt_origin_x);
-    printf("Virtual Origin Offset Vertical:   %5d\n\n", virt_origin_y);
+    logToWix(fmt::format("Virtual Origin Offset Horizontal: {:5d}\n", virt_origin_x));
+    logToWix(fmt::format("Virtual Origin Offset Vertical:   {:5d}\n\n", virt_origin_y));
 
     return num_monitors;
 }
@@ -143,32 +147,32 @@ void DisplaySetup(int num_monitors, CConfig& Config)
 
         displays[i].setAbsBounds(virt_origin_x, virt_origin_y, x_PxToABS, y_PxToABS);
     }
-    printf("\nVirtual Desktop Pixel Bounds (abs)\n");
+    logToWix(fmt::format("\nVirtual Desktop Pixel Bounds (abs)\n"));
     for (int i = 0; i < num_monitors; i++)
     {
-        printf("MON %d pix_abs_left:   %5d\n", i, displays[i].pix_abs_left);
-        printf("MON %d pix_abs_right:  %5d\n", i, displays[i].pix_abs_right);
-        printf("MON %d pix_abs_top:    %5d\n", i, displays[i].pix_abs_top);
-        printf("MON %d pix_abs_bottom: %5d\n", i, displays[i].pix_abs_bottom);
+        logToWix(fmt::format("MON {} pix_abs_left:   {:5d}\n", i, displays[i].pix_abs_left));
+        logToWix(fmt::format("MON {} pix_abs_right:  {:5d}\n", i, displays[i].pix_abs_right));
+        logToWix(fmt::format("MON {} pix_abs_top:    {:5d}\n", i, displays[i].pix_abs_top));
+        logToWix(fmt::format("MON {} pix_abs_bottom: {:5d}\n", i, displays[i].pix_abs_bottom));
     }
-    printf("\n16-bit Coordinate Bounds\n");
+    logToWix(fmt::format("\n16-bit Coordinate Bounds\n"));
     for (int i = 0; i < num_monitors; i++)
     {
-        printf("MON %d abs_left:   %7.1f\n", i, displays[i].abs_left);
-        printf("MON %d abs_right:  %7.1f\n", i, displays[i].abs_right);
-        printf("MON %d abs_top:    %7.1f\n", i, displays[i].abs_top);
-        printf("MON %d abs_bottom: %7.1f\n", i, displays[i].abs_bottom);
+        logToWix(fmt::format("MON {} abs_left:   {:7.1f}\n", i, displays[i].abs_left));
+        logToWix(fmt::format("MON {} abs_right:  {:7.1f}\n", i, displays[i].abs_right));
+        logToWix(fmt::format("MON {} abs_top:    {:7.1f}\n", i, displays[i].abs_top));
+        logToWix(fmt::format("MON {} abs_bottom: {:7.1f}\n", i, displays[i].abs_bottom));
     }
-    printf("\nRotational Bounds\n");
+    logToWix(fmt::format("\nRotational Bounds\n"));
     for (int i = 0; i < num_monitors; i++)
     {
-        printf("MON %d rot_left:   %7.2f\n", i, displays[i].rot_left);
-        printf("MON %d rot_right:  %7.2f\n", i, displays[i].rot_right);
-        printf("MON %d rot_top:    %7.2f\n", i, displays[i].rot_top);
-        printf("MON %d rot_bottom: %7.2f\n", i, displays[i].rot_bottom);
+        logToWix(fmt::format("MON {} rot_left:   {:7.2f}\n", i, displays[i].rot_left));
+        logToWix(fmt::format("MON {} rot_right:  {:7.2f}\n", i, displays[i].rot_right));
+        logToWix(fmt::format("MON {} rot_top:    {:7.2f}\n", i, displays[i].rot_top));
+        logToWix(fmt::format("MON {} rot_bottom: {:7.2f}\n", i, displays[i].rot_bottom));
     }
 
-    printf("\n------------------------------------\n");
+    logToWix(fmt::format("\n------------------------------------\n"));
 
     return;
 }
@@ -221,7 +225,7 @@ void MouseMove(int num_monitors, float yaw, float pitch) {
             // need to cast to an integer because resulting calcs are floats
             SendMyInput(x, y);
             last_screen = i;
-            //printf("(%f, %f)", y, x); // for testing
+            //logToWix(fmt::format("(%f, %f)", y, x); // for testin)g
             return;
         }
     }
@@ -261,7 +265,7 @@ void MouseMove(int num_monitors, float yaw, float pitch) {
         y = my * (rt - pitch) + at;
     }
 
-    // printf("off monitors");
+    // logToWix(fmt::format("off monitors"));
     SendMyInput(x, y);
 
     return;

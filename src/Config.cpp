@@ -4,6 +4,10 @@
 
 #include "toml.hpp"
 
+#include "Log.h"
+#define FMT_HEADER_ONLY
+#include <fmt\format.h>
+
 void  CConfig::LoadSettings(int num_monitors)
 {
     int default_left_padding = 0;
@@ -48,11 +52,11 @@ void  CConfig::LoadSettings(int num_monitors)
 
     }
     catch (std::out_of_range e) {
-        printf("Exception with the default padding table.");
-        printf("TOML Non Crititcal Exception Thrown.\n%s\n", e.what());
+        logToWix(fmt::format("Exception with the default padding table."));
+        logToWix(fmt::format("TOML Non Crititcal Exception Thrown.\n{}\n", e.what()));
     }
 
-    printf("\n--------User Mapping Info----------------------\n");
+    logToWix(fmt::format("\n--------User Mapping Info----------------------\n"));
 
     // Find the profiles table that contains all profiles
     auto& display_mapping_profiles = toml::find(data, "profiles");
@@ -87,44 +91,44 @@ void  CConfig::LoadSettings(int num_monitors)
             int top_padding = toml::find_or<int>(toml_display, "top_padding", 5555);
             int bottom_padding = toml::find_or<int>(toml_display, "bottom_padding", 5555);
 
-            printf("Padding\n");
+            logToWix(fmt::format("Padding\n"));
 
             if (left_padding != 5555) {
-                printf("Display %d Left:   %d\n", i, left_padding);
+                logToWix(fmt::format("Display {} Left:   {}\n", i, left_padding));
                 bounds[i].pad_left = left_padding;
             }
             else {
-                printf("Display %d Left:   %d (Default)\n", i, default_left_padding);
+                logToWix(fmt::format("Display {} Left:   {} (Default)\n", i, default_left_padding));
                 bounds[i].pad_left = default_left_padding;
             }
             if (right_padding != 5555) {
-                printf("Display %d Right:  %d\n", i, right_padding);
+                logToWix(fmt::format("Display {} Right:  {}\n", i, right_padding));
                 bounds[i].pad_right = right_padding;
             }
             else {
-                printf("Display %d Right:  %d (Default)\n", i, default_right_padding);
+                logToWix(fmt::format("Display {} Right:  {} (Default)\n", i, default_right_padding));
                 bounds[i].pad_right = default_right_padding;
             }
             if (top_padding != 5555) {
-                printf("Display %d Top:    %d\n", i, top_padding);
+                logToWix(fmt::format("Display {} Top:    {}\n", i, top_padding));
                 bounds[i].pad_top = top_padding;
             }
             else {
-                printf("Display %d Top:    %d (Default)\n", i, default_top_padding);
+                logToWix(fmt::format("Display {} Top:    {} (Default)\n", i, default_top_padding));
                 bounds[i].pad_top = default_top_padding;
             }
             if (bottom_padding != 5555) {
-                printf("Display %d Bottom:   %d\n", i, bottom_padding);
+                logToWix(fmt::format("Display {} Bottom:   {}\n", i, bottom_padding));
                 bounds[i].pad_bottom = bottom_padding;
             }
             else {
-                printf("Display %d Bottom:   %d (Default)\n", i, default_bottom_padding);
+                logToWix(fmt::format("Display {} Bottom:   {} (Default)\n", i, default_bottom_padding));
                 bounds[i].pad_bottom = default_bottom_padding;
             }
         }
         catch (std::out_of_range e)
         {
-            printf("TOML Exception Thrown!\nIncorrect configuration of display:%d\n%s\n", i, e.what());
+            logToWix(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
             // I wanted to throw std::runtime_error, but i haven't figured out how yet
             throw 23;
         }

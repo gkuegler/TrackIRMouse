@@ -8,6 +8,11 @@
 #include <stdio.h>
 #include <Windows.h>
 
+#include "Log.h"
+
+#define FMT_HEADER_ONLY
+#include <fmt\format.h>
+
 #include "NPClient.h"
 
 PF_NP_REGISTERWINDOWHANDLE       gpfNP_RegisterWindowHandle = NULL;
@@ -199,20 +204,20 @@ NPRESULT NPClient_Init(LPTSTR pszDLLPath)
 			}
 			else
 			{
-				printf("NPTrackIR Program Not Running\n");
+				logToWix("NPTrackIR Program Not Running\n");
 				result = NP_ERR_DLL_NOT_FOUND;
 				return NP_ERR_DLL_NOT_FOUND;
 			}
 		}
 		else
 		{
-			printf("NP Get signature failed\n");
+			logToWix("NP Get signature failed\n");
 			result = NP_ERR_DLL_NOT_FOUND;
 		}
 	}
 	else {
 		DWORD myerror = GetLastError();
-		printf("DLL Load Failed\nError Code: %d\n", myerror);
+		logToWix(fmt::format("DLL Load Failed\nError Code: {}\n", myerror));
 		result = NP_ERR_DLL_NOT_FOUND;
 	}
 

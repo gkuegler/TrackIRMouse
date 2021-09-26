@@ -1,29 +1,16 @@
 #pragma once
 
 #include <wx/wx.h>
-struct strData
-{
-    int int1;
-    int int2;
-    float f1;
-
-    wxString asString() const
-    {
-        return wxString::Format("{%d %d %lf}\n", int1, int2, f1);
-    }
-};
+#include "Track.h"
 
 class MyThread : public wxThread
 {
 public:
-    MyThread(wxEvtHandler* parent) : wxThread(), m_parent(parent) {}
+    HWND m_hWnd;
 
-    ExitCode Entry()
-    {
-        trackStart(m_parent);
+    MyThread(wxEvtHandler* parent, HWND hWnd);
+    ExitCode Entry();
 
-        return NULL;
-    }
 protected:
     wxEvtHandler* m_parent;
 };
@@ -63,3 +50,4 @@ private:
 	cFrame* m_frame = nullptr;
 };
 
+wxDECLARE_APP(CGUIApp);

@@ -5,6 +5,7 @@
 #include <wx/wx.h>
 #include <windows.h>
 
-int trackStart(wxEvtHandler* m_parent, HWND hWnd);
+int trackInitialize(wxEvtHandler* m_parent, HWND hWnd);
+int trackStart();
 
 #endif /* TRACKIRMOUSE_TRACK_H */

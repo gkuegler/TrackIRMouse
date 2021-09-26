@@ -5,6 +5,10 @@
 #include <iostream>
 #include <aclapi.h>
 
+#define FMT_HEADER_ONLY
+#include <fmt\format.h>
+#include "Log.h"
+
 #include "Watchdog.h"
 
 #define BUFSIZE 512
@@ -41,7 +45,7 @@ namespace WatchDog
 
         if (hThread == NULL)
         {
-            printf("CreateThread failed, GLE=%d.\n", GetLastError());
+            logToWix(fmt::format("CreateThread failed, GLE={}.\n", GetLastError()));
             return NULL;
         }
         
@@ -88,7 +92,7 @@ namespace WatchDog
 
         if (NULL == pSD)
         {
-            printf("Heap allocation for security descriptor failed. GLE=%u\n", GetLastError());
+            logToWix(fmt::format("Heap allocation for security descriptor failed. GLE=%u\n", GetLastError()));
             return 1;
         }
 
@@ -97,7 +101,7 @@ namespace WatchDog
         // and all control flags set to FALSE(NULL). Thus, except for its revision level, it is empty
         if (NULL == InitializeSecurityDescriptor(pSD.get(), SECURITY_DESCRIPTOR_REVISION))
         {
-            printf("InitializeSecurityDescriptor Error. GLE=%u\n", GetLastError());
+            logToWix(fmt::format("InitializeSecurityDescriptor Error. GLE=%u\n", GetLastError()));
             //HeapFree(hHeap, 0, pSD);
             return 1;
         }
@@ -112,7 +116,7 @@ namespace WatchDog
             (PACL)NULL,  // if a NULL DACL is assigned to the security descriptor, all access is allowed
             FALSE))      // not a default DACL 
         {
-            printf("SetSecurityDescriptorDacl Error %u\n", GetLastError());
+            logToWix(fmt::format("SetSecurityDescriptorDacl Error %u\n", GetLastError()));
             //goto Cleanup;
         }
 #pragma warning(default:4700)
@@ -122,7 +126,7 @@ namespace WatchDog
         sa.lpSecurityDescriptor = pSD.get();
         sa.bInheritHandle = FALSE;
 
-        printf("\nPipe Server: Main thread awaiting client connection on %s\n", lpszPipename);
+        logToWix(fmt::format("\nPipe Server: Main thread awaiting client connection on {}\n", lpszPipename));
 
         hPipe = CreateNamedPipeA(
             lpszPipename,             // pipe name 
@@ -138,7 +142,7 @@ namespace WatchDog
 
         if (hPipe == INVALID_HANDLE_VALUE)
         {
-            printf("CreateNamedPipe failed, GLE=%d.\n", GetLastError());
+            logToWix(fmt::format("CreateNamedPipe failed, GLE={}.\n", GetLastError()));
             return -1;
         }
 
@@ -164,32 +168,32 @@ namespace WatchDog
 
         if (pchRequest == NULL)
         {
-            printf("\nERROR - Pipe Server Failure:\n");
-            printf("   Serve got an unexpected NULL heap allocation.\n");
-            printf("   Serve exitting.\n");
+            logToWix(fmt::format("\nERROR - Pipe Server Failure:\n"));
+            logToWix(fmt::format("   Serve got an unexpected NULL heap allocation.\n"));
+            logToWix(fmt::format("   Serve exitting.\n"));
             if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
             return (DWORD)-1;
         }
 
         if (pchReply == NULL)
         {
-            printf("\nERROR - Pipe Server Failure:\n");
-            printf("   Serve got an unexpected NULL heap allocation.\n");
-            printf("   Serve exitting.\n");
+            logToWix(fmt::format("\nERROR - Pipe Server Failure:\n"));
+            logToWix(fmt::format("   Serve got an unexpected NULL heap allocation.\n"));
+            logToWix(fmt::format("   Serve exitting.\n"));
             if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
             return (DWORD)-1;
         }
 
         while (1)
         {
-            printf("Waiting on client connection...\n");
+            logToWix(fmt::format("Waiting on client connection...\n"));
 
             if (ConnectNamedPipe(hPipe, NULL) == 0)
             {
-                printf("ConnectNamedPipe failed, GLE=%d.\n", GetLastError());
+                logToWix(fmt::format("ConnectNamedPipe failed, GLE={}.\n", GetLastError()));
                 break;
             }
-            printf("Client Connected!\n");
+            logToWix(fmt::format("Client Connected!\n"));
 
             while (1)
             {
@@ -206,17 +210,17 @@ namespace WatchDog
                 {
                     if (GetLastError() == ERROR_BROKEN_PIPE)
                     {
-                        printf("Serve: client disconnected.\n");
+                        logToWix(fmt::format("Serve: client disconnected.\n"));
                         break;
                     }
                     else
                     {
-                        printf("WD_InstanceThread ReadFile failed, GLE=%d.\n", GetLastError());
+                        logToWix(fmt::format("WD_InstanceThread ReadFile failed, GLE={}.\n", GetLastError()));
                         break;
                     }
                 }
 
-                //printf("CLIENT MSG: %s\n", pchRequest);
+                //logToWix(fmt::format("CLIENT MSG: {}\n", pchRequest));
 
                 // Process the incoming message.
                 WD_HandleMsg(pchRequest, pchReply, &cbReplyBytes);
@@ -237,11 +241,11 @@ namespace WatchDog
 
                 if (!bSuccess || cbReplyBytes != cbWritten)
                 {
-                    printf("WD_InstanceThread WriteFile failed, GLE=%d.\n", GetLastError());
+                    logToWix(fmt::format("WD_InstanceThread WriteFile failed, GLE={}.\n", GetLastError()));
                 }
                 else
                 {
-                    printf("Number of Bytes Written: %d\n", cbReplyBytes);
+                    logToWix(fmt::format("Number of Bytes Written: {}\n", cbReplyBytes));
                 }
 
                 // Flush the pipe to allow the client to read the pipe's contents 
@@ -263,7 +267,7 @@ namespace WatchDog
         HeapFree(hHeap, 0, pchRequest);
         HeapFree(hHeap, 0, pchReply);
 
-        printf("WD_InstanceThread exiting.\n");
+        logToWix(fmt::format("WD_InstanceThread exiting.\n"));
         return (DWORD)1;
     }
 
@@ -274,7 +278,7 @@ namespace WatchDog
         const char* msg_ack = "ACK";
         errno_t rslt = 1;
 
-        printf("Client Request:\n%s\n", pchRequest);
+        logToWix(fmt::format("Client Request:\n{}\n", pchRequest));
 
         if (strcmp(pchRequest, "KILL") == 0)
         {
@@ -301,7 +305,7 @@ namespace WatchDog
         {
             *pchBytes = 0;
             pchReply[0] = 0;
-            printf("strcpy_s failed, no outgoing message.\n");
+            logToWix(fmt::format("strcpy_s failed, no outgoing message.\n"));
             return;
         }
     }
