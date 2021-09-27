@@ -2,6 +2,7 @@
 
 #include "GUI.h"
 #include "Track.h"
+#include <fmt/core.h>
 
 wxIMPLEMENT_APP(CGUIApp);
 
@@ -41,10 +42,13 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
 //MyPanel::MyPanel(wxFrame* frame, int x, int y, int w, int h)
     //: wxPanel(frame, wxID_ANY, wxPoint(x, y), wxSize(w, h))
 {
-    m_textrich = new cTextCtrl(this, wxID_ANY, "-----MouseTrackIR Application-----",
+    wxString start_message(fmt::format("{:-^50}\n", "MouseTrackIR Application"));
+    m_textrich = new cTextCtrl(this, wxID_ANY, start_message,
         wxDefaultPosition, wxDefaultSize,
         wxTE_RICH | wxTE_MULTILINE);
-
+    
+    m_textrich -> SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+   
     // Setting text style of specific characters
     //m_textrich->SetStyle(0, 10, *wxRED);
     //m_textrich->SetStyle(30, 40,

@@ -196,6 +196,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_x64_lib</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>cd "C:\Users\georg\OneDrive\Python\Head Tracking\CPP Implementation\TrackIRMouse\src\x64\Debug"
+TrackIRMouse.exe</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -218,6 +222,10 @@
       <UACUIAccess>false</UACUIAccess>
       <AllowIsolation>true</AllowIsolation>
     </Link>
+    <PostBuildEvent>
+      <Command>cd "C:\Users\georg\OneDrive\Python\Head Tracking\CPP Implementation\TrackIRMouse\src\x64\Debug"
+TrackIRMouse.exe</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">
     <ClCompile>
@@ -238,6 +246,10 @@
       <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_x64_lib</AdditionalLibraryDirectories>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
+    <PostBuildEvent>
+      <Command>cd "C:\Users\georg\OneDrive\Python\Head Tracking\CPP Implementation\TrackIRMouse\src\x64\Debug"
+TrackIRMouse.exe</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Config.cpp" />

@@ -52,7 +52,7 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd)
 	// form & send mouse move command
 
 
-	logToWix(fmt::format("Starting Initialization Of TrackIR"));
+	logToWix(fmt::format("Starting Initialization Of TrackIR\n"));
 
 	//CConfig Config;
 	//Using a global variable instead of classes.
@@ -81,7 +81,7 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd)
 		HANDLE hThread = WatchDog::WD_StartWatchdog();
 	}
 
-	logToWix(fmt::format("\n--------TrackIR Iinit Status--------------\n"));
+	logToWix(fmt::format("\n{:-^50}\n", "TrackIR Iinit Status"));
 
 	// Find and load TrackIR DLL
 	TCHAR sDll[MAX_PATH];
@@ -96,11 +96,11 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd)
 
 	if (NP_OK == rslt)
 	{
-		logToWix(fmt::format("NP Initialization Code: {}\n", rslt));
+		logToWix(fmt::format("NP Initialization Code:      {:>3}\n", rslt));
 	}
 	else
 	{
-		logToWix(fmt::format("NP Initialization Failed With Code: {}\n", rslt));
+		logToWix(fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rslt));
 		return 1;
 	}
 
@@ -118,30 +118,20 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd)
 	if (rslt == 7)
 	{
 		NP_UnregisterWindowHandle();
-		logToWix(fmt::format("! Booted Control of Previous MouseTracker Instance\n"));
+		logToWix(fmt::format("\nBOOTED CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!\n\n"));
 		Sleep(2);
 		rslt = NP_RegisterWindowHandle(hConsole);
 	}
 
-	logToWix(fmt::format("Register Window Handle: {}\n", rslt));
+	logToWix(fmt::format("Register Window Handle:      {:>3}\n", rslt));
 
 	// I'm skipping query the software version, I don't think its necessary
 
 	// Request roll, pitch. See NPClient.h
 	unsigned short data_fields = NPPitch | NPYaw;
 	rslt = NP_RequestData(data_fields);
-	logToWix(fmt::format("Request Data: {}\n", rslt));
+	logToWix(fmt::format("Request Data:                {:>3}\n", rslt));
 
-
-
-	rslt = NP_RegisterProgramProfileID(g_config.profile_ID);
-	logToWix(fmt::format("Register Program Profile ID: {}\n", rslt));
-
-	// Skipping this too. I think this is for legacy games
-	// NP_StopCursor
-
-	rslt = NP_StartDataTransmission();
-	logToWix(fmt::format("Start Data Transmission: {}\n", rslt));
 #endif
 
 	return 1;
@@ -149,7 +139,14 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd)
 
 int trackStart()
 {
-	logToWix(fmt::format("---------------------\n"));
+	NPRESULT rslt = NP_RegisterProgramProfileID(g_config.profile_ID);
+	logToWix(fmt::format("Register Program Profile ID: {:>3}\n", rslt));
+
+	// Skipping this too. I think this is for legacy games
+	// NP_StopCursor
+
+	rslt = NP_StartDataTransmission();
+	logToWix(fmt::format("Start Data Transmission:     {:>3}\n", rslt));
 
 	NPRESULT gdf;
 	tagTrackIRData* pTIRData, TIRData;
@@ -157,7 +154,6 @@ int trackStart()
 
 	unsigned short last_frame = 0;
 	int dropped_frames = 0;
-	// bool connected_to_host = true;
 
 	while(true)
 	{
@@ -180,12 +176,15 @@ int trackStart()
 			}
 
 			MouseMove(g_config.iMonitorCount, yaw, pitch);
-			//logToWix(fmt::format("fNPYaw: %f\n", yaw);
-			//logToWix(fmt::format("fNPPitch: %f\n", pitch);
 
+			// If I would like to log rotational data
+			//logToWix(fmt::format("fNPYaw: {:f}\n", yaw));
+			//logToWix(fmt::format("fNPPitch: {:f}\n", pitch));
+
+			// I don't actually really care about dropped frames
 			//if ((framesig != last_frame + 1) && (last_frame != 0))
 			//{
-				//logToWix(fmt::format("drop");
+				//logToWix(fmt::format("dropped"));
 				//dropped_frames = dropped_frames + framesig - last_frame - 1;
 			//}
 
@@ -193,19 +192,19 @@ int trackStart()
 		}
 		else if (NP_ERR_DEVICE_NOT_PRESENT == gdf)
 		{
-			logToWix(fmt::format("DEVICE NOT PRESENT"));
+			logToWix(fmt::format("\n\nDEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART PROGRAM\n\n"));
 			break;
 		}
 
 		Sleep(8);
-		//Sleep(1000); // Test case
 	}
 	
 	return 0;
 }
 
-void disconnectTrackIR()
+void trackStop()
 {
+	NP_StopDataTransmission();
 	NP_UnregisterWindowHandle();
 }
 

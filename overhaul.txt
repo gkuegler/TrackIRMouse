@@ -5,10 +5,10 @@
 
 Convert To Graphical Utility:
     Core Needs:
-        standard output log to large text control
-        remove press any key to exit
+        // standard output log to large text control
+        // remove press any key to exit
         wxWidget logging (stdout but MessageBox on critical error?)
-        create separate hidden frame for track thread to register with trackIR?
+        // create separate hidden frame for track thread to register with trackIR? no
         wxFileInputStream to open file first, then hand off to toml library
         
 
