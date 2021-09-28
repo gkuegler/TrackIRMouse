@@ -34,6 +34,7 @@ CConfig g_config;
 
 void disconnectTrackIR(void);
 
+namespace Track {
 int trackInitialize(wxEvtHandler* m_parent, HWND hWnd)
 {
 
@@ -206,6 +207,8 @@ void trackStop()
 {
 	NP_StopDataTransmission();
 	NP_UnregisterWindowHandle();
+}
+
 }
 
 

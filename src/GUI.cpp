@@ -17,7 +17,7 @@ bool CGUIApp::OnInit()
     m_frame = new cFrame();
 	m_frame->Show();
 
-    MyThread* thread = new MyThread(this, m_frame -> GetHandle());
+    TrackThread* thread = new TrackThread(this, m_frame -> GetHandle());
 
     if (thread->Create() == wxTHREAD_NO_ERROR)
     {
@@ -32,11 +32,15 @@ bool CGUIApp::OnInit()
 	return true;
 }
 
+//------------------------------------------------------------------------------
+
 cTextCtrl::cTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
     const wxPoint& pos, const wxSize& size, int style) : wxTextCtrl(parent, id, value, pos, size, style)
 {
 
 }
+
+//------------------------------------------------------------------------------
 
 cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
 //MyPanel::MyPanel(wxFrame* frame, int x, int y, int w, int h)
@@ -91,27 +95,27 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     SetSizer(topSizer);
 }
 
+//------------------------------------------------------------------------------
 
 cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200), wxSize(700, 800))
 {
     m_panel = new cPanel(this);
     //m_panel = new MyPanel(this, 10, 10, 300, 100);
     m_panel->GetSizer()->Fit(this);
-
 }
 
+//------------------------------------------------------------------------------
 
-
-MyThread::MyThread(wxEvtHandler* parent, HWND hWnd) : wxThread()
+TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd) : wxThread()
 {
     m_parent = parent;
     m_hWnd = hWnd;
 }
 
-wxThread::ExitCode MyThread::Entry()
+wxThread::ExitCode TrackThread::Entry()
 {
-    int result = trackInitialize(m_parent, m_hWnd);
-    result = trackStart();
+    int result = Track::trackInitialize(m_parent, m_hWnd);
+    result = Trackk::trackStart();
 
     return NULL;
 }
