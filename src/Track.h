@@ -6,17 +6,19 @@
 #include <windows.h>
 #include "Config.h"
 
-int trackInitialize(wxEvtHandler* m_parent, HWND hWnd);
-int trackStart();
-
-class CTracker
+namespace Track
 {
-public:
-    bool m_IsInitialized = false;
-    bool m_IsTracking = false;
-
-    int trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig config);
-    int trackStart(CConfig config);
+	int Track::trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config);
+	int Track::trackStart(CConfig* config);
 }
+//class CTracker
+//{
+//public:
+//    bool m_IsInitialized = false;
+//    bool m_IsTracking = false;
+//
+//    int trackInitialize(wxEvtHandler* m_parent, HWND hWnd);
+//    int trackStart();
+//};
 
 #endif /* TRACKIRMOUSE_TRACK_H */

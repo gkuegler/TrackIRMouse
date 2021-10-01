@@ -2,7 +2,9 @@
 
 #include "GUI.h"
 #include "Track.h"
-#include <fmt/core.h>
+//#include "Config.h"
+
+#include <fmt/format.h>
 
 wxIMPLEMENT_APP(CGUIApp);
 
@@ -15,19 +17,36 @@ CGUIApp::~CGUIApp()
 bool CGUIApp::OnInit()
 {
     m_frame = new cFrame();
-	m_frame->Show();
 
-    TrackThread* thread = new TrackThread(this, m_frame -> GetHandle());
+    int num_monitors = GetSystemMetrics(SM_CMONITORS);
+
+    // Load Settings
+    config = CConfig();
+
+    try
+    {
+        config.LoadSettings(num_monitors);
+    }
+    catch (std::runtime_error e)
+    {
+        m_frame->m_panel->m_textrich->AppendText((fmt::format("Load Settings Failed. See TOML error above.")));
+    }
+
+    TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), &config);
 
     if (thread->Create() == wxTHREAD_NO_ERROR)
     {
         thread->Run();
     }
 
+    // Need to build out this function in order to
+    // pass more than log messages back to my main application.
     Bind(wxEVT_THREAD, [this](wxThreadEvent& ev)
         {
             m_frame -> m_panel->m_textrich->AppendText(ev.GetString());
         });
+
+	m_frame->Show();
 
 	return true;
 }
@@ -106,16 +125,17 @@ cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200)
 
 //------------------------------------------------------------------------------
 
-TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd) : wxThread()
+TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd, CConfig* config) : wxThread()
 {
     m_parent = parent;
     m_hWnd = hWnd;
+    m_pConfig = config;
 }
 
 wxThread::ExitCode TrackThread::Entry()
 {
-    int result = Track::trackInitialize(m_parent, m_hWnd);
-    result = Trackk::trackStart();
+    int result = Track::trackInitialize(m_parent, m_hWnd, m_pConfig);
+    result = Track::trackStart(m_pConfig);
 
     return NULL;
 }

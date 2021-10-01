@@ -25,8 +25,9 @@
 #include "Config.h"
 #include "Watchdog.h"
 #include "Log.h"
+#include "Track.h"
 
-CConfig g_config;
+//CConfig g_config;
 
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
@@ -35,7 +36,7 @@ CConfig g_config;
 void disconnectTrackIR(void);
 
 namespace Track {
-int trackInitialize(wxEvtHandler* m_parent, HWND hWnd)
+int trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 {
 
 	// ## Program flow ##
@@ -57,27 +58,28 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd)
 
 	//CConfig Config;
 	//Using a global variable instead of classes.
-	g_config = CConfig();
+	//g_config = CConfig();
 
 	int iMonitorCount = WinSetup();
-	g_config.iMonitorCount = iMonitorCount;
+	(config) -> iMonitorCount = iMonitorCount;
 
 
 	try
 	{
-		g_config.LoadSettings(iMonitorCount);
+		(config)->LoadSettings(iMonitorCount);
 	}
 	catch (std::runtime_error e)
 	{
 		//logToWix(fmt::format("Load Settings Failed. See TOML error above."));
 	}
 
-	DisplaySetup(iMonitorCount, g_config);
+	
+	DisplaySetup(iMonitorCount, (config));
 
 	// After settings are loaded, start accepting connections & msgs
 	// on a named pipe to kill the trackir process
 	// Start the watchdog thread
-	if (g_config.bWatchdog)
+	if ((config)->bWatchdog)
 	{
 		HANDLE hThread = WatchDog::WD_StartWatchdog();
 	}
@@ -87,7 +89,7 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd)
 	// Find and load TrackIR DLL
 	TCHAR sDll[MAX_PATH];
 	std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> convert;
-	std::wstring wide_string = convert.from_bytes(g_config.sTrackIR_dll_location);
+	std::wstring wide_string = convert.from_bytes((config) -> sTrackIR_dll_location);
 	const wchar_t* temp_wide_string = wide_string.c_str();
 	wcscpy_s(sDll, MAX_PATH, temp_wide_string);
 
@@ -138,9 +140,9 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd)
 	return 1;
 }
 
-int trackStart()
+int trackStart(CConfig* config)
 {
-	NPRESULT rslt = NP_RegisterProgramProfileID(g_config.profile_ID);
+	NPRESULT rslt = NP_RegisterProgramProfileID((config)->profile_ID);
 	logToWix(fmt::format("Register Program Profile ID: {:>3}\n", rslt));
 
 	// Skipping this too. I think this is for legacy games
@@ -176,7 +178,7 @@ int trackStart()
 				continue;
 			}
 
-			MouseMove(g_config.iMonitorCount, yaw, pitch);
+			MouseMove((config)->iMonitorCount, yaw, pitch);
 
 			// If I would like to log rotational data
 			//logToWix(fmt::format("fNPYaw: {:f}\n", yaw));

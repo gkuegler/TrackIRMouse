@@ -123,19 +123,19 @@ int WinSetup()
     return num_monitors;
 }
 
-void DisplaySetup(int num_monitors, CConfig& Config)
+void DisplaySetup(int num_monitors, CConfig* config)
 {
     for (int i = 0; i < num_monitors; i++)
     {
-        g_displays[i].rot_left = Config.bounds[i].left;
-        g_displays[i].rot_right = Config.bounds[i].right;
-        g_displays[i].rot_top = Config.bounds[i].top;
-        g_displays[i].rot_bottom = Config.bounds[i].bottom;
+        g_displays[i].rot_left = (config)->bounds[i].left;
+        g_displays[i].rot_right = (config)->bounds[i].right;
+        g_displays[i].rot_top = (config)->bounds[i].top;
+        g_displays[i].rot_bottom = (config)->bounds[i].bottom;
 
-        g_displays[i].left_padding = Config.bounds[i].pad_left;
-        g_displays[i].right_padding = Config.bounds[i].pad_right;
-        g_displays[i].top_padding = Config.bounds[i].pad_top;
-        g_displays[i].bottom_padding = Config.bounds[i].pad_bottom;
+        g_displays[i].left_padding = (config)->bounds[i].pad_left;
+        g_displays[i].right_padding = (config)->bounds[i].pad_right;
+        g_displays[i].top_padding = (config)->bounds[i].pad_top;
+        g_displays[i].bottom_padding = (config)->bounds[i].pad_bottom;
 
         g_displays[i].setAbsBounds(g_virt_origin_x, g_virt_origin_y, g_x_PxToABS, g_y_PxToABS);
     }
