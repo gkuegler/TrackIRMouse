@@ -5,6 +5,7 @@
 #include "toml.hpp"
 
 #include "Log.h"
+
 #define FMT_HEADER_ONLY
 #include <fmt\format.h>
 

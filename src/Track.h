@@ -8,9 +8,10 @@
 
 namespace Track
 {
-	int Track::trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config);
-	int Track::trackStart(CConfig* config);
+	int trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config);
+	int trackStart(CConfig* config);
 }
+
 //class CTracker
 //{
 //public:

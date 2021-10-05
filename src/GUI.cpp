@@ -4,6 +4,7 @@
 #include "Track.h"
 //#include "Config.h"
 
+#define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
 wxIMPLEMENT_APP(CGUIApp);
