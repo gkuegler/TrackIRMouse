@@ -266,7 +266,7 @@
       <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_x64_lib</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>cd "C:\Users\georg\OneDrive\Python\Head Tracking\CPP Implementation\TrackIRMouse\src\x64\Debug"
+      <Command>cd "C:\Users\georg\OneDrive\Python\Head Tracking\CPP Implementation\TrackIRMouse\src\x64\DebugAndLaunch"
 TrackIRMouse.exe</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

@@ -4,9 +4,15 @@
 // 64-bit support
 
 Convert To Graphical Utility:
+    Development Needs:
+        Program in a switch to not register window handle for debug and launch
+            use function directives to deactivate register window handle function call
+            use watchdog pipe server to discard tracking information
+            use custom-built event to turn on and off tracking of existing instance
     Core Needs:
         // standard output log to large text control
         // remove press any key to exit
+
         wxWidget logging (stdout but MessageBox on critical error?)
         // create separate hidden frame for track thread to register with trackIR? no
         wxFileInputStream to open file first, then hand off to toml library

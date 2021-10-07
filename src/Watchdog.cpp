@@ -9,6 +9,8 @@
 #include <fmt\format.h>
 #include "Log.h"
 
+#include "Constants.h"
+
 #include "Watchdog.h"
 
 #define BUFSIZE 512
@@ -288,6 +290,11 @@ namespace WatchDog
         else if (strcmp(pchRequest, "HEARTBEAT") == 0)
         {
             rslt = strcpy_s(pchReply, BUFSIZE, "HB");
+        }
+        else if (strcmp(pchRequest, "PAUSE") == 0)
+        {
+            rslt = strcpy_s(pchReply, BUFSIZE, "PAUSE");
+            g_pauseTracking = !g_pauseTracking;
         }
         else
         {

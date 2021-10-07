@@ -28,12 +28,13 @@
 #include "Track.h"
 
 //CConfig g_config;
+bool g_pauseTracking = false;
 
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
 //#define TEST_NO_TRACK
 
-void disconnectTrackIR(void);
+//void disconnectTrackIR(void);
 
 namespace Track {
 int trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
@@ -178,7 +179,10 @@ int trackStart(CConfig* config)
 				continue;
 			}
 
-			MouseMove((config)->iMonitorCount, yaw, pitch);
+			if (g_pauseTracking == false)
+			{
+				MouseMove((config)->iMonitorCount, yaw, pitch);
+			}
 
 			// If I would like to log rotational data
 			//logToWix(fmt::format("fNPYaw: {:f}\n", yaw));
