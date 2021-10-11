@@ -27,7 +27,6 @@
 #include "Log.h"
 #include "Track.h"
 
-//CConfig g_config;
 bool g_pauseTracking = false;
 
 // Uncomment this line for testing to prevent program
@@ -61,6 +60,8 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 
 
 	logToWix(fmt::format("Starting Initialization Of TrackIR\n"));
+
+	int iMonitorCount = WinSetup();
 	
 	DisplaySetup(config);
 
