@@ -26,6 +26,7 @@
 #include "Watchdog.h"
 #include "Log.h"
 #include "Track.h"
+#include "Exceptions.h"
 
 bool g_pauseTracking = false;
 
@@ -40,9 +41,8 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 
 	// ## Program flow ##
 	// 
-	// first thinrg is ping windows for info
-	// load settings
-	// validate settings
+	// first thing is ping windows for info
+	// validate settings and build display structures
 	// start watchdog thread
 	// load trackir dll and getproc addresses
 	// connect to trackir and request data type
@@ -66,15 +66,17 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	DisplaySetup(config);
 
 	// After settings are loaded, start accepting connections & msgs
-	// on a named pipe to kill the trackir process
+	// on a named pipe to externally controll the track IR process
 	// Start the watchdog thread
 	if ((config)->bWatchdog)
 	{
+		// Watchdog thread may return NULL
 		m_hWatchdogThread = WatchDog::WD_StartWatchdog();
-	}
-	else
-	{
-		m_hWatchdogThread = nullptr;
+
+		if (NULL == m_hWatchdogThread)
+		{
+			logToWix("Watchdog thread failed to initialize!");
+		}
 	}
 
 	logToWix(fmt::format("\n{:-^50}\n", "TrackIR Init Status"));
@@ -92,11 +94,17 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 
 	if (NP_OK == rslt)
 	{
-		logToWix(fmt::format("NP Initialization Code:      {:>3}\n", rslt));
+		logToWix("NP Initialization:      Succeeded\n");
+	}
+	else if (NP_ERR_DLL_NOT_FOUND == rslt)
+	{
+		logToWix(fmt::format("\nFAILED TO LOAD TRACKIR DLL: {}\n\n", rslt));
+		throw Exception("Failed to load track IR DLL.");
 	}
 	else
 	{
 		logToWix(fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rslt));
+		throw Exception("Failed to initialize track IR.");
 	}
 
 	// NP needs a window handle to send data frames to
@@ -110,25 +118,51 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	rslt = NP_OK;
 	rslt = NP_RegisterWindowHandle(hConsole);
 
+	// 7 is a magic number I found through experimentation.
+	// It means another program has its window handle registered
+	// already.
 	if (rslt == 7)
 	{
 		NP_UnregisterWindowHandle();
-		logToWix(fmt::format("\nBOOTED CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!\n\n"));
+		logToWix(fmt::format("\nBOOTING CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!\n\n"));
 		Sleep(2);
 		rslt = NP_RegisterWindowHandle(hConsole);
 	}
 
-	logToWix(fmt::format("Register Window Handle:      {:>3}\n", rslt));
+	if (NP_OK == rslt)
+	{
+		logToWix("Register Window Handle:      Succeeded\n");
+	}
+	else
+	{
+		logToWix(fmt::format("Register Window Handle: Failed {:>3}\n", rslt));
+		throw Exception("");
+	}
 
 	// I'm skipping query the software version, I don't think its necessary
 
 	// Request roll, pitch. See NPClient.h
-	unsigned short data_fields = NPPitch | NPYaw;
-	rslt = NP_RequestData(data_fields);
-	logToWix(fmt::format("Request Data:                {:>3}\n", rslt));
+	rslt = NP_RequestData(NPPitch | NPYaw);
+	if (NP_OK == rslt)
+	{
+		logToWix("Request Data:         Succeeded\n");
+	}
+	else
+	{
+		logToWix(fmt::format("Request Data:        Failed: {:>3}\n", rslt));
+		throw Exception("");
+	}
 
 	rslt = NP_RegisterProgramProfileID((config)->profile_ID);
-	logToWix(fmt::format("Register Program Profile ID: {:>3}\n", rslt));
+	if (NP_OK == rslt)
+	{
+		logToWix("Register Program Profile ID:         Succeeded\n");
+	}
+	else
+	{
+		logToWix(fmt::format("Register Program Profile ID:       Failed: {:>3}\n", rslt));
+		throw Exception("");
+	}
 
 #endif
 }

@@ -33,7 +33,8 @@ void  CConfig::LoadSettings(int num_monitors)
     display_profile = toml::find<int>(general_settings_table, "profile");
 
     //Optionally the user can specify the location to the trackIR dll
-    sTrackIR_dll_location = toml::find_or<std::string>(data, "TrackIR_dll_directory", "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5");
+    sTrackIR_dll_location = toml::find_or<std::string>(general_settings_table, "TrackIR_dll_directory", "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5");
+    logToWix(fmt::format("{}", sTrackIR_dll_location));
 
     if (sTrackIR_dll_location.back() != '\\')
     {

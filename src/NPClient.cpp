@@ -181,13 +181,13 @@ NPRESULT NPClient_Init(LPTSTR pszDLLPath)
 		strcpy_s(verifySignature.DllSignature, 200, "precise head tracking\n put your head into the game\n now go look around\n\n Copyright EyeControl Technologies");
 		strcpy_s(verifySignature.AppSignature, 200, "hardware camera\n software processing data\n track user movement\n\n Copyright EyeControl Technologies");
 		// query the dll and compare the results
-		NPRESULT vresult = NP_GetSignature(&pSignature);
-		if (vresult == NP_OK)
+		NPRESULT signature_result = NP_GetSignature(&pSignature);
+
+		if (signature_result == NP_OK)
 		{
 			if ((strcmp(verifySignature.DllSignature, pSignature.DllSignature) == 0)
 				&& (strcmp(verifySignature.AppSignature, pSignature.AppSignature) == 0))
 			{
-				result = NP_OK;
 
 				// Get addresses of all exported functions
 				gpfNP_RegisterWindowHandle = (PF_NP_REGISTERWINDOWHANDLE)::GetProcAddress(ghNPClientDLL, "NP_RegisterWindowHandle");
@@ -201,25 +201,24 @@ NPRESULT NPClient_Init(LPTSTR pszDLLPath)
 				gpfNP_ReCenter = (PF_NP_RECENTER)::GetProcAddress(ghNPClientDLL, "NP_ReCenter");
 				gpfNP_StartDataTransmission = (PF_NP_STARTDATATRANSMISSION)::GetProcAddress(ghNPClientDLL, "NP_StartDataTransmission");
 				gpfNP_StopDataTransmission = (PF_NP_STOPDATATRANSMISSION)::GetProcAddress(ghNPClientDLL, "NP_StopDataTransmission");
+
+				return NP_OK;
 			}
 			else
 			{
-				logToWix("\nNPTRACKIR PROGRAM NOT RUNNING!\n");
-				result = NP_ERR_DLL_NOT_FOUND;
-				return NP_ERR_DLL_NOT_FOUND;
+				logToWix("\nNP TRACKIR PROGRAM NOT RUNNING!\n");
+				return NP_ERR;
 			}
 		}
 		else
 		{
 			logToWix("\nNP GET SIGNATURE FAILED!\n");
-			result = NP_ERR_DLL_NOT_FOUND;
+			return NP_ERR;
 		}
 	}
-	else {
-		DWORD myerror = GetLastError();
-		logToWix(fmt::format("\nDLL LOAD FAILED!\nERROR CODE: {}\n", myerror));
-		result = NP_ERR_DLL_NOT_FOUND;
+	else
+	{
+		logToWix(fmt::format("\nDLL LOAD FAILED!\nERROR CODE: {}\n", GetLastError()));
+		return NP_ERR_DLL_NOT_FOUND;
 	}
-
-	return result;
 }

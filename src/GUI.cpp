@@ -136,8 +136,16 @@ TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd, CConfig* config) : wxT
 
 wxThread::ExitCode TrackThread::Entry()
 {
-    CTracker Tracker(m_parent, m_hWnd, m_pConfig);
-    int result = Tracker.trackStart(m_pConfig);
+
+    try
+    {
+        CTracker Tracker(m_parent, m_hWnd, m_pConfig);
+        int result = Tracker.trackStart(m_pConfig);
+    }
+    catch (const std::exception&)
+    {
+        return NULL;
+    }
 
     return NULL;
 }

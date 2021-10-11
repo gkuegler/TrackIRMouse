@@ -99,8 +99,8 @@ typedef enum tagNPResult
 	NP_ERR_INVALID_ARG,
 	NP_ERR_DLL_NOT_FOUND,
 	NP_ERR_NO_DATA,
-	NP_ERR_INTERNAL_DATA
-
+	NP_ERR_INTERNAL_DATA,
+	NP_ERR
 } NPRESULT;
 
 typedef struct tagTrackIRSignature

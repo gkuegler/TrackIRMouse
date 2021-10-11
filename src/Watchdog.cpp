@@ -1,3 +1,10 @@
+/*
+* POTENTIAL PROBLEMS:
+* two messages are sent so fast that the server reads two messages in one go
+* therefore dropping a message or erroring out
+*
+*/
+
 #include <windows.h> 
 #include <stdio.h> 
 #include <tchar.h>
@@ -38,11 +45,11 @@ HANDLE WD_StartWatchdog()
     );
 
     hThread = CreateThread(
-        NULL,              // no security attribute 
-        0,                 // default stack size 
+        NULL,               // no security attribute 
+        0,                  // default stack size 
         WD_InstanceThread,  // thread proc
-        &hEvent,              // thread parameter
-        0,                 // not suspended 
+        &hEvent,            // thread parameter
+        0,                  // not suspended 
         &dwThreadId         // returns thread ID
     );      
 
@@ -323,19 +330,3 @@ VOID WD_HandleMsg(const char* pchRequest, char* pchReply, LPDWORD pchBytes)
 
 }
 #undef BUFSIZE
-
-
-
-// DESIGN DECISIONS
-/*
-should I implement tcp where my program can ask for a reply? YES & YES
-    or just resend a message every so often? <<<< this option
-*/
-
-// POTENTIAL PROBLEMS
-/*
-two messages are sent so fast that the server reads two messages in one go
-    therefore dropping a message or erroring out
-
-maybe I need to
-*/

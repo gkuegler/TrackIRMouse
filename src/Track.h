@@ -11,7 +11,7 @@ class CTracker
 public:
     bool m_IsInitialized = false;
     bool m_IsTracking = false;
-    HANDLE m_hWatchdogThread;
+    HANDLE m_hWatchdogThread = NULL;
 
     CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config);
     int trackStart(CConfig* config);
