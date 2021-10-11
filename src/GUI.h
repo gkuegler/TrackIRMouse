@@ -4,7 +4,7 @@
 
 #include "Config.h"
 #include <wx/wx.h>
-// #include "Track.h"
+ #include "Track.h"
 
 class TrackThread : public wxThread
 {

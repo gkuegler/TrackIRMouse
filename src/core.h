@@ -9,7 +9,7 @@
 #include "Config.h"
 
 int WinSetup();
-void DisplaySetup(int, CConfig*);
+void DisplaySetup(CConfig*);
 void MouseMove(int, float, float);
 
 #endif /* TRACKIRMOUSE_CORE_H */

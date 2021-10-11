@@ -131,12 +131,13 @@ TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd, CConfig* config) : wxT
     m_parent = parent;
     m_hWnd = hWnd;
     m_pConfig = config;
+
 }
 
 wxThread::ExitCode TrackThread::Entry()
 {
-    int result = Track::trackInitialize(m_parent, m_hWnd, m_pConfig);
-    result = Track::trackStart(m_pConfig);
+    CTracker Tracker(m_parent, m_hWnd, m_pConfig);
+    int result = Tracker.trackStart(m_pConfig);
 
     return NULL;
 }

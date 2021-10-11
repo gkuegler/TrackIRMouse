@@ -123,9 +123,9 @@ int WinSetup()
     return num_monitors;
 }
 
-void DisplaySetup(int num_monitors, CConfig* config)
+void DisplaySetup(CConfig* config)
 {
-    for (int i = 0; i < num_monitors; i++)
+    for (int i = 0; i < config -> m_iMonitorCount; i++)
     {
         g_displays[i].rot_left = (config)->bounds[i].left;
         g_displays[i].rot_right = (config)->bounds[i].right;
@@ -140,7 +140,7 @@ void DisplaySetup(int num_monitors, CConfig* config)
         g_displays[i].setAbsBounds(g_virt_origin_x, g_virt_origin_y, g_x_PxToABS, g_y_PxToABS);
     }
     logToWix(fmt::format("\nVirtual Desktop Pixel Bounds (abs)\n"));
-    for (int i = 0; i < num_monitors; i++)
+    for (int i = 0; i < config -> m_iMonitorCount; i++)
     {
         logToWix(fmt::format("MON {} pix_abs_left:   {:>10d}\n", i, g_displays[i].pix_abs_left));
         logToWix(fmt::format("MON {} pix_abs_right:  {:>10d}\n", i, g_displays[i].pix_abs_right));
@@ -148,7 +148,7 @@ void DisplaySetup(int num_monitors, CConfig* config)
         logToWix(fmt::format("MON {} pix_abs_bottom: {:>10d}\n", i, g_displays[i].pix_abs_bottom));
     }
     logToWix(fmt::format("\n16-bit Coordinate Bounds\n"));
-    for (int i = 0; i < num_monitors; i++)
+    for (int i = 0; i < config -> m_iMonitorCount; i++)
     {
         logToWix(fmt::format("MON {} abs_left:       {:>12.1f}\n", i, g_displays[i].abs_left));
         logToWix(fmt::format("MON {} abs_right:      {:>12.1f}\n", i, g_displays[i].abs_right));
@@ -156,7 +156,7 @@ void DisplaySetup(int num_monitors, CConfig* config)
         logToWix(fmt::format("MON {} abs_bottom:     {:>12.1f}\n", i, g_displays[i].abs_bottom));
     }
     logToWix(fmt::format("\nRotational Bounds\n"));
-    for (int i = 0; i < num_monitors; i++)
+    for (int i = 0; i < config -> m_iMonitorCount; i++)
     {
         logToWix(fmt::format("MON {} rot_left:       {:>13.2f}\n", i, g_displays[i].rot_left));
         logToWix(fmt::format("MON {} rot_right:      {:>13.2f}\n", i, g_displays[i].rot_right));

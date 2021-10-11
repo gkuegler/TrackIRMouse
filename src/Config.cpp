@@ -11,6 +11,9 @@
 
 void  CConfig::LoadSettings(int num_monitors)
 {
+
+    m_iMonitorCount = num_monitors;
+
     int default_left_padding = 0;
     int default_right_padding = 0;
     int default_top_padding = 0;

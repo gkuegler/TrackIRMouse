@@ -3,8 +3,8 @@
 * UAC Execution Level /level=requireAdministrator
 * The debug version leaves UAC alone.
 * 
-* I'm building to x86 primarily because I'm stuck using a
-* 32-bit version of Python.
+* I'm building to x64 primarily because fmt library
+* only 64-bit.
 */
 
 #pragma warning(disable : 4996)
@@ -36,8 +36,7 @@ bool g_pauseTracking = false;
 
 //void disconnectTrackIR(void);
 
-namespace Track {
-int trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
+CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 {
 
 	// ## Program flow ##
@@ -54,38 +53,30 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	// calculate mouse position
 	// form & send mouse move command
 
+	//Error Conditions To Check For RAII:
+	// - unable to initialize thread
+	// - unable to load dll
+	// - any NP dll function call failure
+
+
 
 	logToWix(fmt::format("Starting Initialization Of TrackIR\n"));
-
-	//CConfig Config;
-	//Using a global variable instead of classes.
-	//g_config = CConfig();
-
-	int iMonitorCount = WinSetup();
-	(config) -> iMonitorCount = iMonitorCount;
-
-
-	try
-	{
-		(config)->LoadSettings(iMonitorCount);
-	}
-	catch (std::runtime_error e)
-	{
-		//logToWix(fmt::format("Load Settings Failed. See TOML error above."));
-	}
-
 	
-	DisplaySetup(iMonitorCount, (config));
+	DisplaySetup(config);
 
 	// After settings are loaded, start accepting connections & msgs
 	// on a named pipe to kill the trackir process
 	// Start the watchdog thread
 	if ((config)->bWatchdog)
 	{
-		HANDLE hThread = WatchDog::WD_StartWatchdog();
+		m_hWatchdogThread = WatchDog::WD_StartWatchdog();
+	}
+	else
+	{
+		m_hWatchdogThread = nullptr;
 	}
 
-	logToWix(fmt::format("\n{:-^50}\n", "TrackIR Iinit Status"));
+	logToWix(fmt::format("\n{:-^50}\n", "TrackIR Init Status"));
 
 	// Find and load TrackIR DLL
 	TCHAR sDll[MAX_PATH];
@@ -105,7 +96,6 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	else
 	{
 		logToWix(fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rslt));
-		return 1;
 	}
 
 	// NP needs a window handle to send data frames to
@@ -140,11 +130,9 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	logToWix(fmt::format("Register Program Profile ID: {:>3}\n", rslt));
 
 #endif
-
-	return 1;
 }
 
-int trackStart(CConfig* config)
+int CTracker::trackStart(CConfig* config)
 {
 #ifndef TEST_NO_TRACK
 	// Skipping this too. I think this is for legacy games
@@ -183,7 +171,7 @@ int trackStart(CConfig* config)
 
 			if (g_pauseTracking == false)
 			{
-				MouseMove((config)->iMonitorCount, yaw, pitch);
+				MouseMove((config)->m_iMonitorCount, yaw, pitch);
 			}
 
 			// If I would like to log rotational data
@@ -211,12 +199,10 @@ int trackStart(CConfig* config)
 	return 0;
 }
 
-void trackStop()
+void CTracker::trackStop()
 {
 	NP_StopDataTransmission();
 	NP_UnregisterWindowHandle();
-}
-
 }
 
 
