@@ -136,6 +136,9 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	rslt = NP_RequestData(data_fields);
 	logToWix(fmt::format("Request Data:                {:>3}\n", rslt));
 
+	rslt = NP_RegisterProgramProfileID((config)->profile_ID);
+	logToWix(fmt::format("Register Program Profile ID: {:>3}\n", rslt));
+
 #endif
 
 	return 1;
@@ -143,14 +146,13 @@ int trackInitialize(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 
 int trackStart(CConfig* config)
 {
-	NPRESULT rslt = NP_RegisterProgramProfileID((config)->profile_ID);
-	logToWix(fmt::format("Register Program Profile ID: {:>3}\n", rslt));
-
+#ifndef TEST_NO_TRACK
 	// Skipping this too. I think this is for legacy games
 	// NP_StopCursor
 
-	rslt = NP_StartDataTransmission();
+	NPRESULT rslt = NP_StartDataTransmission();
 	logToWix(fmt::format("Start Data Transmission:     {:>3}\n", rslt));
+#endif
 
 	NPRESULT gdf;
 	tagTrackIRData* pTIRData, TIRData;

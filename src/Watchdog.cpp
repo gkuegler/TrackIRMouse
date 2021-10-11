@@ -13,6 +13,7 @@
 
 #include "Watchdog.h"
 
+
 #define BUFSIZE 512
 
 namespace WatchDog
@@ -236,29 +237,29 @@ namespace WatchDog
                 bSuccess = WriteFile(
                     hPipe,        // handle to pipe 
                     pchReply,     // buffer to write from
-                    //pchRequest,
-                    cbReplyBytes, // number of bytes to write 
-                    &cbWritten,   // number of bytes written 
-                    NULL);        // not overlapped I/O 
+//pchRequest,
+cbReplyBytes, // number of bytes to write 
+& cbWritten,   // number of bytes written 
+NULL);        // not overlapped I/O 
 
-                if (!bSuccess || cbReplyBytes != cbWritten)
-                {
-                    logToWix(fmt::format("WD_InstanceThread WriteFile failed, GLE={}.\n", GetLastError()));
-                }
-                else
-                {
-                    logToWix(fmt::format("Number of Bytes Written: {}\n", cbReplyBytes));
-                }
+if (!bSuccess || cbReplyBytes != cbWritten)
+{
+    logToWix(fmt::format("WD_InstanceThread WriteFile failed, GLE={}.\n", GetLastError()));
+}
+else
+{
+    logToWix(fmt::format("Number of Bytes Written: {}\n", cbReplyBytes));
+}
 
-                // Flush the pipe to allow the client to read the pipe's contents 
-                // before disconnecting. Then disconnect the pipe, and close the 
-                // handle to this pipe instance. 
+// Flush the pipe to allow the client to read the pipe's contents 
+// before disconnecting. Then disconnect the pipe, and close the 
+// handle to this pipe instance. 
 
-                FlushFileBuffers(hPipe);
+FlushFileBuffers(hPipe);
 
-                // zero out the message receive and reply character arrays
-                memset(pchRequest, 0, BUFSIZE * sizeof(char));
-                memset(pchReply, 0, BUFSIZE * sizeof(char));
+// zero out the message receive and reply character arrays
+memset(pchRequest, 0, BUFSIZE * sizeof(char));
+memset(pchReply, 0, BUFSIZE * sizeof(char));
 
             }
 
@@ -335,4 +336,3 @@ two messages are sent so fast that the server reads two messages in one go
 
 maybe I need to
 */
-
