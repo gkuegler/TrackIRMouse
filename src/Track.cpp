@@ -32,6 +32,7 @@ bool g_pauseTracking = false;
 
 //void disconnectTrackIR(void);
 
+
 CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 {
 
@@ -90,7 +91,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 
 	if (NP_OK == rslt)
 	{
-		logToWix("NP Initialization:      Succeeded\n");
+		logToWix("NP Initialization:          Success\n");
 	}
 	else if (NP_ERR_DLL_NOT_FOUND == rslt)
 	{
@@ -127,7 +128,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 
 	if (NP_OK == rslt)
 	{
-		logToWix("Register Window Handle:      Succeeded\n");
+		logToWix("Register Window Handle:      Success\n");
 	}
 	else
 	{
@@ -141,7 +142,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	rslt = NP_RequestData(NPPitch | NPYaw);
 	if (NP_OK == rslt)
 	{
-		logToWix("Request Data:         Succeeded\n");
+		logToWix("Request Data:         Success\n");
 	}
 	else
 	{
@@ -152,11 +153,11 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	rslt = NP_RegisterProgramProfileID((config)->profile_ID);
 	if (NP_OK == rslt)
 	{
-		logToWix("Register Program Profile ID:         Succeeded\n");
+		logToWix("Register Profile ID:         Success\n");
 	}
 	else
 	{
-		logToWix(fmt::format("Register Program Profile ID:       Failed: {:>3}\n", rslt));
+		logToWix(fmt::format("Register Profile ID:       Failed: {:>3}\n", rslt));
 		throw Exception("");
 	}
 
@@ -170,7 +171,15 @@ int CTracker::trackStart(CConfig* config)
 	// NP_StopCursor
 
 	NPRESULT rslt = NP_StartDataTransmission();
-	logToWix(fmt::format("Start Data Transmission:     {:>3}\n", rslt));
+	if (NP_OK == rslt)
+	{
+		logToWix("Start Data Transmission:			Success\n");
+	}
+	else
+	{
+		logToWix(fmt::format("Start Data Transmission:     Failed: {:>3}\n", rslt));
+	}
+
 #endif
 
 	NPRESULT gdf;
@@ -531,13 +540,6 @@ int getDllLocationFromRegistry()
 /*
 
 TODO:
-create class cpp/h for display
-maybe create additional headers for NP stuff
-use include gaurds? #ifdef
-delete debug .cpp files
 make toml more robust to non floats
-move toml load to seperate file
-make uniform standard for variables and functions for cases
-variables prefixed and Camel
 
 */

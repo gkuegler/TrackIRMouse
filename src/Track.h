@@ -25,9 +25,9 @@ private:
     signed int m_virt_origin_x = 0; // move to static class member
     signed int m_virt_origin_y = 0; // move to static class member
     float m_x_PxToABS = 0; // move to static class member
-    float m_y_PxToABS = 0; // move to static class member
+    float m_y_PxToABS = 0; // move to static class member6
 
-    static BOOL CALLBACK WrapperPopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM lParam);;
+    static BOOL CALLBACK WrapperPopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT, LPARAM);
     BOOL PopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT);
     void WinSetup();
     void DisplaySetup(CConfig*);
