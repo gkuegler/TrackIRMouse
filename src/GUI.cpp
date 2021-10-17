@@ -2,7 +2,7 @@
 
 #include "GUI.h"
 #include "Track.h"
-//#include "Config.h"
+#include "Config.h"
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>

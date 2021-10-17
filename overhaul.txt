@@ -14,12 +14,13 @@ Convert To Graphical Utility:
         // remove press any key to exit
 
         wxWidget logging (stdout but MessageBox on critical error?)
+            or spd logging?
         // create separate hidden frame for track thread to register with trackIR? no
         wxFileInputStream to open file first, then hand off to toml library
         
-
     Features:
         profile selection (drop down?)
+
         settings reloads
         find good display size default
         edit configuration from gui
