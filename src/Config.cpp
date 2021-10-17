@@ -9,7 +9,7 @@
 #define FMT_HEADER_ONLY
 #include <fmt\format.h>
 
-void  CConfig::LoadSettings(int num_monitors)
+void  CConfig::LoadSettings(const int num_monitors)
 {
 
     m_iMonitorCount = num_monitors;
@@ -81,6 +81,7 @@ void  CConfig::LoadSettings(int num_monitors)
 
     for (int i = 0; i < num_monitors; i++) {
         std::string tname = std::to_string(i);
+        assert(i < num_monitors);
         try {
             const auto& toml_display = toml::find(display_mapping, tname);
 
@@ -135,7 +136,7 @@ void  CConfig::LoadSettings(int num_monitors)
         {
             logToWix(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
             // I wanted to throw std::runtime_error, but i haven't figured out how yet
-            throw 23;
+            //throw 23;
         }
     }
 

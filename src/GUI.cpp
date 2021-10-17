@@ -10,11 +10,6 @@
 
 wxIMPLEMENT_APP(CGUIApp);
 
-CGUIApp::CGUIApp()
-{}
-
-CGUIApp::~CGUIApp()
-{}
 
 bool CGUIApp::OnInit()
 {
@@ -23,8 +18,10 @@ bool CGUIApp::OnInit()
     wxLog::SetActiveTarget(logger);
     wxLog::SetLogLevel(wxLOG_Info);
 
+    // Construct child elements
     m_frame = new cFrame();
 
+    // Load Settings
     int num_monitors = GetSystemMetrics(SM_CMONITORS);
 
     // Load Settings
@@ -37,6 +34,14 @@ bool CGUIApp::OnInit()
     catch (std::runtime_error e)
     {
         m_frame->m_panel->m_textrich->AppendText((fmt::format("Load Settings Failed. See TOML error above.")));
+    }
+    catch (const std::exception& ex)
+    {
+        printf("%s", ex.what());
+    }
+    catch (...)
+    {
+        wxLogError("exception has been uncocked");
     }
 
     TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), &config);
@@ -58,7 +63,7 @@ bool CGUIApp::OnInit()
 	return true;
 }
 
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------
 
 cTextCtrl::cTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
     const wxPoint& pos, const wxSize& size, int style) : wxTextCtrl(parent, id, value, pos, size, style)
@@ -66,7 +71,7 @@ cTextCtrl::cTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
 
 }
 
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------
 
 cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
 //MyPanel::MyPanel(wxFrame* frame, int x, int y, int w, int h)
@@ -121,7 +126,7 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     SetSizer(topSizer);
 }
 
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------
 
 cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200), wxSize(700, 800))
 {
@@ -130,7 +135,7 @@ cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200)
     m_panel->GetSizer()->Fit(this);
 }
 
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------
 
 TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd, CConfig* config) : wxThread()
 {

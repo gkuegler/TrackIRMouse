@@ -323,7 +323,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Config.cpp" />
-    <ClCompile Include="Core.cpp" />
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="NPClient.cpp" />
@@ -333,7 +332,6 @@
   <ItemGroup>
     <ClInclude Include="Config.h" />
     <ClInclude Include="Constants.h" />
-    <ClInclude Include="Core.h" />
     <ClInclude Include="Display.h" />
     <ClInclude Include="Exceptions.h" />
     <ClInclude Include="GUI.h" />

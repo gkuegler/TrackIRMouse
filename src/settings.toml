@@ -10,7 +10,7 @@
 [general]
 watchdog_enabled = true
 TrackIR_dll_directory = "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5"
-profile = 2
+profile = 1
 
 [default_padding]
 left = 3

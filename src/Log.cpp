@@ -8,6 +8,7 @@
 
  void logToWix(std::string msg)
  {
+    wxLogDebug(msg.c_str());
  	wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
  	wxString mystring(msg.c_str(), wxConvUTF8);
  	evt->SetString(mystring);
@@ -24,6 +25,7 @@
 
  void logToWix(const char* msg)
  {
+    wxLogDebug(msg);
  	wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
  	evt->SetString(wxString::wxString(msg));
  	wxTheApp->QueueEvent(evt);

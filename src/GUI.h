@@ -54,8 +54,8 @@ class CGUIApp : public wxApp
 public:
     CConfig config;
 
-    CGUIApp();
-	~CGUIApp();
+    CGUIApp() {};
+    ~CGUIApp() {};
 
 	virtual bool OnInit();
 private:
