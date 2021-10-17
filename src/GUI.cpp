@@ -3,6 +3,7 @@
 #include "GUI.h"
 #include "Track.h"
 #include "Config.h"
+#include "Log.h"
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
@@ -17,6 +18,11 @@ CGUIApp::~CGUIApp()
 
 bool CGUIApp::OnInit()
 {
+    // Initialize global logger
+    CMyLogger* logger = new CMyLogger();
+    wxLog::SetActiveTarget(logger);
+    wxLog::SetLogLevel(wxLOG_Info);
+
     m_frame = new cFrame();
 
     int num_monitors = GetSystemMetrics(SM_CMONITORS);

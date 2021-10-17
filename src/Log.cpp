@@ -1,11 +1,10 @@
 #include "Log.h"
-
-#include <wx/wx.h>
-#include <wx/string.h>
 #include <fmt\xchar.h>
-//#include <spdlog/spdlog.h>
+#include <wx/wx.h>
 
-#include <string>
+// ----------------------------------------------------------------------
+// Functions Logging Specifically to the Text Control
+// ----------------------------------------------------------------------
 
  void logToWix(std::string msg)
  {
@@ -26,9 +25,7 @@
  void logToWix(const char* msg)
  {
  	wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
- 	//evt->SetString(wxString::FromAscii(msg));
  	evt->SetString(wxString::wxString(msg));
- 	//evt->SetString(wxString(msg));
  	wxTheApp->QueueEvent(evt);
  }
 
@@ -38,3 +35,33 @@
  	evt->SetString(wxString::wxString(msg));
  	wxTheApp->QueueEvent(evt);
  }
+
+ // ----------------------------------------------------------------------
+ // Functions for General-purpose Logging, to File, etc ...
+ // ----------------------------------------------------------------------
+
+
+ CMyLogger::CMyLogger()
+{
+
+	if (m_file.Exists(m_filename))
+	{
+		if (!m_file.Access(m_filename, wxFile::write))
+		{
+			wxLogFatalError("Unable to open log file.");
+		}
+	}
+
+	m_file.Open(m_filename, wxFile::write);
+
+}
+
+void CMyLogger::DoLogText(const wxString& msg)
+{
+	bool success = m_file.Write(msg);
+
+	if (!success)
+	{
+		wxLogError("Failed to Write to Log File.");
+	}
+}
