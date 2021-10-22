@@ -65,7 +65,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	// After settings are loaded, start accepting connections & msgs
 	// on a named pipe to externally controll the track IR process
 	// Start the watchdog thread
-	if ((config)->bWatchdog)
+	if ((config)->m_bWatchdog)
 	{
 		// Watchdog thread may return NULL
 		m_hWatchdogThread = WatchDog::WD_StartWatchdog();
@@ -81,7 +81,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	// Find and load TrackIR DLL
 	TCHAR sDll[MAX_PATH];
 	std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> convert;
-	std::wstring wide_string = convert.from_bytes((config) -> sTrackIR_dll_location);
+	std::wstring wide_string = convert.from_bytes((config) -> m_sTrackIR_dll_location);
 	const wchar_t* temp_wide_string = wide_string.c_str();
 	wcscpy_s(sDll, MAX_PATH, temp_wide_string);
 

@@ -52,7 +52,7 @@ public:
 class CGUIApp : public wxApp
 {
 public:
-    CConfig config;
+    CConfig m_config;
 
     CGUIApp() {};
     ~CGUIApp() {};

@@ -22,14 +22,11 @@ bool CGUIApp::OnInit()
     m_frame = new cFrame();
 
     // Load Settings
-    int num_monitors = GetSystemMetrics(SM_CMONITORS);
-
-    // Load Settings
-    config = CConfig();
+    m_config = CConfig();
 
     try
     {
-        config.LoadSettings(num_monitors);
+        m_config.LoadSettings();
     }
     catch (std::runtime_error e)
     {
@@ -44,7 +41,7 @@ bool CGUIApp::OnInit()
         wxLogError("exception has been uncocked");
     }
 
-    TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), &config);
+    TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), &m_config);
 
     if (thread->Create() == wxTHREAD_NO_ERROR)
     {
@@ -74,9 +71,9 @@ cTextCtrl::cTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
 // ----------------------------------------------------------------------
 
 cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
-//MyPanel::MyPanel(wxFrame* frame, int x, int y, int w, int h)
-    //: wxPanel(frame, wxID_ANY, wxPoint(x, y), wxSize(w, h))
 {
+    wxCheckBox* cbxTrackOnStart = new wxCheckBox(this, wxID_ANY, wxString("Track On Start"), wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, wxString("Default Checkbox Name Park"));
+
     wxString start_message(fmt::format("{:-^50}\n", "MouseTrackIR Application"));
     m_textrich = new cTextCtrl(this, wxID_ANY, start_message,
         wxDefaultPosition, wxDefaultSize,
@@ -116,12 +113,16 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     //column2->Add(m_enter, 1, wxALL | wxEXPAND, 10);
 
     wxBoxSizer* row1 = new wxBoxSizer(wxHORIZONTAL);
-    row1->Add(m_textrich, 1, wxALL | wxEXPAND, 5);
+    row1->Add(cbxTrackOnStart, 1, wxALL | wxEXPAND, 5);
+
+    wxBoxSizer* row2 = new wxBoxSizer(wxHORIZONTAL);
+    row2->Add(m_textrich, 1, wxALL | wxEXPAND, 5);
     //row1->Add(column2, 1, wxALL | wxEXPAND, 10);
     //row1->Add(m_textrich, 1, wxALL | wxEXPAND, 10);
 
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
-    topSizer->Add(row1, 2, wxALL | wxEXPAND, 10);
+    topSizer->Add(row1, 0, wxALL | wxEXPAND, 10);
+    topSizer->Add(row2, 1, wxALL | wxEXPAND, 10);
 
     SetSizer(topSizer);
 }
