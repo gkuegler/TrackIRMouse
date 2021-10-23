@@ -16,7 +16,7 @@
 
 void CConfig::LoadSettings()
 {
-    int m_iMonitorCount = GetSystemMetrics(SM_CMONITORS);
+    m_iMonitorCount = GetSystemMetrics(SM_CMONITORS);
 
     int default_left_padding = 0;
     int default_right_padding = 0;
