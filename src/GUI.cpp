@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "GUI.h"
+
 #include "Track.h"
 #include "Config.h"
 #include "Log.h"

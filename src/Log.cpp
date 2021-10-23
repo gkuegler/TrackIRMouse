@@ -1,4 +1,6 @@
 #include "Log.h"
+
+#define FMT_HEADER_ONLY
 #include <fmt\xchar.h>
 #include <wx/wx.h>
 

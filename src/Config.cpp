@@ -1,18 +1,14 @@
 #include "Config.h"
-
-#include <string>
-#include <Windows.h>
-
-#include "toml.hpp"
-
 #include "Log.h"
 
 #define FMT_HEADER_ONLY
 #include <fmt\format.h>
+#include "toml.hpp"
 
-//#include<wx/wfstream.h>
+#include <Windows.h>
 
 #include <iostream>
+#include <string>
 
 void CConfig::LoadSettings()
 {

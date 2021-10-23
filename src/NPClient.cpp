@@ -3,17 +3,17 @@
 //#define _AFXDLL
 //#include <afxwin.h>         // MFC core and standard components
 //#include <afxext.h>         // MFC extensions
-//#include <afxcmn.h>			// MFC support for Windows Common Controls
+//#include <afxcmn.h>	      // MFC support for Windows Common Controls
 
-#include <stdio.h>
-#include <Windows.h>
+#include "NPClient.h"
 
 #include "Log.h"
 
 #define FMT_HEADER_ONLY
 #include <fmt\format.h>
 
-#include "NPClient.h"
+#include <stdio.h>
+#include <Windows.h>
 
 PF_NP_REGISTERWINDOWHANDLE       gpfNP_RegisterWindowHandle = NULL;
 PF_NP_UNREGISTERWINDOWHANDLE     gpfNP_UnregisterWindowHandle = NULL;

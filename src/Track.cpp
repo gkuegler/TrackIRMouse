@@ -8,12 +8,11 @@
 */
 
 #pragma warning(disable : 4996)
-#include <wx/wx.h>
+#include "Track.h"
 
 #include "NPClient.h"
 #include "Display.h"
 #include "Watchdog.h"
-#include "Track.h"
 #include "Exceptions.h"
 #include "Config.h"
 #include "Log.h"
@@ -21,6 +20,7 @@
 #define FMT_HEADER_ONLY
 #include <fmt\format.h>
 #include <fmt\xchar.h>
+#include <wx/wx.h>
 
 #define USHORT_MAX_VAL 65535 // SendInput with absolute mouse movement takes a short int
 
@@ -56,7 +56,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 
 
 
-	logToWix(fmt::format("Starting Initialization Of TrackIR\n"));
+	logToWix(fmt::format("\nStarting Initialization Of TrackIR\n"));
 
 	WinSetup();
 	

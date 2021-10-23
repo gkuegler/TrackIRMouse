@@ -5,21 +5,22 @@
 *
 */
 
-#include <windows.h> 
-#include <stdio.h> 
-#include <tchar.h>
-#include <strsafe.h>
-#include <iostream>
-#include <aclapi.h>
+#include "Watchdog.h"
+
+#include "Constants.h"
+#include "Log.h"
 
 #define FMT_HEADER_ONLY
 #include <fmt\format.h>
-#include "Log.h"
 
-#include "Constants.h"
+#include <windows.h>
+//TODO: 2021-10-23: Delete all unnecessary include statements
+//#include <stdio.h>
+//#include <tchar.h>
+//#include <strsafe.h>
+//#include <aclapi.h>
 
-#include "Watchdog.h"
-
+//#include <iostream>
 
 #define BUFSIZE 512
 
