@@ -12,129 +12,128 @@
 
 void CConfig::LoadSettings()
 {
-    m_iMonitorCount = GetSystemMetrics(SM_CMONITORS);
+    m_monitorCount = GetSystemMetrics(SM_CMONITORS);
 
-    int default_left_padding = 0;
-    int default_right_padding = 0;
-    int default_top_padding = 0;
-    int default_bottom_padding = 0;
+    int defaultPaddingLeft = 0;
+    int defaultPaddingRight = 0;
+    int defaultPaddingTop = 0;
+    int defaultPaddingBottom = 0;
     
     std::string d = "display";
 
     // TOML will throw a std::runtime_error if there's a problem opening the file 
-    auto data = toml::parse("settings.toml");
+    auto vData = toml::parse("settings.toml");
 
     // Find the general settings table
-    auto& general_settings_table = toml::find(data, "general");
+    auto& vGeneralSettings = toml::find(vData, "general");
 
     // find_or will return a default if parameter not found
-    /*profile_ID = toml::find_or<int>(general_settings_table, "profile_ID", 13302);*/
-    m_bWatchdog = toml::find_or<bool>(general_settings_table, "watchdog_enabled", 0);
-    m_display_profile = toml::find<int>(general_settings_table, "profile");
+    m_bWatchdog = toml::find_or<bool>(vGeneralSettings, "watchdog_enabled", 0);
+    m_displayProfile = toml::find<int>(vGeneralSettings, "profile");
 
     //Optionally the user can specify the location to the trackIR dll
-    m_sTrackIR_dll_location = toml::find_or<std::string>(general_settings_table, "TrackIR_dll_directory", "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5");
-    logToWix(fmt::format("{}", m_sTrackIR_dll_location));
+    m_sTrackIrDllLocation = toml::find_or<std::string>(vGeneralSettings, "TrackIR_dll_directory", "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5");
+    LogToWix(fmt::format("{}", m_sTrackIrDllLocation));
 
-    if (m_sTrackIR_dll_location.back() != '\\')
+    if (m_sTrackIrDllLocation.back() != '\\')
     {
-        m_sTrackIR_dll_location.push_back('\\');
+        m_sTrackIrDllLocation.push_back('\\');
     }
 
     #if defined(_WIN64) || defined(__amd64__)
-        m_sTrackIR_dll_location.append("NPClient64.dll");
+        m_sTrackIrDllLocation.append("NPClient64.dll");
     #else	    
-        m_sTrackIR_dll_location.append("NPClient.dll");
+        m_sTrackIrDllLocation.append("NPClient.dll");
     #endif
 
     // load in the global default padding table if available
     try {
-        m_default_padding_table = toml::find(data, "default_padding");
-        default_left_padding = toml::find<int>(m_default_padding_table, "left");
-        default_right_padding = toml::find<int>(m_default_padding_table, "right");
-        default_top_padding = toml::find<int>(m_default_padding_table, "top");
-        default_bottom_padding = toml::find<int>(m_default_padding_table, "bottom");
+        m_vDefaultPaddings = toml::find(vData, "default_padding");
+        defaultPaddingLeft = toml::find<int>(m_vDefaultPaddings, "left");
+        defaultPaddingRight = toml::find<int>(m_vDefaultPaddings, "right");
+        defaultPaddingTop = toml::find<int>(m_vDefaultPaddings, "top");
+        defaultPaddingBottom = toml::find<int>(m_vDefaultPaddings, "bottom");
 
     }
     catch (std::out_of_range e) {
-        logToWix(fmt::format("Exception with the default padding table."));
-        logToWix(fmt::format("TOML Non Crititcal Exception Thrown.\n{}\n", e.what()));
+        LogToWix(fmt::format("Exception with the default padding table."));
+        LogToWix(fmt::format("TOML Non Crititcal Exception Thrown.\n{}\n", e.what()));
     }
 
-    logToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
+    LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
 
     // Find the profiles table that contains all profiles
-    m_display_mapping_profiles = toml::find(data, "profiles");
+    m_vDisplayMappingProfiles = toml::find(vData, "profiles");
 
     // Find the profile table which is currently enabled enabled
-    std::string profile_table_name = std::to_string(m_display_profile);
-    auto& profile_data = toml::find(m_display_mapping_profiles, profile_table_name);
+    std::string profileTableName = std::to_string(m_displayProfile);
+    auto& vProfileData = toml::find(m_vDisplayMappingProfiles, profileTableName);
 
     // Load in current profile dependent settings
-    m_profile_ID = toml::find_or<int>(profile_data, "profile_ID", 13302);
+    m_profileID = toml::find_or<int>(vProfileData, "profile_ID", 13302);
 
     // Load in Display Mappings
     // Find the display mapping table for the given profile
-    auto& display_mapping = toml::find(profile_data, "display");
+    auto& vDisplayMapping = toml::find(vProfileData, "display");
 
-    logToWix(fmt::format("Padding\n"));
+    LogToWix(fmt::format("Padding\n"));
 
-    for (int i = 0; i < m_iMonitorCount; i++) {
+    for (int i = 0; i < m_monitorCount; i++) {
         std::string tname = std::to_string(i);
-        //assert(i < m_iMonitorCount);
+        //assert(i < m_monitorCount);
         try {
-            const auto& toml_display = toml::find(display_mapping, tname);
+            const auto& vTomlDisplay = toml::find(vDisplayMapping, tname);
 
-            bounds[i].left = toml::find<float>(toml_display, "left");
-            bounds[i].right = toml::find<float>(toml_display, "right");
-            bounds[i].top = toml::find<float>(toml_display, "top");
-            bounds[i].bottom = toml::find<float>(toml_display, "bottom");
+            bounds[i].left = toml::find<float>(vTomlDisplay, "left");
+            bounds[i].right = toml::find<float>(vTomlDisplay, "right");
+            bounds[i].top = toml::find<float>(vTomlDisplay, "top");
+            bounds[i].bottom = toml::find<float>(vTomlDisplay, "bottom");
 
             // I return an ungodly fake high padding number,
             // so that I can tell of one was found in the toml config file
             // without producing an exception if a value was not found.
             // Padding values are not critical the program operation.
-            int left_padding = toml::find_or<int>(toml_display, "left_padding", 5555);
-            int right_padding = toml::find_or<int>(toml_display, "right_padding", 5555);
-            int top_padding = toml::find_or<int>(toml_display, "top_padding", 5555);
-            int bottom_padding = toml::find_or<int>(toml_display, "bottom_padding", 5555);
+            int paddingLeft = toml::find_or<int>(vTomlDisplay, "paddingLeft", 5555);
+            int paddingRight = toml::find_or<int>(vTomlDisplay, "paddingRight", 5555);
+            int paddingTop = toml::find_or<int>(vTomlDisplay, "paddingTop", 5555);
+            int paddingBottom = toml::find_or<int>(vTomlDisplay, "paddingBottom", 5555);
 
-            if (left_padding != 5555) {
-                logToWix(fmt::format("Display {} Left:     {:>12}\n", i, left_padding));
-                bounds[i].pad_left = left_padding;
+            if (paddingLeft != 5555) {
+                LogToWix(fmt::format("Display {} Left:     {:>12}\n", i, paddingLeft));
+                bounds[i].paddingLeft = paddingLeft;
             }
             else {
-                logToWix(fmt::format("Display {} Left:     {:>12} (Default)\n", i, default_left_padding));
-                bounds[i].pad_left = default_left_padding;
+                LogToWix(fmt::format("Display {} Left:     {:>12} (Default)\n", i, defaultPaddingLeft));
+                bounds[i].paddingLeft = defaultPaddingLeft;
             }
-            if (right_padding != 5555) {
-                logToWix(fmt::format("Display {} Right:    {:>12}\n", i, right_padding));
-                bounds[i].pad_right = right_padding;
-            }
-            else {
-                logToWix(fmt::format("Display {} Right:    {:>12} (Default)\n", i, default_right_padding));
-                bounds[i].pad_right = default_right_padding;
-            }
-            if (top_padding != 5555) {
-                logToWix(fmt::format("Display {} Top:      {:>12}\n", i, top_padding));
-                bounds[i].pad_top = top_padding;
+            if (paddingRight != 5555) {
+                LogToWix(fmt::format("Display {} Right:    {:>12}\n", i, paddingRight));
+                bounds[i].paddingRight = paddingRight;
             }
             else {
-                logToWix(fmt::format("Display {} Top:      {:>12} (Default)\n", i, default_top_padding));
-                bounds[i].pad_top = default_top_padding;
+                LogToWix(fmt::format("Display {} Right:    {:>12} (Default)\n", i, defaultPaddingRight));
+                bounds[i].paddingRight = defaultPaddingRight;
             }
-            if (bottom_padding != 5555) {
-                logToWix(fmt::format("Display {} Bottom:   {:>12}\n", i, bottom_padding));
-                bounds[i].pad_bottom = bottom_padding;
+            if (paddingTop != 5555) {
+                LogToWix(fmt::format("Display {} Top:      {:>12}\n", i, paddingTop));
+                bounds[i].paddingTop = paddingTop;
             }
             else {
-                logToWix(fmt::format("Display {} Bottom:   {:>12} (Default)\n", i, default_bottom_padding));
-                bounds[i].pad_bottom = default_bottom_padding;
+                LogToWix(fmt::format("Display {} Top:      {:>12} (Default)\n", i, defaultPaddingTop));
+                bounds[i].paddingTop = defaultPaddingTop;
+            }
+            if (paddingBottom != 5555) {
+                LogToWix(fmt::format("Display {} Bottom:   {:>12}\n", i, paddingBottom));
+                bounds[i].paddingBottom = paddingBottom;
+            }
+            else {
+                LogToWix(fmt::format("Display {} Bottom:   {:>12} (Default)\n", i, defaultPaddingBottom));
+                bounds[i].paddingBottom = defaultPaddingBottom;
             }
         }
         catch (std::out_of_range e)
         {
-            logToWix(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
+            LogToWix(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
             // I wanted to throw std::runtime_error, but i haven't figured out how yet
             //throw 23;
         }
@@ -145,7 +144,7 @@ void CConfig::LoadSettings()
 
 void CConfig::SaveSettings()
 {
-    toml::value general_settings_table{ {"watchdog_enabled", m_bWatchdog}, {"TrackIR_dll_directory", m_sTrackIR_dll_location}, {"profile", m_display_profile}};
+    toml::value vGeneralSettings{ {"watchdog_enabled", m_bWatchdog}, {"TrackIR_dll_directory", m_sTrackIrDllLocation}, {"profile", m_displayProfile}};
 
     //wxFile file;
     const std::string FileName = "settings_test.toml";
@@ -160,15 +159,15 @@ void CConfig::SaveSettings()
 
     //file.Open(FileName, wxFile::write);
 
-    //bool success = file.Write(general_settings_table)
+    //bool success = file.Write(vGeneralSettings)
 
     //wxFileOutputStream file(FileName);
 
-    //file << general_settings_table << std::endl;
+    //file << vGeneralSettings << std::endl;
 
     std::fstream file(FileName, std::ios_base::out);
     //file.open();
-    file << general_settings_table << std::endl;
+    file << vGeneralSettings << std::endl;
     file.close();
 
 }

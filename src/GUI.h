@@ -3,8 +3,9 @@
 #define TRACKIRMOUSE_GUI_H
 
 #include "Config.h"
+#include "Track.h"
+
 #include <wx/wx.h>
- #include "Track.h"
 
 class TrackThread : public wxThread
 {

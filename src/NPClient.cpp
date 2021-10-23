@@ -206,19 +206,19 @@ NPRESULT NPClient_Init(LPTSTR pszDLLPath)
 			}
 			else
 			{
-				logToWix("\nNP TRACKIR PROGRAM NOT RUNNING!\n");
+				LogToWix("\nNP TRACKIR PROGRAM NOT RUNNING!\n");
 				return NP_ERR;
 			}
 		}
 		else
 		{
-			logToWix("\nNP GET SIGNATURE FAILED!\n");
+			LogToWix("\nNP GET SIGNATURE FAILED!\n");
 			return NP_ERR;
 		}
 	}
 	else
 	{
-		logToWix(fmt::format("\nDLL LOAD FAILED!\nERROR CODE: {}\n", GetLastError()));
+		LogToWix(fmt::format("\nDLL LOAD FAILED!\nERROR CODE: {}\n", GetLastError()));
 		return NP_ERR_DLL_NOT_FOUND;
 	}
 }

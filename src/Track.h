@@ -22,10 +22,10 @@ public:
 private:
     CDisplay m_displays[DEFAULT_MAX_DISPLAYS];
 
-    signed int m_virt_origin_x = 0;
-    signed int m_virt_origin_y = 0;
-    float m_x_PxToABS = 0;
-    float m_y_PxToABS = 0;
+    signed int m_virtualOriginX = 0; 
+    signed int m_virtualOriginY = 0;
+    float m_xPixelAbsoluteSlope = 0;
+    float m_yPixelAbsoluteSlope = 0;
 
     static BOOL CALLBACK WrapperPopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT, LPARAM);
     BOOL PopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT);

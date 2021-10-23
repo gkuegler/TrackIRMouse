@@ -139,12 +139,11 @@ cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200)
 
 // ----------------------------------------------------------------------
 
-TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd, CConfig* config) : wxThread()
+TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd, CConfig* pConfig) : wxThread()
 {
     m_parent = parent;
     m_hWnd = hWnd;
-    m_pConfig = config;
-
+    m_pConfig = pConfig;
 }
 
 wxThread::ExitCode TrackThread::Entry()

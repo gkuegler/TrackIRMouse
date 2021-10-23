@@ -27,12 +27,12 @@
 namespace WatchDog
 {
 
-HANDLE WD_StartWatchdog()
+HANDLE StartWatchdog()
 {
         
     HANDLE hThread = INVALID_HANDLE_VALUE;
     DWORD  dwThreadId = 0;
-    LPCSTR event_name = "WatchdogInitThread";
+    LPCSTR eventName = "WatchdogInitThread";
 
     // Create an event for the thread to signal on
     // to ensure pipe initialization occurs before continuing.
@@ -42,13 +42,13 @@ HANDLE WD_StartWatchdog()
         NULL,
         TRUE,
         0,
-        event_name
+        eventName
     );
 
     hThread = CreateThread(
         NULL,               // no security attribute 
         0,                  // default stack size 
-        WD_InstanceThread,  // thread proc
+        InstanceThread,  // thread proc
         &hEvent,            // thread parameter
         0,                  // not suspended 
         &dwThreadId         // returns thread ID
@@ -56,7 +56,7 @@ HANDLE WD_StartWatchdog()
 
     if (hThread == NULL)
     {
-        logToWix(fmt::format("CreateThread failed, GLE={}.\n", GetLastError()));
+        LogToWix(fmt::format("CreateThread failed, GLE={}.\n", GetLastError()));
         return NULL;
     }
         
@@ -75,7 +75,7 @@ HANDLE WD_StartWatchdog()
     return hThread;
 }
 
-DWORD WINAPI WD_InstanceThread(LPVOID param)
+DWORD WINAPI InstanceThread(LPVOID param)
 {
     // Signal event when set up of the pipe completes,
     // allowing main program flow to continue
@@ -103,7 +103,7 @@ DWORD WINAPI WD_InstanceThread(LPVOID param)
 
     if (NULL == pSD)
     {
-        logToWix(fmt::format("Heap allocation for security descriptor failed. GLE=%u\n", GetLastError()));
+        LogToWix(fmt::format("Heap allocation for security descriptor failed. GLE=%u\n", GetLastError()));
         return 1;
     }
 
@@ -112,7 +112,7 @@ DWORD WINAPI WD_InstanceThread(LPVOID param)
     // and all control flags set to FALSE(NULL). Thus, except for its revision level, it is empty
     if (NULL == InitializeSecurityDescriptor(pSD.get(), SECURITY_DESCRIPTOR_REVISION))
     {
-        logToWix(fmt::format("InitializeSecurityDescriptor Error. GLE=%u\n", GetLastError()));
+        LogToWix(fmt::format("InitializeSecurityDescriptor Error. GLE=%u\n", GetLastError()));
         //HeapFree(hHeap, 0, pSD);
         return 1;
     }
@@ -128,7 +128,7 @@ DWORD WINAPI WD_InstanceThread(LPVOID param)
         (PACL)NULL,  // if a NULL DACL is assigned to the security descriptor, all access is allowed
         FALSE))      // not a default DACL 
     {
-        logToWix(fmt::format("SetSecurityDescriptorDacl Error %u\n", GetLastError()));
+        LogToWix(fmt::format("SetSecurityDescriptorDacl Error %u\n", GetLastError()));
         //goto Cleanup;
     }
 #pragma warning(default:4700)
@@ -138,7 +138,7 @@ DWORD WINAPI WD_InstanceThread(LPVOID param)
     sa.lpSecurityDescriptor = pSD.get();
     sa.bInheritHandle = FALSE;
 
-    logToWix(fmt::format("\nPipe Server: Main thread awaiting client connection on {}\n", lpszPipename));
+    LogToWix(fmt::format("\nPipe Server: Main thread awaiting client connection on {}\n", lpszPipename));
 
     hPipe = CreateNamedPipeA(
         lpszPipename,             // pipe name 
@@ -154,18 +154,18 @@ DWORD WINAPI WD_InstanceThread(LPVOID param)
 
     if (hPipe == INVALID_HANDLE_VALUE)
     {
-        logToWix(fmt::format("CreateNamedPipe failed, GLE={}.\n", GetLastError()));
+        LogToWix(fmt::format("CreateNamedPipe failed, GLE={}.\n", GetLastError()));
         return -1;
     }
 
     result = SetEvent(*phEvent);
-    lala = WD_Serve(hPipe);
+    lala = Serve(hPipe);
 
     //HeapFree(hHeap, 0, pSD);
     return 0;
 }
 
-int WD_Serve(HANDLE hPipe)
+int Serve(HANDLE hPipe)
 {
     // This is a lot of Windows boilerplate code
     HANDLE hHeap = GetProcessHeap();
@@ -180,32 +180,32 @@ int WD_Serve(HANDLE hPipe)
 
     if (pchRequest == NULL)
     {
-        logToWix(fmt::format("\nERROR - Pipe Server Failure:\n"));
-        logToWix(fmt::format("   Serve got an unexpected NULL heap allocation.\n"));
-        logToWix(fmt::format("   Serve exitting.\n"));
+        LogToWix(fmt::format("\nERROR - Pipe Server Failure:\n"));
+        LogToWix(fmt::format("   Serve got an unexpected NULL heap allocation.\n"));
+        LogToWix(fmt::format("   Serve exitting.\n"));
         if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
         return (DWORD)-1;
     }
 
     if (pchReply == NULL)
     {
-        logToWix(fmt::format("\nERROR - Pipe Server Failure:\n"));
-        logToWix(fmt::format("   Serve got an unexpected NULL heap allocation.\n"));
-        logToWix(fmt::format("   Serve exitting.\n"));
+        LogToWix(fmt::format("\nERROR - Pipe Server Failure:\n"));
+        LogToWix(fmt::format("   Serve got an unexpected NULL heap allocation.\n"));
+        LogToWix(fmt::format("   Serve exitting.\n"));
         if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
         return (DWORD)-1;
     }
 
     while (1)
     {
-        logToWix(fmt::format("Waiting on client connection...\n"));
+        LogToWix(fmt::format("Waiting on client connection...\n"));
 
         if (ConnectNamedPipe(hPipe, NULL) == 0)
         {
-            logToWix(fmt::format("ConnectNamedPipe failed, GLE={}.\n", GetLastError()));
+            LogToWix(fmt::format("ConnectNamedPipe failed, GLE={}.\n", GetLastError()));
             break;
         }
-        logToWix(fmt::format("Client Connected!\n"));
+        LogToWix(fmt::format("Client Connected!\n"));
 
         while (1)
         {
@@ -222,20 +222,20 @@ int WD_Serve(HANDLE hPipe)
             {
                 if (GetLastError() == ERROR_BROKEN_PIPE)
                 {
-                    logToWix(fmt::format("Serve: client disconnected.\n"));
+                    LogToWix(fmt::format("Serve: client disconnected.\n"));
                     break;
                 }
                 else
                 {
-                    logToWix(fmt::format("WD_InstanceThread ReadFile failed, GLE={}.\n", GetLastError()));
+                    LogToWix(fmt::format("InstanceThread ReadFile failed, GLE={}.\n", GetLastError()));
                     break;
                 }
             }
 
-            //logToWix(fmt::format("CLIENT MSG: {}\n", pchRequest));
+            //LogToWix(fmt::format("CLIENT MSG: {}\n", pchRequest));
 
             // Process the incoming message.
-            WD_HandleMsg(pchRequest, pchReply, &cbReplyBytes);
+            HandleMsg(pchRequest, pchReply, &cbReplyBytes);
 
             //_tcscpy_s(pchReply, BUFSIZE, TEXT("ACK"));
             //cbReplyBytes = BUFSIZE * sizeof(char);
@@ -254,11 +254,11 @@ int WD_Serve(HANDLE hPipe)
 
             if (!bSuccess || cbReplyBytes != cbWritten)
             {
-                logToWix(fmt::format("WD_InstanceThread WriteFile failed, GLE={}.\n", GetLastError()));
+                LogToWix(fmt::format("InstanceThread WriteFile failed, GLE={}.\n", GetLastError()));
             }
             else
             {
-                logToWix(fmt::format("Number of Bytes Written: {}\n", cbReplyBytes));
+                LogToWix(fmt::format("Number of Bytes Written: {}\n", cbReplyBytes));
             }
 
             // Flush the pipe to allow the client to read the pipe's contents 
@@ -280,19 +280,18 @@ int WD_Serve(HANDLE hPipe)
     HeapFree(hHeap, 0, pchRequest);
     HeapFree(hHeap, 0, pchReply);
 
-    logToWix(fmt::format("WD_InstanceThread exiting.\n"));
+    LogToWix(fmt::format("InstanceThread exiting.\n"));
     return (DWORD)1;
 
 }
 
-VOID WD_HandleMsg(const char* pchRequest, char* pchReply, LPDWORD pchBytes)
+VOID HandleMsg(const char* pchRequest, char* pchReply, LPDWORD pchBytes)
     // Reads message and performs actions based on the content
     // Writes a reply into the reply char*
 {
-    const char* msg_ack = "ACK";
     errno_t rslt = 1;
 
-    logToWix(fmt::format("Client Request:\n{}\n", pchRequest));
+    LogToWix(fmt::format("Client Request:\n{}\n", pchRequest));
 
     if (strcmp(pchRequest, "KILL") == 0)
     {
@@ -306,7 +305,7 @@ VOID WD_HandleMsg(const char* pchRequest, char* pchReply, LPDWORD pchBytes)
     else if (strcmp(pchRequest, "PAUSE") == 0)
     {
         rslt = strcpy_s(pchReply, BUFSIZE, "PAUSE");
-        g_pauseTracking = !g_pauseTracking;
+        g_bPauseTracking = !g_bPauseTracking;
     }
     else
     {
@@ -324,7 +323,7 @@ VOID WD_HandleMsg(const char* pchRequest, char* pchReply, LPDWORD pchBytes)
     {
         *pchBytes = 0;
         pchReply[0] = 0;
-        logToWix(fmt::format("strcpy_s failed, no outgoing message.\n"));
+        LogToWix(fmt::format("strcpy_s failed, no outgoing message.\n"));
         return;
     }
 }

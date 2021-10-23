@@ -24,7 +24,7 @@
 
 #define USHORT_MAX_VAL 65535 // SendInput with absolute mouse movement takes a short int
 
-bool g_pauseTracking = false;
+bool g_bPauseTracking = false;
 
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
@@ -56,7 +56,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 
 
 
-	logToWix(fmt::format("\nStarting Initialization Of TrackIR\n"));
+	LogToWix(fmt::format("\nStarting Initialization Of TrackIR\n"));
 
 	WinSetup();
 	
@@ -65,25 +65,24 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	// After settings are loaded, start accepting connections & msgs
 	// on a named pipe to externally controll the track IR process
 	// Start the watchdog thread
-	if ((config)->m_bWatchdog)
+	if (config->m_bWatchdog)
 	{
 		// Watchdog thread may return NULL
-		m_hWatchdogThread = WatchDog::WD_StartWatchdog();
+		m_hWatchdogThread = WatchDog::StartWatchdog();
 
 		if (NULL == m_hWatchdogThread)
 		{
-			logToWix("Watchdog thread failed to initialize!");
+			LogToWix("Watchdog thread failed to initialize!");
 		}
 	}
 
-	logToWix(fmt::format("\n{:-^50}\n", "TrackIR Init Status"));
+	LogToWix(fmt::format("\n{:-^50}\n", "TrackIR Init Status"));
 
 	// Find and load TrackIR DLL
 	TCHAR sDll[MAX_PATH];
 	std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> convert;
-	std::wstring wide_string = convert.from_bytes((config) -> m_sTrackIR_dll_location);
-	const wchar_t* temp_wide_string = wide_string.c_str();
-	wcscpy_s(sDll, MAX_PATH, temp_wide_string);
+	std::wstring wide_string = convert.from_bytes(config -> m_sTrackIrDllLocation);
+	wcscpy_s(sDll, MAX_PATH, wide_string.c_str());
 
 	// Load trackir dll and resolve function addresses
 	NPRESULT rslt = NP_OK;
@@ -91,16 +90,16 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 
 	if (NP_OK == rslt)
 	{
-		logToWix("NP Initialization:          Success\n");
+		LogToWix("NP Initialization:          Success\n");
 	}
 	else if (NP_ERR_DLL_NOT_FOUND == rslt)
 	{
-		logToWix(fmt::format("\nFAILED TO LOAD TRACKIR DLL: {}\n\n", rslt));
+		LogToWix(fmt::format("\nFAILED TO LOAD TRACKIR DLL: {}\n\n", rslt));
 		throw Exception("Failed to load track IR DLL.");
 	}
 	else
 	{
-		logToWix(fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rslt));
+		LogToWix(fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rslt));
 		throw Exception("Failed to initialize track IR.");
 	}
 
@@ -121,18 +120,18 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	if (rslt == 7)
 	{
 		NP_UnregisterWindowHandle();
-		logToWix(fmt::format("\nBOOTING CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!\n\n"));
+		LogToWix(fmt::format("\nBOOTING CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!\n\n"));
 		Sleep(2);
 		rslt = NP_RegisterWindowHandle(hConsole);
 	}
 
 	if (NP_OK == rslt)
 	{
-		logToWix("Register Window Handle:      Success\n");
+		LogToWix("Register Window Handle:      Success\n");
 	}
 	else
 	{
-		logToWix(fmt::format("Register Window Handle: Failed {:>3}\n", rslt));
+		LogToWix(fmt::format("Register Window Handle: Failed {:>3}\n", rslt));
 		throw Exception("");
 	}
 
@@ -142,22 +141,22 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	rslt = NP_RequestData(NPPitch | NPYaw);
 	if (NP_OK == rslt)
 	{
-		logToWix("Request Data:         Success\n");
+		LogToWix("Request Data:         Success\n");
 	}
 	else
 	{
-		logToWix(fmt::format("Request Data:        Failed: {:>3}\n", rslt));
+		LogToWix(fmt::format("Request Data:        Failed: {:>3}\n", rslt));
 		throw Exception("");
 	}
 
-	rslt = NP_RegisterProgramProfileID((config)->profile_ID);
+	rslt = NP_RegisterProgramProfileID(config->m_profileID);
 	if (NP_OK == rslt)
 	{
-		logToWix("Register Profile ID:         Success\n");
+		LogToWix("Register Profile ID:         Success\n");
 	}
 	else
 	{
-		logToWix(fmt::format("Register Profile ID:       Failed: {:>3}\n", rslt));
+		LogToWix(fmt::format("Register Profile ID:       Failed: {:>3}\n", rslt));
 		throw Exception("");
 	}
 
@@ -173,11 +172,11 @@ int CTracker::trackStart(CConfig* config)
 	NPRESULT rslt = NP_StartDataTransmission();
 	if (NP_OK == rslt)
 	{
-		logToWix("Start Data Transmission:			Success\n");
+		LogToWix("Start Data Transmission:			Success\n");
 	}
 	else
 	{
-		logToWix(fmt::format("Start Data Transmission:     Failed: {:>3}\n", rslt));
+		LogToWix(fmt::format("Start Data Transmission:     Failed: {:>3}\n", rslt));
 	}
 
 #endif
@@ -186,8 +185,9 @@ int CTracker::trackStart(CConfig* config)
 	tagTrackIRData* pTIRData, TIRData;
 	pTIRData = &TIRData;
 
-	unsigned short last_frame = 0;
-	int dropped_frames = 0;
+	unsigned short lastFrame = 0;
+	// used for testing, dropped frames rare and not real world relevant
+	// int droppedFrames = 0;
 
 	while(true)
 	{
@@ -196,40 +196,41 @@ int CTracker::trackStart(CConfig* config)
 		{
 			unsigned short status = (*pTIRData).wNPStatus;
 			unsigned short framesig = (*pTIRData).wPFrameSignature;
-			float yaw = -(*pTIRData).fNPYaw; // Make Future optimization to not need a negative sign
+			// TODO: Make Future optimization to not need a negative sign
+			float yaw = -(*pTIRData).fNPYaw;
 			float pitch = -(*pTIRData).fNPPitch;
 
 			// Don't try to move the mouse when TrackIR is paused
-			if (framesig == last_frame)
+			if (framesig == lastFrame)
 			{
-				// logToWix(fmt::format("Tracking Paused\n");
+				// LogToWix(fmt::format("Tracking Paused\n");
 				// TrackIR5 supposedly operates at 120hz
 				// 8ms is approximately 1 frame
 				Sleep(8);
 				continue;
 			}
 
-			if (g_pauseTracking == false)
+			if (g_bPauseTracking == false)
 			{
-				MouseMove((config)->m_iMonitorCount, yaw, pitch);
+				MouseMove(config->m_monitorCount, yaw, pitch);
 			}
 
 			// If I would like to log rotational data
-			//logToWix(fmt::format("fNPYaw: {:f}\n", yaw));
-			//logToWix(fmt::format("fNPPitch: {:f}\n", pitch));
+			//LogToWix(fmt::format("fNPYaw: {:f}\n", yaw));
+			//LogToWix(fmt::format("fNPPitch: {:f}\n", pitch));
 
 			// I don't actually really care about dropped frames
-			//if ((framesig != last_frame + 1) && (last_frame != 0))
+			//if ((framesig != lastFrame + 1) && (lastFrame != 0))
 			//{
-				//logToWix(fmt::format("dropped"));
-				//dropped_frames = dropped_frames + framesig - last_frame - 1;
+				//LogToWix(fmt::format("dropped"));
+				//droppedFrames = droppedFrames + framesig - lastFrame - 1;
 			//}
 
-			last_frame = framesig;
+			lastFrame = framesig;
 		}
 		else if (NP_ERR_DEVICE_NOT_PRESENT == gdf)
 		{
-			logToWix(fmt::format("\n\nDEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART PROGRAM\n\n"));
+			LogToWix(fmt::format("\n\nDEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART PROGRAM\n\n"));
 			break;
 		}
 
@@ -259,26 +260,26 @@ BOOL CTracker::PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRE
 	Monitor.cbSize = sizeof(MONITORINFOEX);
 	GetMonitorInfo(hMonitor, &Monitor);
 
-	m_displays[count].pix_left = static_cast <unsigned int> (Monitor.rcMonitor.left); // from long
-	m_displays[count].pix_right = static_cast <unsigned int> (Monitor.rcMonitor.right); // from long
-	m_displays[count].pix_top = static_cast <unsigned int> (Monitor.rcMonitor.top); // from long
-	m_displays[count].pix_bottom = static_cast <unsigned int> (Monitor.rcMonitor.bottom); // from long
+	m_displays[count].pixelBoundLeft = static_cast <unsigned int> (Monitor.rcMonitor.left); // from long
+	m_displays[count].pixelBoundRight = static_cast <unsigned int> (Monitor.rcMonitor.right); // from long
+	m_displays[count].pixelBoundTop = static_cast <unsigned int> (Monitor.rcMonitor.top); // from long
+	m_displays[count].pixelBoundBottom = static_cast <unsigned int> (Monitor.rcMonitor.bottom); // from long
 
 	// Remember to not use {s} for string types. This causes an error for some reason.
-	logToWix(fmt::format(L"MON Name:{:>15}\n", Monitor.szDevice));
+	LogToWix(fmt::format(L"MON Name:{:>15}\n", Monitor.szDevice));
 
-	logToWix(fmt::format("MON {} Left:   {:>10}\n", count, m_displays[count].pix_left));
-	logToWix(fmt::format("MON {} Right:  {:>10}\n", count, m_displays[count].pix_right));
-	logToWix(fmt::format("MON {} Top:    {:>10}\n", count, m_displays[count].pix_top));
-	logToWix(fmt::format("MON {} Bottom: {:>10}\n", count, m_displays[count].pix_bottom));
+	LogToWix(fmt::format("MON {} Left:   {:>10}\n", count, m_displays[count].pixelBoundLeft));
+	LogToWix(fmt::format("MON {} Right:  {:>10}\n", count, m_displays[count].pixelBoundRight));
+	LogToWix(fmt::format("MON {} Top:    {:>10}\n", count, m_displays[count].pixelBoundTop));
+	LogToWix(fmt::format("MON {} Bottom: {:>10}\n", count, m_displays[count].pixelBoundBottom));
 
-	if (Monitor.rcMonitor.left < m_virt_origin_x)
+	if (Monitor.rcMonitor.left < m_virtualOriginX)
 	{
-		m_virt_origin_x = Monitor.rcMonitor.left;
+		m_virtualOriginX = Monitor.rcMonitor.left;
 	}
-	if (Monitor.rcMonitor.top < m_virt_origin_y)
+	if (Monitor.rcMonitor.top < m_virtualOriginY)
 	{
-		m_virt_origin_y = Monitor.rcMonitor.top;
+		m_virtualOriginY = Monitor.rcMonitor.top;
 	}
 
 	count++;
@@ -287,19 +288,20 @@ BOOL CTracker::PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRE
 
 void CTracker::WinSetup()
 {
-	logToWix(fmt::format("\n{:-^50}\n", "Windows Environment Info"));
+	LogToWix(fmt::format("\n{:-^50}\n", "Windows Environment Info"));
 
-	int num_monitors = GetSystemMetrics(SM_CMONITORS);
-	int VM_width = GetSystemMetrics(SM_CXVIRTUALSCREEN);  // width of total bounds of all screens
-	int VM_height = GetSystemMetrics(SM_CYVIRTUALSCREEN); // height of total bounds of all screens
+	int monitorCount = GetSystemMetrics(SM_CMONITORS);
+	int virtualDesktopWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);  // width of total bounds of all screens
+	int virtualDesktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN); // height of total bounds of all screens
 
-	logToWix(fmt::format("{} Monitors Found\n", num_monitors));
-	logToWix(fmt::format("Width of Virtual Desktop:  {:>5}\n", VM_width));
-	logToWix(fmt::format("Height of Virtual Desktop: {:>5}\n", VM_height));
+	LogToWix(fmt::format("{} Monitors Found\n", GetSystemMetrics(SM_CMONITORS)));
+	LogToWix(fmt::format("Width of Virtual Desktop:  {:>5}\n", virtualDesktopWidth));
+	LogToWix(fmt::format("Height of Virtual Desktop: {:>5}\n", virtualDesktopHeight));
 
-	if (DEFAULT_MAX_DISPLAYS < num_monitors)
+	// TODO: move this to config or turn my array into a vector
+	if (DEFAULT_MAX_DISPLAYS < monitorCount)
 	{
-		logToWix(fmt::format("More Than {} Displays Found.\nIncrease max number of m_displays.\n", DEFAULT_MAX_DISPLAYS));
+		LogToWix(fmt::format("More Than {} Displays Found.\nIncrease max number of m_displays.\n", DEFAULT_MAX_DISPLAYS));
 	}
 
 	/* #################################################################
@@ -321,7 +323,7 @@ void CTracker::WinSetup()
 		if (result)
 		{
 			//std::cout << i << " Name: " << display_device_info.DeviceName << "  DeviceString: " << display_device_info.DeviceString << std::endl;
-			logToWix(fmt::format("{} Name: {} DeviceString: {}\n", i, display_device_info.DeviceName, display_device_info.DeviceString));
+			LogToWix(fmt::format("{} Name: {} DeviceString: {}\n", i, display_device_info.DeviceName, display_device_info.DeviceString));
 		}
 		else
 		{
@@ -330,60 +332,60 @@ void CTracker::WinSetup()
 	}
 	######################################################################## */
 
-	m_x_PxToABS = USHORT_MAX_VAL / static_cast<float>(VM_width);
-	m_y_PxToABS = USHORT_MAX_VAL / static_cast<float>(VM_height);
+	m_xPixelAbsoluteSlope = USHORT_MAX_VAL / static_cast<float>(virtualDesktopWidth);
+	m_yPixelAbsoluteSlope = USHORT_MAX_VAL / static_cast<float>(virtualDesktopHeight);
 
-	logToWix(fmt::format("\nVirtual Desktop Pixel Bounds\n"));
+	LogToWix(fmt::format("\nVirtual Desktop Pixel Bounds\n"));
 	EnumDisplayMonitors(NULL, NULL, WrapperPopulateVirtMonitorBounds, reinterpret_cast<LPARAM>(this));
 
-	logToWix(fmt::format("\nVirtual Origin Offset Horizontal: {:d}\n", m_virt_origin_x));
-	logToWix(fmt::format("Virtual Origin Offset Vertical:   {:d}\n", m_virt_origin_y));
+	LogToWix(fmt::format("\nVirtual Origin Offset Horizontal: {:d}\n", m_virtualOriginX));
+	LogToWix(fmt::format("Virtual Origin Offset Vertical:   {:d}\n", m_virtualOriginY));
 
 	return;
 }
 
 void CTracker::DisplaySetup(CConfig* config)
 {
-	for (int i = 0; i < config->m_iMonitorCount; i++)
+	for (int i = 0; i < config->m_monitorCount; i++)
 	{
-		m_displays[i].rot_left = (config)->bounds[i].left;
-		m_displays[i].rot_right = (config)->bounds[i].right;
-		m_displays[i].rot_top = (config)->bounds[i].top;
-		m_displays[i].rot_bottom = (config)->bounds[i].bottom;
+		m_displays[i].rotationBoundLeft   = config->bounds[i].left;
+		m_displays[i].rotationBoundRight  = config->bounds[i].right;
+		m_displays[i].rotationBoundTop    = config->bounds[i].top;
+		m_displays[i].rotationBoundBottom = config->bounds[i].bottom;
 
-		m_displays[i].left_padding = (config)->bounds[i].pad_left;
-		m_displays[i].right_padding = (config)->bounds[i].pad_right;
-		m_displays[i].top_padding = (config)->bounds[i].pad_top;
-		m_displays[i].bottom_padding = (config)->bounds[i].pad_bottom;
+		m_displays[i].paddingLeft         = config->bounds[i].paddingLeft;
+		m_displays[i].paddingRight        = config->bounds[i].paddingRight;
+		m_displays[i].paddingTop          = config->bounds[i].paddingTop;
+		m_displays[i].paddingBottom       = config->bounds[i].paddingBottom;
 
-		m_displays[i].setAbsBounds(m_virt_origin_x, m_virt_origin_y, m_x_PxToABS, m_y_PxToABS);
+		m_displays[i].setAbsBounds(m_virtualOriginX, m_virtualOriginY, m_xPixelAbsoluteSlope, m_yPixelAbsoluteSlope);
 	}
-	logToWix(fmt::format("\nVirtual Desktop Pixel Bounds (abs)\n"));
-	for (int i = 0; i < config->m_iMonitorCount; i++)
+	LogToWix(fmt::format("\nVirtual Desktop Pixel Bounds (abs)\n"));
+	for (int i = 0; i < config->m_monitorCount; i++)
 	{
-		logToWix(fmt::format("MON {} pix_abs_left:   {:>10d}\n", i, m_displays[i].pix_abs_left));
-		logToWix(fmt::format("MON {} pix_abs_right:  {:>10d}\n", i, m_displays[i].pix_abs_right));
-		logToWix(fmt::format("MON {} pix_abs_top:    {:>10d}\n", i, m_displays[i].pix_abs_top));
-		logToWix(fmt::format("MON {} pix_abs_bottom: {:>10d}\n", i, m_displays[i].pix_abs_bottom));
+		LogToWix(fmt::format("MON {} pixelBoundboundAbsLeft:   {:>10d}\n", i, m_displays[i].pixelBoundAbsLeft));
+		LogToWix(fmt::format("MON {} pixelBoundboundAbsRight:  {:>10d}\n", i, m_displays[i].pixelBoundAbsRight));
+		LogToWix(fmt::format("MON {} pixelBoundboundAbsTop:    {:>10d}\n", i, m_displays[i].pixelBoundAbsTop));
+		LogToWix(fmt::format("MON {} pixelBoundboundAbsBottom: {:>10d}\n", i, m_displays[i].pixelBoundAbsBottom));
 	}
-	logToWix(fmt::format("\n16-bit Coordinate Bounds\n"));
-	for (int i = 0; i < config->m_iMonitorCount; i++)
+	LogToWix(fmt::format("\n16-bit Coordinate Bounds\n"));
+	for (int i = 0; i < config->m_monitorCount; i++)
 	{
-		logToWix(fmt::format("MON {} abs_left:       {:>12.1f}\n", i, m_displays[i].abs_left));
-		logToWix(fmt::format("MON {} abs_right:      {:>12.1f}\n", i, m_displays[i].abs_right));
-		logToWix(fmt::format("MON {} abs_top:        {:>12.1f}\n", i, m_displays[i].abs_top));
-		logToWix(fmt::format("MON {} abs_bottom:     {:>12.1f}\n", i, m_displays[i].abs_bottom));
+		LogToWix(fmt::format("MON {} boundAbsLeft:       {:>12.1f}\n", i, m_displays[i].boundAbsLeft));
+		LogToWix(fmt::format("MON {} boundAbsRight:      {:>12.1f}\n", i, m_displays[i].boundAbsRight));
+		LogToWix(fmt::format("MON {} boundAbsTop:        {:>12.1f}\n", i, m_displays[i].boundAbsTop));
+		LogToWix(fmt::format("MON {} boundAbsBottom:     {:>12.1f}\n", i, m_displays[i].boundAbsBottom));
 	}
-	logToWix(fmt::format("\nRotational Bounds\n"));
-	for (int i = 0; i < config->m_iMonitorCount; i++)
+	LogToWix(fmt::format("\nRotational Bounds\n"));
+	for (int i = 0; i < config->m_monitorCount; i++)
 	{
-		logToWix(fmt::format("MON {} rot_left:       {:>13.2f}\n", i, m_displays[i].rot_left));
-		logToWix(fmt::format("MON {} rot_right:      {:>13.2f}\n", i, m_displays[i].rot_right));
-		logToWix(fmt::format("MON {} rot_top:        {:>13.2f}\n", i, m_displays[i].rot_top));
-		logToWix(fmt::format("MON {} rot_bottom:     {:>13.2f}\n", i, m_displays[i].rot_bottom));
+		LogToWix(fmt::format("MON {} rotationBoundLeft:       {:>13.2f}\n", i, m_displays[i].rotationBoundLeft));
+		LogToWix(fmt::format("MON {} rotationBoundRight:      {:>13.2f}\n", i, m_displays[i].rotationBoundRight));
+		LogToWix(fmt::format("MON {} rotationBoundTop:        {:>13.2f}\n", i, m_displays[i].rotationBoundTop));
+		LogToWix(fmt::format("MON {} rotationBoundBottom:     {:>13.2f}\n", i, m_displays[i].rotationBoundBottom));
 	}
 
-	logToWix(fmt::format("\n{:-^}\n", ""));
+	LogToWix(fmt::format("\n{:-^}\n", ""));
 
 	return;
 }
@@ -412,12 +414,12 @@ inline void SendMyInput(float x, float y)
 	return;
 }
 
-void CTracker::MouseMove(int num_monitors, float yaw, float pitch)
+void CTracker::MouseMove(int monitorCount, float yaw, float pitch)
 {
 
 	// set the last screen initially equal to the main display for me
 	// TODO: find a way to specify in settings or get from windows
-	static int last_screen = 1;
+	static int lastScreen = 0;
 
 	// variables used for linear interpolation
 	static float rl;
@@ -432,25 +434,25 @@ void CTracker::MouseMove(int num_monitors, float yaw, float pitch)
 	// Check if the head is pointing to a screen
 	// The return statement is never reached if the head is pointing outside the bounds of any of the screens
 
-	for (int i = 0; i <= num_monitors - 1; i++)
+	for (int i = 0; i <= monitorCount - 1; i++)
 	{
-		if ((yaw > m_displays[i].rot_s15bit_left) && (yaw < m_displays[i].rot_s15bit_right) && (pitch < m_displays[i].rot_s15bit_top) && (pitch > m_displays[i].rot_s15bit_bottom))
+		if ((yaw > m_displays[i].rotationBound16BitLeft) && (yaw < m_displays[i].rotationBound16BitRight) && (pitch < m_displays[i].rotationBound16BitTop) && (pitch > m_displays[i].rotationBound16BitBottom))
 		{
 			// I wrote it out for maintainability
 			// its plenty fast anyway for a 60hz limited display
-			rl = m_displays[i].rot_s15bit_left;
-			al = m_displays[i].abs_left;
+			rl = m_displays[i].rotationBound16BitLeft;
+			al = m_displays[i].boundAbsLeft;
 			mx = m_displays[i].xSlope;
-			x = mx * (yaw - rl) + al;
-			rt = m_displays[i].rot_s15bit_top;
-			at = m_displays[i].abs_top;
+			x  = mx * (yaw - rl) + al;
+			rt = m_displays[i].rotationBound16BitTop;
+			at = m_displays[i].boundAbsTop;
 			my = m_displays[i].ySlope;
-			y = my * (rt - pitch) + at;
+			y  = my * (rt - pitch) + at;
 			// load the coordinates into my input structure
 			// need to cast to an integer because resulting calcs are floats
 			SendMyInput(x, y);
-			last_screen = i;
-			//logToWix(fmt::format("(%f, %f)", y, x); // for testing
+			lastScreen = i;
+			//LogToWix(fmt::format("(%f, %f)", y, x); // for testing
 			return;
 		}
 	}
@@ -458,45 +460,47 @@ void CTracker::MouseMove(int num_monitors, float yaw, float pitch)
 	// If the head is pointing outside of the bounds of a screen the mouse should snap to the breached edge
 	// It could either be the pitch or the yaw axis that is too great or too little
 	// To do this assume the pointer came from the last screen, just asign the mouse position to the absolute limit from the screen it came from
-	if (yaw < m_displays[last_screen].rot_s15bit_left)
+	if (yaw < m_displays[lastScreen].rotationBound16BitLeft)
 	{
-		x = m_displays[last_screen].abs_left + m_displays[last_screen].left_padding * m_x_PxToABS;
+		x = m_displays[lastScreen].boundAbsLeft + m_displays[lastScreen].paddingLeft * m_xPixelAbsoluteSlope;
 	}
-	else if (yaw > m_displays[last_screen].rot_s15bit_right)
+	else if (yaw > m_displays[lastScreen].rotationBound16BitRight)
 	{
-		x = m_displays[last_screen].abs_right - m_displays[last_screen].right_padding * m_x_PxToABS;
-	}
-	else
-	{
-		rl = m_displays[last_screen].rot_s15bit_left;
-		al = m_displays[last_screen].abs_left;
-		mx = m_displays[last_screen].xSlope;
-		x = mx * (yaw - rl) + al;
-	}
-
-	if (pitch > m_displays[last_screen].rot_s15bit_top)
-	{
-		y = m_displays[last_screen].abs_top + m_displays[last_screen].top_padding * m_y_PxToABS;
-	}
-	else if (pitch < m_displays[last_screen].rot_s15bit_bottom)
-	{
-		y = m_displays[last_screen].abs_bottom - m_displays[last_screen].bottom_padding * m_y_PxToABS;
+		x = m_displays[lastScreen].boundAbsRight - m_displays[lastScreen].paddingRight * m_xPixelAbsoluteSlope;
 	}
 	else
 	{
-		rt = m_displays[last_screen].rot_s15bit_top;
-		at = m_displays[last_screen].abs_top;
-		my = m_displays[last_screen].ySlope;
-		y = my * (rt - pitch) + at;
+		rl = m_displays[lastScreen].rotationBound16BitLeft;
+		al = m_displays[lastScreen].boundAbsLeft;
+		mx = m_displays[lastScreen].xSlope;
+		x  = mx * (yaw - rl) + al;
 	}
 
-	// logToWix(fmt::format("off monitors"));
+	if (pitch > m_displays[lastScreen].rotationBound16BitTop)
+	{
+		y = m_displays[lastScreen].boundAbsTop + m_displays[lastScreen].paddingTop * m_yPixelAbsoluteSlope;
+	}
+	else if (pitch < m_displays[lastScreen].rotationBound16BitBottom)
+	{
+		y = m_displays[lastScreen].boundAbsBottom - m_displays[lastScreen].paddingBottom * m_yPixelAbsoluteSlope;
+	}
+	else
+	{
+		rt = m_displays[lastScreen].rotationBound16BitTop;
+		at = m_displays[lastScreen].boundAbsTop;
+		my = m_displays[lastScreen].ySlope;
+		y  = my * (rt - pitch) + at;
+	}
+
+	// LogToWix(fmt::format("off monitors"));
 	SendMyInput(x, y);
 
 	return;
 
 }
-// Future function to implement
+
+/*
+// TODO: Future function to implement
 int getDllLocationFromRegistry()
 {
 	TCHAR szPath[MAX_PATH * 2];
@@ -506,27 +510,27 @@ int getDllLocationFromRegistry()
 	if (::RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\NaturalPoint\\NATURALPOINT\\NPClient Location"), 0, KEY_READ, &pKey) != ERROR_SUCCESS)
 	{
 		//MessageBox(hWnd, _T("DLL Location key not present"), _T("TrackIR Client"), MB_OK);
-		logToWix(fmt::format("Registry Error: DLL Location key not present"));
+		LogToWix(fmt::format("Registry Error: DLL Location key not present"));
 		return false;
 	}
 	if (RegQueryValueEx(pKey, _T("Path"), NULL, NULL, NULL, &dwSize) != ERROR_SUCCESS)
 	{
 		//MessageBox(hWnd, _T("Path value not present"), _T("TrackIR Client"), MB_OK);
-		logToWix(fmt::format("Registry Error: Path value not present"));
+		LogToWix(fmt::format("Registry Error: Path value not present"));
 		return false;
 	}
 	pszValue = (LPTSTR)malloc(dwSize);
 	if (pszValue == NULL)
 	{
 		//MessageBox(hWnd, _T("Insufficient memory"), _T("TrackIR Client"), MB_OK);
-		logToWix(fmt::format("Registry Error: Insufficient memory"));
+		LogToWix(fmt::format("Registry Error: Insufficient memory"));
 		return false;
 	}
 	if (RegQueryValueEx(pKey, _T("Path"), NULL, NULL, (LPBYTE)pszValue, &dwSize) != ERROR_SUCCESS)
 	{
 		::RegCloseKey(pKey);
 		//MessageBox(hWnd, _T("Error reading location key"), _T("TrackIR Client"), MB_OK);
-		logToWix(fmt::format("Registry Error: Error reading location key"));
+		LogToWix(fmt::format("Registry Error: Error reading location key"));
 		return false;
 	}
 	else
@@ -535,7 +539,7 @@ int getDllLocationFromRegistry()
 		_tcscpy_s(szPath, pszValue);
 		free(pszValue);
 	}
-}
+}*/
 
 /*
 

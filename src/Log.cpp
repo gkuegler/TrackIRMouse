@@ -8,16 +8,16 @@
 // Functions Logging Specifically to the Text Control
 // ----------------------------------------------------------------------
 
- void logToWix(std::string msg)
+ void LogToWix(std::string msg)
  {
-    wxLogDebug(msg.c_str());
+   wxLogDebug(msg.c_str());
  	wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
  	wxString mystring(msg.c_str(), wxConvUTF8);
  	evt->SetString(mystring);
  	wxTheApp->QueueEvent(evt);
  }
 
- void logToWix(std::wstring msg)
+ void LogToWix(std::wstring msg)
  {
  	wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
  	wxString mystring(msg.c_str(), wxConvUTF8);
@@ -25,7 +25,7 @@
  	wxTheApp->QueueEvent(evt);
  }
 
- void logToWix(const char* msg)
+ void LogToWix(const char* msg)
  {
     wxLogDebug(msg);
  	wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
@@ -33,7 +33,7 @@
  	wxTheApp->QueueEvent(evt);
  }
 
- void logToWix(const wchar_t* msg)
+ void LogToWix(const wchar_t* msg)
  {
  	wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
  	evt->SetString(wxString::wxString(msg));

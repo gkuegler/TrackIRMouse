@@ -2,18 +2,17 @@
 #ifndef TRACKIRMOUSE_LOG_H
 #define TRACKIRMOUSE_LOG_H
 
-#include <string>
-
 #include <wx/string.h>
 #include <wx/log.h>
 #include <wx/file.h>
 
+#include <string>
 
- void logToWix(std::string msg);
- void logToWix(std::wstring msg);
+ void LogToWix(std::string msg);
+ void LogToWix(std::wstring msg);
 
- void logToWix(const char* msg);
- void logToWix(const wchar_t* msg);
+ void LogToWix(const char* msg);
+ void LogToWix(const wchar_t* msg);
 
  class CMyLogger : public wxLog
  {

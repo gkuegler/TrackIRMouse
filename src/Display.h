@@ -11,71 +11,71 @@ public:
     //   3. Call setAbsBounds()
 
     // User inputed rotational bounds of display
-    float rot_left = 0;
-    float rot_right = 0;
-    float rot_top = 0;
-    float rot_bottom = 0;
+    float rotationBoundLeft = 0;
+    float rotationBoundRight = 0;
+    float rotationBoundTop = 0;
+    float rotationBoundBottom = 0;
 
-    float rot_s15bit_left = 0;
-    float rot_s15bit_right = 0;
-    float rot_s15bit_top = 0;
-    float rot_s15bit_bottom = 0;
+    float rotationBound16BitLeft = 0;
+    float rotationBound16BitRight = 0;
+    float rotationBound16BitTop = 0;
+    float rotationBound16BitBottom = 0;
 
     // User-specified
-    int left_padding = 3;
-    int right_padding = 3;
-    int top_padding = 0;
-    int bottom_padding = 0;
+    int paddingLeft = 3;
+    int paddingRight = 3;
+    int paddingTop = 0;
+    int paddingBottom = 0;
 
     // Virtual desktop bounds of display relative to main monitor
-    signed int pix_left = 0;
-    signed int pix_right = 0;
-    signed int pix_top = 0;
-    signed int pix_bottom = 0;
+    signed int pixelBoundLeft = 0;
+    signed int pixelBoundRight = 0;
+    signed int pixelBoundTop = 0;
+    signed int pixelBoundBottom = 0;
 
     // Resulting Virtualized virtual desktop bounds
-    signed int pix_abs_left = 0;
-    signed int pix_abs_right = 0;
-    signed int pix_abs_top = 0;
-    signed int pix_abs_bottom = 0;
+    signed int pixelBoundAbsLeft = 0;
+    signed int pixelBoundAbsRight = 0;
+    signed int pixelBoundAbsTop = 0;
+    signed int pixelBoundAbsBottom = 0;
 
     // Resulting Mapped bounds of display in absolute from top left most display
-    float abs_left = 0;
-    float abs_right = 0;
-    float abs_top = 0;
-    float abs_bottom = 0;
+    float boundAbsLeft = 0;
+    float boundAbsRight = 0;
+    float boundAbsTop = 0;
+    float boundAbsBottom = 0;
 
     // Ratio of input rotation to abolutized integer
     float ySlope{};
     float xSlope{};
 
-    void setAbsBounds(signed int virt_origin_left, signed int virt_origin_top,
+    void setAbsBounds(signed int virtualOriginLeft, signed int virtualOriginTop,
         float x_PxToABS, float y_PxToABS) {
-        pix_abs_left = pix_left - virt_origin_left;
-        pix_abs_right = pix_right - virt_origin_left;
-        pix_abs_top = pix_top - virt_origin_top;
-        pix_abs_bottom = pix_bottom - virt_origin_top;
+        pixelBoundAbsLeft = pixelBoundLeft - virtualOriginLeft;
+        pixelBoundAbsRight = pixelBoundRight - virtualOriginLeft;
+        pixelBoundAbsTop = pixelBoundTop - virtualOriginTop;
+        pixelBoundAbsBottom = pixelBoundBottom - virtualOriginTop;
 
-        abs_left = static_cast<float>(pix_abs_left) * x_PxToABS;
-        abs_right = static_cast<float>(pix_abs_right) * x_PxToABS;
-        abs_top = pix_abs_top * y_PxToABS;
-        abs_bottom = pix_abs_bottom * y_PxToABS;
+        boundAbsLeft = static_cast<float>(pixelBoundAbsLeft) * x_PxToABS;
+        boundAbsRight = static_cast<float>(pixelBoundAbsRight) * x_PxToABS;
+        boundAbsTop = pixelBoundAbsTop * y_PxToABS;
+        boundAbsBottom = pixelBoundAbsBottom * y_PxToABS;
 
-        rot_s15bit_left = rot_left * (16383 / 180);
-        rot_s15bit_right = rot_right * (16383 / 180);
-        rot_s15bit_top = rot_top * (16383 / 180);
-        rot_s15bit_bottom = rot_bottom * (16383 / 180);
+        rotationBound16BitLeft = rotationBoundLeft * (16383 / 180);
+        rotationBound16BitRight = rotationBoundRight * (16383 / 180);
+        rotationBound16BitTop = rotationBoundTop * (16383 / 180);
+        rotationBound16BitBottom = rotationBoundBottom * (16383 / 180);
 
-        float rl = rot_s15bit_left;
-        float rr = rot_s15bit_right;
-        float al = abs_left;
-        float ar = abs_right;
+        float rl = rotationBound16BitLeft;
+        float rr = rotationBound16BitRight;
+        float al = boundAbsLeft;
+        float ar = boundAbsRight;
         xSlope = (ar - al) / (rr - rl);
 
-        float rt = rot_s15bit_top;
-        float rb = rot_s15bit_bottom;
-        float at = abs_top;
-        float ab = abs_bottom;
+        float rt = rotationBound16BitTop;
+        float rb = rotationBound16BitBottom;
+        float at = boundAbsTop;
+        float ab = boundAbsBottom;
         ySlope = -(at - ab) / (rt - rb);
 
         return;
