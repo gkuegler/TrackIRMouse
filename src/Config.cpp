@@ -200,10 +200,46 @@ void CConfig::LoadSettings()
         try {
             const auto& vTomlDisplay = toml::find(vDisplayMapping, tname);
 
-            bounds[i].left = toml::find<float>(vTomlDisplay, "left");
-            bounds[i].right = toml::find<float>(vTomlDisplay, "right");
-            bounds[i].top = toml::find<float>(vTomlDisplay, "top");
-            bounds[i].bottom = toml::find<float>(vTomlDisplay, "bottom");
+            // Bring In The Rotational Bounds
+            toml::value left = toml::find(vTomlDisplay, "left");
+            toml::value right = toml::find(vTomlDisplay, "right");
+            toml::value top = toml::find(vTomlDisplay, "top");
+            toml::value bottom = toml::find(vTomlDisplay, "bottom");
+
+            // Each value is checked because this toml library cannot
+            // cast integers in a toml file to a float
+            if (left.type() == toml::value_t::integer)
+            {
+                bounds[i].left = static_cast<float>(left.as_integer());
+            }
+            else
+            {
+                bounds[i].left = toml::find<float>(vTomlDisplay, "left"); 
+            }
+            if (right.type() == toml::value_t::integer)
+            {
+                bounds[i].right = static_cast<float>(right.as_integer());
+            }
+            else
+            {
+                bounds[i].right = toml::find<float>(vTomlDisplay, "right");
+            }
+            if (top.type() == toml::value_t::integer)
+            {
+                bounds[i].top = static_cast<float>(top.as_integer());
+            }
+            else
+            {
+                bounds[i].top = toml::find<float>(vTomlDisplay, "top");
+            }
+            if (bottom.type() == toml::value_t::integer)
+            {
+                bounds[i].bottom = static_cast<float>(bottom.as_integer());
+            }
+            else
+            {
+                bounds[i].bottom = toml::find<float>(vTomlDisplay, "bottom");
+            }
 
             // I return an ungodly fake high padding number,
             // so that I can tell of one was found in the toml config file
@@ -246,6 +282,10 @@ void CConfig::LoadSettings()
                 LogToWix(fmt::format("Display {} Bottom:   {:>12} (Default)\n", i, defaultPaddingBottom));
                 bounds[i].paddingBottom = defaultPaddingBottom;
             }
+        }
+        catch (toml::type_error e)
+        {
+            LogToWix(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
         }
         catch (std::out_of_range e)
         {

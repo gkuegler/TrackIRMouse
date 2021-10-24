@@ -35,11 +35,13 @@ bool CGUIApp::OnInit()
     }
     catch (const std::exception& ex)
     {
-        printf("%s", ex.what());
+        LogToWix(fmt::format("Load Setting Failed: ", ex.what()));
+        wxLogError("Load Setting Failed: ", ex.what());
     }
     catch (...)
     {
-        wxLogError("exception has been uncocked");
+        LogToWix("An unconquered exception has gone on handle when loading settings.");
+        wxLogError("exception has gone unhandled");
     }
 
     TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), &m_config);
