@@ -9,7 +9,7 @@
 
 [general]
 watchdog_enabled = true
-TrackIR_dll_directory = "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5"
+TrackIR_DLL_directory = "default" # Specify "default" to get value from registry or an absolute path eg. "C:\Program Files..."
 profile = 1
 
 [default_padding]

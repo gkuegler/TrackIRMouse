@@ -1,5 +1,6 @@
 #include "Config.h"
 #include "Log.h"
+#include "Exceptions.h"
 
 #define FMT_HEADER_ONLY
 #include <fmt\format.h>
@@ -9,6 +10,101 @@
 
 #include <iostream>
 #include <string>
+
+typedef struct _RegistryQuery {
+    int result;
+    std::string resultString;
+    std::string value;
+} RegistryQuery;
+
+RegistryQuery GetStringFrOomRegistry(HKEY hParentKey, const char* subKey, const char* subValue)
+{
+
+    //////////////////////////////////////////////////////////////////////
+    //                         Opening The Key                          //
+    //////////////////////////////////////////////////////////////////////
+
+    HKEY hKey = 0;
+
+    LSTATUS statusOpen = RegOpenKeyExA(
+        hParentKey, // should usually be HKEY_CURRENT_USER
+        subKey,
+        0, //[in]           DWORD  ulOptions,
+        KEY_READ, //[in]           REGSAM samDesired,
+        &hKey
+    );
+
+    if (ERROR_FILE_NOT_FOUND == statusOpen)
+    {
+        return RegistryQuery{ ERROR_FILE_NOT_FOUND , "Registry key not found.", "" };
+    }
+
+    // Catch all other errors
+    if (ERROR_SUCCESS != statusOpen)
+    {
+        return RegistryQuery{ statusOpen , "Could not open registry key.", "" };
+    }
+
+
+    //////////////////////////////////////////////////////////////////////
+    //                    Querying Value Information                    //
+    //////////////////////////////////////////////////////////////////////
+
+    DWORD valueType = 0;
+    DWORD sizeOfBuffer = 0;
+
+    LSTATUS statusQueryValue = RegQueryValueExA(
+        hKey, // [in]                HKEY    hKey,
+        "Path",// [in, optional]      LPCSTR  lpValueName,
+        0,// LPDWORD lpReserved,
+        &valueType, // [out, optional]     LPDWORD lpType,
+        0, // [out, optional]     LPBYTE  lpData,
+        &sizeOfBuffer // [in, out, optional] LPDWORD lpcbData
+    );
+
+    if (ERROR_FILE_NOT_FOUND == statusQueryValue)
+    {
+        return RegistryQuery{ ERROR_FILE_NOT_FOUND, "Value not found for key.", "" };
+    }
+
+    // Catch all other errors of RegQueryValueExA
+    if (ERROR_SUCCESS != statusQueryValue)
+    {
+        return RegistryQuery{ statusQueryValue, "RegQueryValueExA failed.", "" };
+    }
+
+    if (REG_SZ != valueType)
+    {
+        return RegistryQuery{ 1, "Registry value not a string type.", "" };
+    }
+
+
+    //////////////////////////////////////////////////////////////////////
+    //                      Getting the hKey Value                       //
+    //////////////////////////////////////////////////////////////////////
+
+    // Registry key may or may not be stored with a null terminator
+    // add one just in case
+    char* szPath = static_cast<char*>(calloc(1, sizeOfBuffer + 1));
+
+    if (NULL == szPath)
+    {
+        return RegistryQuery{ 1, "Failed to allocate memory.", "" };
+    }
+
+    LSTATUS statusGetValue = RegGetValueA(
+        hKey, // [in]                HKEY    hkey,
+        0, // [in, optional]      LPCSTR  lpSubKey,
+        subValue, // [in, optional]      LPCSTR  lpValue,
+        RRF_RT_REG_SZ, // [in, optional]      DWORD   dwFlags,
+        &valueType, // [out, optional]     LPDWORD pdwType,
+        (void*)szPath, // [out, optional]     PVOID   pvData,
+        &sizeOfBuffer // [in, out, optional] LPDWORD pcbData
+    );
+
+    return RegistryQuery{ 0, "", std::string(szPath) };
+}
+
 
 void CConfig::LoadSettings()
 {
@@ -32,8 +128,28 @@ void CConfig::LoadSettings()
     m_displayProfile = toml::find<int>(vGeneralSettings, "profile");
 
     //Optionally the user can specify the location to the trackIR dll
-    m_sTrackIrDllLocation = toml::find_or<std::string>(vGeneralSettings, "TrackIR_dll_directory", "C:\\Program Files (x86)\\NaturalPoint\\TrackIR5");
-    LogToWix(fmt::format("{}", m_sTrackIrDllLocation));
+    m_sTrackIrDllLocation = toml::find_or<std::string>(vGeneralSettings, "TrackIR_dll_directory", "default");
+
+    if ("default" == m_sTrackIrDllLocation)
+    {
+        RegistryQuery path = GetStringFrOomRegistry(HKEY_CURRENT_USER, "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
+
+        if (0 == path.result)
+        {
+            m_sTrackIrDllLocation = path.value;
+            LogToWix("Acquired DLL location from registry.\n");
+        }
+        else
+        {
+            LogToWix(fmt::format("Registry get key failed."));
+            LogToWix(fmt::format("  result: {}", path.result));
+            LogToWix(fmt::format("  result string: {}", path.resultString));
+            throw Exception("See error above.");
+        }
+
+        
+    }
+    LogToWix(fmt::format("NPTrackIR DLL Location: {}", m_sTrackIrDllLocation));
 
     if (m_sTrackIrDllLocation.back() != '\\')
     {
