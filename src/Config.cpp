@@ -4,6 +4,7 @@
 
 #define FMT_HEADER_ONLY
 #include <fmt\format.h>
+#define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
 #include "toml.hpp"
 
 #include <Windows.h>
@@ -118,10 +119,10 @@ void CConfig::LoadSettings()
     std::string d = "display";
 
     // TOML will throw a std::runtime_error if there's a problem opening the file 
-    auto vData = toml::parse("settings.toml");
+    m_vData = toml::parse<toml::preserve_comments>("settings.toml");
 
     // Find the general settings table
-    auto& vGeneralSettings = toml::find(vData, "general");
+    auto& vGeneralSettings = toml::find(m_vData, "general");
 
     // find_or will return a default if parameter not found
     m_bWatchdog = toml::find_or<bool>(vGeneralSettings, "watchdog_enabled", 0);
@@ -164,7 +165,8 @@ void CConfig::LoadSettings()
 
     // load in the global default padding table if available
     try {
-        m_vDefaultPaddings = toml::find(vData, "default_padding");
+        m_vDefaultPaddings = toml::find(m_vData, "default_padding");
+
         defaultPaddingLeft = toml::find<int>(m_vDefaultPaddings, "left");
         defaultPaddingRight = toml::find<int>(m_vDefaultPaddings, "right");
         defaultPaddingTop = toml::find<int>(m_vDefaultPaddings, "top");
@@ -179,7 +181,7 @@ void CConfig::LoadSettings()
     LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
 
     // Find the profiles table that contains all profiles
-    m_vDisplayMappingProfiles = toml::find(vData, "profiles");
+    m_vDisplayMappingProfiles = toml::find(m_vData, "profiles");
 
     // Find the profile table which is currently enabled enabled
     std::string profileTableName = std::to_string(m_displayProfile);
@@ -194,9 +196,11 @@ void CConfig::LoadSettings()
 
     LogToWix(fmt::format("Padding\n"));
 
+    // TODO: check bounds of my array first with number of monitors
+    //  and see if they match
     for (int i = 0; i < m_monitorCount; i++) {
         std::string tname = std::to_string(i);
-        //assert(i < m_monitorCount);
+        
         try {
             const auto& vTomlDisplay = toml::find(vDisplayMapping, tname);
 
@@ -300,30 +304,19 @@ void CConfig::LoadSettings()
 
 void CConfig::SaveSettings()
 {
-    toml::value vGeneralSettings{ {"watchdog_enabled", m_bWatchdog}, {"TrackIR_dll_directory", m_sTrackIrDllLocation}, {"profile", m_displayProfile}};
 
-    //wxFile file;
     const std::string FileName = "settings_test.toml";
 
-    //if (file.Exists(FileName))
-    //{
-    //    if (!file.Access(FileName, wxFile::write))
-    //    {
-    //        wxLogFatalError("Unable to open log file.");
-    //    }
-    //}
-
-    //file.Open(FileName, wxFile::write);
-
-    //bool success = file.Write(vGeneralSettings)
-
-    //wxFileOutputStream file(FileName);
-
-    //file << vGeneralSettings << std::endl;
-
     std::fstream file(FileName, std::ios_base::out);
-    //file.open();
-    file << vGeneralSettings << std::endl;
+    file << m_vData << std::endl;
     file.close();
 
+}
+
+void CConfig::SetGeneralInteger(const char* parameterName, int value)
+{
+    toml::value& table = toml::get<toml::table >(m_vData).at("general");
+    toml::value& parameter_ = toml::get<toml::table >(table).at(parameterName);
+    toml::integer& parameter = toml::get<toml::integer>(parameter_);
+    parameter = value;
 }

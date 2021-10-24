@@ -32,11 +32,15 @@ public:
 
     bounds_in_degrees bounds[DEFAULT_MAX_DISPLAYS];
 
-    CConfig() {};
+    CConfig(){};
+
     void LoadSettings();
     void SaveSettings();
 
+    void SetGeneralInteger(const char*, int);
+
 private:
+    toml::value m_vData;
     toml::value m_vDefaultPaddings;
     toml::value m_vDisplayMappingProfiles;
 };

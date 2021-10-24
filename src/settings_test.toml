@@ -1,0 +1,45 @@
+[general]
+TrackIR_DLL_directory = "default"
+watchdog_enabled = true
+profile = 5
+[default_padding]
+left = 3
+right = 3
+top = 0
+bottom = 0
+
+[profiles]
+[profiles.1]
+profile_ID = 13302
+[profiles.1.display]
+[profiles.1.display.0]
+left = -43
+right = 50
+top = 19
+bottom = -19
+[profiles.1.display.1]
+left = 62
+right = 180
+top = 19
+bottom = -19
+
+[profiles.2]
+profile_ID = 2025
+[profiles.2.display]
+[profiles.2.display.0]
+left = -50
+right = 50
+top = 32
+bottom = -32
+
+[profiles.3]
+profile_ID = 2025
+[profiles.3.display]
+[profiles.3.display.0]
+left = -25
+right = 25
+top = 15
+bottom = -15
+
+
+
