@@ -10,6 +10,12 @@
 #include <utility>
 #include <vector>
 
+#ifdef TOML11_PRESERVE_COMMENTS_BY_DEFAULT
+#  define TOML11_DEFAULT_COMMENT_STRATEGY ::toml::preserve_comments
+#else
+#  define TOML11_DEFAULT_COMMENT_STRATEGY ::toml::discard_comments
+#endif
+
 // This file provides mainly two classes, `preserve_comments` and `discard_comments`.
 // Those two are a container that have the same interface as `std::vector<std::string>`
 // but bahaves in the opposite way. `preserve_comments` is just the same as
@@ -340,7 +346,7 @@ operator+(const empty_iterator<T, C>& lhs, typename empty_iterator<T, C>::differ
 //
 // Why this is chose as the default type is because the last version (2.x.y)
 // does not contain any comments in a value. To minimize the impact on the
-// efficiency, this is choosed as a default.
+// efficiency, this is chosen as a default.
 //
 // To reduce the memory footprint, later we can try empty base optimization (EBO).
 struct discard_comments

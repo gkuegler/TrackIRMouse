@@ -28,8 +28,8 @@ bool CGUIApp::OnInit()
     try
     {
         m_config.LoadSettings();
-        m_config.SetGeneralInteger("profile", 5);
-        m_config.SaveSettings();
+        //m_config.SetGeneralInteger("profile", 5);
+        //m_config.SaveSettings();
     }
     catch (std::runtime_error e)
     {

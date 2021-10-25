@@ -1,9 +1,12 @@
 #ifndef TRACKIRMOUSE_CONFIG_H
 #define TRACKIRMOUSE_CONFIG_H
 
-#include <string>
 #include "Constants.h"
+
+#define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
 #include "toml.hpp"
+
+#include <string>
 
 struct bounds_in_degrees {
     float left = 0;

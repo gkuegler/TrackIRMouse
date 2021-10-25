@@ -364,6 +364,19 @@ inline result<std::string, std::string> parse_escape_sequence(location& loc)
     return err(msg);
 }
 
+inline std::ptrdiff_t check_utf8_validity(const std::string& reg)
+{
+    location loc("tmp", reg);
+    const auto u8 = repeat<lex_utf8_code, unlimited>::invoke(loc);
+    if(!u8 || loc.iter() != loc.end())
+    {
+        const auto error_location = std::distance(loc.begin(), loc.iter());
+        assert(0 <= error_location);
+        return error_location;
+    }
+    return -1;
+}
+
 inline result<std::pair<toml::string, region>, std::string>
 parse_ml_basic_string(location& loc)
 {
@@ -432,7 +445,21 @@ parse_ml_basic_string(location& loc)
                     source_location(inner_loc));
             }
         }
-        return ok(std::make_pair(toml::string(retval), token.unwrap()));
+
+        const auto err_loc = check_utf8_validity(token.unwrap().str());
+        if(err_loc == -1)
+        {
+            return ok(std::make_pair(toml::string(retval), token.unwrap()));
+        }
+        else
+        {
+            inner_loc.reset(first);
+            inner_loc.advance(err_loc);
+            throw syntax_error(format_underline(
+                "parse_ml_basic_string: invalid utf8 sequence found",
+                {{source_location(inner_loc), "here"}}),
+                source_location(inner_loc));
+        }
     }
     else
     {
@@ -484,7 +511,21 @@ parse_basic_string(location& loc)
             }
             quot = lex_quotation_mark::invoke(inner_loc);
         }
-        return ok(std::make_pair(toml::string(retval), token.unwrap()));
+
+        const auto err_loc = check_utf8_validity(token.unwrap().str());
+        if(err_loc == -1)
+        {
+            return ok(std::make_pair(toml::string(retval), token.unwrap()));
+        }
+        else
+        {
+            inner_loc.reset(first);
+            inner_loc.advance(err_loc);
+            throw syntax_error(format_underline(
+                "parse_ml_basic_string: invalid utf8 sequence found",
+                {{source_location(inner_loc), "here"}}),
+                source_location(inner_loc));
+        }
     }
     else
     {
@@ -545,8 +586,22 @@ parse_ml_literal_string(location& loc)
                     source_location(inner_loc));
             }
         }
-        return ok(std::make_pair(toml::string(retval, toml::string_t::literal),
-                                 token.unwrap()));
+
+        const auto err_loc = check_utf8_validity(token.unwrap().str());
+        if(err_loc == -1)
+        {
+            return ok(std::make_pair(toml::string(retval, toml::string_t::literal),
+                                     token.unwrap()));
+        }
+        else
+        {
+            inner_loc.reset(first);
+            inner_loc.advance(err_loc);
+            throw syntax_error(format_underline(
+                "parse_ml_basic_string: invalid utf8 sequence found",
+                {{source_location(inner_loc), "here"}}),
+                source_location(inner_loc));
+        }
     }
     else
     {
@@ -584,9 +639,23 @@ parse_literal_string(location& loc)
                 {{source_location(inner_loc), "should be '"}}),
                 source_location(inner_loc));
         }
-        return ok(std::make_pair(
-                  toml::string(body.unwrap().str(), toml::string_t::literal),
-                  token.unwrap()));
+
+        const auto err_loc = check_utf8_validity(token.unwrap().str());
+        if(err_loc == -1)
+        {
+            return ok(std::make_pair(
+                      toml::string(body.unwrap().str(), toml::string_t::literal),
+                      token.unwrap()));
+        }
+        else
+        {
+            inner_loc.reset(first);
+            inner_loc.advance(err_loc);
+            throw syntax_error(format_underline(
+                "parse_ml_basic_string: invalid utf8 sequence found",
+                {{source_location(inner_loc), "here"}}),
+                source_location(inner_loc));
+        }
     }
     else
     {
@@ -662,12 +731,19 @@ parse_local_date(location& loc)
                 {{source_location(inner_loc), "here"}}),
                 source_location(inner_loc));
         }
-        return ok(std::make_pair(local_date(
-            static_cast<std::int16_t>(from_string<int>(y.unwrap().str(), 0)),
-            static_cast<month_t>(
-                static_cast<std::int8_t>(from_string<int>(m.unwrap().str(), 0)-1)),
-            static_cast<std::int8_t>(from_string<int>(d.unwrap().str(), 0))),
-            token.unwrap()));
+
+        const auto year  = static_cast<std::int16_t>(from_string<int>(y.unwrap().str(), 0));
+        const auto month = static_cast<std::int8_t >(from_string<int>(m.unwrap().str(), 0));
+        const auto day   = static_cast<std::int8_t >(from_string<int>(d.unwrap().str(), 0));
+
+        // this could be improved a bit more, but is it ... really ... needed?
+        if(31 < day)
+        {
+            throw syntax_error(format_underline("toml::parse_date: invalid date",
+                {{source_location(loc), "here"}}), source_location(loc));
+        }
+        return ok(std::make_pair(local_date(year, static_cast<month_t>(month - 1), day),
+                                 token.unwrap()));
     }
     else
     {
@@ -794,7 +870,7 @@ parse_local_datetime(location& loc)
         {
             throw internal_error(format_underline(
                 "toml::parse_local_datetime: invalid datetime format",
-                {{source_location(inner_loc), "invalid time fomrat"}}),
+                {{source_location(inner_loc), "invalid time format"}}),
                 source_location(inner_loc));
         }
         return ok(std::make_pair(
@@ -1268,7 +1344,10 @@ insert_nested_key(typename Value::table_type& root, const Value& v,
                     }
                     // the above if-else-if checks tab->at(k) is an array
                     auto& a = tab->at(k).as_array();
-                    if(!(a.front().is_table()))
+                    // If table element is defined as [[array_of_tables]], it
+                    // cannot be an empty array. If an array of tables is
+                    // defined as `aot = []`, it cannot be appended.
+                    if(a.empty() || !(a.front().is_table()))
                     {
                         throw syntax_error(format_underline(concat_to_string(
                             "toml::insert_value: array of table (\"",
@@ -1288,7 +1367,7 @@ insert_nested_key(typename Value::table_type& root, const Value& v,
                     // b = 54
                     // ```
                     // Here, from the type information, these cannot be detected
-                    // bacause inline table is also a table.
+                    // because inline table is also a table.
                     // But toml v0.5.0 explicitly says it is invalid. The above
                     // array-of-tables has a static size and appending to the
                     // array is invalid.
@@ -1338,7 +1417,7 @@ insert_nested_key(typename Value::table_type& root, const Value& v,
                     // ```toml
                     // # comment 1
                     // aot = [
-                    //     # coment 2
+                    //     # comment 2
                     //     {foo = "bar"},
                     // ]
                     // ```
@@ -1380,6 +1459,16 @@ insert_nested_key(typename Value::table_type& root, const Value& v,
                     auto& t = tab->at(k).as_table();
                     for(const auto& kv : v.as_table())
                     {
+                        if(tab->at(k).contains(kv.first))
+                        {
+                            throw syntax_error(format_underline(concat_to_string(
+                                "toml::insert_value: value (\"",
+                                format_dotted_keys(first, last),
+                                "\") already exists."), {
+                                    {t.at(kv.first).location(), "already exists here"},
+                                    {v.location(), "this defined twice"}
+                                }), v.location());
+                        }
                         t[kv.first] = kv.second;
                     }
                     detail::change_region(tab->at(k), key_reg);
@@ -1494,22 +1583,24 @@ parse_inline_table(location& loc)
             {{source_location(loc), "the next token is not an inline table"}}));
     }
     loc.advance();
+
+    // check if the inline table is an empty table = { }
+    maybe<lex_ws>::invoke(loc);
+    if(loc.iter() != loc.end() && *loc.iter() == '}')
+    {
+        loc.advance(); // skip `}`
+        return ok(std::make_pair(retval, region(loc, first, loc.iter())));
+    }
+
     // it starts from "{". it should be formatted as inline-table
     while(loc.iter() != loc.end())
     {
-        maybe<lex_ws>::invoke(loc);
-        if(loc.iter() != loc.end() && *loc.iter() == '}')
-        {
-            loc.advance(); // skip `}`
-            return ok(std::make_pair(retval,
-                        region(loc, first, loc.iter())));
-        }
-
         const auto kv_r = parse_key_value_pair<value_type>(loc);
         if(!kv_r)
         {
             return err(kv_r.unwrap_err());
         }
+
         const auto&              kvpair  = kv_r.unwrap();
         const std::vector<key>&  keys    = kvpair.first.first;
         const auto&              key_reg = kvpair.first.second;
@@ -1526,10 +1617,19 @@ parse_inline_table(location& loc)
 
         using lex_table_separator = sequence<maybe<lex_ws>, character<','>>;
         const auto sp = lex_table_separator::invoke(loc);
+
         if(!sp)
         {
             maybe<lex_ws>::invoke(loc);
-            if(loc.iter() != loc.end() && *loc.iter() == '}')
+
+            if(loc.iter() == loc.end())
+            {
+                throw syntax_error(format_underline(
+                    "toml::parse_inline_table: missing table separator `}` ",
+                    {{source_location(loc), "should be `}`"}}),
+                    source_location(loc));
+            }
+            else if(*loc.iter() == '}')
             {
                 loc.advance(); // skip `}`
                 return ok(std::make_pair(
@@ -1547,6 +1647,18 @@ parse_inline_table(location& loc)
                 throw syntax_error(format_underline(
                     "toml::parse_inline_table: missing table separator `,` ",
                     {{source_location(loc), "should be `,`"}}),
+                    source_location(loc));
+            }
+        }
+        else // `,` is found
+        {
+            maybe<lex_ws>::invoke(loc);
+            if(loc.iter() != loc.end() && *loc.iter() == '}')
+            {
+                throw syntax_error(format_underline(
+                    "toml::parse_inline_table: trailing comma is not allowed in"
+                    " an inline table",
+                    {{source_location(loc), "should be `}`"}}),
                     source_location(loc));
             }
         }
@@ -1802,7 +1914,7 @@ parse_table_key(location& loc)
                 source_location(inner_loc));
         }
 
-        // after [table.key], newline or EOF(empty table) requried.
+        // after [table.key], newline or EOF(empty table) required.
         if(loc.iter() != loc.end())
         {
             using lex_newline_after_table_key =
@@ -1859,7 +1971,7 @@ parse_array_table_key(location& loc)
                 source_location(inner_loc));
         }
 
-        // after [[table.key]], newline or EOF(empty table) requried.
+        // after [[table.key]], newline or EOF(empty table) required.
         if(loc.iter() != loc.end())
         {
             using lex_newline_after_table_key =
@@ -1977,7 +2089,9 @@ result<Value, std::string> parse_toml_file(location& loc)
     const auto first = loc.iter();
     if(first == loc.end())
     {
-        return ok(value_type(table_type{} /*, empty file has no region ...*/));
+        // For empty files, return an empty table with an empty region (zero-length).
+        // Without the region, error messages would miss the filename.
+        return ok(value_type(table_type{}, region(loc, first, first), {}));
     }
 
     // put the first line as a region of a file
@@ -2076,7 +2190,7 @@ result<Value, std::string> parse_toml_file(location& loc)
 
 } // detail
 
-template<typename                     Comment = ::toml::discard_comments,
+template<typename                     Comment = TOML11_DEFAULT_COMMENT_STRATEGY,
          template<typename ...> class Table   = std::unordered_map,
          template<typename ...> class Array   = std::vector>
 basic_value<Comment, Table, Array>
@@ -2127,7 +2241,7 @@ parse(std::istream& is, const std::string& fname = "unknown file")
     return data.unwrap();
 }
 
-template<typename                     Comment = ::toml::discard_comments,
+template<typename                     Comment = TOML11_DEFAULT_COMMENT_STRATEGY,
          template<typename ...> class Table   = std::unordered_map,
          template<typename ...> class Array   = std::vector>
 basic_value<Comment, Table, Array> parse(const std::string& fname)
@@ -2148,9 +2262,9 @@ basic_value<Comment, Table, Array> parse(const std::string& fname)
 // Without this, both parse(std::string) and parse(std::filesystem::path)
 // matches to parse("filename.toml"). This breaks the existing code.
 //
-// This function exactly matches to the invokation with c-string.
+// This function exactly matches to the invocation with c-string.
 // So this function is preferred than others and the ambiguity disappears.
-template<typename                     Comment = ::toml::discard_comments,
+template<typename                     Comment = TOML11_DEFAULT_COMMENT_STRATEGY,
          template<typename ...> class Table   = std::unordered_map,
          template<typename ...> class Array   = std::vector>
 basic_value<Comment, Table, Array> parse(const char* fname)
@@ -2158,7 +2272,7 @@ basic_value<Comment, Table, Array> parse(const char* fname)
     return parse<Comment, Table, Array>(std::string(fname));
 }
 
-template<typename                     Comment = ::toml::discard_comments,
+template<typename                     Comment = TOML11_DEFAULT_COMMENT_STRATEGY,
          template<typename ...> class Table   = std::unordered_map,
          template<typename ...> class Array   = std::vector>
 basic_value<Comment, Table, Array> parse(const std::filesystem::path& fpath)

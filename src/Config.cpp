@@ -1,11 +1,10 @@
 #include "Config.h"
+
 #include "Log.h"
 #include "Exceptions.h"
 
 #define FMT_HEADER_ONLY
 #include <fmt\format.h>
-#define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
-#include "toml.hpp"
 
 #include <Windows.h>
 
@@ -122,7 +121,7 @@ void CConfig::LoadSettings()
     m_vData = toml::parse<toml::preserve_comments>("settings.toml");
 
     // Find the general settings table
-    auto& vGeneralSettings = toml::find(m_vData, "general");
+    auto& vGeneralSettings = toml::find(m_vData, "General");
 
     // find_or will return a default if parameter not found
     m_bWatchdog = toml::find_or<bool>(vGeneralSettings, "watchdog_enabled", 0);
@@ -177,7 +176,7 @@ void CConfig::LoadSettings()
     // Catch padding table errors because reverting to 0 padding is 
     // not a critical error
     try {
-        m_vDefaultPaddingTable = toml::find(m_vData, "default_padding");
+        m_vDefaultPaddingTable = toml::find(m_vData, "DefaultPadding");
 
         defaultPaddingLeft = toml::find<int>(m_vDefaultPaddingTable, "left");
         defaultPaddingRight = toml::find<int>(m_vDefaultPaddingTable, "right");
@@ -197,7 +196,7 @@ void CConfig::LoadSettings()
     LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
 
     // Find the profiles table that contains all mapping profiles
-    m_vProfilesTable = toml::find(m_vData, "profiles");
+    m_vProfilesTable = toml::find(m_vData, "Profiles");
 
     // Find the profile table which is currently enabled
     std::string profileTableName = std::to_string(m_activeDisplayProfile);
@@ -208,7 +207,7 @@ void CConfig::LoadSettings()
 
     // Load in Display Mappings
     // Find the display mapping table for the given profile
-    auto& vDisplayMappingTable = toml::find(vActiveProfileTable, "display");
+    auto& vDisplayMappingTable = toml::find(vActiveProfileTable, "DisplayMappings");
 
     LogToWix(fmt::format("Padding\n"));
 

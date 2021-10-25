@@ -34,12 +34,13 @@
 #endif
 
 #define TOML11_VERSION_MAJOR 3
-#define TOML11_VERSION_MINOR 6
-#define TOML11_VERSION_PATCH 1
+#define TOML11_VERSION_MINOR 7
+#define TOML11_VERSION_PATCH 0
 
 #include "toml/parser.hpp"
 #include "toml/literal.hpp"
 #include "toml/serializer.hpp"
 #include "toml/get.hpp"
+#include "toml/macros.hpp"
 
 #endif// TOML_FOR_MODERN_CPP

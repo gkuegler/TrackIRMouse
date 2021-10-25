@@ -2,48 +2,48 @@
 # FreeSpace2 = 13302
 # Aerofly = 2025
 
-[general]
+[General]
 watchdog_enabled = true
 TrackIR_DLL_directory = "default" # Specify "default" to get value from registry or an absolute path eg. "C:\Program Files..."
 profile = 1
 
-[default_padding]
+[DefaultPadding]
 left   = 3
 right  = 3
 top    = 0
 bottom = 0
 
-[profiles]
-[profiles.1]
+[Profiles]
+[Profiles.1]
 profile_ID = 13302
 
 # Desktop Dual Monitor Setup
-[profiles.1.display.0]
+[Profiles.1.DisplayMappings.0]
 left   = -43
 right  = 50
 top    = 19
 bottom = -19
 
-[profiles.1.display.1]
+[Profiles.1.DisplayMappings.1]
 left   = 62
 right  = 180
 top    = 19
 bottom = -19
 
-[profiles.2]
+[Profiles.2]
 profile_ID = 2025
 
 # Laptop Monitor
-[profiles.2.display.0]
+[Profiles.2.DisplayMappings.0]
 left   = -50
 right  = 50
 top    = 32
 bottom = -32
 
-[profiles.3]
+[Profiles.3]
 profile_ID = 2025
 
-[profiles.3.display.0]
+[Profiles.3.DisplayMappings.0]
 left   = -25
 right  = 25
 top    = 15
