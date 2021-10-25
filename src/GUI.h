@@ -6,6 +6,7 @@
 #include "Track.h"
 
 #include <wx/wx.h>
+#include <wx/dataview.h>
 
 class TrackThread : public wxThread
 {
@@ -34,19 +35,37 @@ public:
 class cPanel : public wxPanel
 {
 public:
+    cTextCtrl* m_textrich;
+
     cPanel(wxFrame* frame);
 
-    cTextCtrl* m_textrich;
+    void LoadDisplayMappings(const CConfig& config);
+
+private:
+    wxDataViewListCtrl* m_tlcMappingData;
 };
+
+//------------------------------------------------------------------------------
 
 class cFrame : public wxFrame
 {
 public:
-    cFrame();
-
     cPanel* m_panel;
 
+    cFrame();
+
+private:
+    void OnExit(wxCommandEvent& event);
+    void OnAbout(wxCommandEvent& event);
+
+    wxDECLARE_EVENT_TABLE();
+
 };
+
+wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
+    EVT_MENU(wxID_EXIT, cFrame::OnExit)
+    EVT_MENU(wxID_ABOUT, cFrame::OnAbout)
+wxEND_EVENT_TABLE()
 
 //------------------------------------------------------------------------------
 
