@@ -25,7 +25,7 @@ public:
     int m_profileID = 0;
     bool m_bWatchdog = 0;
     std::string m_sTrackIrDllLocation;
-    int m_displayProfile = 0;
+    int m_activeDisplayProfile = 0;
 
     // Values Determined at Run Time
     int m_monitorCount = 0;
@@ -41,8 +41,8 @@ public:
 
 private:
     toml::value m_vData;
-    toml::value m_vDefaultPaddings;
-    toml::value m_vDisplayMappingProfiles;
+    toml::value m_vDefaultPaddingTable;
+    toml::value m_vProfilesTable;
 };
 
 #endif /* TRACKIRMOUSE_CONFIG_H */

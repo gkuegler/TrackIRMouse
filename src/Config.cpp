@@ -126,7 +126,11 @@ void CConfig::LoadSettings()
 
     // find_or will return a default if parameter not found
     m_bWatchdog = toml::find_or<bool>(vGeneralSettings, "watchdog_enabled", 0);
-    m_displayProfile = toml::find<int>(vGeneralSettings, "profile");
+    m_activeDisplayProfile = toml::find<int>(vGeneralSettings, "profile");
+
+    //////////////////////////////////////////////////////////////////////
+    //                  Finding NPTrackIR DLL Location                  //
+    //////////////////////////////////////////////////////////////////////
 
     //Optionally the user can specify the location to the trackIR dll
     m_sTrackIrDllLocation = toml::find_or<std::string>(vGeneralSettings, "TrackIR_dll_directory", "default");
@@ -152,25 +156,33 @@ void CConfig::LoadSettings()
     }
     LogToWix(fmt::format("NPTrackIR DLL Location: {}", m_sTrackIrDllLocation));
 
+    // Check if DLL folder path is post fixed with slashes
     if (m_sTrackIrDllLocation.back() != '\\')
     {
         m_sTrackIrDllLocation.push_back('\\');
     }
 
+    // Match to the correct bitness of this application
     #if defined(_WIN64) || defined(__amd64__)
         m_sTrackIrDllLocation.append("NPClient64.dll");
     #else	    
         m_sTrackIrDllLocation.append("NPClient.dll");
     #endif
 
-    // load in the global default padding table if available
-    try {
-        m_vDefaultPaddings = toml::find(m_vData, "default_padding");
 
-        defaultPaddingLeft = toml::find<int>(m_vDefaultPaddings, "left");
-        defaultPaddingRight = toml::find<int>(m_vDefaultPaddings, "right");
-        defaultPaddingTop = toml::find<int>(m_vDefaultPaddings, "top");
-        defaultPaddingBottom = toml::find<int>(m_vDefaultPaddings, "bottom");
+    //////////////////////////////////////////////////////////////////////
+    //                     Finding Default Padding                      //
+    //////////////////////////////////////////////////////////////////////
+
+    // Catch padding table errors because reverting to 0 padding is 
+    // not a critical error
+    try {
+        m_vDefaultPaddingTable = toml::find(m_vData, "default_padding");
+
+        defaultPaddingLeft = toml::find<int>(m_vDefaultPaddingTable, "left");
+        defaultPaddingRight = toml::find<int>(m_vDefaultPaddingTable, "right");
+        defaultPaddingTop = toml::find<int>(m_vDefaultPaddingTable, "top");
+        defaultPaddingBottom = toml::find<int>(m_vDefaultPaddingTable, "bottom");
 
     }
     catch (std::out_of_range e) {
@@ -178,37 +190,42 @@ void CConfig::LoadSettings()
         LogToWix(fmt::format("TOML Non Crititcal Exception Thrown.\n{}\n", e.what()));
     }
 
+    //////////////////////////////////////////////////////////////////////
+    //                       Find Display Mapping                       //
+    //////////////////////////////////////////////////////////////////////
+
     LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
 
-    // Find the profiles table that contains all profiles
-    m_vDisplayMappingProfiles = toml::find(m_vData, "profiles");
+    // Find the profiles table that contains all mapping profiles
+    m_vProfilesTable = toml::find(m_vData, "profiles");
 
-    // Find the profile table which is currently enabled enabled
-    std::string profileTableName = std::to_string(m_displayProfile);
-    auto& vProfileData = toml::find(m_vDisplayMappingProfiles, profileTableName);
+    // Find the profile table which is currently enabled
+    std::string profileTableName = std::to_string(m_activeDisplayProfile);
+    auto& vActiveProfileTable = toml::find(m_vProfilesTable, profileTableName);
 
     // Load in current profile dependent settings
-    m_profileID = toml::find_or<int>(vProfileData, "profile_ID", 13302);
+    m_profileID = toml::find_or<int>(vActiveProfileTable, "profile_ID", 13302);
 
     // Load in Display Mappings
     // Find the display mapping table for the given profile
-    auto& vDisplayMapping = toml::find(vProfileData, "display");
+    auto& vDisplayMappingTable = toml::find(vActiveProfileTable, "display");
 
     LogToWix(fmt::format("Padding\n"));
 
     // TODO: check bounds of my array first with number of monitors
     //  and see if they match
     for (int i = 0; i < m_monitorCount; i++) {
-        std::string tname = std::to_string(i);
+
+        std::string displayTableName = std::to_string(i);
         
         try {
-            const auto& vTomlDisplay = toml::find(vDisplayMapping, tname);
+            const auto& vDisplayMapping = toml::find(vDisplayMappingTable, displayTableName);
 
             // Bring In The Rotational Bounds
-            toml::value left = toml::find(vTomlDisplay, "left");
-            toml::value right = toml::find(vTomlDisplay, "right");
-            toml::value top = toml::find(vTomlDisplay, "top");
-            toml::value bottom = toml::find(vTomlDisplay, "bottom");
+            toml::value left = toml::find(vDisplayMapping, "left");
+            toml::value right = toml::find(vDisplayMapping, "right");
+            toml::value top = toml::find(vDisplayMapping, "top");
+            toml::value bottom = toml::find(vDisplayMapping, "bottom");
 
             // Each value is checked because this toml library cannot
             // cast integers in a toml file to a float
@@ -218,7 +235,7 @@ void CConfig::LoadSettings()
             }
             else
             {
-                bounds[i].left = toml::find<float>(vTomlDisplay, "left"); 
+                bounds[i].left = toml::find<float>(vDisplayMapping, "left"); 
             }
             if (right.type() == toml::value_t::integer)
             {
@@ -226,7 +243,7 @@ void CConfig::LoadSettings()
             }
             else
             {
-                bounds[i].right = toml::find<float>(vTomlDisplay, "right");
+                bounds[i].right = toml::find<float>(vDisplayMapping, "right");
             }
             if (top.type() == toml::value_t::integer)
             {
@@ -234,7 +251,7 @@ void CConfig::LoadSettings()
             }
             else
             {
-                bounds[i].top = toml::find<float>(vTomlDisplay, "top");
+                bounds[i].top = toml::find<float>(vDisplayMapping, "top");
             }
             if (bottom.type() == toml::value_t::integer)
             {
@@ -242,17 +259,17 @@ void CConfig::LoadSettings()
             }
             else
             {
-                bounds[i].bottom = toml::find<float>(vTomlDisplay, "bottom");
+                bounds[i].bottom = toml::find<float>(vDisplayMapping, "bottom");
             }
 
             // I return an ungodly fake high padding number,
             // so that I can tell of one was found in the toml config file
             // without producing an exception if a value was not found.
             // Padding values are not critical the program operation.
-            int paddingLeft = toml::find_or<int>(vTomlDisplay, "paddingLeft", 5555);
-            int paddingRight = toml::find_or<int>(vTomlDisplay, "paddingRight", 5555);
-            int paddingTop = toml::find_or<int>(vTomlDisplay, "paddingTop", 5555);
-            int paddingBottom = toml::find_or<int>(vTomlDisplay, "paddingBottom", 5555);
+            int paddingLeft = toml::find_or<int>(vDisplayMapping, "paddingLeft", 5555);
+            int paddingRight = toml::find_or<int>(vDisplayMapping, "paddingRight", 5555);
+            int paddingTop = toml::find_or<int>(vDisplayMapping, "paddingTop", 5555);
+            int paddingBottom = toml::find_or<int>(vDisplayMapping, "paddingBottom", 5555);
 
             if (paddingLeft != 5555) {
                 LogToWix(fmt::format("Display {} Left:     {:>12}\n", i, paddingLeft));
