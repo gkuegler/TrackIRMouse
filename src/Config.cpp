@@ -320,13 +320,11 @@ void CConfig::LoadSettings()
 
 void CConfig::SaveSettings()
 {
-
     const std::string FileName = "settings_test.toml";
 
     std::fstream file(FileName, std::ios_base::out);
     file << m_vData << std::endl;
     file.close();
-
 }
 
 void CConfig::SetGeneralInteger(const char* parameterName, int value)
