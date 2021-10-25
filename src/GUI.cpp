@@ -10,6 +10,7 @@
 #include <fmt/format.h>
 
 #include <wx/dataview.h>
+#include <wx/colour.h>
 
 wxIMPLEMENT_APP(CGUIApp);
 
@@ -40,12 +41,12 @@ bool CGUIApp::OnInit()
     }
     catch (const std::exception& ex)
     {
-        LogToWix(fmt::format("Load Setting Failed: ", ex.what()));
+        LogToWixError(fmt::format("Load Setting Failed: ", ex.what()));
         wxLogError("Load Setting Failed: ", ex.what());
     }
     catch (...)
     {
-        LogToWix("An unconquered exception has gone on handle when loading settings.");
+        LogToWixError("An unconquered exception has gone on handle when loading settings.");
         wxLogError("exception has gone unhandled");
     }
 
@@ -60,9 +61,28 @@ bool CGUIApp::OnInit()
 
     // Need to build out this function in order to
     // pass more than log messages back to my main application.
-    Bind(wxEVT_THREAD, [this](wxThreadEvent& ev)
+    Bind(wxEVT_THREAD, [this](wxThreadEvent& event)
         {
-            m_frame -> m_panel->m_textrich->AppendText(ev.GetString());
+            cTextCtrl* textrich = m_frame->m_panel->m_textrich;
+
+            if (1 == event.GetExtraLong())
+            {
+                // Setting textile for future output
+                wxTextAttr attrExisting = textrich->GetDefaultStyle();
+
+                textrich->SetDefaultStyle(wxTextAttr(*wxRED));
+
+                textrich->AppendText(event.GetString());
+
+                textrich->SetDefaultStyle(attrExisting);
+
+            }
+            else
+            {
+                textrich->AppendText(event.GetString());
+            }
+
+
         });
 
 	m_frame->Show();
@@ -104,37 +124,6 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
         wxTE_RICH | wxTE_MULTILINE);
     
     m_textrich -> SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-   
-    // Setting text style of specific characters
-    //m_textrich->SetStyle(0, 10, *wxRED);
-    //m_textrich->SetStyle(30, 40,
-        //wxTextAttr(*wxGREEN, wxNullColour, *wxITALIC_FONT));
-
-    // Setting textile for future output
-    //m_textrich->SetDefaultStyle(wxTextAttr()); // default text?
-    //m_textrich->SetDefaultStyle(wxTextAttr(*wxCYAN, *wxBLUE)); // cyan on blue
-    //m_textrich->AppendText("blah blah blah blah\n");
-
-
-    // Setting Advanced Text Attributes
-    //wxTextAttr attr = m_textrich->GetDefaultStyle();
-    //attr.SetFontUnderlined(true);
-    //m_textrich->SetDefaultStyle6(attr);
-    //m_textrich->AppendText("\nAnd there");
-
-    // lay out the controls
-    //wxBoxSizer* column1 = new wxBoxSizer(wxVERTICAL);
-    //column1->Add(m_textrich, 1, wxALL | wxEXPAND, 5);
-    //column1->Add(m_password, 0, wxALL | wxEXPAND, 10);
-    //column1->Add(m_readonly, 0, wxALL, 10);
-    //column1->Add(m_limited, 0, wxALL, 10);
-    //column1->Add(upperOnly, 0, wxALL, 10);
-    //column1->Add(m_horizontal, 1, wxALL | wxEXPAND, 10);
-
-    //wxBoxSizer* column2 = new wxBoxSizer(wxVERTICAL);
-    //column2->Add(m_multitext, 1, wxALL | wxEXPAND, 10);
-    //column2->Add(m_tab, 0, wxALL | wxEXPAND, 10);
-    //column2->Add(m_enter, 1, wxALL | wxEXPAND, 10);
 
     wxBoxSizer* row1 = new wxBoxSizer(wxVERTICAL);
     row1->Add(cbxTrackOnStart, 0, wxALL, 0);

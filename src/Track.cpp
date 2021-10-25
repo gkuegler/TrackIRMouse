@@ -94,12 +94,12 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	}
 	else if (NP_ERR_DLL_NOT_FOUND == rslt)
 	{
-		LogToWix(fmt::format("\nFAILED TO LOAD TRACKIR DLL: {}\n\n", rslt));
+		LogToWixError(fmt::format("\nFAILED TO LOAD TRACKIR DLL: {}\n\n", rslt));
 		throw Exception("Failed to load track IR DLL.");
 	}
 	else
 	{
-		LogToWix(fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rslt));
+		LogToWixError(fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rslt));
 		throw Exception("Failed to initialize track IR.");
 	}
 
@@ -120,7 +120,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	if (rslt == 7)
 	{
 		NP_UnregisterWindowHandle();
-		LogToWix(fmt::format("\nBOOTING CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!\n\n"));
+		LogToWixError(fmt::format("\nBOOTING CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!\n\n"));
 		Sleep(2);
 		rslt = NP_RegisterWindowHandle(hConsole);
 	}
@@ -131,7 +131,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	}
 	else
 	{
-		LogToWix(fmt::format("Register Window Handle: Failed {:>3}\n", rslt));
+		LogToWixError(fmt::format("Register Window Handle: Failed {:>3}\n", rslt));
 		throw Exception("");
 	}
 
@@ -145,7 +145,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	}
 	else
 	{
-		LogToWix(fmt::format("Request Data:        Failed: {:>3}\n", rslt));
+		LogToWixError(fmt::format("Request Data:        Failed: {:>3}\n", rslt));
 		throw Exception("");
 	}
 
@@ -156,7 +156,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	}
 	else
 	{
-		LogToWix(fmt::format("Register Profile ID:       Failed: {:>3}\n", rslt));
+		LogToWixError(fmt::format("Register Profile ID:       Failed: {:>3}\n", rslt));
 		throw Exception("");
 	}
 
@@ -176,7 +176,7 @@ int CTracker::trackStart(CConfig* config)
 	}
 	else
 	{
-		LogToWix(fmt::format("Start Data Transmission:     Failed: {:>3}\n", rslt));
+		LogToWixError(fmt::format("Start Data Transmission:     Failed: {:>3}\n", rslt));
 	}
 
 #endif
@@ -230,7 +230,7 @@ int CTracker::trackStart(CConfig* config)
 		}
 		else if (NP_ERR_DEVICE_NOT_PRESENT == gdf)
 		{
-			LogToWix(fmt::format("\n\nDEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART PROGRAM\n\n"));
+			LogToWixError(fmt::format("\n\nDEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART PROGRAM\n\n"));
 			break;
 		}
 
@@ -301,7 +301,7 @@ void CTracker::WinSetup()
 	// TODO: move this to config or turn my array into a vector
 	if (DEFAULT_MAX_DISPLAYS < monitorCount)
 	{
-		LogToWix(fmt::format("More Than {} Displays Found.\nIncrease max number of m_displays.\n", DEFAULT_MAX_DISPLAYS));
+		LogToWixError(fmt::format("More Than {} Displays Found.\nIncrease max number of m_displays.\n", DEFAULT_MAX_DISPLAYS));
 	}
 
 	/* #################################################################
@@ -492,17 +492,7 @@ void CTracker::MouseMove(int monitorCount, float yaw, float pitch)
 		y  = my * (rt - pitch) + at;
 	}
 
-	// LogToWix(fmt::format("off monitors"));
 	SendMyInput(x, y);
 
 	return;
-
 }
-
-
-/*
-
-TODO:
-make toml more robust to non floats
-
-*/

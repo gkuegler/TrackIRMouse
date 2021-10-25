@@ -14,6 +14,12 @@
  void LogToWix(const char* msg);
  void LogToWix(const wchar_t* msg);
 
+ void LogToWixError(std::string msg);
+ void LogToWixError(std::wstring msg);
+
+ void LogToWixError(const char* msg);
+ void LogToWixError(const wchar_t* msg);
+
  class CMyLogger : public wxLog
  {
  public:

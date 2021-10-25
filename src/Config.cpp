@@ -145,9 +145,9 @@ void CConfig::LoadSettings()
         }
         else
         {
-            LogToWix(fmt::format("Registry get key failed."));
-            LogToWix(fmt::format("  result: {}", path.result));
-            LogToWix(fmt::format("  result string: {}", path.resultString));
+            LogToWixError(fmt::format("Registry get key failed."));
+            LogToWixError(fmt::format("  result: {}", path.result));
+            LogToWixError(fmt::format("  result string: {}", path.resultString));
             throw Exception("See error above.");
         }
 
@@ -185,8 +185,8 @@ void CConfig::LoadSettings()
 
     }
     catch (std::out_of_range e) {
-        LogToWix(fmt::format("Exception with the default padding table."));
-        LogToWix(fmt::format("TOML Non Crititcal Exception Thrown.\n{}\n", e.what()));
+        LogToWixError(fmt::format("Exception with the default padding table."));
+        LogToWixError(fmt::format("TOML Non Crititcal Exception Thrown.\n{}\n", e.what()));
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -305,11 +305,11 @@ void CConfig::LoadSettings()
         }
         catch (toml::type_error e)
         {
-            LogToWix(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
+            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
         }
         catch (std::out_of_range e)
         {
-            LogToWix(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
+            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
             // I wanted to throw std::runtime_error, but i haven't figured out how yet
             //throw 23;
         }
