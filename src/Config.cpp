@@ -109,14 +109,7 @@ RegistryQuery GetStringFrOomRegistry(HKEY hParentKey, const char* subKey, const 
 void CConfig::LoadSettings()
 {
     m_monitorCount = GetSystemMetrics(SM_CMONITORS);
-
-    int defaultPaddingLeft = 0;
-    int defaultPaddingRight = 0;
-    int defaultPaddingTop = 0;
-    int defaultPaddingBottom = 0;
     
-    std::string d = "display";
-
     // TOML will throw a std::runtime_error if there's a problem opening the file 
     m_vData = toml::parse<toml::preserve_comments>("settings.toml");
 
@@ -153,6 +146,7 @@ void CConfig::LoadSettings()
 
         
     }
+
     LogToWix(fmt::format("NPTrackIR DLL Location: {}", m_sTrackIrDllLocation));
 
     // Check if DLL folder path is post fixed with slashes
@@ -173,8 +167,16 @@ void CConfig::LoadSettings()
     //                     Finding Default Padding                      //
     //////////////////////////////////////////////////////////////////////
 
-    // Catch padding table errors because reverting to 0 padding is 
-    // not a critical error
+    // Using the 'find' method here instead of 'find_or' so that the user can be
+    // notified if the default padding table hasn't been configured correctly
+    // in the settings file.
+    int defaultPaddingLeft = 0;
+    int defaultPaddingRight = 0;
+    int defaultPaddingTop = 0;
+    int defaultPaddingBottom = 0;
+
+    // Catch padding table errors and notify user, because reverting to e
+    // 0 padding is not a critical to program function
     try {
         m_vDefaultPaddingTable = toml::find(m_vData, "DefaultPadding");
 
@@ -213,6 +215,7 @@ void CConfig::LoadSettings()
 
     // TODO: check bounds of my array first with number of monitors
     //  and see if they match
+    
     for (int i = 0; i < m_monitorCount; i++) {
 
         std::string displayTableName = std::to_string(i);

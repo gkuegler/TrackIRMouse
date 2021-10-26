@@ -46,7 +46,7 @@ bool CGUIApp::OnInit()
     catch (const std::exception& ex)
     {
         LogToWixError(fmt::format("std::exception&: Load Setting Failed: ", ex.what()));
-        wxLogError("Load Setting Failed: %s", ex.what());
+        //wxLogError("Load Setting Failed: %s", ex.what());
     }
     catch (const Exception& ex)
     {

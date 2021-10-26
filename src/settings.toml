@@ -18,6 +18,7 @@ bottom = 0
 profile_ID = 13302
 
 # Desktop Dual Monitor Setup
+[Profiles.1.DisplayMappings]
 [Profiles.1.DisplayMappings.0]
 left   = -43
 right  = 50
@@ -34,6 +35,7 @@ bottom = -19
 profile_ID = 2025
 
 # Laptop Monitor
+[Profiles.2DisplayMappings]
 [Profiles.2.DisplayMappings.0]
 left   = -50
 right  = 50
@@ -43,6 +45,7 @@ bottom = -32
 [Profiles.3]
 profile_ID = 2025
 
+[Profiles.3.DisplayMappings]
 [Profiles.3.DisplayMappings.0]
 left   = -25
 right  = 25
