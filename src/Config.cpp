@@ -131,7 +131,7 @@ void CConfig::LoadSettings()
     //                  Finding NPTrackIR DLL Location                  //
     //////////////////////////////////////////////////////////////////////
 
-    //Optionally the user can specify the location to the trackIR dll
+    // Optionally the user can specify the location to the trackIR dll
     m_sTrackIrDllLocation = toml::find_or<std::string>(vGeneralSettings, "TrackIR_dll_directory", "default");
 
     if ("default" == m_sTrackIrDllLocation)

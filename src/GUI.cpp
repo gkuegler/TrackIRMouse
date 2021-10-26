@@ -5,6 +5,7 @@
 #include "Track.h"
 #include "Config.h"
 #include "Log.h"
+#include "Exceptions.h"
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
@@ -18,9 +19,9 @@ wxIMPLEMENT_APP(CGUIApp);
 bool CGUIApp::OnInit()
 {
     // Initialize global logger
-    CMyLogger* logger = new CMyLogger();
-    wxLog::SetActiveTarget(logger);
-    wxLog::SetLogLevel(wxLOG_Info);
+    //CMyLogger* logger = new CMyLogger();
+    //wxLog::SetActiveTarget(logger);
+    //wxLog::SetLogLevel(wxLOG_Info);
 
     // Construct child elements
     m_frame = new cFrame();
@@ -34,20 +35,28 @@ bool CGUIApp::OnInit()
         m_config.SetGeneralInteger("profile", 5);
         m_config.SaveSettings();
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error& e)
     {
-        m_frame->m_panel->m_textrich->AppendText((fmt::format("Load Settings Failed. See TOML error above.")));
+        LogToWixError((fmt::format("runtime_error: Load Settings Failed. See TOML error above.")));
         return true;
     }
+    // TODO: something in the toml library
+    // is causing this error to be raised:
+    // "invalid unordered_map<K, T> key"
     catch (const std::exception& ex)
     {
-        LogToWixError(fmt::format("Load Setting Failed: ", ex.what()));
-        wxLogError("Load Setting Failed: ", ex.what());
+        LogToWixError(fmt::format("std::exception&: Load Setting Failed: ", ex.what()));
+        wxLogError("Load Setting Failed: %s", ex.what());
+    }
+    catch (const Exception& ex)
+    {
+        LogToWixError(fmt::format("Exception: Load Setting Failed: ", ex.what()));
+        wxLogError("Load Setting Failed: %s", ex.what());
     }
     catch (...)
     {
         LogToWixError("An unconquered exception has gone on handle when loading settings.");
-        wxLogError("exception has gone unhandled");
+        wxLogFatalError("exception has gone unhandled");
     }
 
     m_frame -> m_panel -> LoadDisplayMappings(m_config);
