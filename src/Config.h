@@ -40,7 +40,7 @@ public:
     void LoadSettings();
     void SaveSettings();
 
-    void SetGeneralInteger(const char*, int);
+    void SetGeneralInteger(const char*, std::string);
 
 private:
     toml::value m_vData;

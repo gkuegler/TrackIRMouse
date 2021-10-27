@@ -32,7 +32,9 @@ bool CGUIApp::OnInit()
     try
     {
         m_config.LoadSettings();
-        m_config.SetGeneralInteger("profile", 5);
+
+        // Currently for testing
+        m_config.SetGeneralInteger("profile", 7);
         m_config.SaveSettings();
     }
     catch (std::runtime_error& e)
@@ -40,13 +42,10 @@ bool CGUIApp::OnInit()
         LogToWixError((fmt::format("runtime_error: Load Settings Failed. See TOML error above.")));
         return true;
     }
-    // TODO: something in the toml library
-    // is causing this error to be raised:
-    // "invalid unordered_map<K, T> key"
     catch (const std::exception& ex)
     {
         LogToWixError(fmt::format("std::exception&: Load Setting Failed: ", ex.what()));
-        //wxLogError("Load Setting Failed: %s", ex.what());
+        wxLogError("Load Setting Failed: %s", ex.what());
     }
     catch (const Exception& ex)
     {
