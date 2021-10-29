@@ -34,7 +34,8 @@ bool CGUIApp::OnInit()
         m_config.LoadSettings();
 
         // Currently for testing
-        m_config.SetGeneralInteger("profile", 7);
+        m_config.SetValueInTable({ "Profiles", "1", "DisplayMappings", "0"}, "left", 69.69);
+
         m_config.SaveSettings();
     }
     catch (std::runtime_error& e)

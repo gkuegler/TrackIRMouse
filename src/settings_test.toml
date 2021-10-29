@@ -7,7 +7,7 @@
 watchdog_enabled = true
 # Specify "default" to get value from registry or an absolute path eg. "C:\Program Files..."
 TrackIR_DLL_directory = "default"
-profile = 7
+profile = 1
 
 [Profiles]
 
@@ -18,7 +18,7 @@ profile_ID = 13302
 [Profiles.1.DisplayMappings]
 
 [Profiles.1.DisplayMappings.0]
-left = -43
+left = 69.69
 right = 50
 top = 19
 bottom = -19
@@ -41,6 +41,7 @@ top = 32
 bottom = -32
 
 
+# Laptop Monitor
 [Profiles.3]
 profile_ID = 2025
 
@@ -52,9 +53,6 @@ right = 25
 top = 15
 bottom = -15
 
-
-# Laptop Monitor
-[Profiles.2DisplayMappings]
 
 
 [DefaultPadding]

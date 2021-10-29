@@ -40,9 +40,23 @@ public:
     void LoadSettings();
     void SaveSettings();
 
-    void SetGeneralInteger(const char*, std::string);
+    template <typename T>
+    int SetValueInTable(std::vector<std::string> tableHierarchy, std::string parameterName, T value)
+    {
+        toml::value* table = this->FindHighestTable(tableHierarchy);
+        if (nullptr == table) return 1;
+
+        // See link below for explanation on accessing the underlying
+        // unordered_map of a toml table
+        // https://github.com/ToruNiina/toml11/issues/85
+
+        table->as_table()[parameterName] = value;
+        return 0;
+    }
 
 private:
+    //toml::value* FindParameterInTable(std::vector<std::string> tableHierarchy, std::string parameterName);
+    toml::value* FindHighestTable(std::vector<std::string> tableHierarchy);
     toml::value m_vData;
     toml::value m_vDefaultPaddingTable;
     toml::value m_vProfilesTable;

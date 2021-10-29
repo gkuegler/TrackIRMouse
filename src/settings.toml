@@ -34,14 +34,14 @@ bottom = -19
 [Profiles.2]
 profile_ID = 2025
 
-# Laptop Monitor
-[Profiles.2DisplayMappings]
+[Profiles.2.DisplayMappings]
 [Profiles.2.DisplayMappings.0]
 left   = -50
 right  = 50
 top    = 32
 bottom = -32
 
+# Laptop Monitor
 [Profiles.3]
 profile_ID = 2025
 

@@ -330,15 +330,26 @@ void CConfig::SaveSettings()
     file.close();
 }
 
-// TODO: bake in error handling:
-    // bad casting
-    // incorrect tables = const std::exception& ex -> "invalid unordered_map<K, T> key"
-    // value not found = const std::exception& ex -> "invalid unordered_map<K, T> key"
 
-void CConfig::SetGeneralInteger(const char* parameterName, std::string value)
+toml::value* CConfig::FindHighestTable(std::vector<std::string> tableHierarchy)
 {
-    toml::value& table = toml::get<toml::table >(m_vData).at("General");
-    toml::value& parameter_ = toml::get<toml::table >(table).at(parameterName);
-    toml::integer& parameter = toml::get<toml::integer>(parameter_);
-    parameter = value;
+    toml::value* table = &m_vData;
+
+    if (tableHierarchy.empty())
+    {
+        return table;
+    }
+
+    for (auto& tableName : tableHierarchy)
+    {
+        if (tableName.empty())
+        {
+            LogToWixError("Tablename can't be empty.");
+            return nullptr;
+        }
+
+        table = &toml::get<toml::table>(*table).at(tableName);
+    }
+
+    return table;
 }
