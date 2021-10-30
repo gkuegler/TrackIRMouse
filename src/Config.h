@@ -51,7 +51,21 @@ public:
         // https://github.com/ToruNiina/toml11/issues/85
 
         table->as_table()[parameterName] = value;
+
+        this->SaveSettings();
+
         return 0;
+    }
+    void InvertBooleanInTable(std::vector<std::string> tableHierarchy, std::string parameterName)
+    {
+        toml::value* table = this->FindHighestTable(tableHierarchy);
+        if (nullptr == table) return;
+
+        toml::value& is_enabled_ = toml::get<toml::table>(*table).at(parameterName);
+        toml::boolean& is_enabled = toml::get<toml::boolean>(is_enabled_);
+        is_enabled = !is_enabled;
+
+        this->SaveSettings();
     }
 
 private:

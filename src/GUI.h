@@ -5,8 +5,13 @@
 #include "Config.h"
 #include "Track.h"
 
+#include "Log.h"
+#include "ControlIDs.h"
+
 #include <wx/wx.h>
 #include <wx/dataview.h>
+
+
 
 class TrackThread : public wxThread
 {
@@ -43,7 +48,31 @@ public:
 
 private:
     wxDataViewListCtrl* m_tlcMappingData;
+
+    void SaveCheckbox(wxCommandEvent& event)
+    {
+        LogToWix("checkbox pressed: ");
+        switch (event.GetId())
+        {
+        case myID_TRACK_ON_START:
+            //SetValueInTable?
+            //where to declare function?
+            LogToWix("myID_TRACK_ON_START pressed\n");
+            break;
+
+        case myID_QUIT_ON_LOSS_OF_TRACK_IR:
+            LogToWix("myID_QUIT_ON_LOSS_OF_TRACK_IR pressed\n");
+            break;
+        }
+    }
+
+    wxDECLARE_EVENT_TABLE();
 };
+
+wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
+    EVT_CHECKBOX(myID_TRACK_ON_START, cPanel::SaveCheckbox)
+    EVT_CHECKBOX(myID_QUIT_ON_LOSS_OF_TRACK_IR, cPanel::SaveCheckbox)
+wxEND_EVENT_TABLE()
 
 //------------------------------------------------------------------------------
 

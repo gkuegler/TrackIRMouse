@@ -34,6 +34,8 @@ bool CGUIApp::OnInit()
         m_config.LoadSettings();
 
         // Currently for testing
+        m_config.InvertBooleanInTable({ "General" }, "track_on_start");
+        m_config.InvertBooleanInTable({ "General" }, "quick_on_loss_of_track_ir");
         m_config.SetValueInTable({ "Profiles", "1", "DisplayMappings", "0"}, "left", 69.69);
 
         m_config.SaveSettings();
@@ -59,7 +61,7 @@ bool CGUIApp::OnInit()
         wxLogFatalError("exception has gone unhandled");
     }
 
-    m_frame -> m_panel -> LoadDisplayMappings(m_config);
+    //m_frame -> m_panel -> LoadDisplayMappings(m_config);?
 
     TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), &m_config);
 
@@ -111,8 +113,8 @@ cTextCtrl::cTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
 
 cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
 {
-    wxCheckBox* cbxTrackOnStart = new wxCheckBox(this, wxID_ANY, "Track On Start", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-    wxCheckBox* cbxQuitOnLossOfTrackIR = new wxCheckBox(this, wxID_ANY, "Quit On Loss Of Track IR", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+    wxCheckBox* cbxTrackOnStart = new wxCheckBox(this, myID_TRACK_ON_START, "Track On Start", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+    wxCheckBox* cbxQuitOnLossOfTrackIR = new wxCheckBox(this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
 
     wxButton* btnStartMouse = new wxButton(this, wxID_ANY, "Start Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
     wxButton* btnStopMouse = new wxButton(this, wxID_ANY, "Stop Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");

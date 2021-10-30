@@ -4,6 +4,8 @@
 
 
 [General]
+track_on_start = false
+quick_on_loss_of_track_ir = true
 watchdog_enabled = true
 # Specify "default" to get value from registry or an absolute path eg. "C:\Program Files..."
 TrackIR_DLL_directory = "default"
