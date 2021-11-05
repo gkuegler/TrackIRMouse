@@ -2,9 +2,13 @@
 #define TRACKIRMOUSE_CONFIG_H
 
 #include "Constants.h"
+#include "Log.h"
 
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
 #include "toml.hpp"
+
+#define FMT_HEADER_ONLY
+#include <fmt\format.h>
 
 #include <string>
 
@@ -21,27 +25,32 @@ struct bounds_in_degrees {
     int paddingBottom = 0;
 };
 
-class CConfig {
+class CConfig
+{
 public:
 
     // Values Stored in TOML File
-    int m_profileID = 0;
+    bool usrTrackOnStart = 0;
+    bool usrQuitOnLossOfTrackIr = 0;
     bool m_bWatchdog = 0;
-    std::string m_sTrackIrDllLocation;
+
+    std::string m_sTrackIrDllLocation = "";
+
     int m_activeDisplayProfile = 0;
+    int m_profile_ID = 0;
 
     // Values Determined at Run Time
     int m_monitorCount = 0;
 
     bounds_in_degrees bounds[DEFAULT_MAX_DISPLAYS];
 
-    CConfig(){};
+    CConfig() {};
 
     void LoadSettings();
     void SaveSettings();
 
     template <typename T>
-    int SetValueInTable(std::vector<std::string> tableHierarchy, std::string parameterName, T value)
+    int SetValueInTable(std::vector<std::string> tableHierarchy, std::string parameterName, const T value)
     {
         toml::value* table = this->FindHighestTable(tableHierarchy);
         if (nullptr == table) return 1;
@@ -52,28 +61,49 @@ public:
 
         table->as_table()[parameterName] = value;
 
-        this->SaveSettings();
-
         return 0;
     }
-    void InvertBooleanInTable(std::vector<std::string> tableHierarchy, std::string parameterName)
+
+    template <typename T>
+    int SetValue(std::string s, const T value)
     {
-        toml::value* table = this->FindHighestTable(tableHierarchy);
-        if (nullptr == table) return;
+        try {
+            std::vector<std::string> tableHierarchy;
 
-        toml::value& is_enabled_ = toml::get<toml::table>(*table).at(parameterName);
-        toml::boolean& is_enabled = toml::get<toml::boolean>(is_enabled_);
-        is_enabled = !is_enabled;
+            constexpr std::string_view delimiter = "/";
+            size_t last = 0;
+            size_t next = 0;
 
-        this->SaveSettings();
+            while ((next = s.find(delimiter, last)) != std::string::npos)
+            {
+                std::string key = s.substr(last, next - last);
+                last = next + 1;
+                tableHierarchy.push_back(key);
+            }
+            std::string parameterName = s.substr(last);
+
+            return SetValueInTable(tableHierarchy, parameterName, value);
+        }
+        catch (const std::exception& ex)
+        {
+            LogToWixError(fmt::format("A big exception happened: {}\n", ex.what()));
+        }
     }
 
+    
+    int GetInteger(std::string s);
+    float GetFloat(std::string s);
+    bool GetBool(std::string s);
+    std::string GetString(std::string s);
+
 private:
-    //toml::value* FindParameterInTable(std::vector<std::string> tableHierarchy, std::string parameterName);
-    toml::value* FindHighestTable(std::vector<std::string> tableHierarchy);
     toml::value m_vData;
-    toml::value m_vDefaultPaddingTable;
-    toml::value m_vProfilesTable;
+
+    void LogTomlError(const std::exception& ex);
+    toml::value GetValue(std::string s);
+    toml::value* FindHighestTable(std::vector<std::string> tableHierarchy);
 };
+
+extern CConfig g_config;
 
 #endif /* TRACKIRMOUSE_CONFIG_H */

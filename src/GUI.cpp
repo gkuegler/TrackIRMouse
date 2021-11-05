@@ -27,18 +27,24 @@ bool CGUIApp::OnInit()
     m_frame = new cFrame();
 
     // Load Settings
-    m_config = CConfig();
+    //try
+    //{
+    //    //wxLogError("press okay to continue");
+    //    /*g_config CConfig();*/
+    //}
+    //catch (const toml::syntax_error& ex)
+    //{
+    //    wxLogFatalError("Failed To Parse File: %s", ex.what());
+    //}
+    //catch (...) {
+    //    wxLogFatalError("An unhandled exception occurred when loading toml file.");
+    //}
+    m_frame->m_panel->SetConfiguration(&g_config);
 
     try
     {
-        m_config.LoadSettings();
-
-        // Currently for testing
-        m_config.InvertBooleanInTable({ "General" }, "track_on_start");
-        m_config.InvertBooleanInTable({ "General" }, "quick_on_loss_of_track_ir");
-        m_config.SetValueInTable({ "Profiles", "1", "DisplayMappings", "0"}, "left", 69.69);
-
-        m_config.SaveSettings();
+        g_config.LoadSettings();
+        //g_config.SaveSettings();
     }
     catch (std::runtime_error& e)
     {
@@ -61,9 +67,10 @@ bool CGUIApp::OnInit()
         wxLogFatalError("exception has gone unhandled");
     }
 
-    //m_frame -> m_panel -> LoadDisplayMappings(m_config);?
-
-    TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), &m_config);
+    //m_frame -> m_panel -> LoadDisplayMappings(g_config);?
+    
+   
+    TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), g_config);
 
     if (thread->Create() == wxTHREAD_NO_ERROR)
     {
@@ -113,21 +120,21 @@ cTextCtrl::cTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
 
 cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
 {
-    wxCheckBox* cbxTrackOnStart = new wxCheckBox(this, myID_TRACK_ON_START, "Track On Start", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-    wxCheckBox* cbxQuitOnLossOfTrackIR = new wxCheckBox(this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+    m_cbxTrackOnStart = new wxCheckBox(this, myID_TRACK_ON_START, "Track On Start", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+    m_cbxQuitOnLossOfTrackIR = new wxCheckBox(this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
 
-    wxButton* btnStartMouse = new wxButton(this, wxID_ANY, "Start Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
-    wxButton* btnStopMouse = new wxButton(this, wxID_ANY, "Stop Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
+    m_btnStartMouse = new wxButton(this, wxID_ANY, "Start Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
+    m_btnStopMouse = new wxButton(this, wxID_ANY, "Stop Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
+    m_btnSaveSettings = new wxButton(this, myID_SAVE_SETTINGS, "Save Settings", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
 
-    wxComboBox* cmbProfiles = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, 0, wxCB_DROPDOWN, wxDefaultValidator, "");
+    m_cmbProfiles = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, 0, wxCB_DROPDOWN, wxDefaultValidator, "");
 
     m_tlcMappingData = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(300, 400), wxDV_HORIZ_RULES, wxDefaultValidator);
 
     m_tlcMappingData->AppendTextColumn("Display #");
     m_tlcMappingData->AppendTextColumn("Parameters");
     m_tlcMappingData->AppendTextColumn("Values", wxDATAVIEW_CELL_EDITABLE);
-
-
+    
 
     wxString start_message(fmt::format("{:-^50}\n", "MouseTrackIR Application"));
     m_textrich = new cTextCtrl(this, wxID_ANY, start_message,
@@ -137,14 +144,15 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     m_textrich -> SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
 
     wxBoxSizer* row1 = new wxBoxSizer(wxVERTICAL);
-    row1->Add(cbxTrackOnStart, 0, wxALL, 0);
-    row1->Add(cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
+    row1->Add(m_cbxTrackOnStart, 0, wxALL, 0);
+    row1->Add(m_cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
 
     wxBoxSizer* row2 = new wxBoxSizer(wxVERTICAL);
-    row2->Add(btnStartMouse, 0, wxALL, 0);
-    row2->Add(btnStopMouse, 0, wxALL, 0);
-    row2->Add(cmbProfiles, 0, wxALL, 0);
-
+    row2->Add(m_btnStartMouse, 0, wxALL, 0);
+    row2->Add(m_btnStopMouse, 0, wxALL, 0);
+    row2->Add(m_btnSaveSettings, 0, wxALL, 0);
+    row2->Add(m_cmbProfiles, 0, wxALL, 0);
+              
     wxBoxSizer* row3 = new wxBoxSizer(wxVERTICAL);
     //row3->Add(tcMappingData, 1, wxALL | wxEXPAND, 0);
     row3->Add(m_tlcMappingData, 0, wxALL | wxEXPAND, 0);
@@ -164,7 +172,7 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     SetSizer(topSizer);
 }
 
-void cPanel::LoadDisplayMappings(const CConfig& config)
+void cPanel::LoadDisplayMappings(const CConfig config)
 {
     std::vector<std::string> names = { "left", "right","top", "bottom" };
 
@@ -185,9 +193,9 @@ void cPanel::LoadDisplayMappings(const CConfig& config)
 }
 
 // ----------------------------------------------------------------------
-
 cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200), wxSize(1200, 800))
 {
+
     wxMenu* menuFile = new wxMenu;
 
     //menuFile->Append(wxID_ANY, "&Hello...\tCtrl-H",
@@ -229,11 +237,11 @@ E-mail: georgekuegler@gmail.com)";
 
 // ----------------------------------------------------------------------
 
-TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd, CConfig* pConfig) : wxThread()
+TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd, const CConfig config) : wxThread()
 {
     m_parent = parent;
     m_hWnd = hWnd;
-    m_pConfig = pConfig;
+    m_Config = config;
 }
 
 wxThread::ExitCode TrackThread::Entry()
@@ -241,8 +249,8 @@ wxThread::ExitCode TrackThread::Entry()
 
     try
     {
-        CTracker Tracker(m_parent, m_hWnd, m_pConfig);
-        int result = Tracker.trackStart(m_pConfig);
+        CTracker Tracker(m_parent, m_hWnd, m_Config);
+        int result = Tracker.trackStart(m_Config);
     }
     catch (const std::exception&)
     {

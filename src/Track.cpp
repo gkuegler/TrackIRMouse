@@ -33,7 +33,7 @@ bool g_bPauseTracking = false;
 //void disconnectTrackIR(void);
 
 
-CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
+CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, const CConfig config)
 {
 
 	// ## Program flow ##
@@ -65,7 +65,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	// After settings are loaded, start accepting connections & msgs
 	// on a named pipe to externally controll the track IR process
 	// Start the watchdog thread
-	if (config->m_bWatchdog)
+	if (config.m_bWatchdog)
 	{
 		// Watchdog thread may return NULL
 		m_hWatchdogThread = WatchDog::StartWatchdog();
@@ -81,7 +81,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 	// Find and load TrackIR DLL
 	TCHAR sDll[MAX_PATH];
 	std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> convert;
-	std::wstring wide_string = convert.from_bytes(config -> m_sTrackIrDllLocation);
+	std::wstring wide_string = convert.from_bytes(config.m_sTrackIrDllLocation);
 	wcscpy_s(sDll, MAX_PATH, wide_string.c_str());
 
 	// Load trackir dll and resolve function addresses
@@ -149,7 +149,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 		throw Exception("");
 	}
 
-	rslt = NP_RegisterProgramProfileID(config->m_profileID);
+	rslt = NP_RegisterProgramProfileID(config.m_profile_ID);
 	if (NP_OK == rslt)
 	{
 		LogToWix("Register Profile ID:         Success\n");
@@ -163,7 +163,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig* config)
 #endif
 }
 
-int CTracker::trackStart(CConfig* config)
+int CTracker::trackStart(CConfig config)
 {
 #ifndef TEST_NO_TRACK
 	// Skipping this too. I think this is for legacy games
@@ -212,7 +212,7 @@ int CTracker::trackStart(CConfig* config)
 
 			if (g_bPauseTracking == false)
 			{
-				MouseMove(config->m_monitorCount, yaw, pitch);
+				MouseMove(config.m_monitorCount, yaw, pitch);
 			}
 
 			// If I would like to log rotational data
@@ -344,24 +344,24 @@ void CTracker::WinSetup()
 	return;
 }
 
-void CTracker::DisplaySetup(CConfig* config)
+void CTracker::DisplaySetup(const CConfig config)
 {
-	for (int i = 0; i < config->m_monitorCount; i++)
+	for (int i = 0; i < config.m_monitorCount; i++)
 	{
-		m_displays[i].rotationBoundLeft   = config->bounds[i].left;
-		m_displays[i].rotationBoundRight  = config->bounds[i].right;
-		m_displays[i].rotationBoundTop    = config->bounds[i].top;
-		m_displays[i].rotationBoundBottom = config->bounds[i].bottom;
+		m_displays[i].rotationBoundLeft   = config.bounds[i].left;
+		m_displays[i].rotationBoundRight  = config.bounds[i].right;
+		m_displays[i].rotationBoundTop    = config.bounds[i].top;
+		m_displays[i].rotationBoundBottom = config.bounds[i].bottom;
 
-		m_displays[i].paddingLeft         = config->bounds[i].paddingLeft;
-		m_displays[i].paddingRight        = config->bounds[i].paddingRight;
-		m_displays[i].paddingTop          = config->bounds[i].paddingTop;
-		m_displays[i].paddingBottom       = config->bounds[i].paddingBottom;
+		m_displays[i].paddingLeft         = config.bounds[i].paddingLeft;
+		m_displays[i].paddingRight        = config.bounds[i].paddingRight;
+		m_displays[i].paddingTop          = config.bounds[i].paddingTop;
+		m_displays[i].paddingBottom       = config.bounds[i].paddingBottom;
 
 		m_displays[i].setAbsBounds(m_virtualOriginX, m_virtualOriginY, m_xPixelAbsoluteSlope, m_yPixelAbsoluteSlope);
 	}
 	LogToWix(fmt::format("\nVirtual Desktop Pixel Bounds (abs)\n"));
-	for (int i = 0; i < config->m_monitorCount; i++)
+	for (int i = 0; i < config.m_monitorCount; i++)
 	{
 		LogToWix(fmt::format("MON {} pixelBoundboundAbsLeft:   {:>10d}\n", i, m_displays[i].pixelBoundAbsLeft));
 		LogToWix(fmt::format("MON {} pixelBoundboundAbsRight:  {:>10d}\n", i, m_displays[i].pixelBoundAbsRight));
@@ -369,7 +369,7 @@ void CTracker::DisplaySetup(CConfig* config)
 		LogToWix(fmt::format("MON {} pixelBoundboundAbsBottom: {:>10d}\n", i, m_displays[i].pixelBoundAbsBottom));
 	}
 	LogToWix(fmt::format("\n16-bit Coordinate Bounds\n"));
-	for (int i = 0; i < config->m_monitorCount; i++)
+	for (int i = 0; i < config.m_monitorCount; i++)
 	{
 		LogToWix(fmt::format("MON {} boundAbsLeft:       {:>12.1f}\n", i, m_displays[i].boundAbsLeft));
 		LogToWix(fmt::format("MON {} boundAbsRight:      {:>12.1f}\n", i, m_displays[i].boundAbsRight));
@@ -377,7 +377,7 @@ void CTracker::DisplaySetup(CConfig* config)
 		LogToWix(fmt::format("MON {} boundAbsBottom:     {:>12.1f}\n", i, m_displays[i].boundAbsBottom));
 	}
 	LogToWix(fmt::format("\nRotational Bounds\n"));
-	for (int i = 0; i < config->m_monitorCount; i++)
+	for (int i = 0; i < config.m_monitorCount; i++)
 	{
 		LogToWix(fmt::format("MON {} rotationBoundLeft:       {:>13.2f}\n", i, m_displays[i].rotationBoundLeft));
 		LogToWix(fmt::format("MON {} rotationBoundRight:      {:>13.2f}\n", i, m_displays[i].rotationBoundRight));

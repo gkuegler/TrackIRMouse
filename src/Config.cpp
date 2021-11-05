@@ -11,6 +11,8 @@
 #include <iostream>
 #include <string>
 
+CConfig g_config = CConfig();
+
 typedef struct _RegistryQuery {
     int result;
     std::string resultString;
@@ -105,7 +107,6 @@ RegistryQuery GetStringFrOomRegistry(HKEY hParentKey, const char* subKey, const 
     return RegistryQuery{ 0, "", std::string(szPath) };
 }
 
-
 void CConfig::LoadSettings()
 {
     m_monitorCount = GetSystemMetrics(SM_CMONITORS);
@@ -178,12 +179,12 @@ void CConfig::LoadSettings()
     // Catch padding table errors and notify user, because reverting to e
     // 0 padding is not a critical to program function
     try {
-        m_vDefaultPaddingTable = toml::find(m_vData, "DefaultPadding");
+        toml::value vDefaultPaddingTable = toml::find(m_vData, "DefaultPadding");
 
-        defaultPaddingLeft = toml::find<int>(m_vDefaultPaddingTable, "left");
-        defaultPaddingRight = toml::find<int>(m_vDefaultPaddingTable, "right");
-        defaultPaddingTop = toml::find<int>(m_vDefaultPaddingTable, "top");
-        defaultPaddingBottom = toml::find<int>(m_vDefaultPaddingTable, "bottom");
+        defaultPaddingLeft = toml::find<int>(vDefaultPaddingTable, "left");
+        defaultPaddingRight = toml::find<int>(vDefaultPaddingTable, "right");
+        defaultPaddingTop = toml::find<int>(vDefaultPaddingTable, "top");
+        defaultPaddingBottom = toml::find<int>(vDefaultPaddingTable, "bottom");
 
     }
     catch (std::out_of_range e) {
@@ -198,14 +199,14 @@ void CConfig::LoadSettings()
     LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
 
     // Find the profiles table that contains all mapping profiles
-    m_vProfilesTable = toml::find(m_vData, "Profiles");
+    toml::value vProfilesTable = toml::find(m_vData, "Profiles");
 
     // Find the profile table which is currently enabled
     std::string profileTableName = std::to_string(m_activeDisplayProfile);
-    auto& vActiveProfileTable = toml::find(m_vProfilesTable, profileTableName);
+    auto& vActiveProfileTable = toml::find(vProfilesTable, profileTableName);
 
     // Load in current profile dependent settings
-    m_profileID = toml::find_or<int>(vActiveProfileTable, "profile_ID", 13302);
+    m_profile_ID = toml::find_or<int>(vActiveProfileTable, "profile_ID", 13302);
 
     // Load in Display Mappings
     // Find the display mapping table for the given profile
@@ -320,16 +321,19 @@ void CConfig::LoadSettings()
 
 }
 
-
 void CConfig::SaveSettings()
 {
     const std::string FileName = "settings_test.toml";
+
+    //SetValue("General/track_on_start", usrTrackOnStart);
+    //SetValue("General/quick_on_loss_of_track_ir", usrQuitOnLossOfTrackIr);
+    //SetValue("General/watchdog_enabled", m_bWatchdog);
+    //SetValue("General/profile", m_activeDisplayProfile);
 
     std::fstream file(FileName, std::ios_base::out);
     file << m_vData << std::endl;
     file.close();
 }
-
 
 toml::value* CConfig::FindHighestTable(std::vector<std::string> tableHierarchy)
 {
@@ -352,4 +356,87 @@ toml::value* CConfig::FindHighestTable(std::vector<std::string> tableHierarchy)
     }
 
     return table;
+}
+
+toml::value CConfig::GetValue(std::string s)
+{
+    std::vector<std::string> tableHierarchy;
+
+    constexpr std::string_view delimiter = "/";
+    size_t last = 0;
+    size_t next = 0;
+
+    while ((next = s.find(delimiter, last)) != std::string::npos)
+    {
+        std::string key = s.substr(last, next - last);
+        last = next + 1;
+        tableHierarchy.push_back(key);
+    }
+
+    std::string parameterName = s.substr(last);
+
+    toml::value* table = this->FindHighestTable(tableHierarchy);
+    if (nullptr == table) return 1;
+
+    return toml::find(*table, parameterName);
+
+    return 0;
+}
+
+int CConfig::GetInteger(std::string s)
+{
+
+    try
+    {
+        toml::value value = GetValue(s);
+        return value.as_integer();
+    }
+    catch (const std::exception& ex)
+    {
+        LogTomlError(ex);
+    }
+}
+
+float CConfig::GetFloat(std::string s)
+{
+    try
+    {
+        toml::value value = GetValue(s);
+        return value.as_floating();
+    }
+    catch (const std::exception& ex)
+    {
+        LogTomlError(ex);
+    }
+}
+
+bool CConfig::GetBool(std::string s)
+{
+    try
+    {
+        toml::value value = GetValue(s);
+        return value.as_boolean();
+    }
+    catch (const std::exception& ex)
+    {
+        LogTomlError(ex);
+    }
+}
+
+std::string CConfig::GetString(std::string s)
+{
+    try
+    {
+        toml::value value = GetValue(s);
+        return value.as_string();
+    }
+    catch (const std::exception& ex)
+    {
+        LogTomlError(ex);
+    }
+}
+
+void CConfig::LogTomlError(const std::exception& ex)
+{
+    wxLogError("Incorrect type on reading configuration parameter: %s", ex.what());
 }

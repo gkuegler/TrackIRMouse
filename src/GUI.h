@@ -4,22 +4,24 @@
 
 #include "Config.h"
 #include "Track.h"
-
 #include "Log.h"
 #include "ControlIDs.h"
+#include "Exceptions.h"
+
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
 
 #include <wx/wx.h>
 #include <wx/dataview.h>
-
 
 
 class TrackThread : public wxThread
 {
 public:
     HWND m_hWnd;
-    CConfig* m_pConfig;
+    CConfig m_Config;
 
-    TrackThread(wxEvtHandler* parent, HWND hWnd, CConfig* config);
+    TrackThread(wxEvtHandler* parent, HWND hWnd, CConfig config);
     ExitCode Entry();
 
 protected:
@@ -37,41 +39,59 @@ public:
 
 //------------------------------------------------------------------------------
 
+void TestFunction()
+{
+    LogToWix("hello how are you");
+}
+
 class cPanel : public wxPanel
 {
 public:
+    wxCheckBox* m_cbxTrackOnStart;
+    wxCheckBox* m_cbxQuitOnLossOfTrackIR;
+    wxButton* m_btnStartMouse;
+    wxButton* m_btnStopMouse;
+    wxButton * m_btnSaveSettings;
+    wxComboBox* m_cmbProfiles;
+
     cTextCtrl* m_textrich;
 
-    cPanel(wxFrame* frame);
+    CConfig* m_pconfig;
 
-    void LoadDisplayMappings(const CConfig& config);
+    cPanel(wxFrame* frame);
+    
+    void LoadDisplayMappings(const CConfig config);
+
+    void SetConfiguration(CConfig* config)
+    {
+        m_pconfig = config;
+    }
 
 private:
     wxDataViewListCtrl* m_tlcMappingData;
 
-    void SaveCheckbox(wxCommandEvent& event)
+    void OnTrackOnStart(wxCommandEvent& event)
     {
-        LogToWix("checkbox pressed: ");
-        switch (event.GetId())
-        {
-        case myID_TRACK_ON_START:
-            //SetValueInTable?
-            //where to declare function?
-            LogToWix("myID_TRACK_ON_START pressed\n");
-            break;
+        m_pconfig->SetValue("General/track_on_start", m_cbxTrackOnStart->IsChecked());
+    }
+    
+    void OnQuitOnLossOfTrackIr(wxCommandEvent& event)
+    {
+        m_pconfig->SetValue("General/quit_on_loss_of_track_ir", m_cbxQuitOnLossOfTrackIR->IsChecked());
+    }
 
-        case myID_QUIT_ON_LOSS_OF_TRACK_IR:
-            LogToWix("myID_QUIT_ON_LOSS_OF_TRACK_IR pressed\n");
-            break;
-        }
+    void OnSaveSettings(wxCommandEvent& event)
+    {
+        m_pconfig->SaveSettings();
     }
 
     wxDECLARE_EVENT_TABLE();
 };
 
 wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
-    EVT_CHECKBOX(myID_TRACK_ON_START, cPanel::SaveCheckbox)
-    EVT_CHECKBOX(myID_QUIT_ON_LOSS_OF_TRACK_IR, cPanel::SaveCheckbox)
+    EVT_CHECKBOX(myID_TRACK_ON_START, cPanel::OnTrackOnStart)
+    EVT_CHECKBOX(myID_QUIT_ON_LOSS_OF_TRACK_IR, cPanel::OnQuitOnLossOfTrackIr)
+    EVT_BUTTON(myID_SAVE_SETTINGS, cPanel::OnSaveSettings)
 wxEND_EVENT_TABLE()
 
 //------------------------------------------------------------------------------
@@ -101,12 +121,17 @@ wxEND_EVENT_TABLE()
 class CGUIApp : public wxApp
 {
 public:
-    CConfig m_config;
+    CConfig g_config;
 
     CGUIApp() {};
     ~CGUIApp() {};
 
 	virtual bool OnInit();
+    virtual void OnUnhandledException()
+    {
+        wxLogFatalError("An unhandled exception has occurred.");
+        std::terminate();
+    }
 private:
 	cFrame* m_frame = nullptr;
 };

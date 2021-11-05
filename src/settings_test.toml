@@ -4,8 +4,8 @@
 
 
 [General]
-track_on_start = false
-quick_on_loss_of_track_ir = true
+track_on_start = true
+quit_on_loss_of_track_ir = false
 watchdog_enabled = true
 # Specify "default" to get value from registry or an absolute path eg. "C:\Program Files..."
 TrackIR_DLL_directory = "default"
@@ -20,7 +20,7 @@ profile_ID = 13302
 [Profiles.1.DisplayMappings]
 
 [Profiles.1.DisplayMappings.0]
-left = 69.69
+left = -43
 right = 50
 top = 19
 bottom = -19
