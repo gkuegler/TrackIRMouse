@@ -5,30 +5,46 @@
 #include <wx/string.h>
 #include <wx/log.h>
 #include <wx/file.h>
+#include <wx/wx.h>
 
 #include <string>
 
- void LogToWix(std::string msg);
- void LogToWix(std::wstring msg);
+//////////////////////////////////////////////////////////////////////
+//        Functions Logging Specifically to the Text Control        //
+//////////////////////////////////////////////////////////////////////
 
- void LogToWix(const char* msg);
- void LogToWix(const wchar_t* msg);
+// Scott Meyers universal reference tips!
+template <typename T>
+void LogToWix(T&& msg)
+{
+    wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
+    evt->SetString(std::forward<T>(msg));
+    wxTheApp->QueueEvent(evt);
+}
 
- void LogToWixError(std::string msg);
- void LogToWixError(std::wstring msg);
+template <typename T>
+void LogToWixError(T&& msg)
+{
+    wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
+    evt->SetString(std::forward<T>(msg));
+    evt->SetExtraLong(1);
+    wxTheApp->QueueEvent(evt);
+}
 
- void LogToWixError(const char* msg);
- void LogToWixError(const wchar_t* msg);
 
- class CMyLogger : public wxLog
- {
- public:
-	 wxString m_filename = "log-trackir.txt";
-	 wxFile m_file;
+//////////////////////////////////////////////////////////////////////
+//     Functions for General-purpose Logging, to File, etc ...      //
+//////////////////////////////////////////////////////////////////////
 
-	 CMyLogger();
-	 void DoLogText(const wxString& msg);
+class CMyLogger : public wxLog
+{
+public:
+    wxString m_filename = "log-trackir.txt";
+    wxFile m_file;
 
- };
+    CMyLogger();
+    void DoLogText(const wxString& msg);
+
+};
 
 #endif /* TRACKIRMOUSE_LOG_H */
