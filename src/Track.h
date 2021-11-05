@@ -15,23 +15,25 @@ public:
     bool m_IsTracking = false;
     HANDLE m_hWatchdogThread = NULL;
 
+    // Passing configuration by value is an intentional choice here
     CTracker(wxEvtHandler* m_parent, HWND hWnd, const CConfig config);
     int trackStart(const CConfig config);
     void trackStop();
 
 private:
-    CDisplay m_displays[DEFAULT_MAX_DISPLAYS];
+    std::vector<CDisplay> m_displays;
 
     signed int m_virtualOriginX = 0;
     signed int m_virtualOriginY = 0;
     float m_xPixelAbsoluteSlope = 0;
     float m_yPixelAbsoluteSlope = 0;
 
-    static BOOL CALLBACK WrapperPopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT, LPARAM);
-    BOOL PopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT);
-    void WinSetup();
+    void WinSetup(CConfig);
     void DisplaySetup(const CConfig);
     void MouseMove(int, float, float);
+
+    BOOL PopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT);
+    static BOOL CALLBACK WrapperPopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT, LPARAM);
 };
 
 #endif /* TRACKIRMOUSE_TRACK_H */

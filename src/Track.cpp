@@ -58,7 +58,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, const CConfig config)
 
 	LogToWix(fmt::format("\nStarting Initialization Of TrackIR\n"));
 
-	WinSetup();
+	WinSetup(config);
 	
 	DisplaySetup(config);
 
@@ -260,18 +260,23 @@ BOOL CTracker::PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRE
 	Monitor.cbSize = sizeof(MONITORINFOEX);
 	GetMonitorInfo(hMonitor, &Monitor);
 
-	m_displays[count].pixelBoundLeft = static_cast <unsigned int> (Monitor.rcMonitor.left); // from long
-	m_displays[count].pixelBoundRight = static_cast <unsigned int> (Monitor.rcMonitor.right); // from long
-	m_displays[count].pixelBoundTop = static_cast <unsigned int> (Monitor.rcMonitor.top); // from long
-	m_displays[count].pixelBoundBottom = static_cast <unsigned int> (Monitor.rcMonitor.bottom); // from long
+	signed int pixelBoundLeft = static_cast <unsigned int> (Monitor.rcMonitor.left); // from long
+	signed int pixelBoundRight = static_cast <unsigned int> (Monitor.rcMonitor.right); // from long
+	signed int pixelBoundTop = static_cast <unsigned int> (Monitor.rcMonitor.top); // from long
+	signed int pixelBoundBottom = static_cast <unsigned int> (Monitor.rcMonitor.bottom); // from long
+
+	// CDisplay may create an extra copy constructor, But I want to guarantee overload resolution
+	// uses my initializer list to instantiate a single item. 
+	// TODO: Optimize this later, see Scott Meyers notes about overload resolutionand vectors.
+	m_displays.push_back(CDisplay{ pixelBoundLeft, pixelBoundRight, pixelBoundTop, pixelBoundBottom });
 
 	// Remember to not use {s} for string types. This causes an error for some reason.
 	LogToWix(fmt::format(L"MON Name:{:>15}\n", Monitor.szDevice));
 
-	LogToWix(fmt::format("MON {} Left:   {:>10}\n", count, m_displays[count].pixelBoundLeft));
-	LogToWix(fmt::format("MON {} Right:  {:>10}\n", count, m_displays[count].pixelBoundRight));
-	LogToWix(fmt::format("MON {} Top:    {:>10}\n", count, m_displays[count].pixelBoundTop));
-	LogToWix(fmt::format("MON {} Bottom: {:>10}\n", count, m_displays[count].pixelBoundBottom));
+	LogToWix(fmt::format("MON {} Left:   {:>10}\n", count, pixelBoundLeft));
+	LogToWix(fmt::format("MON {} Right:  {:>10}\n", count, pixelBoundRight));
+	LogToWix(fmt::format("MON {} Top:    {:>10}\n", count, pixelBoundTop));
+	LogToWix(fmt::format("MON {} Bottom: {:>10}\n", count, pixelBoundBottom));
 
 	if (Monitor.rcMonitor.left < m_virtualOriginX)
 	{
@@ -286,23 +291,29 @@ BOOL CTracker::PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRE
 	return true;
 };
 
-void CTracker::WinSetup()
+void CTracker::WinSetup(CConfig config)
 {
 	LogToWix(fmt::format("\n{:-^50}\n", "Windows Environment Info"));
 
-	int monitorCount = GetSystemMetrics(SM_CMONITORS);
+	const int monitorCount = GetSystemMetrics(SM_CMONITORS);
 	int virtualDesktopWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);  // width of total bounds of all screens
 	int virtualDesktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN); // height of total bounds of all screens
 
-	LogToWix(fmt::format("{} Monitors Found\n", GetSystemMetrics(SM_CMONITORS)));
+	// TODO: this check actually happens at the initialization of my configuration file
+	LogToWixError(fmt::format("Displays Specified: {}\nDisplays Found: {}\n", config.m_bounds.size(), monitorCount));
+
+	if (config.m_bounds.size() < monitorCount)
+	{
+		LogToWixError(fmt::format("More Displays Connected Then Specified In Settings File.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_bounds.size()));
+	}
+	if (config.m_bounds.size() > monitorCount)
+	{
+		LogToWixError(fmt::format("Less Displays Connected Then Specified In Settings File.\nThe Wrong Configuration May Be Selected.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_bounds.size()));
+	}
+
+	LogToWix(fmt::format("{} Monitors Found\n", monitorCount));
 	LogToWix(fmt::format("Width of Virtual Desktop:  {:>5}\n", virtualDesktopWidth));
 	LogToWix(fmt::format("Height of Virtual Desktop: {:>5}\n", virtualDesktopHeight));
-
-	// TODO: move this to config or turn my array into a vector
-	if (DEFAULT_MAX_DISPLAYS < monitorCount)
-	{
-		LogToWixError(fmt::format("More Than {} Displays Found.\nIncrease max number of m_displays.\n", DEFAULT_MAX_DISPLAYS));
-	}
 
 	/* #################################################################
 	For a future feature to automatically detect monitor configurations
@@ -348,15 +359,15 @@ void CTracker::DisplaySetup(const CConfig config)
 {
 	for (int i = 0; i < config.m_monitorCount; i++)
 	{
-		m_displays[i].rotationBoundLeft   = config.bounds[i].left;
-		m_displays[i].rotationBoundRight  = config.bounds[i].right;
-		m_displays[i].rotationBoundTop    = config.bounds[i].top;
-		m_displays[i].rotationBoundBottom = config.bounds[i].bottom;
+		m_displays[i].rotationBoundLeft   = config.m_bounds[i].left;
+		m_displays[i].rotationBoundRight  = config.m_bounds[i].right;
+		m_displays[i].rotationBoundTop    = config.m_bounds[i].top;
+		m_displays[i].rotationBoundBottom = config.m_bounds[i].bottom;
 
-		m_displays[i].paddingLeft         = config.bounds[i].paddingLeft;
-		m_displays[i].paddingRight        = config.bounds[i].paddingRight;
-		m_displays[i].paddingTop          = config.bounds[i].paddingTop;
-		m_displays[i].paddingBottom       = config.bounds[i].paddingBottom;
+		m_displays[i].paddingLeft         = config.m_bounds[i].paddingLeft;
+		m_displays[i].paddingRight        = config.m_bounds[i].paddingRight;
+		m_displays[i].paddingTop          = config.m_bounds[i].paddingTop;
+		m_displays[i].paddingBottom       = config.m_bounds[i].paddingBottom;
 
 		m_displays[i].setAbsBounds(m_virtualOriginX, m_virtualOriginY, m_xPixelAbsoluteSlope, m_yPixelAbsoluteSlope);
 	}

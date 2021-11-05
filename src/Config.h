@@ -13,16 +13,16 @@
 #include <string>
 
 struct bounds_in_degrees {
-    float left = 0;
-    float right = 0;
-    float top = 0;
-    float bottom = 0;
+    float left;
+    float right;
+    float top;
+    float bottom;
 
     //These are actually in pixels
-    int paddingLeft = 0;
-    int paddingRight = 0;
-    int paddingTop = 0;
-    int paddingBottom = 0;
+    int paddingLeft;
+    int paddingRight;
+    int paddingTop;
+    int paddingBottom;
 };
 
 class CConfig
@@ -42,7 +42,8 @@ public:
     // Values Determined at Run Time
     int m_monitorCount = 0;
 
-    bounds_in_degrees bounds[DEFAULT_MAX_DISPLAYS];
+    //bounds_in_degrees bounds[DEFAULT_MAX_DISPLAYS];
+    std::vector<bounds_in_degrees> m_bounds;
 
     CConfig() {};
 

@@ -231,42 +231,23 @@ void CConfig::LoadSettings()
             toml::value bottom = toml::find(vDisplayMapping, "bottom");
 
             // Each value is checked because this toml library cannot
-            // cast integers in a toml file to a float
-            if (left.type() == toml::value_t::integer)
-            {
-                bounds[i].left = static_cast<float>(left.as_integer());
-            }
-            else
-            {
-                bounds[i].left = toml::find<float>(vDisplayMapping, "left"); 
-            }
-            if (right.type() == toml::value_t::integer)
-            {
-                bounds[i].right = static_cast<float>(right.as_integer());
-            }
-            else
-            {
-                bounds[i].right = toml::find<float>(vDisplayMapping, "right");
-            }
-            if (top.type() == toml::value_t::integer)
-            {
-                bounds[i].top = static_cast<float>(top.as_integer());
-            }
-            else
-            {
-                bounds[i].top = toml::find<float>(vDisplayMapping, "top");
-            }
-            if (bottom.type() == toml::value_t::integer)
-            {
-                bounds[i].bottom = static_cast<float>(bottom.as_integer());
-            }
-            else
-            {
-                bounds[i].bottom = toml::find<float>(vDisplayMapping, "bottom");
-            }
+            // convert integers in a toml value to a float
+            toml::value_t integer = toml::value_t::integer;
 
-            // I return an ungodly fake high padding number,
-            // so that I can tell of one was found in the toml config file
+            float rotLeft = (left.type() == integer) ? static_cast<float>(left.as_integer())
+                                                     : left.as_floating();
+
+            float rotRight = (right.type() == integer) ? static_cast<float>(right.as_integer())
+                                                       : right.as_floating();
+
+            float rotTop = (top.type() == integer) ? static_cast<float>(top.as_integer())
+                                                  : top.as_floating();
+
+            float rotBottom = (bottom.type() == integer) ? static_cast<float>(bottom.as_integer())
+                                                         : bottom.as_floating();
+
+            // I return an ungodly fake high padding numbelong ,
+            // so that I can tell if one was found in the toml config file
             // without producing an exception if a value was not found.
             // Padding values are not critical the program operation.
             int paddingLeft = toml::find_or<int>(vDisplayMapping, "paddingLeft", 5555);
@@ -276,36 +257,38 @@ void CConfig::LoadSettings()
 
             if (paddingLeft != 5555) {
                 LogToWix(fmt::format("Display {} Left:     {:>12}\n", i, paddingLeft));
-                bounds[i].paddingLeft = paddingLeft;
+                paddingLeft = paddingLeft;
             }
             else {
                 LogToWix(fmt::format("Display {} Left:     {:>12} (Default)\n", i, defaultPaddingLeft));
-                bounds[i].paddingLeft = defaultPaddingLeft;
+                paddingLeft = defaultPaddingLeft;
             }
             if (paddingRight != 5555) {
                 LogToWix(fmt::format("Display {} Right:    {:>12}\n", i, paddingRight));
-                bounds[i].paddingRight = paddingRight;
+                paddingRight = paddingRight;
             }
             else {
                 LogToWix(fmt::format("Display {} Right:    {:>12} (Default)\n", i, defaultPaddingRight));
-                bounds[i].paddingRight = defaultPaddingRight;
+                paddingRight = defaultPaddingRight;
             }
             if (paddingTop != 5555) {
                 LogToWix(fmt::format("Display {} Top:      {:>12}\n", i, paddingTop));
-                bounds[i].paddingTop = paddingTop;
+                paddingTop = paddingTop;
             }
             else {
                 LogToWix(fmt::format("Display {} Top:      {:>12} (Default)\n", i, defaultPaddingTop));
-                bounds[i].paddingTop = defaultPaddingTop;
+                paddingTop = defaultPaddingTop;
             }
             if (paddingBottom != 5555) {
                 LogToWix(fmt::format("Display {} Bottom:   {:>12}\n", i, paddingBottom));
-                bounds[i].paddingBottom = paddingBottom;
+                paddingBottom = paddingBottom;
             }
             else {
                 LogToWix(fmt::format("Display {} Bottom:   {:>12} (Default)\n", i, defaultPaddingBottom));
-                bounds[i].paddingBottom = defaultPaddingBottom;
+                paddingBottom = defaultPaddingBottom;
             }
+
+            m_bounds.push_back(bounds_in_degrees{ rotLeft, rotRight, rotTop, rotBottom, paddingLeft, paddingRight, paddingTop, paddingBottom});
         }
         catch (toml::type_error e)
         {

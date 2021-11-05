@@ -49,6 +49,14 @@ public:
     float ySlope{};
     float xSlope{};
 
+    CDisplay(signed int left, signed int right, signed int top, signed int bottom)
+    {
+        pixelBoundLeft = left;
+        pixelBoundRight = right;
+        pixelBoundTop = top;
+        pixelBoundBottom = bottom;
+    }
+
     void setAbsBounds(signed int virtualOriginLeft, signed int virtualOriginTop,
         float x_PxToABS, float y_PxToABS) {
         pixelBoundAbsLeft = pixelBoundLeft - virtualOriginLeft;

@@ -184,7 +184,7 @@ void cPanel::LoadDisplayMappings(const CConfig config)
             rotationBoundLeft.push_back(wxVariant(std::to_string(i)));
             rotationBoundLeft.push_back(wxVariant(names.at(j)));
 
-            wxString stringnumber = wxString::Format(wxT("%d"), (int)config.bounds[i].left);
+            wxString stringnumber = wxString::Format(wxT("%d"), (int)config.m_bounds[i].left);
 
             rotationBoundLeft.push_back(wxVariant(stringnumber));
             m_tlcMappingData->AppendItem(rotationBoundLeft);
