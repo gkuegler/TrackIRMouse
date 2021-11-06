@@ -12,6 +12,7 @@
 
 #include <wx/dataview.h>
 #include <wx/colour.h>
+#include <spdlog/spdlog.h>
 
 wxIMPLEMENT_APP(CGUIApp);
 
@@ -22,6 +23,7 @@ bool CGUIApp::OnInit()
     //CMyLogger* logger = new CMyLogger();
     //wxLog::SetActiveTarget(logger);
     //wxLog::SetLogLevel(wxLOG_Info);
+    /*spdlog::info("Welcome to spdlog!");*/
 
     // Construct child elements
     m_frame = new cFrame();
@@ -67,7 +69,7 @@ bool CGUIApp::OnInit()
         wxLogFatalError("exception has gone unhandled");
     }
 
-    //m_frame -> m_panel -> LoadDisplayMappings(g_config);?
+    m_frame->m_panel->LoadDisplayMappings(g_config);
     
    
     TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), g_config);
@@ -180,14 +182,14 @@ void cPanel::LoadDisplayMappings(const CConfig config)
     {
         for (int j = 0; j < names.size(); j++)
         {
-            wxVector<wxVariant> rotationBoundLeft;
-            rotationBoundLeft.push_back(wxVariant(std::to_string(i)));
-            rotationBoundLeft.push_back(wxVariant(names.at(j)));
+            wxVector<wxVariant> row;
+            row.push_back(wxVariant(std::to_string(i)));
+            row.push_back(wxVariant(names.at(j)));
 
-            wxString stringnumber = wxString::Format(wxT("%d"), (int)config.m_bounds[i].left);
+            wxString stringnumber = wxString::Format(wxT("%d"), (int)config.m_bounds[i].rotationBounds[j]);
 
-            rotationBoundLeft.push_back(wxVariant(stringnumber));
-            m_tlcMappingData->AppendItem(rotationBoundLeft);
+            row.push_back(wxVariant(stringnumber));
+            m_tlcMappingData->AppendItem(row);
         }
     }
 }

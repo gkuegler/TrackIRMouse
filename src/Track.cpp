@@ -260,23 +260,26 @@ BOOL CTracker::PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRE
 	Monitor.cbSize = sizeof(MONITORINFOEX);
 	GetMonitorInfo(hMonitor, &Monitor);
 
-	signed int pixelBoundLeft = static_cast <unsigned int> (Monitor.rcMonitor.left); // from long
-	signed int pixelBoundRight = static_cast <unsigned int> (Monitor.rcMonitor.right); // from long
-	signed int pixelBoundTop = static_cast <unsigned int> (Monitor.rcMonitor.top); // from long
-	signed int pixelBoundBottom = static_cast <unsigned int> (Monitor.rcMonitor.bottom); // from long
+	// Monitor Pixel Bounds in the Virtual Desktop
+	// static_cast is long -> signed int
+	signed int left   = static_cast<unsigned int>(Monitor.rcMonitor.left);
+	signed int right  = static_cast<unsigned int>(Monitor.rcMonitor.right);
+	signed int top    = static_cast<unsigned int>(Monitor.rcMonitor.top);
+	signed int bottom = static_cast<unsigned int>(Monitor.rcMonitor.bottom);
 
-	// CDisplay may create an extra copy constructor, But I want to guarantee overload resolution
-	// uses my initializer list to instantiate a single item. 
+	// CDisplay may create an extra copy constructor, but I want to guarantee
+	// overload resolution uses my initializer list to instantiate a single item.
 	// TODO: Optimize this later, see Scott Meyers notes about overload resolutionand vectors.
-	m_displays.push_back(CDisplay{ pixelBoundLeft, pixelBoundRight, pixelBoundTop, pixelBoundBottom });
+	m_displays.push_back(CDisplay{ left, right, top, bottom });
 
-	// Remember to not use {s} for string types. This causes an error for some reason.
+
+	// Display monitor info to user
 	LogToWix(fmt::format(L"MON Name:{:>15}\n", Monitor.szDevice));
 
-	LogToWix(fmt::format("MON {} Left:   {:>10}\n", count, pixelBoundLeft));
-	LogToWix(fmt::format("MON {} Right:  {:>10}\n", count, pixelBoundRight));
-	LogToWix(fmt::format("MON {} Top:    {:>10}\n", count, pixelBoundTop));
-	LogToWix(fmt::format("MON {} Bottom: {:>10}\n", count, pixelBoundBottom));
+	LogToWix(fmt::format("MON {} Left:   {:>10}\n", count, left));
+	LogToWix(fmt::format("MON {} Right:  {:>10}\n", count, right));
+	LogToWix(fmt::format("MON {} Top:    {:>10}\n", count, top));
+	LogToWix(fmt::format("MON {} Bottom: {:>10}\n", count, bottom));
 
 	if (Monitor.rcMonitor.left < m_virtualOriginX)
 	{
@@ -359,15 +362,15 @@ void CTracker::DisplaySetup(const CConfig config)
 {
 	for (int i = 0; i < config.m_monitorCount; i++)
 	{
-		m_displays[i].rotationBoundLeft   = config.m_bounds[i].left;
-		m_displays[i].rotationBoundRight  = config.m_bounds[i].right;
-		m_displays[i].rotationBoundTop    = config.m_bounds[i].top;
-		m_displays[i].rotationBoundBottom = config.m_bounds[i].bottom;
+		m_displays[i].rotationBoundLeft   = config.m_bounds[i].rotationBounds[0];
+		m_displays[i].rotationBoundRight  = config.m_bounds[i].rotationBounds[1];
+		m_displays[i].rotationBoundTop    = config.m_bounds[i].rotationBounds[2];
+		m_displays[i].rotationBoundBottom = config.m_bounds[i].rotationBounds[3];
 
-		m_displays[i].paddingLeft         = config.m_bounds[i].paddingLeft;
-		m_displays[i].paddingRight        = config.m_bounds[i].paddingRight;
-		m_displays[i].paddingTop          = config.m_bounds[i].paddingTop;
-		m_displays[i].paddingBottom       = config.m_bounds[i].paddingBottom;
+		m_displays[i].paddingLeft         = config.m_bounds[i].paddingBounds[0];
+		m_displays[i].paddingRight        = config.m_bounds[i].paddingBounds[1];
+		m_displays[i].paddingTop          = config.m_bounds[i].paddingBounds[2];
+		m_displays[i].paddingBottom       = config.m_bounds[i].paddingBounds[3];
 
 		m_displays[i].setAbsBounds(m_virtualOriginX, m_virtualOriginY, m_xPixelAbsoluteSlope, m_yPixelAbsoluteSlope);
 	}
@@ -447,7 +450,10 @@ void CTracker::MouseMove(int monitorCount, float yaw, float pitch)
 
 	for (int i = 0; i <= monitorCount - 1; i++)
 	{
-		if ((yaw > m_displays[i].rotationBound16BitLeft) && (yaw < m_displays[i].rotationBound16BitRight) && (pitch < m_displays[i].rotationBound16BitTop) && (pitch > m_displays[i].rotationBound16BitBottom))
+		if ((yaw > m_displays[i].rotationBound16BitLeft)
+			&& (yaw < m_displays[i].rotationBound16BitRight)
+			&& (pitch < m_displays[i].rotationBound16BitTop)
+			&& (pitch > m_displays[i].rotationBound16BitBottom))
 		{
 			// I wrote it out for maintainability
 			// its plenty fast anyway for a 60hz limited display
@@ -468,16 +474,20 @@ void CTracker::MouseMove(int monitorCount, float yaw, float pitch)
 		}
 	}
 
-	// If the head is pointing outside of the bounds of a screen the mouse should snap to the breached edge
-	// It could either be the pitch or the yaw axis that is too great or too little
-	// To do this assume the pointer came from the last screen, just asign the mouse position to the absolute limit from the screen it came from
+	// If the head is pointing outside of the bounds of a screen the mouse
+	// should snap to the breached edge it could either be the pitch or the
+	// yaw axis that is too great or too little to do this assume the pointer
+	// came from the last screen, just asign the mouse position to the absolute
+	// limit from the screen it came from.
 	if (yaw < m_displays[lastScreen].rotationBound16BitLeft)
 	{
-		x = m_displays[lastScreen].boundAbsLeft + m_displays[lastScreen].paddingLeft * m_xPixelAbsoluteSlope;
+		x = m_displays[lastScreen].boundAbsLeft
+			+ m_displays[lastScreen].paddingLeft * m_xPixelAbsoluteSlope;
 	}
 	else if (yaw > m_displays[lastScreen].rotationBound16BitRight)
 	{
-		x = m_displays[lastScreen].boundAbsRight - m_displays[lastScreen].paddingRight * m_xPixelAbsoluteSlope;
+		x = m_displays[lastScreen].boundAbsRight
+			- m_displays[lastScreen].paddingRight * m_xPixelAbsoluteSlope;
 	}
 	else
 	{
@@ -489,11 +499,13 @@ void CTracker::MouseMove(int monitorCount, float yaw, float pitch)
 
 	if (pitch > m_displays[lastScreen].rotationBound16BitTop)
 	{
-		y = m_displays[lastScreen].boundAbsTop + m_displays[lastScreen].paddingTop * m_yPixelAbsoluteSlope;
+		y = m_displays[lastScreen].boundAbsTop
+			+ m_displays[lastScreen].paddingTop * m_yPixelAbsoluteSlope;
 	}
 	else if (pitch < m_displays[lastScreen].rotationBound16BitBottom)
 	{
-		y = m_displays[lastScreen].boundAbsBottom - m_displays[lastScreen].paddingBottom * m_yPixelAbsoluteSlope;
+		y = m_displays[lastScreen].boundAbsBottom
+			- m_displays[lastScreen].paddingBottom * m_yPixelAbsoluteSlope;
 	}
 	else
 	{

@@ -12,17 +12,27 @@
 
 #include <string>
 
-struct bounds_in_degrees {
-    float left;
-    float right;
-    float top;
-    float bottom;
+// struct bounds_in_degrees {
+//     // Left, Right, Top, Bottom
+//     std::array<std::string, 4> names = { "left", "right", "top", "bottom" };
+//     std::array<float, 4> rotationBounds;
+//     std::array<int, 4> paddingBounds;
+// };
 
-    //These are actually in pixels
-    int paddingLeft;
-    int paddingRight;
-    int paddingTop;
-    int paddingBottom;
+class bounds_in_degrees
+{
+public:
+
+    // Left, Right, Top, Bottom
+    static constexpr std::array<std::string_view, 4> names = { "left", "right", "top", "bottom" };
+    std::array<float, 4> rotationBounds;
+    std::array<int, 4> paddingBounds;
+
+    bounds_in_degrees(std::array<float, 4>&& rotations, std::array<int, 4>&& padding)
+    {
+        rotationBounds = rotations;
+        paddingBounds = padding;
+    }
 };
 
 class CConfig

@@ -288,7 +288,7 @@ void CConfig::LoadSettings()
                 paddingBottom = defaultPaddingBottom;
             }
 
-            m_bounds.push_back(bounds_in_degrees{ rotLeft, rotRight, rotTop, rotBottom, paddingLeft, paddingRight, paddingTop, paddingBottom});
+            m_bounds.push_back(bounds_in_degrees({rotLeft, rotRight, rotTop, rotBottom}, {paddingLeft, paddingRight, paddingTop, paddingBottom}));
         }
         catch (toml::type_error e)
         {
