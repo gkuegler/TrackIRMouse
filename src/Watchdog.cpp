@@ -10,9 +10,6 @@
 #include "Constants.h"
 #include "Log.h"
 
-#define FMT_HEADER_ONLY
-#include <fmt\format.h>
-
 #include <windows.h>
 //TODO: 2021-10-23: Delete all unnecessary include statements
 //#include <stdio.h>

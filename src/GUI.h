@@ -1,4 +1,3 @@
-#pragma once
 #ifndef TRACKIRMOUSE_GUI_H
 #define TRACKIRMOUSE_GUI_H
 
@@ -7,9 +6,6 @@
 #include "Log.h"
 #include "ControlIDs.h"
 #include "Exceptions.h"
-
-#define FMT_HEADER_ONLY
-#include <fmt/format.h>
 
 #include <wx/wx.h>
 #include <wx/dataview.h>

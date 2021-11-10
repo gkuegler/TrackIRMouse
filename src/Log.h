@@ -1,16 +1,8 @@
-#pragma once
 #ifndef TRACKIRMOUSE_LOG_H
 #define TRACKIRMOUSE_LOG_H
 
-#include <wx/string.h>
-#include <wx/log.h>
-#include <wx/file.h>
-#include <wx/wx.h>
-
-#include <string>
-
 #define FMT_HEADER_ONLY
-#include <fmt\xchar.h>
+// #include <fmt\xchar.h>
 #include <fmt\format.h>
 
 #define SPDLOG_NO_THREAD_ID
@@ -19,6 +11,12 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 
+#include <wx/string.h>
+#include <wx/log.h>
+#include <wx/file.h>
+#include <wx/wx.h>
+
+#include <string>
 
 
 //////////////////////////////////////////////////////////////////////

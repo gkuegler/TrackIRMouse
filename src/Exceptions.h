@@ -1,4 +1,3 @@
-#pragma once
 #ifndef TRACKIRMOUSE_EXCEPTIONS_H
 #define TRACKIRMOUSE_EXCEPTIONS_H
 

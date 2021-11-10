@@ -7,9 +7,6 @@
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
 #include "toml.hpp"
 
-#define FMT_HEADER_ONLY
-#include <fmt\format.h>
-
 #include <string>
 
 // struct bounds_in_degrees {

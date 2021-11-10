@@ -3,9 +3,6 @@
 #include "Log.h"
 #include "Exceptions.h"
 
-#define FMT_HEADER_ONLY
-#include <fmt\format.h>
-
 #include <Windows.h>
 
 #include <iostream>

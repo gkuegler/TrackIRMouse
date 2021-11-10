@@ -17,9 +17,6 @@
 #include "Config.h"
 #include "Log.h"
 
-#define FMT_HEADER_ONLY
-#include <fmt\format.h>
-#include <fmt\xchar.h>
 #include <wx/wx.h>
 
 #define USHORT_MAX_VAL 65535 // SendInput with absolute mouse movement takes a short int

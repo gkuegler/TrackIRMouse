@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TRACKIRMOUSE_CONTROL_IDS_H
+#define TRACKIRMOUSE_CONTROL_IDS_H
 
 #include <wx/wx.h>
 
@@ -11,3 +12,5 @@ enum
 	myID_SAVE_SETTINGS,
 	myID_PROFILE_SELECTION,
 };
+
+#endif /* TRACKIRMOUSE_CONTROL_IDS_H */

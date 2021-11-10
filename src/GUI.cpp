@@ -7,12 +7,8 @@
 #include "Log.h"
 #include "Exceptions.h"
 
-//#define FMT_HEADER_ONLY
-//#include <fmt/format.h>
-
 #include <wx/dataview.h>
 #include <wx/colour.h>
-//#include <spdlog/spdlog.h>
 
 wxIMPLEMENT_APP(CGUIApp);
 
