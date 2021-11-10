@@ -138,7 +138,7 @@ DWORD WINAPI InstanceThread(LPVOID param)
     sa.lpSecurityDescriptor = pSD.get();
     sa.bInheritHandle = FALSE;
 
-    LogToWix(fmt::format("\nPipe Server: Main thread awaiting client connection on {}\n", lpszPipename));
+    //LogToWix(fmt::format("\nPipe Server: Main thread awaiting client connection on {}\n", lpszPipename));
 
     hPipe = CreateNamedPipeA(
         lpszPipename,             // pipe name 
@@ -180,32 +180,32 @@ int Serve(HANDLE hPipe)
 
     if (pchRequest == NULL)
     {
-        LogToWix(fmt::format("\nERROR - Pipe Server Failure:\n"));
-        LogToWix(fmt::format("   Serve got an unexpected NULL heap allocation.\n"));
-        LogToWix(fmt::format("   Serve exitting.\n"));
+        LogToWix("\nERROR - Pipe Server Failure:\n");
+        LogToWix("   Serve got an unexpected NULL heap allocation.\n");
+        LogToWix("   Serve exitting.\n");
         if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
         return (DWORD)-1;
     }
 
     if (pchReply == NULL)
     {
-        LogToWix(fmt::format("\nERROR - Pipe Server Failure:\n"));
-        LogToWix(fmt::format("   Serve got an unexpected NULL heap allocation.\n"));
-        LogToWix(fmt::format("   Serve exitting.\n"));
+        LogToWix("\nERROR - Pipe Server Failure:\n");
+        LogToWix("   Serve got an unexpected NULL heap allocation.\n");
+        LogToWix("   Serve exitting.\n");
         if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
         return (DWORD)-1;
     }
 
     while (1)
     {
-        LogToWix(fmt::format("Waiting on client connection...\n"));
+        LogToWix("Waiting on client connection...\n");
 
         if (ConnectNamedPipe(hPipe, NULL) == 0)
         {
             LogToWix(fmt::format("ConnectNamedPipe failed, GLE={}.\n", GetLastError()));
             break;
         }
-        LogToWix(fmt::format("Client Connected!\n"));
+        LogToWix("Client Connected!\n");
 
         while (1)
         {
@@ -222,7 +222,7 @@ int Serve(HANDLE hPipe)
             {
                 if (GetLastError() == ERROR_BROKEN_PIPE)
                 {
-                    LogToWix(fmt::format("Serve: client disconnected.\n"));
+                    LogToWix("Serve: client disconnected.\n");
                     break;
                 }
                 else
@@ -280,7 +280,7 @@ int Serve(HANDLE hPipe)
     HeapFree(hHeap, 0, pchRequest);
     HeapFree(hHeap, 0, pchReply);
 
-    LogToWix(fmt::format("InstanceThread exiting.\n"));
+    LogToWix("InstanceThread exiting.\n");
     return (DWORD)1;
 
 }
@@ -323,7 +323,7 @@ VOID HandleMsg(const char* pchRequest, char* pchReply, LPDWORD pchBytes)
     {
         *pchBytes = 0;
         pchReply[0] = 0;
-        LogToWix(fmt::format("strcpy_s failed, no outgoing message.\n"));
+        LogToWix("strcpy_s failed, no outgoing message.\n");
         return;
     }
 }

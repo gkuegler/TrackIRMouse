@@ -9,6 +9,18 @@
 
 #include <string>
 
+#define FMT_HEADER_ONLY
+#include <fmt\xchar.h>
+#include <fmt\format.h>
+
+#define SPDLOG_NO_THREAD_ID
+#define SPDLOG_NO_ATOMIC_LEVELS
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/spdlog.h>
+
+
+
 //////////////////////////////////////////////////////////////////////
 //        Functions Logging Specifically to the Text Control        //
 //////////////////////////////////////////////////////////////////////
@@ -17,6 +29,10 @@
 template <typename T>
 void LogToWix(T&& msg)
 {
+    //std::string msg2(msg);
+    //logger->info(msg2.c_str());
+    //spdlog::get("logger1")->info("hnlogger->info<T>(msg);
+    spdlog::get("mainlogger")->info<T>(msg);
     wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
     evt->SetString(std::forward<T>(msg));
     wxTheApp->QueueEvent(evt);
@@ -25,12 +41,12 @@ void LogToWix(T&& msg)
 template <typename T>
 void LogToWixError(T&& msg)
 {
+    //logger->warn(msg);
     wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
     evt->SetString(std::forward<T>(msg));
     evt->SetExtraLong(1);
     wxTheApp->QueueEvent(evt);
 }
-
 
 //////////////////////////////////////////////////////////////////////
 //     Functions for General-purpose Logging, to File, etc ...      //

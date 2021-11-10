@@ -222,7 +222,7 @@ int CTracker::trackStart(CConfig config)
 			// I don't actually really care about dropped frames
 			//if ((framesig != lastFrame + 1) && (lastFrame != 0))
 			//{
-				//LogToWix(fmt::format("dropped"));
+				//LogToWix("dropped frame");
 				//droppedFrames = droppedFrames + framesig - lastFrame - 1;
 			//}
 
@@ -230,7 +230,7 @@ int CTracker::trackStart(CConfig config)
 		}
 		else if (NP_ERR_DEVICE_NOT_PRESENT == gdf)
 		{
-			LogToWixError(fmt::format("\n\nDEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART PROGRAM\n\n"));
+			LogToWixError("\n\nDEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART PROGRAM\n\n");
 			break;
 		}
 
@@ -274,7 +274,7 @@ BOOL CTracker::PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRE
 
 
 	// Display monitor info to user
-	LogToWix(fmt::format(L"MON Name:{:>15}\n", Monitor.szDevice));
+	//LogToWix(fmt::format(L"MON Name:{:>15}\n", Monitor.szDevice));
 
 	LogToWix(fmt::format("MON {} Left:   {:>10}\n", count, left));
 	LogToWix(fmt::format("MON {} Right:  {:>10}\n", count, right));
@@ -349,7 +349,7 @@ void CTracker::WinSetup(CConfig config)
 	m_xPixelAbsoluteSlope = USHORT_MAX_VAL / static_cast<float>(virtualDesktopWidth);
 	m_yPixelAbsoluteSlope = USHORT_MAX_VAL / static_cast<float>(virtualDesktopHeight);
 
-	LogToWix(fmt::format("\nVirtual Desktop Pixel Bounds\n"));
+	LogToWix("\nVirtual Desktop Pixel Bounds\n");
 	EnumDisplayMonitors(NULL, NULL, WrapperPopulateVirtMonitorBounds, reinterpret_cast<LPARAM>(this));
 
 	LogToWix(fmt::format("\nVirtual Origin Offset Horizontal: {:d}\n", m_virtualOriginX));
@@ -374,7 +374,7 @@ void CTracker::DisplaySetup(const CConfig config)
 
 		m_displays[i].setAbsBounds(m_virtualOriginX, m_virtualOriginY, m_xPixelAbsoluteSlope, m_yPixelAbsoluteSlope);
 	}
-	LogToWix(fmt::format("\nVirtual Desktop Pixel Bounds (abs)\n"));
+	LogToWix("\nVirtual Desktop Pixel Bounds (abs)\n");
 	for (int i = 0; i < config.m_monitorCount; i++)
 	{
 		LogToWix(fmt::format("MON {} pixelBoundboundAbsLeft:   {:>10d}\n", i, m_displays[i].pixelBoundAbsLeft));
@@ -382,7 +382,7 @@ void CTracker::DisplaySetup(const CConfig config)
 		LogToWix(fmt::format("MON {} pixelBoundboundAbsTop:    {:>10d}\n", i, m_displays[i].pixelBoundAbsTop));
 		LogToWix(fmt::format("MON {} pixelBoundboundAbsBottom: {:>10d}\n", i, m_displays[i].pixelBoundAbsBottom));
 	}
-	LogToWix(fmt::format("\n16-bit Coordinate Bounds\n"));
+	LogToWix("\n16-bit Coordinate Bounds\n");
 	for (int i = 0; i < config.m_monitorCount; i++)
 	{
 		LogToWix(fmt::format("MON {} boundAbsLeft:       {:>12.1f}\n", i, m_displays[i].boundAbsLeft));
@@ -390,7 +390,7 @@ void CTracker::DisplaySetup(const CConfig config)
 		LogToWix(fmt::format("MON {} boundAbsTop:        {:>12.1f}\n", i, m_displays[i].boundAbsTop));
 		LogToWix(fmt::format("MON {} boundAbsBottom:     {:>12.1f}\n", i, m_displays[i].boundAbsBottom));
 	}
-	LogToWix(fmt::format("\nRotational Bounds\n"));
+	LogToWix("\nRotational Bounds\n");
 	for (int i = 0; i < config.m_monitorCount; i++)
 	{
 		LogToWix(fmt::format("MON {} rotationBoundLeft:       {:>13.2f}\n", i, m_displays[i].rotationBoundLeft));
@@ -399,7 +399,7 @@ void CTracker::DisplaySetup(const CConfig config)
 		LogToWix(fmt::format("MON {} rotationBoundBottom:     {:>13.2f}\n", i, m_displays[i].rotationBoundBottom));
 	}
 
-	LogToWix(fmt::format("\n{:-^}\n", ""));
+	LogToWix(fmt::format("\n{:-^}\n", "???"));
 
 	return;
 }

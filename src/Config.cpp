@@ -212,7 +212,7 @@ void CConfig::LoadSettings()
     // Find the display mapping table for the given profile
     auto& vDisplayMappingTable = toml::find(vActiveProfileTable, "DisplayMappings");
 
-    LogToWix(fmt::format("Padding\n"));
+    LogToWix("Padding\n");
 
     // TODO: check bounds of my array first with number of monitors
     //  and see if they match

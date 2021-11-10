@@ -7,12 +7,12 @@
 #include "Log.h"
 #include "Exceptions.h"
 
-#define FMT_HEADER_ONLY
-#include <fmt/format.h>
+//#define FMT_HEADER_ONLY
+//#include <fmt/format.h>
 
 #include <wx/dataview.h>
 #include <wx/colour.h>
-#include <spdlog/spdlog.h>
+//#include <spdlog/spdlog.h>
 
 wxIMPLEMENT_APP(CGUIApp);
 
@@ -24,6 +24,8 @@ bool CGUIApp::OnInit()
     //wxLog::SetActiveTarget(logger);
     //wxLog::SetLogLevel(wxLOG_Info);
     /*spdlog::info("Welcome to spdlog!");*/
+    auto logger = spdlog::basic_logger_mt("mainlogger", "log-trackir.txt");
+    //spdlog::set_level(spdlog::level::info);
 
     // Construct child elements
     m_frame = new cFrame();
@@ -50,7 +52,7 @@ bool CGUIApp::OnInit()
     }
     catch (std::runtime_error& e)
     {
-        LogToWixError((fmt::format("runtime_error: Load Settings Failed. See TOML error above.")));
+        LogToWixError("runtime_error: Load Settings Failed. See TOML error above.");
         return true;
     }
     catch (const std::exception& ex)
