@@ -16,7 +16,7 @@ typedef struct _RegistryQuery {
     std::string value;
 } RegistryQuery;
 
-RegistryQuery GetStringFrOomRegistry(HKEY hParentKey, const char* subKey, const char* subValue)
+RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char* subKey, const char* subValue)
 {
 
     //////////////////////////////////////////////////////////////////////
@@ -104,30 +104,40 @@ RegistryQuery GetStringFrOomRegistry(HKEY hParentKey, const char* subKey, const 
     return RegistryQuery{ 0, "", std::string(szPath) };
 }
 
+void CConfig::ParseFile(const std::string fileName)
+{
+    m_vData = toml::parse<toml::preserve_comments>(fileName);
+}
+
+// Should be changed to verify
 void CConfig::LoadSettings()
 {
     m_monitorCount = GetSystemMetrics(SM_CMONITORS);
-    
-    // TOML will throw a std::runtime_error if there's a problem opening the file 
-    m_vData = toml::parse<toml::preserve_comments>("settings.toml");
 
     // Find the general settings table
     auto& vGeneralSettings = toml::find(m_vData, "General");
 
-    // find_or will return a default if parameter not found
-    m_bWatchdog = toml::find_or<bool>(vGeneralSettings, "watchdog_enabled", 0);
-    m_activeDisplayProfile = toml::find<int>(vGeneralSettings, "profile");
+    //////////////////////////////////////////////////////////////////////
+    //                   Validate In General Settings                   //
+    //////////////////////////////////////////////////////////////////////
+
+    // Values Stored in TOML File
+    bool usrTrackOnStart = toml::find<bool>(vGeneralSettings, "track_on_start");
+    bool usrQuitOnLossOfTrackIr = toml::find<bool>(vGeneralSettings, "quit_on_loss_of_track_ir");
+    bool bWatchdog = toml::find<bool>(vGeneralSettings, "watchdog_enabled");
+
+    int activeDisplayProfile = toml::find<int>(vGeneralSettings, "active_profile");
 
     //////////////////////////////////////////////////////////////////////
     //                  Finding NPTrackIR DLL Location                  //
     //////////////////////////////////////////////////////////////////////
 
     // Optionally the user can specify the location to the trackIR dll
-    m_sTrackIrDllLocation = toml::find_or<std::string>(vGeneralSettings, "TrackIR_dll_directory", "default");
+    m_sTrackIrDllLocation = toml::find<std::string>(vGeneralSettings, "trackir_dll_directory");
 
     if ("default" == m_sTrackIrDllLocation)
     {
-        RegistryQuery path = GetStringFrOomRegistry(HKEY_CURRENT_USER, "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
+        RegistryQuery path = GetStringFromRegistry(HKEY_CURRENT_USER, "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
 
         if (0 == path.result)
         {
@@ -175,19 +185,29 @@ void CConfig::LoadSettings()
 
     // Catch padding table errors and notify user, because reverting to e
     // 0 padding is not a critical to program function
-    try {
-        toml::value vDefaultPaddingTable = toml::find(m_vData, "DefaultPadding");
+    toml::value vDefaultPaddingTable;
 
-        defaultPaddingLeft = toml::find<int>(vDefaultPaddingTable, "left");
-        defaultPaddingRight = toml::find<int>(vDefaultPaddingTable, "right");
-        defaultPaddingTop = toml::find<int>(vDefaultPaddingTable, "top");
-        defaultPaddingBottom = toml::find<int>(vDefaultPaddingTable, "bottom");
+    try
+    {
+        vDefaultPaddingTable = toml::find(m_vData, "DefaultPadding");
+    }
+    catch (std::out_of_range e)
+    {
+        LogToWixError(fmt::format("Default Padding Table Not Found"));
+        LogToWixError(fmt::format(
+            "Please add the following to the settings.toml file:\n"
+            "[DefaultPadding]"
+            "left   = 0"
+            "right  = 0"
+            "top    = 0"
+            "bottom = 0"
+        ));
+    }
 
-    }
-    catch (std::out_of_range e) {
-        LogToWixError(fmt::format("Exception with the default padding table."));
-        LogToWixError(fmt::format("TOML Non Crititcal Exception Thrown.\n{}\n", e.what()));
-    }
+    defaultPaddingLeft = toml::find<int>(vDefaultPaddingTable, "left");
+    defaultPaddingRight = toml::find<int>(vDefaultPaddingTable, "right");
+    defaultPaddingTop = toml::find<int>(vDefaultPaddingTable, "top");
+    defaultPaddingBottom = toml::find<int>(vDefaultPaddingTable, "bottom");
 
     //////////////////////////////////////////////////////////////////////
     //                       Find Display Mapping                       //
@@ -199,11 +219,11 @@ void CConfig::LoadSettings()
     toml::value vProfilesTable = toml::find(m_vData, "Profiles");
 
     // Find the profile table which is currently enabled
-    std::string profileTableName = std::to_string(m_activeDisplayProfile);
+    std::string profileTableName = std::to_string(activeDisplayProfile);
     auto& vActiveProfileTable = toml::find(vProfilesTable, profileTableName);
 
     // Load in current profile dependent settings
-    m_profile_ID = toml::find_or<int>(vActiveProfileTable, "profile_ID", 13302);
+    m_profile_ID = toml::find_or<int>(vActiveProfileTable, "profile_id", 13302);
 
     // Load in Display Mappings
     // Find the display mapping table for the given profile

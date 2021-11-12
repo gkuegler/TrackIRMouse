@@ -9,7 +9,7 @@
 
 #include <wx/wx.h>
 #include <wx/dataview.h>
-
+// #include <wx/wfstream.h>
 
 class TrackThread : public wxThread
 {
@@ -24,7 +24,9 @@ protected:
     wxEvtHandler* m_parent;
 };
 
-//------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////
+//                Text Control Status Output Window                 //
+//////////////////////////////////////////////////////////////////////
 
 class cTextCtrl : public wxTextCtrl
 {
@@ -33,12 +35,9 @@ public:
         const wxPoint& pos, const wxSize& size, int style = 0);
 };
 
-//------------------------------------------------------------------------------
-
-void TestFunction()
-{
-    LogToWix("hello how are you");
-}
+//////////////////////////////////////////////////////////////////////
+//                              Panel                               //
+//////////////////////////////////////////////////////////////////////
 
 class cPanel : public wxPanel
 {
@@ -90,7 +89,9 @@ wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
     EVT_BUTTON(myID_SAVE_SETTINGS, cPanel::OnSaveSettings)
 wxEND_EVENT_TABLE()
 
-//------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////
+//                              Frame                               //
+//////////////////////////////////////////////////////////////////////
 
 class cFrame : public wxFrame
 {
@@ -102,6 +103,8 @@ public:
 private:
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
+    void OnOpen(wxCommandEvent& event);
+    void OnGenerateExample(wxCommandEvent& event);
 
     wxDECLARE_EVENT_TABLE();
 
@@ -110,9 +113,13 @@ private:
 wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
     EVT_MENU(wxID_EXIT, cFrame::OnExit)
     EVT_MENU(wxID_ABOUT, cFrame::OnAbout)
+    EVT_MENU(wxID_OPEN, cFrame::OnOpen)
+    EVT_MENU(myID_GEN_EXMPL, cFrame::OnGenerateExample)
 wxEND_EVENT_TABLE()
 
-//------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////
+//                         Main Application                         //
+//////////////////////////////////////////////////////////////////////
 
 class CGUIApp : public wxApp
 {

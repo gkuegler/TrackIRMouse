@@ -9,6 +9,9 @@
 
 #include <wx/dataview.h>
 #include <wx/colour.h>
+#include <wx/filedlg.h>
+#include <wx/wfstream.h>
+
 
 wxIMPLEMENT_APP(CGUIApp);
 
@@ -26,45 +29,45 @@ bool CGUIApp::OnInit()
     // Construct child elements
     m_frame = new cFrame();
 
-    // Load Settings
-    //try
-    //{
-    //    //wxLogError("press okay to continue");
-    //    /*g_config CConfig();*/
-    //}
-    //catch (const toml::syntax_error& ex)
-    //{
-    //    wxLogFatalError("Failed To Parse File: %s", ex.what());
-    //}
-    //catch (...) {
-    //    wxLogFatalError("An unhandled exception occurred when loading toml file.");
-    //}
-    m_frame->m_panel->SetConfiguration(&g_config);
+    // Parse Settings File
+    try
+    {
+       //wxLogError("press okay to continue");
+       g_config.ParseFile("settings.toml");
+    }
+    catch (const toml::syntax_error& ex)
+    {
+       wxLogFatalError("Failed To Parse toml Settings File:\n%s", ex.what());
+    }
+    catch (std::runtime_error& ex)
+    {
+        wxLogFatalError("Failed To Parse Settings File.\n\"settings.toml\" File Likely Not Found.\n%s", ex.what());
+    }
+    catch (...) {
+       wxLogFatalError("An unhandled exception occurred when loading toml file.");
+    }
 
     try
     {
         g_config.LoadSettings();
-        //g_config.SaveSettings();
     }
-    catch (std::runtime_error& e)
+    // type_error inherits from toml::exception
+    catch (const toml::type_error& ex)
     {
-        LogToWixError("runtime_error: Load Settings Failed. See TOML error above.");
-        return true;
+        wxLogFatalError("Incorrect type when loading settings.\n\n%s", ex.what());
     }
-    catch (const std::exception& ex)
+    // toml::exception is base exception class
+    catch (const toml::exception& ex)
     {
-        LogToWixError(fmt::format("std::exception&: Load Setting Failed: ", ex.what()));
-        wxLogError("Load Setting Failed: %s", ex.what());
+        wxLogFatalError("std::exception:\n%s", ex.what());
     }
     catch (const Exception& ex)
     {
-        LogToWixError(fmt::format("Exception: Load Setting Failed: ", ex.what()));
-        wxLogError("Load Setting Failed: %s", ex.what());
+        wxLogFatalError("My Custom Exception:\n%s", ex.what());
     }
     catch (...)
     {
-        LogToWixError("An unconquered exception has gone on handle when loading settings.");
-        wxLogFatalError("exception has gone unhandled");
+        wxLogFatalError("exception has gone unhandled loading and verifying settings");
     }
 
     m_frame->m_panel->LoadDisplayMappings(g_config);
@@ -197,14 +200,15 @@ cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200)
 {
 
     wxMenu* menuFile = new wxMenu;
-
-    //menuFile->Append(wxID_ANY, "&Hello...\tCtrl-H",
-        //"Help string shown in status bar for this menu item");
-
-    //menuFile->AppendSeparator();
+    menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
+        "Open a new settings file from disk.");
+    menuFile->AppendSeparator();
     menuFile->Append(wxID_EXIT);
 
     wxMenu* menuHelp = new wxMenu;
+    menuHelp->Append(myID_GEN_EXMPL, "Generate Example Settings File", 
+        "Use this option if the existing settings file has become corrupted");
+    menuHelp->AppendSeparator();
     menuHelp->Append(wxID_ABOUT);
 
     wxMenuBar* menuBar = new wxMenuBar;
@@ -232,6 +236,48 @@ Author: George Kuegler
 E-mail: georgekuegler@gmail.com)";
 
     wxMessageBox(msg, "About TrackIRMouse", wxOK | wxICON_NONE);
+}
+
+void cFrame::OnOpen(wxCommandEvent& event)
+{
+    const char lpFilename[MAX_PATH] = {0};
+
+    DWORD result = GetModuleFileNameA(0, (LPSTR)lpFilename, MAX_PATH);
+
+    wxString defaultFilePath;
+
+    if (result)
+    {
+        wxString executablePath(lpFilename, static_cast<size_t>(result));
+        defaultFilePath = executablePath.substr(0, executablePath.find_last_of("\\/"));
+        // defaultFilePath = wxString(lpFilename, static_cast<size_t>(result));
+        LogToWix(defaultFilePath);
+    }
+    else
+    {
+        defaultFilePath = wxEmptyString;
+    }
+
+    wxFileDialog openFileDialog(this, "Open Settings File", defaultFilePath, wxEmptyString,
+                   "Toml (*.toml)|*.toml", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+
+    if (openFileDialog.ShowModal() == wxID_CANCEL)
+        return;     // the user changed their mind...
+    
+    // proceed loading the file chosen by the user;
+    // this can be done with e.g. wxWidgets input streams:
+     wxFileInputStream input_stream(openFileDialog.GetPath());
+     if (!input_stream.IsOk())
+     {
+         wxLogError("Cannot open file '%s'.", openFileDialog.GetPath());
+         return;
+     }
+     wxLogError("Method not implemented yet!");
+}
+
+void cFrame::OnGenerateExample(wxCommandEvent& event)
+{
+    wxLogError("Method not implemented yet!");
 }
 
 

@@ -68,5 +68,8 @@
     <ClInclude Include="ControlIDs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ExampleSettingsFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

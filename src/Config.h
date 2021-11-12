@@ -37,13 +37,13 @@ class CConfig
 public:
 
     // Values Stored in TOML File
-    bool usrTrackOnStart = 0;
-    bool usrQuitOnLossOfTrackIr = 0;
-    bool m_bWatchdog = 0;
+    // bool usrTrackOnStart = 0;
+    // bool usrQuitOnLossOfTrackIr = 0;
+    // bool m_bWatchdog = 0;
 
     std::string m_sTrackIrDllLocation = "";
 
-    int m_activeDisplayProfile = 0;
+    // int m_activeDisplayProfile = 0;
     int m_profile_ID = 0;
 
     // Values Determined at Run Time
@@ -54,6 +54,7 @@ public:
 
     CConfig() {};
 
+    void ParseFile(const std::string);
     void LoadSettings();
     void SaveSettings();
 

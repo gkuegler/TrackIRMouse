@@ -30,7 +30,7 @@ bool g_bPauseTracking = false;
 //void disconnectTrackIR(void);
 
 
-CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, const CConfig config)
+CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig config)
 {
 
 	// ## Program flow ##
@@ -62,7 +62,8 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, const CConfig config)
 	// After settings are loaded, start accepting connections & msgs
 	// on a named pipe to externally controll the track IR process
 	// Start the watchdog thread
-	if (config.m_bWatchdog)
+	// if (config.m_bWatchdog)
+	if (config.GetBool("General/watchdog_enabled"))
 	{
 		// Watchdog thread may return NULL
 		m_hWatchdogThread = WatchDog::StartWatchdog();
