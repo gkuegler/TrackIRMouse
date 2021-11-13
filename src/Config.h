@@ -32,6 +32,16 @@ public:
     }
 };
 
+class CDisplayConfiguration
+{
+public:
+    std::string m_name = "Example Text";
+    int m_profile_ID = 0;
+    bool m_useDefaultPadding = true;
+
+    std::vector<bounds_in_degrees> m_bounds;
+};
+
 class CConfig
 {
 public:
@@ -50,13 +60,30 @@ public:
     int m_monitorCount = 0;
 
     //bounds_in_degrees bounds[DEFAULT_MAX_DISPLAYS];
-    std::vector<bounds_in_degrees> m_bounds;
+    // std::vector<bounds_in_degrees> m_bounds;
+    CDisplayConfiguration m_activeDisplayConfiguration;
+
+    // Using the 'find' method here instead of 'find_or' so that the user can be
+    // notified if the default padding table hasn't been configured correctly
+    // in the settings file.
+    int m_defaultPaddingLeft = 0;
+    int m_defaultPaddingRight = 0;
+    int m_defaultPaddingTop = 0;
+    int m_defaultPaddingBottom = 0;
+
+    std::vector<std::string> m_profileNames;
+
+
 
     CConfig() {};
 
     void ParseFile(const std::string);
     void LoadSettings();
     void SaveSettings();
+    void LoadActiveDisplay(int activeProfile);
+    CDisplayConfiguration GetActiveDisplaySetUp()
+    
+
 
     template <typename T>
     int SetValueInTable(std::vector<std::string> tableHierarchy, std::string parameterName, const T value)

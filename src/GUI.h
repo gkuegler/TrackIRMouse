@@ -25,6 +25,25 @@ protected:
 };
 
 //////////////////////////////////////////////////////////////////////
+//                  Display Configuration SubPanel                  //
+//////////////////////////////////////////////////////////////////////
+
+class cPanelConfiguration : public wxPanel
+{
+public:
+    cPanelConfiguration(wxPanel* panel);
+    //LoadDisplaySettings(CConfig config);
+
+    wxTextCtrl* m_name;
+    wxTextCtrl* m_profileID;
+    wxCheckBox* m_useDefaultPadding;
+
+    wxDataViewListCtrl* m_tlcMappingData;
+
+
+};
+
+//////////////////////////////////////////////////////////////////////
 //                Text Control Status Output Window                 //
 //////////////////////////////////////////////////////////////////////
 
@@ -49,6 +68,8 @@ public:
     wxButton * m_btnSaveSettings;
     wxComboBox* m_cmbProfiles;
 
+    wxPanel* m_pnlDisplayConfiguration;
+
     cTextCtrl* m_textrich;
 
     CConfig* m_pconfig;
@@ -56,6 +77,13 @@ public:
     cPanel(wxFrame* frame);
     
     void LoadDisplayMappings(const CConfig config);
+    void PopulateComboBoxWithProfiles(CConfig config)
+    {
+        for (auto& item : config.m_profileNumbers)
+        {
+            m_cmbProfiles->Append(item);
+        }
+    }
 
     void SetConfiguration(CConfig* config)
     {

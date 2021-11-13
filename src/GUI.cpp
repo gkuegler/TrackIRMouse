@@ -70,7 +70,8 @@ bool CGUIApp::OnInit()
         wxLogFatalError("exception has gone unhandled loading and verifying settings");
     }
 
-    m_frame->m_panel->LoadDisplayMappings(g_config);
+    // m_frame->m_panel->LoadDisplayMappings(g_config);
+    m_frame->m_panel->PopulateComboBoxWithProfiles(g_config);
     
    
     TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), g_config);
@@ -111,91 +112,10 @@ bool CGUIApp::OnInit()
 	return true;
 }
 
-// ----------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////
+//                            Main Frame                            //
+//////////////////////////////////////////////////////////////////////
 
-cTextCtrl::cTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
-    const wxPoint& pos, const wxSize& size, int style) : wxTextCtrl(parent, id, value, pos, size, style)
-{
-
-}
-
-// ----------------------------------------------------------------------
-
-cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
-{
-    m_cbxTrackOnStart = new wxCheckBox(this, myID_TRACK_ON_START, "Track On Start", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-    m_cbxQuitOnLossOfTrackIR = new wxCheckBox(this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-
-    m_btnStartMouse = new wxButton(this, wxID_ANY, "Start Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
-    m_btnStopMouse = new wxButton(this, wxID_ANY, "Stop Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
-    m_btnSaveSettings = new wxButton(this, myID_SAVE_SETTINGS, "Save Settings", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
-
-    m_cmbProfiles = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, 0, wxCB_DROPDOWN, wxDefaultValidator, "");
-
-    m_tlcMappingData = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(300, 400), wxDV_HORIZ_RULES, wxDefaultValidator);
-
-    m_tlcMappingData->AppendTextColumn("Display #");
-    m_tlcMappingData->AppendTextColumn("Parameters");
-    m_tlcMappingData->AppendTextColumn("Values", wxDATAVIEW_CELL_EDITABLE);
-    
-
-    wxString start_message(fmt::format("{:-^50}\n", "MouseTrackIR Application"));
-    m_textrich = new cTextCtrl(this, wxID_ANY, start_message,
-        wxDefaultPosition, wxDefaultSize,
-        wxTE_RICH | wxTE_MULTILINE);
-    
-    m_textrich -> SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-
-    wxBoxSizer* row1 = new wxBoxSizer(wxVERTICAL);
-    row1->Add(m_cbxTrackOnStart, 0, wxALL, 0);
-    row1->Add(m_cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
-
-    wxBoxSizer* row2 = new wxBoxSizer(wxVERTICAL);
-    row2->Add(m_btnStartMouse, 0, wxALL, 0);
-    row2->Add(m_btnStopMouse, 0, wxALL, 0);
-    row2->Add(m_btnSaveSettings, 0, wxALL, 0);
-    row2->Add(m_cmbProfiles, 0, wxALL, 0);
-              
-    wxBoxSizer* row3 = new wxBoxSizer(wxVERTICAL);
-    //row3->Add(tcMappingData, 1, wxALL | wxEXPAND, 0);
-    row3->Add(m_tlcMappingData, 0, wxALL | wxEXPAND, 0);
-
-    wxBoxSizer* row4 = new wxBoxSizer(wxHORIZONTAL);
-    row4->Add(m_textrich, 1, wxALL | wxEXPAND, 5);
-
-    wxBoxSizer* leftColumn = new wxBoxSizer(wxVERTICAL);
-    leftColumn->Add(row1, 0, wxALL, 10);
-    leftColumn->Add(row2, 0, wxALL, 10);
-    leftColumn->Add(row3, 0, wxALL, 10);
-
-    wxBoxSizer* topSizer = new wxBoxSizer(wxHORIZONTAL);
-    topSizer->Add(leftColumn, 0, wxALL | wxEXPAND, 10);
-    topSizer->Add(row4, 1, wxALL | wxEXPAND, 10);
-
-    SetSizer(topSizer);
-}
-
-void cPanel::LoadDisplayMappings(const CConfig config)
-{
-    std::vector<std::string> names = { "left", "right","top", "bottom" };
-
-    for (int i = 0; i < config.m_monitorCount; i++)
-    {
-        for (int j = 0; j < names.size(); j++)
-        {
-            wxVector<wxVariant> row;
-            row.push_back(wxVariant(std::to_string(i)));
-            row.push_back(wxVariant(names.at(j)));
-
-            wxString stringnumber = wxString::Format(wxT("%d"), (int)config.m_bounds[i].rotationBounds[j]);
-
-            row.push_back(wxVariant(stringnumber));
-            m_tlcMappingData->AppendItem(row);
-        }
-    }
-}
-
-// ----------------------------------------------------------------------
 cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200), wxSize(1200, 800))
 {
 
@@ -280,8 +200,159 @@ void cFrame::OnGenerateExample(wxCommandEvent& event)
     wxLogError("Method not implemented yet!");
 }
 
+//////////////////////////////////////////////////////////////////////
+//                            Main Panel                            //
+//////////////////////////////////////////////////////////////////////
 
-// ----------------------------------------------------------------------
+cTextCtrl::cTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
+    const wxPoint& pos, const wxSize& size, int style) : wxTextCtrl(parent, id, value, pos, size, style)
+{
+
+}
+
+cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
+{
+    m_cbxTrackOnStart = new wxCheckBox(this, myID_TRACK_ON_START, "Track On Start", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+    m_cbxQuitOnLossOfTrackIR = new wxCheckBox(this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+
+    m_btnStartMouse = new wxButton(this, wxID_ANY, "Start Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
+    m_btnStopMouse = new wxButton(this, wxID_ANY, "Stop Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
+    m_btnSaveSettings = new wxButton(this, myID_SAVE_SETTINGS, "Save Settings", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
+
+    m_cmbProfiles = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, 0, wxCB_DROPDOWN, wxDefaultValidator, "");
+
+    // m_tlcMappingData = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(300, 400), wxDV_HORIZ_RULES, wxDefaultValidator);
+
+    // m_tlcMappingData->AppendTextColumn("Display #");
+    // m_tlcMappingData->AppendTextColumn("Parameters");
+    // m_tlcMappingData->AppendTextColumn("Values", wxDATAVIEW_CELL_EDITABLE);
+    
+    m_pnlDisplayConfiguration = new cPanelConfiguration(this);
+
+    wxString start_message(fmt::format("{:-^50}\n", "MouseTrackIR Application"));
+    m_textrich = new cTextCtrl(this, wxID_ANY, start_message,
+        wxDefaultPosition, wxDefaultSize,
+        wxTE_RICH | wxTE_MULTILINE);
+    
+    m_textrich -> SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+
+    wxBoxSizer* row1 = new wxBoxSizer(wxVERTICAL);
+    row1->Add(m_cbxTrackOnStart, 0, wxALL, 0);
+    row1->Add(m_cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
+
+    wxBoxSizer* row2 = new wxBoxSizer(wxVERTICAL);
+    row2->Add(m_btnStartMouse, 0, wxALL, 0);
+    row2->Add(m_btnStopMouse, 0, wxALL, 0);
+    row2->Add(m_btnSaveSettings, 0, wxALL, 0);
+    row2->Add(m_cmbProfiles, 0, wxALL, 0);
+              
+    wxBoxSizer* row3 = new wxBoxSizer(wxVERTICAL);
+    //row3->Add(tcMappingData, 0, wxALL | wxEXPAND, 0);
+    row3->Add(m_pnlDisplayConfiguration, 0, wxALL | wxEXPAND, 0);
+
+    wxBoxSizer* row4 = new wxBoxSizer(wxHORIZONTAL);
+    row4->Add(m_textrich, 1, wxALL | wxEXPAND, 5);
+
+    wxBoxSizer* leftColumn = new wxBoxSizer(wxVERTICAL);
+    leftColumn->Add(row1, 0, wxALL, 10);
+    leftColumn->Add(row2, 0, wxALL, 10);
+    leftColumn->Add(row3, 0, wxALL, 10);
+
+    wxBoxSizer* topSizer = new wxBoxSizer(wxHORIZONTAL);
+    topSizer->Add(leftColumn, 0, wxALL | wxEXPAND, 10);
+    topSizer->Add(row4, 1, wxALL | wxEXPAND, 10);
+
+    SetSizer(topSizer);
+}
+
+//void cPanel::LoadDisplayMappings(const CConfig config)
+//{
+//    std::vector<std::string> names = { "left", "right","top", "bottom" };
+//
+//    for (int i = 0; i < config.m_monitorCount; i++)
+//    {
+//        for (int j = 0; j < names.size(); j++)
+//        {
+//            wxVector<wxVariant> row;
+//            row.push_back(wxVariant(std::to_string(i)));
+//            row.push_back(wxVariant(names.at(j)));
+//
+//            wxString stringnumber = wxString::Format(wxT("%d"), (int)config.m_bounds[i].rotationBounds[j]);
+//
+//            row.push_back(wxVariant(stringnumber));
+//            m_tlcMappingData->AppendItem(row);
+//        }
+//    }
+//}
+
+//void cPanel::LoadSubPanel(CConfig config)
+//{
+//    // 
+//}
+
+//////////////////////////////////////////////////////////////////////
+//                      Display Settings Panel                      //
+//////////////////////////////////////////////////////////////////////
+
+cPanelConfiguration::cPanelConfiguration(wxPanel* panel) : wxPanel(panel)
+{
+    m_name = new wxTextCtrl(this, wxID_ANY, "Desktop", wxDefaultPosition, wxDefaultSize, wxTE_LEFT, wxDefaultValidator, "");
+    m_profileID = new wxTextCtrl(this, wxID_ANY, "2201576", wxDefaultPosition, wxDefaultSize, wxTE_LEFT, wxDefaultValidator, "");
+    m_useDefaultPadding = new wxCheckBox(this, wxID_ANY, "Use Default Padding", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+
+    m_tlcMappingData = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(300, 400), wxDV_HORIZ_RULES, wxDefaultValidator);
+
+    m_tlcMappingData->AppendTextColumn("Display #");
+    m_tlcMappingData->AppendTextColumn("Parameters");
+    m_tlcMappingData->AppendTextColumn("Values", wxDATAVIEW_CELL_EDITABLE);
+
+    wxStaticText* txtProfileName = new wxStaticText(this, wxID_ANY, "Profile Name:   ");
+    wxStaticText* txtProfileId = new wxStaticText(this, wxID_ANY, "TrackIR Profile ID:   ");
+
+    wxBoxSizer* row1 = new wxBoxSizer(wxHORIZONTAL);
+    row1->Add(txtProfileName, 0, 0, 0);
+    row1->Add(m_name, 0, 0, 0);
+
+    wxBoxSizer* row2 = new wxBoxSizer(wxHORIZONTAL);
+    row2->Add(txtProfileId, 0, 0, 0);
+    row2->Add(m_profileID, 0, 0, 0);
+
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    topSizer->Add(row1, 0, wxALL, 5);
+    topSizer->Add(row2, 0, wxALL, 5);
+    topSizer->Add(m_useDefaultPadding, 0, wxALL, 5);
+    topSizer->Add(m_tlcMappingData, 0, wxALL, 5);
+
+    SetSizer(topSizer);
+
+    // LoadDisplaysSettings();
+}
+
+//cPanelConfiguration::LoadDisplaySettings(CConfig config)
+//{
+//    m_name.SetValue("Desktop2");
+//    m_profileID.SetValue("9999");
+
+    // std::vector<std::string> names = { "left", "right","top", "bottom" };
+
+    // for (int i = 0; i < config.m_monitorCount; i++)
+    // {
+    //     for (int j = 0; j < names.size(); j++)
+    //     {
+    //         wxVector<wxVariant> row;
+    //         row.push_back(wxVariant(std::to_string(i)));
+    //         row.push_back(wxVariant(names.at(j)));
+
+    //         wxString stringnumber = wxString::Format(wxT("%d"), (int)config.m_bounds[i].rotationBounds[j]);
+
+    //         row.push_back(wxVariant(stringnumber));
+    //         m_tlcMappingData->AppendItem(row);
+    //     }
+    // }
+//}
+//////////////////////////////////////////////////////////////////////
+//                           TrackThread                            //
+//////////////////////////////////////////////////////////////////////
 
 TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd, const CConfig config) : wxThread()
 {

@@ -147,7 +147,7 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig config)
 		throw Exception("");
 	}
 
-	rslt = NP_RegisterProgramProfileID(config.m_profile_ID);
+	rslt = NP_RegisterProgramProfileID(config.m_activeDisplayConfiguration.m_profile_ID);
 	if (NP_OK == rslt)
 	{
 		LogToWix("Register Profile ID:         Success\n");
@@ -301,15 +301,15 @@ void CTracker::WinSetup(CConfig config)
 	int virtualDesktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN); // height of total bounds of all screens
 
 	// TODO: this check actually happens at the initialization of my configuration file
-	LogToWixError(fmt::format("Displays Specified: {}\nDisplays Found: {}\n", config.m_bounds.size(), monitorCount));
+	LogToWixError(fmt::format("Displays Specified: {}\nDisplays Found: {}\n", config.m_activeDisplayConfiguration.m_bounds.size(), monitorCount));
 
-	if (config.m_bounds.size() < monitorCount)
+	if (config.m_activeDisplayConfiguration.m_bounds.size() < monitorCount)
 	{
-		LogToWixError(fmt::format("More Displays Connected Then Specified In Settings File.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_bounds.size()));
+		LogToWixError(fmt::format("More Displays Connected Then Specified In Settings File.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_activeDisplayConfiguration.m_bounds.size()));
 	}
-	if (config.m_bounds.size() > monitorCount)
+	if (config.m_activeDisplayConfiguration.m_bounds.size() > monitorCount)
 	{
-		LogToWixError(fmt::format("Less Displays Connected Then Specified In Settings File.\nThe Wrong Configuration May Be Selected.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_bounds.size()));
+		LogToWixError(fmt::format("Less Displays Connected Then Specified In Settings File.\nThe Wrong Configuration May Be Selected.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_activeDisplayConfiguration.m_bounds.size()));
 	}
 
 	LogToWix(fmt::format("{} Monitors Found\n", monitorCount));
@@ -360,15 +360,15 @@ void CTracker::DisplaySetup(const CConfig config)
 {
 	for (int i = 0; i < config.m_monitorCount; i++)
 	{
-		m_displays[i].rotationBoundLeft   = config.m_bounds[i].rotationBounds[0];
-		m_displays[i].rotationBoundRight  = config.m_bounds[i].rotationBounds[1];
-		m_displays[i].rotationBoundTop    = config.m_bounds[i].rotationBounds[2];
-		m_displays[i].rotationBoundBottom = config.m_bounds[i].rotationBounds[3];
+		m_displays[i].rotationBoundLeft   = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[0];
+		m_displays[i].rotationBoundRight  = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[1];
+		m_displays[i].rotationBoundTop    = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[2];
+		m_displays[i].rotationBoundBottom = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[3];
 
-		m_displays[i].paddingLeft         = config.m_bounds[i].paddingBounds[0];
-		m_displays[i].paddingRight        = config.m_bounds[i].paddingBounds[1];
-		m_displays[i].paddingTop          = config.m_bounds[i].paddingBounds[2];
-		m_displays[i].paddingBottom       = config.m_bounds[i].paddingBounds[3];
+		m_displays[i].paddingLeft         = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[0];
+		m_displays[i].paddingRight        = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[1];
+		m_displays[i].paddingTop          = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[2];
+		m_displays[i].paddingBottom       = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[3];
 
 		m_displays[i].setAbsBounds(m_virtualOriginX, m_virtualOriginY, m_xPixelAbsoluteSlope, m_yPixelAbsoluteSlope);
 	}

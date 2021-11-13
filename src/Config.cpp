@@ -126,7 +126,7 @@ void CConfig::LoadSettings()
     bool usrQuitOnLossOfTrackIr = toml::find<bool>(vGeneralSettings, "quit_on_loss_of_track_ir");
     bool bWatchdog = toml::find<bool>(vGeneralSettings, "watchdog_enabled");
 
-    int activeDisplayProfile = toml::find<int>(vGeneralSettings, "active_profile");
+    std::string activeDisplayProfile = toml::find<std::string>(vGeneralSettings, "active_profile");
 
     //////////////////////////////////////////////////////////////////////
     //                  Finding NPTrackIR DLL Location                  //
@@ -175,14 +175,6 @@ void CConfig::LoadSettings()
     //                     Finding Default Padding                      //
     //////////////////////////////////////////////////////////////////////
 
-    // Using the 'find' method here instead of 'find_or' so that the user can be
-    // notified if the default padding table hasn't been configured correctly
-    // in the settings file.
-    int defaultPaddingLeft = 0;
-    int defaultPaddingRight = 0;
-    int defaultPaddingTop = 0;
-    int defaultPaddingBottom = 0;
-
     // Catch padding table errors and notify user, because reverting to e
     // 0 padding is not a critical to program function
     toml::value vDefaultPaddingTable;
@@ -204,10 +196,10 @@ void CConfig::LoadSettings()
         ));
     }
 
-    defaultPaddingLeft = toml::find<int>(vDefaultPaddingTable, "left");
-    defaultPaddingRight = toml::find<int>(vDefaultPaddingTable, "right");
-    defaultPaddingTop = toml::find<int>(vDefaultPaddingTable, "top");
-    defaultPaddingBottom = toml::find<int>(vDefaultPaddingTable, "bottom");
+    m_defaultPaddingLeft = toml::find<int>(vDefaultPaddingTable, "left");
+    m_defaultPaddingRight = toml::find<int>(vDefaultPaddingTable, "right");
+    m_defaultPaddingTop = toml::find<int>(vDefaultPaddingTable, "top");
+    m_defaultPaddingBottom = toml::find<int>(vDefaultPaddingTable, "bottom");
 
     //////////////////////////////////////////////////////////////////////
     //                       Find Display Mapping                       //
@@ -215,32 +207,64 @@ void CConfig::LoadSettings()
 
     LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
 
+
+    auto& vProfilesTable = toml::find(m_vData, "Profiles");
+
+    for (auto& table: vProfilesTable.as_table())
+    {
+        try
+        {
+            std::string profileNames = toml::find<std::string>(table.second, "name");
+            m_profileNames.push_back(profileNames);
+        }
+        catch (std::out_of_range e)
+        {
+            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", table.first, e.what()));
+        }    
+    }
+
+    LoadActiveDisplay(activeDisplayProfile);
+
+}
+
+void CConfig::LoadActiveDisplay(std::string activeProfile)
+{
+    auto& vProfilesTable = toml::find(m_vData, "Profiles");
+
+    // toml::value
+    for (auto& table: vProfilesTable.as_table())
+    {
+        try
+        {
+            std::string profileNames = toml::find<std::string>(table.second, "name");
+            m_profileNames.push_back(profileNames);
+        }
+        catch (std::out_of_range e)
+        {
+            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", table.first, e.what()));
+        }    
+    }
+    // find the table with the data
     // Find the profiles table that contains all mapping profiles
-    toml::value vProfilesTable = toml::find(m_vData, "Profiles");
+    auto& vProfilesTable = toml::find(m_vData, "Profiles");
 
     // Find the profile table which is currently enabled
-    std::string profileTableName = std::to_string(activeDisplayProfile);
-    auto& vActiveProfileTable = toml::find(vProfilesTable, profileTableName);
+    auto& vActiveProfileTable = toml::find(vProfilesTable, std::to_string(activeProfile));
+
 
     // Load in current profile dependent settings
-    m_profile_ID = toml::find_or<int>(vActiveProfileTable, "profile_id", 13302);
+    m_activeDisplayConfiguration.m_profile_ID = toml::find_or<int>(vActiveProfileTable, "profile_id", 13302);
 
-    // Load in Display Mappings
     // Find the display mapping table for the given profile
     auto& vDisplayMappingTable = toml::find(vActiveProfileTable, "DisplayMappings");
-
-    LogToWix("Padding\n");
-
-    // TODO: check bounds of my array first with number of monitors
-    //  and see if they match
     
-    for (int i = 0; i < m_monitorCount; i++) {
+    for (auto& display: vDisplayMappingTable.as_table())
+    {
+        std::string i = display.first;
+        auto& vDisplayMapping = display.second;
 
-        std::string displayTableName = std::to_string(i);
-        
-        try {
-            const auto& vDisplayMapping = toml::find(vDisplayMappingTable, displayTableName);
-
+        try
+        {
             // Bring In The Rotational Bounds
             toml::value left = toml::find(vDisplayMapping, "left");
             toml::value right = toml::find(vDisplayMapping, "right");
@@ -252,16 +276,16 @@ void CConfig::LoadSettings()
             toml::value_t integer = toml::value_t::integer;
 
             float rotLeft = (left.type() == integer) ? static_cast<float>(left.as_integer())
-                                                     : left.as_floating();
+                : left.as_floating();
 
             float rotRight = (right.type() == integer) ? static_cast<float>(right.as_integer())
-                                                       : right.as_floating();
+                : right.as_floating();
 
             float rotTop = (top.type() == integer) ? static_cast<float>(top.as_integer())
-                                                  : top.as_floating();
+                : top.as_floating();
 
             float rotBottom = (bottom.type() == integer) ? static_cast<float>(bottom.as_integer())
-                                                         : bottom.as_floating();
+                : bottom.as_floating();
 
             // I return an ungodly fake high padding numbelong ,
             // so that I can tell if one was found in the toml config file
@@ -272,40 +296,48 @@ void CConfig::LoadSettings()
             int paddingTop = toml::find_or<int>(vDisplayMapping, "paddingTop", 5555);
             int paddingBottom = toml::find_or<int>(vDisplayMapping, "paddingBottom", 5555);
 
-            if (paddingLeft != 5555) {
+            if (paddingLeft != 5555)
+            {
                 LogToWix(fmt::format("Display {} Left:     {:>12}\n", i, paddingLeft));
                 paddingLeft = paddingLeft;
             }
-            else {
-                LogToWix(fmt::format("Display {} Left:     {:>12} (Default)\n", i, defaultPaddingLeft));
-                paddingLeft = defaultPaddingLeft;
+            else
+            {
+                LogToWix(fmt::format("Display {} Left:     {:>12} (Default)\n", i, m_defaultPaddingLeft));
+                paddingLeft = m_defaultPaddingLeft;
             }
-            if (paddingRight != 5555) {
+            if (paddingRight != 5555)
+            {
                 LogToWix(fmt::format("Display {} Right:    {:>12}\n", i, paddingRight));
                 paddingRight = paddingRight;
             }
-            else {
-                LogToWix(fmt::format("Display {} Right:    {:>12} (Default)\n", i, defaultPaddingRight));
-                paddingRight = defaultPaddingRight;
+            else
+            {
+                LogToWix(fmt::format("Display {} Right:    {:>12} (Default)\n", i, m_defaultPaddingRight));
+                paddingRight = m_defaultPaddingRight;
             }
-            if (paddingTop != 5555) {
+            if (paddingTop != 5555)
+            {
                 LogToWix(fmt::format("Display {} Top:      {:>12}\n", i, paddingTop));
                 paddingTop = paddingTop;
             }
-            else {
-                LogToWix(fmt::format("Display {} Top:      {:>12} (Default)\n", i, defaultPaddingTop));
-                paddingTop = defaultPaddingTop;
+            else
+            {
+                LogToWix(fmt::format("Display {} Top:      {:>12} (Default)\n", i, m_defaultPaddingTop));
+                paddingTop = m_defaultPaddingTop;
             }
-            if (paddingBottom != 5555) {
+            if (paddingBottom != 5555)
+            {
                 LogToWix(fmt::format("Display {} Bottom:   {:>12}\n", i, paddingBottom));
                 paddingBottom = paddingBottom;
             }
-            else {
-                LogToWix(fmt::format("Display {} Bottom:   {:>12} (Default)\n", i, defaultPaddingBottom));
-                paddingBottom = defaultPaddingBottom;
+            else
+            {
+                LogToWix(fmt::format("Display {} Bottom:   {:>12} (Default)\n", i, m_defaultPaddingBottom));
+                paddingBottom = m_defaultPaddingBottom;
             }
 
-            m_bounds.push_back(bounds_in_degrees({rotLeft, rotRight, rotTop, rotBottom}, {paddingLeft, paddingRight, paddingTop, paddingBottom}));
+            m_activeDisplayConfiguration.m_bounds.push_back(bounds_in_degrees({ rotLeft, rotRight, rotTop, rotBottom }, { paddingLeft, paddingRight, paddingTop, paddingBottom }));
         }
         catch (toml::type_error e)
         {
@@ -317,6 +349,8 @@ void CConfig::LoadSettings()
             // I wanted to throw std::runtime_error, but i haven't figured out how yet
             //throw 23;
         }
+        // load simple settings
+        // load monitor display mapping
     }
 
 }
