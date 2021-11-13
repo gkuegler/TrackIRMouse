@@ -80,8 +80,12 @@ public:
     void ParseFile(const std::string);
     void LoadSettings();
     void SaveSettings();
-    void LoadActiveDisplay(int activeProfile);
+    void LoadActiveDisplay(std::string activeProfile);
+
     CDisplayConfiguration GetActiveDisplaySetUp()
+    {
+        return m_activeDisplayConfiguration;
+    }
     
 
 

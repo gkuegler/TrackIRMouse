@@ -229,28 +229,25 @@ void CConfig::LoadSettings()
 
 void CConfig::LoadActiveDisplay(std::string activeProfile)
 {
+    // Find the profiles table that contains all mapping profiles.
     auto& vProfilesTable = toml::find(m_vData, "Profiles");
+    std::string tableKey;
 
-    // toml::value
+    // Find the table with a matching profile name.
+    // .as_table() returns a std::unordered_map<toml::key, toml::table>
+    // Conversion is necessary to loop by element.
     for (auto& table: vProfilesTable.as_table())
     {
-        try
+        std::string profileName = toml::find<std::string>(table.second, "name");
+        if (activeProfile == profileName)
         {
-            std::string profileNames = toml::find<std::string>(table.second, "name");
-            m_profileNames.push_back(profileNames);
+            tableKey = table.first;
+            break;
         }
-        catch (std::out_of_range e)
-        {
-            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", table.first, e.what()));
-        }    
     }
-    // find the table with the data
-    // Find the profiles table that contains all mapping profiles
-    auto& vProfilesTable = toml::find(m_vData, "Profiles");
 
-    // Find the profile table which is currently enabled
-    auto& vActiveProfileTable = toml::find(vProfilesTable, std::to_string(activeProfile));
-
+    // Use the found table key
+    auto& vActiveProfileTable = toml::find(vProfilesTable, tableKey);
 
     // Load in current profile dependent settings
     m_activeDisplayConfiguration.m_profile_ID = toml::find_or<int>(vActiveProfileTable, "profile_id", 13302);
@@ -346,11 +343,7 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
         catch (std::out_of_range e)
         {
             LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
-            // I wanted to throw std::runtime_error, but i haven't figured out how yet
-            //throw 23;
         }
-        // load simple settings
-        // load monitor display mapping
     }
 
 }

@@ -76,10 +76,10 @@ public:
 
     cPanel(wxFrame* frame);
     
-    void LoadDisplayMappings(const CConfig config);
+    //void LoadDisplayMappings(const CConfig config);
     void PopulateComboBoxWithProfiles(CConfig config)
     {
-        for (auto& item : config.m_profileNumbers)
+        for (auto& item : config.m_profileNames)
         {
             m_cmbProfiles->Append(item);
         }
