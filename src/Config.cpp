@@ -421,6 +421,7 @@ int CConfig::GetInteger(std::string s)
     catch (const std::exception& ex)
     {
         LogTomlError(ex);
+        return -1;
     }
 }
 
@@ -434,6 +435,7 @@ float CConfig::GetFloat(std::string s)
     catch (const std::exception& ex)
     {
         LogTomlError(ex);
+        return -1.0;
     }
 }
 
@@ -447,6 +449,7 @@ bool CConfig::GetBool(std::string s)
     catch (const std::exception& ex)
     {
         LogTomlError(ex);
+        return false;
     }
 }
 
@@ -460,10 +463,22 @@ std::string CConfig::GetString(std::string s)
     catch (const std::exception& ex)
     {
         LogTomlError(ex);
+        return "";
     }
 }
 
 void CConfig::LogTomlError(const std::exception& ex)
 {
-    wxLogError("Incorrect type on reading configuration parameter: %s", ex.what());
+    wxLogFatalError("Incorrect type on reading configuration parameter: %s", ex.what());
+}
+
+
+CConfig* GetGlobalConfig()
+{
+    return &g_config;
+}
+
+CConfig GetGlobalConfigCopy()
+{
+    return g_config;
 }

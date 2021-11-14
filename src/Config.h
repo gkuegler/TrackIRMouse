@@ -9,12 +9,6 @@
 
 #include <string>
 
-// struct bounds_in_degrees {
-//     // Left, Right, Top, Bottom
-//     std::array<std::string, 4> names = { "left", "right", "top", "bottom" };
-//     std::array<float, 4> rotationBounds;
-//     std::array<int, 4> paddingBounds;
-// };
 
 class bounds_in_degrees
 {
@@ -129,8 +123,7 @@ public:
             LogToWixError(fmt::format("A big exception happened: {}\n", ex.what()));
         }
     }
-
-    
+   
     int GetInteger(std::string s);
     float GetFloat(std::string s);
     bool GetBool(std::string s);
@@ -145,5 +138,9 @@ private:
 };
 
 extern CConfig g_config;
+
+CConfig* GetGlobalConfig();
+
+CConfig GetGlobalConfigCopy();
 
 #endif /* TRACKIRMOUSE_CONFIG_H */
