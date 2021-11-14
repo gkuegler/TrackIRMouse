@@ -61,8 +61,10 @@ public:
 class cPanel : public wxPanel
 {
 public:
+    wxCheckBox* m_cbxEnableWatchdog;
     wxCheckBox* m_cbxTrackOnStart;
     wxCheckBox* m_cbxQuitOnLossOfTrackIR;
+    wxTextCtrl* m_txtTrackIrDllPath;
     wxButton* m_btnStartMouse;
     wxButton* m_btnStopMouse;
     wxButton * m_btnSaveSettings;
@@ -93,28 +95,24 @@ public:
 private:
     wxDataViewListCtrl* m_tlcMappingData;
 
-    void OnTrackOnStart(wxCommandEvent& event)
-    {
-        m_pconfig->SetValue("General/track_on_start", m_cbxTrackOnStart->IsChecked());
-    }
-    
-    void OnQuitOnLossOfTrackIr(wxCommandEvent& event)
-    {
-        m_pconfig->SetValue("General/quit_on_loss_of_track_ir", m_cbxQuitOnLossOfTrackIR->IsChecked());
-    }
-
-    void OnSaveSettings(wxCommandEvent& event)
-    {
-        m_pconfig->SaveSettings();
-    }
+    // Control Event Handlers
+    void OnEnabledWatchdog(wxCommandEvent& event);
+    void OnTrackOnStart(wxCommandEvent& event);
+    void OnQuitOnLossOfTrackIr(wxCommandEvent& event);
+    void OnTrackIrDllPath(wxCommandEvent& event);
+    void OnSaveSettings(wxCommandEvent& event);
+    void OnActiveProfile(wxCommandEvent& event);
 
     wxDECLARE_EVENT_TABLE();
 };
 
 wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
+    EVT_CHECKBOX(myID_WATCHDOG_ENABLED, cPanel::OnEnabledWatchdog)
     EVT_CHECKBOX(myID_TRACK_ON_START, cPanel::OnTrackOnStart)
     EVT_CHECKBOX(myID_QUIT_ON_LOSS_OF_TRACK_IR, cPanel::OnQuitOnLossOfTrackIr)
+    EVT_TEXT_ENTER(myID_TRACK_IR_DLL_PATH, cPanel::OnTrackIrDllPath)
     EVT_BUTTON(myID_SAVE_SETTINGS, cPanel::OnSaveSettings)
+    EVT_COMBOBOX(myID_PROFILE_SELECTION, cPanel::OnActiveProfile)
 wxEND_EVENT_TABLE()
 
 //////////////////////////////////////////////////////////////////////
@@ -152,7 +150,7 @@ wxEND_EVENT_TABLE()
 class CGUIApp : public wxApp
 {
 public:
-    CConfig g_config;
+    // CConfig g_config;
 
     CGUIApp() {};
     ~CGUIApp() {};

@@ -19,21 +19,19 @@ wxIMPLEMENT_APP(CGUIApp);
 bool CGUIApp::OnInit()
 {
     // Initialize global logger
-    //CMyLogger* logger = new CMyLogger();
-    //wxLog::SetActiveTarget(logger);
-    //wxLog::SetLogLevel(wxLOG_Info);
-    /*spdlog::info("Welcome to spdlog!");*/
     auto logger = spdlog::basic_logger_mt("mainlogger", "log-trackir.txt");
-    //spdlog::set_level(spdlog::level::info);
+    spdlog::set_level(spdlog::level::info);
 
     // Construct child elements
-    m_frame = new cFrame();
+    m_frame = new cFrame();    
+
+    CConfig* config = GetGlobalConfig();
 
     // Parse Settings File
     try
     {
        //wxLogError("press okay to continue");
-       g_config.ParseFile("settings.toml");
+       config->ParseFile("settings.toml");
     }
     catch (const toml::syntax_error& ex)
     {
@@ -49,7 +47,7 @@ bool CGUIApp::OnInit()
 
     try
     {
-        g_config.LoadSettings();
+        config->LoadSettings();
     }
     // type_error inherits from toml::exception
     catch (const toml::type_error& ex)
@@ -71,10 +69,10 @@ bool CGUIApp::OnInit()
     }
 
     // m_frame->m_panel->LoadDisplayMappings(g_config);
-    m_frame->m_panel->PopulateComboBoxWithProfiles(g_config);
+    m_frame->m_panel->PopulateComboBoxWithProfiles(GetGlobalConfigCopy());
     
    
-    TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), g_config);
+    TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), GetGlobalConfigCopy());
 
     if (thread->Create() == wxTHREAD_NO_ERROR)
     {
@@ -212,11 +210,16 @@ cTextCtrl::cTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value,
 
 cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
 {
+    m_cbxEnableWatchdog = new wxCheckBox(this, myID_WATCHDOG_ENABLED, "Watchdog Enabled", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
     m_cbxTrackOnStart = new wxCheckBox(this, myID_TRACK_ON_START, "Track On Start", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
     m_cbxQuitOnLossOfTrackIR = new wxCheckBox(this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
 
-    m_btnStartMouse = new wxButton(this, wxID_ANY, "Start Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
-    m_btnStopMouse = new wxButton(this, wxID_ANY, "Stop Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
+    wxStaticText* txtTrackLocation1 = new wxStaticText(this, wxID_ANY, "Path of 'NPClient64.dll'");
+    m_txtTrackIrDllPath = new cTextCtrl(this, myID_TRACK_IR_DLL_PATH, "default", wxDefaultPosition, wxSize(60, 10), wxTE_LEFT);
+    wxStaticText* txtTrackLocation2 = new wxStaticText(this, wxID_ANY, "Note: a value of 'default' will get from install location.");
+
+    m_btnStartMouse = new wxButton(this, myID_START_TRACK, "Start Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
+    m_btnStopMouse = new wxButton(this, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
     m_btnSaveSettings = new wxButton(this, myID_SAVE_SETTINGS, "Save Settings", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
 
     m_cmbProfiles = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, 0, wxCB_DROPDOWN, wxDefaultValidator, "");
@@ -236,9 +239,16 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     
     m_textrich -> SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
 
+    //wxBoxSizer* rowA = new wxBoxSizer(wxHORIZONTAL);
+
+
     wxBoxSizer* row1 = new wxBoxSizer(wxVERTICAL);
+    row1->Add(m_cbxEnableWatchdog, 0, wxALL, 0);
     row1->Add(m_cbxTrackOnStart, 0, wxALL, 0);
     row1->Add(m_cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
+    row1->Add(txtTrackLocation1, 0, wxALL, 0);
+    row1->Add(m_txtTrackIrDllPath, 0, wxALL, 0);
+    row1->Add(txtTrackLocation2, 0, wxALL, 0);
 
     wxBoxSizer* row2 = new wxBoxSizer(wxVERTICAL);
     row2->Add(m_btnStartMouse, 0, wxALL, 0);
@@ -263,6 +273,46 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     topSizer->Add(row4, 1, wxALL | wxEXPAND, 10);
 
     SetSizer(topSizer);
+}
+
+void cPanel::OnEnabledWatchdog(wxCommandEvent& event)
+{
+    CConfig* config = GetGlobalConfig();
+    config->SetValue("General/watchdog_enabled", m_cbxEnableWatchdog->IsChecked());
+}
+
+void cPanel::OnTrackOnStart(wxCommandEvent& event)
+{
+    CConfig* config = GetGlobalConfig();
+    config->SetValue("General/track_on_start", m_cbxTrackOnStart->IsChecked());
+}
+
+void cPanel::OnQuitOnLossOfTrackIr(wxCommandEvent& event)
+{
+    CConfig* config = GetGlobalConfig();
+    config->SetValue("General/quit_on_loss_of_track_ir", m_cbxQuitOnLossOfTrackIR->IsChecked());
+}
+
+void cPanel::OnTrackIrDllPath(wxCommandEvent& event)
+{
+    CConfig* config = GetGlobalConfig();
+    wxString wxsPath = m_txtTrackIrDllPath->GetLineText(0);
+    std::string path(wxsPath.mb_str());
+    config->SetValue("General/trackir_dll_dIirectory", path);
+}
+
+void cPanel::OnActiveProfile(wxCommandEvent& event)
+{
+    int index = m_cmbProfiles->GetSelection();
+    CConfig* config = GetGlobalConfig();
+    // config->SetActiveProfile(m_cbxQuitOnLossOfTrackIR->GetString(index));
+    // Make sure to update the table
+}
+
+void cPanel::OnSaveSettings(wxCommandEvent& event)
+{
+    CConfig* config = GetGlobalConfig();
+    config->SaveSettings();
 }
 
 //void cPanel::LoadDisplayMappings(const CConfig config)
