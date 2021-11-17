@@ -11,13 +11,18 @@
 #include <wx/dataview.h>
 // #include <wx/wfstream.h>
 
+class cFrame;
+
 class TrackThread : public wxThread
 {
 public:
+    cFrame* m_pHandler = nullptr;
     HWND m_hWnd;
     CConfig m_Config;
 
-    TrackThread(wxEvtHandler* parent, HWND hWnd, CConfig config);
+    TrackThread(cFrame* m_pHandler, HWND hWnd, CConfig config);
+    ~TrackThread();
+
     ExitCode Entry();
 
 protected:
@@ -116,8 +121,11 @@ class cFrame : public wxFrame
 {
 public:
     cPanel* m_panel;
+    TrackThread* m_pTrackThread = nullptr;
 
     cFrame();
+
+    void OnTrackStart(wxCommandEvent& event);
 
 private:
     void OnExit(wxCommandEvent& event);
@@ -133,7 +141,8 @@ wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
     EVT_MENU(wxID_EXIT, cFrame::OnExit)
     EVT_MENU(wxID_ABOUT, cFrame::OnAbout)
     EVT_MENU(wxID_OPEN, cFrame::OnOpen)
-    EVT_MENU(myID_GEN_EXMPL, cFrame::OnGenerateExample)
+    EVT_BUTTON(myID_GEN_EXMPL, cFrame::OnGenerateExample)
+    EVT_BUTTON(myID_TRACK_START, cFrame::OnGenerateExample)
 wxEND_EVENT_TABLE()
 
 //////////////////////////////////////////////////////////////////////
@@ -155,7 +164,6 @@ public:
 
 private:
 	cFrame* m_frame = nullptr;
-    //TrackThread* m_trackThread = nullptr;
 };
 
 wxDECLARE_APP(CGUIApp);

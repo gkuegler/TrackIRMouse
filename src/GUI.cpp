@@ -93,16 +93,14 @@ bool CGUIApp::OnInit()
     m_frame->m_panel->PopulateComboBoxWithProfiles(GetGlobalConfigCopy());
     m_frame->m_panel->m_pnlDisplayConfig->LoadDisplaySettings();
     
-
-    TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), GetGlobalConfigCopy());
-
-    if (thread->Create() == wxTHREAD_NO_ERROR)
-    {
-        thread->Run();
-    }
-
-
 	m_frame->Show();
+
+    // Start the track IR thread if enabled
+    if (config->GetBool("General/watchdog_enabled"))
+    {
+        wxCommandEvent event = {};
+        m_frame->OnTrackStart(event);
+    }
 
 	return true;
 }
@@ -193,6 +191,24 @@ void cFrame::OnOpen(wxCommandEvent& event)
 void cFrame::OnGenerateExample(wxCommandEvent& event)
 {
     wxLogError("Method not implemented yet!");
+}
+
+void cFrame::OnTrackStart(wxCommandEvent& event)
+{
+    // Threads run in detached mode by default.
+    // It is okay to lose pointer.
+    m_pTrackThread = new TrackThread(this, this->GetHandle(), GetGlobalConfigCopy());
+
+    if (m_pTrackThread->Create() == wxTHREAD_NO_ERROR)
+    {
+        m_pTrackThread->Run();
+    }
+    else
+    {
+        wxLogError("Can't create the thread!");
+        delete m_pTrackThread;
+        m_pTrackThread = NULL;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -388,11 +404,18 @@ void cPanelConfiguration::LoadDisplaySettings()
 //                           TrackThread                            //
 //////////////////////////////////////////////////////////////////////
 
-TrackThread::TrackThread(wxEvtHandler* parent, HWND hWnd, const CConfig config) : wxThread()
+TrackThread::TrackThread(cFrame* pHandler, HWND hWnd, CConfig config) : wxThread()
 {
-    m_parent = parent;
+    m_pHandler = pHandler;
     m_hWnd = hWnd;
     m_Config = config;
+}
+
+TrackThread::~TrackThread()
+{
+    // Will need to provide locks in the future with critical sections
+    https://docs.wxwidgets.org/3.0/classwx_thread.html
+    m_pHandler->m_pTrackThread = NULL;
 }
 
 wxThread::ExitCode TrackThread::Entry()
@@ -400,8 +423,9 @@ wxThread::ExitCode TrackThread::Entry()
 
     try
     {
-        CTracker Tracker(m_parent, m_hWnd, m_Config);
-        int result = Tracker.trackStart(m_Config);
+        TR_Initialize(m_hWnd, m_Config);
+        TR_TrackStart(m_Config);
+
     }
     catch (const std::exception& ex)
     {

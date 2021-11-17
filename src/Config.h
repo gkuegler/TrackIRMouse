@@ -87,7 +87,7 @@ public:
     int SetValueInTable(std::vector<std::string> tableHierarchy, std::string parameterName, const T value)
     {
         toml::value* table = this->FindHighestTable(tableHierarchy);
-        if (nullptr == table) return 1;
+        if (nullptr == table) return -1;
 
         // See link below for explanation on accessing the underlying
         // unordered_map of a toml table
@@ -121,6 +121,7 @@ public:
         catch (const std::exception& ex)
         {
             LogToWixError(fmt::format("A big exception happened: {}\n", ex.what()));
+            return -1;
         }
     }
    

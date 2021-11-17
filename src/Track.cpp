@@ -17,20 +17,33 @@
 #include "Config.h"
 #include "Log.h"
 
-#include <wx/wx.h>
+// #include <wx/wx.h>
 
 #define USHORT_MAX_VAL 65535 // SendInput with absolute mouse movement takes a short int
 
 bool g_bPauseTracking = false;
 
+std::vector<CDisplay> g_displays;
+
+signed int g_virtualOriginX = 0;
+signed int g_virtualOriginY = 0;
+float g_xPixelAbsoluteSlope = 0;
+float g_yPixelAbsoluteSlope = 0;
+
+HANDLE g_hWatchdogThread = NULL;
+
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
 //#define TEST_NO_TRACK
 
+// Function Prototypes
+BOOL PopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT);
+void WinSetup(CConfig);
+void DisplaySetup(const CConfig);
+void MouseMove(int, float, float);
 
 
-
-CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig config)
+void TR_Initialize(HWND hWnd, CConfig config)
 {
 
 	// ## Program flow ##
@@ -66,9 +79,9 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig config)
 	if (config.GetBool("General/watchdog_enabled"))
 	{
 		// Watchdog thread may return NULL
-		m_hWatchdogThread = WatchDog::StartWatchdog();
+		g_hWatchdogThread = WatchDog::StartWatchdog();
 
-		if (NULL == m_hWatchdogThread)
+		if (NULL == g_hWatchdogThread)
 		{
 			LogToWix("Watchdog thread failed to initialize!");
 		}
@@ -161,9 +174,9 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig config)
 #endif
 }
 
-int CTracker::trackStart(CConfig config)
+void TR_TrackStart(CConfig config)
 {
-#ifndef TEST_NO_TRACK	
+#ifndef TEST_NO_TRACK
 	// Skipping this api call. I think this is for legacy games.
 	// NP_StopCursor
 
@@ -225,23 +238,16 @@ int CTracker::trackStart(CConfig config)
 		Sleep(8);
 	}
 	
-	return 0;
+	return;
 }
 
-void CTracker::trackStop()
+void TR_TrackStop()
 {
 	NP_StopDataTransmission();
 	NP_UnregisterWindowHandle();
 }
 
-BOOL CTracker::WrapperPopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM lParam)
-{
-	CTracker* pThis = reinterpret_cast<CTracker*>(lParam);
-	BOOL winreturn = pThis->PopulateVirtMonitorBounds(hMonitor, hdcMonitor, lprcMonitor);
-	return true;
-}
-
-BOOL CTracker::PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor)
+BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM lParam)
 {
 	static int count{ 0 };
 	MONITORINFOEX Monitor;
@@ -257,11 +263,12 @@ BOOL CTracker::PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRE
 
 	// CDisplay may create an extra copy constructor, but I want to guarantee
 	// overload resolution uses my initializer list to instantiate a single item.
-	// TODO: Optimize this later, see Scott Meyers notes about overload resolutionand vectors.
-	m_displays.push_back(CDisplay{ left, right, top, bottom });
+	// TODO: Optimize this later, see Scott Meyers notes about overload resolution and vectors.
+	g_displays.push_back(CDisplay{ left, right, top, bottom });
 
 
 	// Display monitor info to user
+	// TODO: michael does not yet support wide character strings
 	//LogToWix(fmt::format(L"MON Name:{:>15}\n", Monitor.szDevice));
 
 	LogToWix(fmt::format("MON {} Left:   {:>10}\n", count, left));
@@ -269,20 +276,20 @@ BOOL CTracker::PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRE
 	LogToWix(fmt::format("MON {} Top:    {:>10}\n", count, top));
 	LogToWix(fmt::format("MON {} Bottom: {:>10}\n", count, bottom));
 
-	if (Monitor.rcMonitor.left < m_virtualOriginX)
+	if (Monitor.rcMonitor.left < g_virtualOriginX)
 	{
-		m_virtualOriginX = Monitor.rcMonitor.left;
+		g_virtualOriginX = Monitor.rcMonitor.left;
 	}
-	if (Monitor.rcMonitor.top < m_virtualOriginY)
+	if (Monitor.rcMonitor.top < g_virtualOriginY)
 	{
-		m_virtualOriginY = Monitor.rcMonitor.top;
+		g_virtualOriginY = Monitor.rcMonitor.top;
 	}
 
 	count++;
 	return true;
 };
 
-void CTracker::WinSetup(CConfig config)
+void WinSetup(CConfig config)
 {
 	LogToWix(fmt::format("\n{:-^50}\n", "Windows Environment Info"));
 
@@ -306,85 +313,57 @@ void CTracker::WinSetup(CConfig config)
 	LogToWix(fmt::format("Width of Virtual Desktop:  {:>5}\n", virtualDesktopWidth));
 	LogToWix(fmt::format("Height of Virtual Desktop: {:>5}\n", virtualDesktopHeight));
 
-	/* #################################################################
-	For a future feature to automatically detect monitor configurations
-	and select the correct profile.
-
-	DISPLAY_DEVICEA display_device_info;
-	display_device_info.cb = sizeof(DISPLAY_DEVICEA);
-
-	for (int i = 0; ; i++)
-	{
-		BOOL result = EnumDisplayDevicesA(
-			0,
-			i,
-			&display_device_info,
-			0
-		);
-
-		if (result)
-		{
-			//std::cout << i << " Name: " << display_device_info.DeviceName << "  DeviceString: " << display_device_info.DeviceString << std::endl;
-			LogToWix(fmt::format("{} Name: {} DeviceString: {}\n", i, display_device_info.DeviceName, display_device_info.DeviceString));
-		}
-		else
-		{
-			break;
-		}
-	}
-	######################################################################## */
-
-	m_xPixelAbsoluteSlope = USHORT_MAX_VAL / static_cast<float>(virtualDesktopWidth);
-	m_yPixelAbsoluteSlope = USHORT_MAX_VAL / static_cast<float>(virtualDesktopHeight);
+	g_xPixelAbsoluteSlope = USHORT_MAX_VAL / static_cast<float>(virtualDesktopWidth);
+	g_yPixelAbsoluteSlope = USHORT_MAX_VAL / static_cast<float>(virtualDesktopHeight);
 
 	LogToWix("\nVirtual Desktop Pixel Bounds\n");
-	EnumDisplayMonitors(NULL, NULL, WrapperPopulateVirtMonitorBounds, reinterpret_cast<LPARAM>(this));
+	EnumDisplayMonitors(NULL, NULL, PopulateVirtMonitorBounds, 0);
 
-	LogToWix(fmt::format("\nVirtual Origin Offset Horizontal: {:d}\n", m_virtualOriginX));
-	LogToWix(fmt::format("Virtual Origin Offset Vertical:   {:d}\n", m_virtualOriginY));
+	LogToWix(fmt::format("\nVirtual Origin Offset Horizontal: {:d}\n", g_virtualOriginX));
+	LogToWix(fmt::format("Virtual Origin Offset Vertical:   {:d}\n", g_virtualOriginY));
 
 	return;
 }
 
-void CTracker::DisplaySetup(const CConfig config)
+void DisplaySetup(const CConfig config)
 {
 	for (int i = 0; i < config.m_monitorCount; i++)
 	{
-		m_displays[i].rotationBoundLeft   = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[0];
-		m_displays[i].rotationBoundRight  = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[1];
-		m_displays[i].rotationBoundTop    = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[2];
-		m_displays[i].rotationBoundBottom = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[3];
+		g_displays[i].rotationBoundLeft   = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[0];
+		g_displays[i].rotationBoundRight  = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[1];
+		g_displays[i].rotationBoundTop    = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[2];
+		g_displays[i].rotationBoundBottom = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[3];
 
-		m_displays[i].paddingLeft         = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[0];
-		m_displays[i].paddingRight        = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[1];
-		m_displays[i].paddingTop          = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[2];
-		m_displays[i].paddingBottom       = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[3];
+		g_displays[i].paddingLeft         = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[0];
+		g_displays[i].paddingRight        = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[1];
+		g_displays[i].paddingTop          = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[2];
+		g_displays[i].paddingBottom       = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[3];
 
-		m_displays[i].setAbsBounds(m_virtualOriginX, m_virtualOriginY, m_xPixelAbsoluteSlope, m_yPixelAbsoluteSlope);
+		g_displays[i].setAbsBounds(g_virtualOriginX, g_virtualOriginY, g_xPixelAbsoluteSlope, g_yPixelAbsoluteSlope);
 	}
 	LogToWix("\nVirtual Desktop Pixel Bounds (abs)\n");
 	for (int i = 0; i < config.m_monitorCount; i++)
 	{
-		LogToWix(fmt::format("MON {} pixelBoundboundAbsLeft:   {:>10d}\n", i, m_displays[i].pixelBoundAbsLeft));
-		LogToWix(fmt::format("MON {} pixelBoundboundAbsRight:  {:>10d}\n", i, m_displays[i].pixelBoundAbsRight));
-		LogToWix(fmt::format("MON {} pixelBoundboundAbsTop:    {:>10d}\n", i, m_displays[i].pixelBoundAbsTop));
-		LogToWix(fmt::format("MON {} pixelBoundboundAbsBottom: {:>10d}\n", i, m_displays[i].pixelBoundAbsBottom));
+		LogToWix(fmt::format("MON {} pixelBoundboundAbsLeft:   {:>10d}\n", i, g_displays[i].pixelBoundAbsLeft));
+		LogToWix(fmt::format("MON {} pixelBoundboundAbsRight:  {:>10d}\n", i, g_displays[i].pixelBoundAbsRight));
+		LogToWix(fmt::format("MON {} pixelBoundboundAbsTop:    {:>10d}\n", i, g_displays[i].pixelBoundAbsTop));
+		LogToWix(fmt::format("MON {} pixelBoundboundAbsBottom: {:>10d}\n", i, g_displays[i].pixelBoundAbsBottom));
 	}
 	LogToWix("\n16-bit Coordinate Bounds\n");
 	for (int i = 0; i < config.m_monitorCount; i++)
 	{
-		LogToWix(fmt::format("MON {} boundAbsLeft:       {:>12.1f}\n", i, m_displays[i].boundAbsLeft));
-		LogToWix(fmt::format("MON {} boundAbsRight:      {:>12.1f}\n", i, m_displays[i].boundAbsRight));
-		LogToWix(fmt::format("MON {} boundAbsTop:        {:>12.1f}\n", i, m_displays[i].boundAbsTop));
-		LogToWix(fmt::format("MON {} boundAbsBottom:     {:>12.1f}\n", i, m_displays[i].boundAbsBottom));
+		LogToWix(fmt::format("MON {} boundAbsLeft:       {:>12.1f}\n", i, g_displays[i].boundAbsLeft));
+		LogToWix(fmt::format("MON {} boundAbsRight:      {:>12.1f}\n", i, g_displays[i].boundAbsRight));
+		LogToWix(fmt::format("MON {} boundAbsTop:        {:>12.1f}\n", i, g_displays[i].boundAbsTop));
+		LogToWix(fmt::format("MON {} boundAbsBottom:     {:>12.1f}\n", i, g_displays[i].boundAbsBottom));
 	}
 	LogToWix("\nRotational Bounds\n");
 	for (int i = 0; i < config.m_monitorCount; i++)
 	{
-		LogToWix(fmt::format("MON {} rotationBoundLeft:       {:>13.2f}\n", i, m_displays[i].rotationBoundLeft));
-		LogToWix(fmt::format("MON {} rotationBoundRight:      {:>13.2f}\n", i, m_displays[i].rotationBoundRight));
-		LogToWix(fmt::format("MON {} rotationBoundTop:        {:>13.2f}\n", i, m_displays[i].rotationBoundTop));
-		LogToWix(fmt::format("MON {} rotationBoundBottom:     {:>13.2f}\n", i, m_displays[i].rotationBoundBottom));
+		LogToWix(fmt::format("MON {} rotationBoundLeft:       {:>13.2f}\n", i, g_displays[i].rotationBoundLeft));
+		LogToWix(fmt::format("MON {} rotationBoundRight:      {:>13.2f}\n", i, g_displays[i].rotationBoundRight));
+		LogToWix(fmt::format("MON {} rotationBoundTop:        {:>13.2f}\n", i, g_displays[i].rotationBoundTop));
+		LogToWix(fmt::format("MON {} rotationBoundBottom:     {:>13.2f}\n", i, g_displays[i].rotationBoundBottom));
 	}
 
 	LogToWix(fmt::format("\n{:-^}\n", "???"));
@@ -416,7 +395,7 @@ inline void SendMyInput(float x, float y)
 	return;
 }
 
-void CTracker::MouseMove(int monitorCount, float yaw, float pitch)
+void MouseMove(int monitorCount, float yaw, float pitch)
 {
 
 	// set the last screen initially equal to the main display for me
@@ -438,20 +417,20 @@ void CTracker::MouseMove(int monitorCount, float yaw, float pitch)
 
 	for (int i = 0; i <= monitorCount - 1; i++)
 	{
-		if ((yaw > m_displays[i].rotationBound16BitLeft)
-			&& (yaw < m_displays[i].rotationBound16BitRight)
-			&& (pitch < m_displays[i].rotationBound16BitTop)
-			&& (pitch > m_displays[i].rotationBound16BitBottom))
+		if ((yaw > g_displays[i].rotationBound16BitLeft)
+			&& (yaw < g_displays[i].rotationBound16BitRight)
+			&& (pitch < g_displays[i].rotationBound16BitTop)
+			&& (pitch > g_displays[i].rotationBound16BitBottom))
 		{
 			// I wrote it out for maintainability
 			// its plenty fast anyway for a 60hz limited display
-			rl = m_displays[i].rotationBound16BitLeft;
-			al = m_displays[i].boundAbsLeft;
-			mx = m_displays[i].xSlope;
+			rl = g_displays[i].rotationBound16BitLeft;
+			al = g_displays[i].boundAbsLeft;
+			mx = g_displays[i].xSlope;
 			x  = mx * (yaw - rl) + al;
-			rt = m_displays[i].rotationBound16BitTop;
-			at = m_displays[i].boundAbsTop;
-			my = m_displays[i].ySlope;
+			rt = g_displays[i].rotationBound16BitTop;
+			at = g_displays[i].boundAbsTop;
+			my = g_displays[i].ySlope;
 			y  = my * (rt - pitch) + at;
 			// load the coordinates into my input structure
 			// need to cast to an integer because resulting calcs are floats
@@ -467,39 +446,39 @@ void CTracker::MouseMove(int monitorCount, float yaw, float pitch)
 	// yaw axis that is too great or too little to do this assume the pointer
 	// came from the last screen, just asign the mouse position to the absolute
 	// limit from the screen it came from.
-	if (yaw < m_displays[lastScreen].rotationBound16BitLeft)
+	if (yaw < g_displays[lastScreen].rotationBound16BitLeft)
 	{
-		x = m_displays[lastScreen].boundAbsLeft
-			+ m_displays[lastScreen].paddingLeft * m_xPixelAbsoluteSlope;
+		x = g_displays[lastScreen].boundAbsLeft
+			+ g_displays[lastScreen].paddingLeft * g_xPixelAbsoluteSlope;
 	}
-	else if (yaw > m_displays[lastScreen].rotationBound16BitRight)
+	else if (yaw > g_displays[lastScreen].rotationBound16BitRight)
 	{
-		x = m_displays[lastScreen].boundAbsRight
-			- m_displays[lastScreen].paddingRight * m_xPixelAbsoluteSlope;
+		x = g_displays[lastScreen].boundAbsRight
+			- g_displays[lastScreen].paddingRight * g_xPixelAbsoluteSlope;
 	}
 	else
 	{
-		rl = m_displays[lastScreen].rotationBound16BitLeft;
-		al = m_displays[lastScreen].boundAbsLeft;
-		mx = m_displays[lastScreen].xSlope;
+		rl = g_displays[lastScreen].rotationBound16BitLeft;
+		al = g_displays[lastScreen].boundAbsLeft;
+		mx = g_displays[lastScreen].xSlope;
 		x  = mx * (yaw - rl) + al;
 	}
 
-	if (pitch > m_displays[lastScreen].rotationBound16BitTop)
+	if (pitch > g_displays[lastScreen].rotationBound16BitTop)
 	{
-		y = m_displays[lastScreen].boundAbsTop
-			+ m_displays[lastScreen].paddingTop * m_yPixelAbsoluteSlope;
+		y = g_displays[lastScreen].boundAbsTop
+			+ g_displays[lastScreen].paddingTop * g_yPixelAbsoluteSlope;
 	}
-	else if (pitch < m_displays[lastScreen].rotationBound16BitBottom)
+	else if (pitch < g_displays[lastScreen].rotationBound16BitBottom)
 	{
-		y = m_displays[lastScreen].boundAbsBottom
-			- m_displays[lastScreen].paddingBottom * m_yPixelAbsoluteSlope;
+		y = g_displays[lastScreen].boundAbsBottom
+			- g_displays[lastScreen].paddingBottom * g_yPixelAbsoluteSlope;
 	}
 	else
 	{
-		rt = m_displays[lastScreen].rotationBound16BitTop;
-		at = m_displays[lastScreen].boundAbsTop;
-		my = m_displays[lastScreen].ySlope;
+		rt = g_displays[lastScreen].rotationBound16BitTop;
+		at = g_displays[lastScreen].boundAbsTop;
+		my = g_displays[lastScreen].ySlope;
 		y  = my * (rt - pitch) + at;
 	}
 
