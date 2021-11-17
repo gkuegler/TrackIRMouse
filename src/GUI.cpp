@@ -23,7 +23,28 @@ bool CGUIApp::OnInit()
     spdlog::set_level(spdlog::level::info);
 
     // Construct child elements
-    m_frame = new cFrame();    
+    m_frame = new cFrame();
+
+    // Build out this function in order to past more than
+    // log messages back to my main application
+    Bind(wxEVT_THREAD, [this](wxThreadEvent& event)
+        {
+            cTextCtrl* textrich = m_frame->m_panel->m_textrich;
+
+            // Output message in red lettering as an error
+            if (1 == event.GetExtraLong())
+            {
+                wxTextAttr attrExisting = textrich->GetDefaultStyle();
+                textrich->SetDefaultStyle(wxTextAttr(*wxRED));
+                textrich->AppendText(event.GetString());
+                textrich->SetDefaultStyle(attrExisting);
+            }
+            // Output text normally; no errorF
+            else
+            {
+                textrich->AppendText(event.GetString());
+            }
+    });
 
     CConfig* config = GetGlobalConfig();
 
@@ -68,10 +89,11 @@ bool CGUIApp::OnInit()
         wxLogFatalError("exception has gone unhandled loading and verifying settings");
     }
 
-    // m_frame->m_panel->LoadDisplayMappings(g_config);
+    // Populate GUI With Settings
     m_frame->m_panel->PopulateComboBoxWithProfiles(GetGlobalConfigCopy());
+    m_frame->m_panel->m_pnlDisplayConfig->LoadDisplaySettings();
     
-   
+
     TrackThread* thread = new TrackThread(this, m_frame -> GetHandle(), GetGlobalConfigCopy());
 
     if (thread->Create() == wxTHREAD_NO_ERROR)
@@ -79,31 +101,6 @@ bool CGUIApp::OnInit()
         thread->Run();
     }
 
-    // Need to build out this function in order to
-    // pass more than log messages back to my main application.
-    Bind(wxEVT_THREAD, [this](wxThreadEvent& event)
-        {
-            cTextCtrl* textrich = m_frame->m_panel->m_textrich;
-
-            if (1 == event.GetExtraLong())
-            {
-                // Setting textile for future output
-                wxTextAttr attrExisting = textrich->GetDefaultStyle();
-
-                textrich->SetDefaultStyle(wxTextAttr(*wxRED));
-
-                textrich->AppendText(event.GetString());
-
-                textrich->SetDefaultStyle(attrExisting);
-
-            }
-            else
-            {
-                textrich->AppendText(event.GetString());
-            }
-
-
-        });
 
 	m_frame->Show();
 
@@ -215,7 +212,7 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     m_cbxQuitOnLossOfTrackIR = new wxCheckBox(this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
 
     wxStaticText* txtTrackLocation1 = new wxStaticText(this, wxID_ANY, "Path of 'NPClient64.dll'");
-    m_txtTrackIrDllPath = new cTextCtrl(this, myID_TRACK_IR_DLL_PATH, "default", wxDefaultPosition, wxSize(60, 10), wxTE_LEFT);
+    m_txtTrackIrDllPath = new cTextCtrl(this, myID_TRACK_IR_DLL_PATH, "(default)", wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
     wxStaticText* txtTrackLocation2 = new wxStaticText(this, wxID_ANY, "Note: a value of 'default' will get from install location.");
 
     m_btnStartMouse = new wxButton(this, myID_START_TRACK, "Start Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
@@ -230,7 +227,7 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     // m_tlcMappingData->AppendTextColumn("Parameters");
     // m_tlcMappingData->AppendTextColumn("Values", wxDATAVIEW_CELL_EDITABLE);
     
-    m_pnlDisplayConfiguration = new cPanelConfiguration(this);
+    m_pnlDisplayConfig = new cPanelConfiguration(this);
 
     wxString start_message(fmt::format("{:-^50}\n", "MouseTrackIR Application"));
     m_textrich = new cTextCtrl(this, wxID_ANY, start_message,
@@ -258,7 +255,7 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
               
     wxBoxSizer* row3 = new wxBoxSizer(wxVERTICAL);
     //row3->Add(tcMappingData, 0, wxALL | wxEXPAND, 0);
-    row3->Add(m_pnlDisplayConfiguration, 0, wxALL | wxEXPAND, 0);
+    row3->Add(m_pnlDisplayConfig, 0, wxALL | wxEXPAND, 0);
 
     wxBoxSizer* row4 = new wxBoxSizer(wxHORIZONTAL);
     row4->Add(m_textrich, 1, wxALL | wxEXPAND, 5);
@@ -315,38 +312,13 @@ void cPanel::OnSaveSettings(wxCommandEvent& event)
     config->SaveSettings();
 }
 
-//void cPanel::LoadDisplayMappings(const CConfig config)
-//{
-//    std::vector<std::string> names = { "left", "right","top", "bottom" };
-//
-//    for (int i = 0; i < config.m_monitorCount; i++)
-//    {
-//        for (int j = 0; j < names.size(); j++)
-//        {
-//            wxVector<wxVariant> row;
-//            row.push_back(wxVariant(std::to_string(i)));
-//            row.push_back(wxVariant(names.at(j)));
-//
-//            wxString stringnumber = wxString::Format(wxT("%d"), (int)config.m_bounds[i].rotationBounds[j]);
-//
-//            row.push_back(wxVariant(stringnumber));
-//            m_tlcMappingData->AppendItem(row);
-//        }
-//    }
-//}
-
-//void cPanel::LoadSubPanel(CConfig config)
-//{
-//    // 
-//}
-
 //////////////////////////////////////////////////////////////////////
 //                      Display Settings Panel                      //
 //////////////////////////////////////////////////////////////////////
 
 cPanelConfiguration::cPanelConfiguration(wxPanel* panel) : wxPanel(panel)
 {
-    m_name = new wxTextCtrl(this, wxID_ANY, "Desktop", wxDefaultPosition, wxDefaultSize, wxTE_LEFT, wxDefaultValidator, "");
+    m_name = new wxTextCtrl(this, wxID_ANY, "Desktop", wxDefaultPosition, wxSize(150, 20), wxTE_LEFT, wxDefaultValidator, "");
     m_profileID = new wxTextCtrl(this, wxID_ANY, "2201576", wxDefaultPosition, wxDefaultSize, wxTE_LEFT, wxDefaultValidator, "");
     m_useDefaultPadding = new wxCheckBox(this, wxID_ANY, "Use Default Padding", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
 
@@ -374,32 +346,44 @@ cPanelConfiguration::cPanelConfiguration(wxPanel* panel) : wxPanel(panel)
     topSizer->Add(m_tlcMappingData, 0, wxALL, 5);
 
     SetSizer(topSizer);
-
-    // LoadDisplaysSettings();
 }
 
-//cPanelConfiguration::LoadDisplaySettings(CConfig config)
-//{
-//    m_name.SetValue("Desktop2");
-//    m_profileID.SetValue("9999");
+void cPanelConfiguration::LoadDisplaySettings()
+{
+    CConfig config = GetGlobalConfigCopy();
+    auto& dpConfig = config.m_activeDisplayConfiguration;
 
-    // std::vector<std::string> names = { "left", "right","top", "bottom" };
+    m_name->SetValue(dpConfig.m_name);
+    m_profileID->SetValue(wxString::Format("%d", dpConfig.m_profile_ID));
+    m_useDefaultPadding->SetValue(dpConfig.m_useDefaultPadding);
 
-    // for (int i = 0; i < config.m_monitorCount; i++)
-    // {
-    //     for (int j = 0; j < names.size(); j++)
-    //     {
-    //         wxVector<wxVariant> row;
-    //         row.push_back(wxVariant(std::to_string(i)));
-    //         row.push_back(wxVariant(names.at(j)));
+    std::vector<std::string> names = { "left", "right","top", "bottom" };
 
-    //         wxString stringnumber = wxString::Format(wxT("%d"), (int)config.m_bounds[i].rotationBounds[j]);
+    int displayNum = 0;
+    for (auto& display : dpConfig.m_bounds)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            wxVector<wxVariant> row;
+            row.push_back(wxVariant(wxString::Format("%d", displayNum)));
+            row.push_back(wxVariant(names.at(i)));
+            row.push_back(wxVariant(wxString::Format("%7.2f", display.rotationBounds[i])));
+            m_tlcMappingData->AppendItem(row);
 
-    //         row.push_back(wxVariant(stringnumber));
-    //         m_tlcMappingData->AppendItem(row);
-    //     }
-    // }
-//}
+            // Optional Padding Values
+            if(!m_useDefaultPadding->IsChecked())
+            {
+                wxVector<wxVariant> row;
+                row.push_back(wxVariant(wxString::Format("%d", displayNum)));
+                row.push_back(wxVariant("pad" + names.at(i)));
+                // row.push_back(wxVariant(wxString::Format("%d", display.paddingBounds[i])));
+                row.push_back(wxVariant(wxString::Format("%s", "(default)")));
+                m_tlcMappingData->AppendItem(row);
+            }
+        }
+        displayNum++;
+    }
+}
 //////////////////////////////////////////////////////////////////////
 //                           TrackThread                            //
 //////////////////////////////////////////////////////////////////////
@@ -419,8 +403,9 @@ wxThread::ExitCode TrackThread::Entry()
         CTracker Tracker(m_parent, m_hWnd, m_Config);
         int result = Tracker.trackStart(m_Config);
     }
-    catch (const std::exception&)
+    catch (const std::exception& ex)
     {
+        wxLogError("Exception happened when starting track thread:\n%s", ex.what());
         return NULL;
     }
 

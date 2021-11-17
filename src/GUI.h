@@ -31,16 +31,17 @@ protected:
 class cPanelConfiguration : public wxPanel
 {
 public:
-    cPanelConfiguration(wxPanel* panel);
-    //LoadDisplaySettings(CConfig config);
-
     wxTextCtrl* m_name;
     wxTextCtrl* m_profileID;
     wxCheckBox* m_useDefaultPadding;
 
     wxDataViewListCtrl* m_tlcMappingData;
 
+    cPanelConfiguration(wxPanel* panel);
+    
+    void LoadDisplaySettings();
 
+private:
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -70,26 +71,18 @@ public:
     wxButton * m_btnSaveSettings;
     wxComboBox* m_cmbProfiles;
 
-    wxPanel* m_pnlDisplayConfiguration;
+    cPanelConfiguration* m_pnlDisplayConfig;
 
     cTextCtrl* m_textrich;
 
-    CConfig* m_pconfig;
-
     cPanel(wxFrame* frame);
     
-    //void LoadDisplayMappings(const CConfig config);
     void PopulateComboBoxWithProfiles(CConfig config)
     {
         for (auto& item : config.m_profileNames)
         {
             m_cmbProfiles->Append(item);
         }
-    }
-
-    void SetConfiguration(CConfig* config)
-    {
-        m_pconfig = config;
     }
 
 private:
@@ -150,8 +143,6 @@ wxEND_EVENT_TABLE()
 class CGUIApp : public wxApp
 {
 public:
-    // CConfig g_config;
-
     CGUIApp() {};
     ~CGUIApp() {};
 
@@ -161,8 +152,10 @@ public:
         wxLogFatalError("An unhandled exception has occurred.");
         std::terminate();
     }
+
 private:
 	cFrame* m_frame = nullptr;
+    //TrackThread* m_trackThread = nullptr;
 };
 
 wxDECLARE_APP(CGUIApp);
