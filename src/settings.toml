@@ -19,6 +19,7 @@ bottom = 0
 [Profiles.1]
 name = "Desktop Dual Monitor"
 profile_ID = 13302
+use_default_padding = true
 
 # Desktop Dual Monitor Setup
 [Profiles.1.DisplayMappings]
@@ -37,6 +38,7 @@ bottom = -19
 [Profiles.2]
 name = "Desktop Single Monitor"
 profile_id = 2025
+use_default_padding = true
 
 [Profiles.2.DisplayMappings]
 [Profiles.2.DisplayMappings.0]
@@ -49,6 +51,7 @@ bottom = -32
 [Profiles.3]
 name = "Laptop Screen"
 profile_id = 2025
+use_default_padding = true
 
 [Profiles.3.DisplayMappings]
 [Profiles.3.DisplayMappings.0]
