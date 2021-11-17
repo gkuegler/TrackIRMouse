@@ -27,7 +27,7 @@ bool g_bPauseTracking = false;
 // from attaching to NPTrackIR and supersede control
 //#define TEST_NO_TRACK
 
-//void disconnectTrackIR(void);
+
 
 
 CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig config)
@@ -163,8 +163,8 @@ CTracker::CTracker(wxEvtHandler* m_parent, HWND hWnd, CConfig config)
 
 int CTracker::trackStart(CConfig config)
 {
-#ifndef TEST_NO_TRACK
-	// Skipping this too. I think this is for legacy games
+#ifndef TEST_NO_TRACK	
+	// Skipping this api call. I think this is for legacy games.
 	// NP_StopCursor
 
 	NPRESULT rslt = NP_StartDataTransmission();
@@ -194,15 +194,15 @@ int CTracker::trackStart(CConfig config)
 		{
 			unsigned short status = (*pTIRData).wNPStatus;
 			unsigned short framesig = (*pTIRData).wPFrameSignature;
-			// TODO: Make Future optimization to not need a negative sign
+			// TODO: apply negative sign on startup to avoid extra operation here
+			// yaw and pitch come reversed for some reason from trackIR
 			float yaw = -(*pTIRData).fNPYaw;
 			float pitch = -(*pTIRData).fNPPitch;
 
-			// Don't try to move the mouse when TrackIR is paused
+			// Don't move the mouse when TrackIR is paused
 			if (framesig == lastFrame)
 			{
-				// LogToWix(fmt::format("Tracking Paused\n");
-				// TrackIR5 supposedly operates at 120hz
+				// TrackIR 5 supposedly operates at 120hz
 				// 8ms is approximately 1 frame
 				Sleep(8);
 				continue;
@@ -213,19 +213,9 @@ int CTracker::trackStart(CConfig config)
 				MouseMove(config.m_monitorCount, yaw, pitch);
 			}
 
-			// If I would like to log rotational data
-			//LogToWix(fmt::format("fNPYaw: {:f}\n", yaw));
-			//LogToWix(fmt::format("fNPPitch: {:f}\n", pitch));
-
-			// I don't actually really care about dropped frames
-			//if ((framesig != lastFrame + 1) && (lastFrame != 0))
-			//{
-				//LogToWix("dropped frame");
-				//droppedFrames = droppedFrames + framesig - lastFrame - 1;
-			//}
-
 			lastFrame = framesig;
 		}
+
 		else if (NP_ERR_DEVICE_NOT_PRESENT == gdf)
 		{
 			LogToWixError("\n\nDEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART PROGRAM\n\n");
