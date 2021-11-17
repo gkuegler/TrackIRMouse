@@ -222,7 +222,7 @@ void CConfig::LoadSettings()
             LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", table.first, e.what()));
         }    
     }
-
+    
     LoadActiveDisplay(activeDisplayProfile);
 
 }
@@ -251,6 +251,7 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
 
     // Load in current profile dependent settings
     m_activeDisplayConfiguration.m_profile_ID = toml::find_or<int>(vActiveProfileTable, "profile_id", 13302);
+    m_activeDisplayConfiguration.m_name = activeProfile;
 
     // Find the display mapping table for the given profile
     auto& vDisplayMappingTable = toml::find(vActiveProfileTable, "DisplayMappings");

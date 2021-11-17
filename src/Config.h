@@ -29,7 +29,7 @@ public:
 class CDisplayConfiguration
 {
 public:
-    std::string m_name = "Example Text";
+    std::string m_name = "Lorem Ipsum";
     int m_profile_ID = 0;
     bool m_useDefaultPadding = true;
 
