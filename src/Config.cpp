@@ -229,6 +229,7 @@ void CConfig::LoadSettings()
 
 void CConfig::LoadActiveDisplay(std::string activeProfile)
 {
+    CDisplayConfiguration configuration;
     // Find the profiles table that contains all mapping profiles.
     auto& vProfilesTable = toml::find(m_vData, "Profiles");
     std::string tableKey;
@@ -250,8 +251,8 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
     auto& vActiveProfileTable = toml::find(vProfilesTable, tableKey);
 
     // Load in current profile dependent settings
-    m_activeDisplayConfiguration.m_profile_ID = toml::find_or<int>(vActiveProfileTable, "profile_id", 13302);
-    m_activeDisplayConfiguration.m_name = activeProfile;
+    configuration.m_profile_ID = toml::find_or<int>(vActiveProfileTable, "profile_id", 13302);
+    configuration.m_name = activeProfile;
 
     // Find the display mapping table for the given profile
     auto& vDisplayMappingTable = toml::find(vActiveProfileTable, "DisplayMappings");
@@ -335,7 +336,7 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
                 paddingBottom = m_defaultPaddingBottom;
             }
 
-            m_activeDisplayConfiguration.m_bounds.push_back(bounds_in_degrees({ rotLeft, rotRight, rotTop, rotBottom }, { paddingLeft, paddingRight, paddingTop, paddingBottom }));
+            configuration.m_bounds.push_back(bounds_in_degrees({ rotLeft, rotRight, rotTop, rotBottom }, { paddingLeft, paddingRight, paddingTop, paddingBottom }));
         }
         catch (toml::type_error e)
         {

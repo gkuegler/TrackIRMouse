@@ -91,6 +91,7 @@ bool CGUIApp::OnInit()
 
     // Populate GUI With Settings
     m_frame->m_panel->PopulateComboBoxWithProfiles(GetGlobalConfigCopy());
+    m_frame->m_panel->LoadSettings();
     m_frame->m_panel->m_pnlDisplayConfig->LoadDisplaySettings();
     
 	m_frame->Show();
@@ -211,6 +212,21 @@ void cFrame::OnTrackStart(wxCommandEvent& event)
     }
 }
 
+void cFrame::OnTrackStop(wxCommandEvent& event)
+{
+    // Threads run in detached mode by default.
+    // It is okay to lose pointer.
+    if (m_pTrackThread)
+    {
+        // delete T_pTrackThread;
+        // m_pTrackThread = NULL;
+    }
+    else
+    {
+        LogToWix("Track thread not running!\n");
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //                            Main Panel                            //
 //////////////////////////////////////////////////////////////////////
@@ -235,7 +251,7 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     m_btnStopMouse = new wxButton(this, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
     m_btnSaveSettings = new wxButton(this, myID_SAVE_SETTINGS, "Save Settings", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
 
-    m_cmbProfiles = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, 0, wxCB_DROPDOWN, wxDefaultValidator, "");
+    m_cmbProfiles = new wxComboBox(this, myID_PROFILE_SELECTION, "", wxDefaultPosition, wxDefaultSize, 0, 0, wxCB_DROPDOWN, wxDefaultValidator, "");
 
     // m_tlcMappingData = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(300, 400), wxDV_HORIZ_RULES, wxDefaultValidator);
 
@@ -287,6 +303,28 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
 
     SetSizer(topSizer);
 }
+void cPanel::LoadSettings()
+{
+    CConfig config = GetGlobalConfigCopy();
+
+    m_cbxTrackOnStart->SetValue(config.GetBool("General/track_on_start"));
+    m_cbxEnableWatchdog->SetValue(config.GetBool("General/watchdog_enabled"));
+    m_cbxQuitOnLossOfTrackIR->SetValue(config.GetBool("General/quit_on_loss_of_track_ir"));
+
+    wxString activeProfile = config.GetString("General/active_profile");
+    LogToWix(fmt::format("activeProfile: {}", activeProfile));
+
+    int index = m_cmbProfiles->FindString(activeProfile);
+    if (wxNOT_FOUND == index)
+    {
+        wxLogError("active profile not found in available loaded profiles");
+    }
+    else
+    {
+        m_cmbProfiles->SetSelection(index);
+    }
+
+}
 
 void cPanel::OnEnabledWatchdog(wxCommandEvent& event)
 {
@@ -318,8 +356,9 @@ void cPanel::OnActiveProfile(wxCommandEvent& event)
 {
     int index = m_cmbProfiles->GetSelection();
     CConfig* config = GetGlobalConfig();
-    // config->SetActiveProfile(m_cbxQuitOnLossOfTrackIR->GetString(index));
-    // Make sure to update the table
+    std::string activeProfile((m_cmbProfiles->GetString(index)).mb_str());
+    config->LoadActiveDisplay(activeProfile);
+    m_pnlDisplayConfig->LoadDisplaySettings();
 }
 
 void cPanel::OnSaveSettings(wxCommandEvent& event)
@@ -374,7 +413,8 @@ void cPanelConfiguration::LoadDisplaySettings()
     m_useDefaultPadding->SetValue(dpConfig.m_useDefaultPadding);
 
     std::vector<std::string> names = { "left", "right","top", "bottom" };
-
+    m_tlcMappingData->DeleteAllItems();
+    
     int displayNum = 0;
     for (auto& display : dpConfig.m_bounds)
     {
@@ -392,7 +432,7 @@ void cPanelConfiguration::LoadDisplaySettings()
                 wxVector<wxVariant> row;
                 row.push_back(wxVariant(wxString::Format("%d", displayNum)));
                 row.push_back(wxVariant("pad" + names.at(i)));
-                // row.push_back(wxVariant(wxString::Format("%d", display.paddingBounds[i])));
+                row.push_back(wxVariant(wxString::Format("%d", display.paddingBounds[i])));
                 row.push_back(wxVariant(wxString::Format("%s", "(default)")));
                 m_tlcMappingData->AppendItem(row);
             }

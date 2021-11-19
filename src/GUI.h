@@ -82,6 +82,7 @@ public:
 
     cPanel(wxFrame* frame);
     
+    void LoadSettings();
     void PopulateComboBoxWithProfiles(CConfig config)
     {
         for (auto& item : config.m_profileNames)
@@ -126,6 +127,7 @@ public:
     cFrame();
 
     void OnTrackStart(wxCommandEvent& event);
+    void OnTrackStop(wxCommandEvent& event);
 
 private:
     void OnExit(wxCommandEvent& event);
@@ -142,7 +144,8 @@ wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
     EVT_MENU(wxID_ABOUT, cFrame::OnAbout)
     EVT_MENU(wxID_OPEN, cFrame::OnOpen)
     EVT_BUTTON(myID_GEN_EXMPL, cFrame::OnGenerateExample)
-    EVT_BUTTON(myID_TRACK_START, cFrame::OnGenerateExample)
+    EVT_BUTTON(myID_START_TRACK, cFrame::OnTrackStart)
+    EVT_BUTTON(myID_STOP_TRACK, cFrame::OnTrackStop)
 wxEND_EVENT_TABLE()
 
 //////////////////////////////////////////////////////////////////////
