@@ -348,16 +348,14 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
         }
     }
 
+    SetValue("General/active_profile", activeProfile);
+    m_activeDisplayConfiguration = configuration;
+
 }
 
 void CConfig::SaveSettings()
 {
-    const std::string FileName = "settings_test.toml";
-
-    //SetValue("General/track_on_start", usrTrackOnStart);
-    //SetValue("General/quick_on_loss_of_track_ir", usrQuitOnLossOfTrackIr);
-    //SetValue("General/watchdog_enabled", m_bWatchdog);
-    //SetValue("General/profile", m_activeDisplayProfile);
+    const std::string FileName = "settings.toml";
 
     std::fstream file(FileName, std::ios_base::out);
     file << m_vData << std::endl;
