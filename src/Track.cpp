@@ -174,7 +174,7 @@ void TR_Initialize(HWND hWnd, CConfig config)
 #endif
 }
 
-void TR_TrackStart(CConfig config)
+int TR_TrackStart(CConfig config)
 {
 #ifndef TEST_NO_TRACK
 	// Skipping this api call. I think this is for legacy games.
@@ -232,13 +232,13 @@ void TR_TrackStart(CConfig config)
 		else if (NP_ERR_DEVICE_NOT_PRESENT == gdf)
 		{
 			LogToWixError("\n\nDEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART PROGRAM\n\n");
-			break;
+			return 1;
 		}
 
 		Sleep(8);
 	}
 	
-	return;
+	return 0;
 }
 
 void TR_TrackStop()

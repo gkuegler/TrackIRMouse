@@ -4,29 +4,34 @@
 // 64-bit support
 
 Convert To Graphical Utility:
-    Development Needs:
+    Core Needs:
+        robust checking of setting parameters
+        robust error handling of incorrect parameters
+        robust handling of incorrect user input
+        // standard output log to large text control
+        // remove press any key to exit
+
+        // wxWidget logging (stdout but MessageBox on critical error?)
+        //     or spd logging?
+        // create separate hidden frame for track thread to register with trackIR? no
+        wxFileInputStream to open file first, then hand off to toml library?
+
+    User Interface Needs:
         // Program in a switch to not register window handle for debug and launch
             // use function directives to deactivate register window handle function call
             // use watchdog pipe server to discard tracking information
             // use custom-built event to turn on and off tracking of existing instance
-    Core Needs:
-        // standard output log to large text control
-        // remove press any key to exit
-
-        wxWidget logging (stdout but MessageBox on critical error?)
-            or spd logging?
-        // create separate hidden frame for track thread to register with trackIR? no
-        wxFileInputStream to open file first, then hand off to toml library
+        button to add profiles
+        button to delete profiles
         
-    Features:
-        profile selection (drop down?)
-
+    Optional Features:
+        // profile selection (drop down?)
         settings reloads
         find good display size default
         edit configuration from gui
-        start button (attach to trackIR)
-        checkbox to automatically start
-        wxRegKey for TrackIR DLL location
+        // start button (attach to trackIR)
+        // checkbox to automatically start
+        // wxRegKey for TrackIR DLL location
         multi-language support with wxTranslations & wxLocal (needs a file menu to change option)
 
 implement installer?

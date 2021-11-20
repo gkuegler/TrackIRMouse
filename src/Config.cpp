@@ -353,6 +353,16 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
 
 }
 
+void CConfig::AddDisplayConfiguration()
+{
+    CDisplayConfiguration configuration;
+    
+    // configuration.m_name = "";
+    // configuration.m_profile_ID = 0;
+    // configuration.m_useDefaultPadding = true;
+    // configuration.m_bounds;
+}
+
 void CConfig::SaveSettings()
 {
     const std::string FileName = "settings.toml";

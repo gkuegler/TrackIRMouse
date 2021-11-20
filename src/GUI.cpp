@@ -31,6 +31,11 @@ bool CGUIApp::OnInit()
         {
             cTextCtrl* textrich = m_frame->m_panel->m_textrich;
 
+            if (1 == event.GetInt())
+            {
+                m_frame->Close(true);
+            }
+
             // Output message in red lettering as an error
             if (1 == event.GetExtraLong())
             {
@@ -110,7 +115,7 @@ bool CGUIApp::OnInit()
 //                            Main Frame                            //
 //////////////////////////////////////////////////////////////////////
 
-cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Example Title", wxPoint(200, 200), wxSize(1200, 800))
+cFrame::cFrame() : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", wxPoint(200, 200), wxSize(1200, 800))
 {
 
     wxMenu* menuFile = new wxMenu;
@@ -458,13 +463,28 @@ TrackThread::~TrackThread()
     m_pHandler->m_pTrackThread = NULL;
 }
 
+void CloseApplication()
+{
+    wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD);
+    evt->SetInt(1);
+    wxTheApp->QueueEvent(evt);
+}    
+
 wxThread::ExitCode TrackThread::Entry()
 {
 
     try
     {
         TR_Initialize(m_hWnd, m_Config);
-        TR_TrackStart(m_Config);
+        int result = TR_TrackStart(m_Config);
+        if (1 == result)
+        {
+            CConfig* config = GetGlobalConfig();
+            if (config->GetBool("General/quit_on_loss_of_track_ir"))
+            {
+                CloseApplication();
+            }
+        }
 
     }
     catch (const std::exception& ex)

@@ -8,7 +8,7 @@
 #include <windows.h>
 
 void TR_Initialize(HWND hWnd, CConfig config);
-void TR_TrackStart(CConfig config);
+int TR_TrackStart(CConfig config);
 void TR_TrackStop(CConfig config);
 
 // class CTracker
