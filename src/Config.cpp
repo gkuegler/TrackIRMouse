@@ -208,18 +208,18 @@ void CConfig::LoadSettings()
     LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
 
 
-    auto& vProfilesTable = toml::find(m_vData, "Profiles");
+    auto& vProfilesArray = toml::find(m_vData, "Profiles");
 
-    for (auto& table: vProfilesTable.as_table())
+    for (auto& table: vProfilesArray.as_array())
     {
         try
         {
-            std::string profileNames = toml::find<std::string>(table.second, "name");
-            m_profileNames.push_back(profileNames);
+            std::string profileName = toml::find<std::string>(table, "name");
+            m_profileNames.push_back(profileName);
         }
         catch (std::out_of_range e)
         {
-            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", table.first, e.what()));
+            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display.\n{}\n", e.what()));
         }    
     }
     
@@ -231,44 +231,47 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
 {
     CDisplayConfiguration configuration;
     // Find the profiles table that contains all mapping profiles.
-    auto& vProfilesTable = toml::find(m_vData, "Profiles");
+    auto& vProfilesArray = toml::find(m_vData, "Profiles");
     std::string tableKey;
+    toml::value vActiveProfileTable;
 
     // Find the table with a matching profile name.
     // .as_table() returns a std::unordered_map<toml::key, toml::table>
     // Conversion is necessary to loop by element.
-    for (auto& table: vProfilesTable.as_table())
+    for (auto& table: vProfilesArray.as_array())
     {
-        std::string profileName = toml::find<std::string>(table.second, "name");
+        std::string profileName = toml::find<std::string>(table, "name");
         if (activeProfile == profileName)
         {
-            tableKey = table.first;
+            vActiveProfileTable = table;
             break;
         }
     }
 
     // Use the found table key
-    auto& vActiveProfileTable = toml::find(vProfilesTable, tableKey);
+    // auto& vActiveProfileTable = toml::find(vProfilesArray, tableKey);
 
     // Load in current profile dependent settings
     configuration.m_profile_ID = toml::find_or<int>(vActiveProfileTable, "profile_id", 13302);
     configuration.m_name = activeProfile;
 
     // Find the display mapping table for the given profile
-    auto& vDisplayMappingTable = toml::find(vActiveProfileTable, "DisplayMappings");
+    auto& vDisplayMappingArray = toml::find(vActiveProfileTable, "DisplayMappings");
     
-    for (auto& display: vDisplayMappingTable.as_table())
+    int index = 0;
+    for (auto& display: vDisplayMappingArray.as_array())
     {
-        std::string i = display.first;
-        auto& vDisplayMapping = display.second;
+        //std::string i = display.first;
+        //auto& vDisplayMapping = display.second;
+        int i = index++;
 
         try
         {
             // Bring In The Rotational Bounds
-            toml::value left = toml::find(vDisplayMapping, "left");
-            toml::value right = toml::find(vDisplayMapping, "right");
-            toml::value top = toml::find(vDisplayMapping, "top");
-            toml::value bottom = toml::find(vDisplayMapping, "bottom");
+            toml::value left = toml::find(display, "left");
+            toml::value right = toml::find(display, "right");
+            toml::value top = toml::find(display, "top");
+            toml::value bottom = toml::find(display, "bottom");
 
             // Each value is checked because this toml library cannot
             // convert integers in a toml value to a float
@@ -290,10 +293,10 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
             // so that I can tell if one was found in the toml config file
             // without producing an exception if a value was not found.
             // Padding values are not critical the program operation.
-            int paddingLeft = toml::find_or<int>(vDisplayMapping, "paddingLeft", 5555);
-            int paddingRight = toml::find_or<int>(vDisplayMapping, "paddingRight", 5555);
-            int paddingTop = toml::find_or<int>(vDisplayMapping, "paddingTop", 5555);
-            int paddingBottom = toml::find_or<int>(vDisplayMapping, "paddingBottom", 5555);
+            int paddingLeft = toml::find_or<int>(display, "paddingLeft", 5555);
+            int paddingRight = toml::find_or<int>(display, "paddingRight", 5555);
+            int paddingTop = toml::find_or<int>(display, "paddingTop", 5555);
+            int paddingBottom = toml::find_or<int>(display, "paddingBottom", 5555);
 
             if (paddingLeft != 5555)
             {
@@ -356,7 +359,7 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
 void CConfig::AddDisplayConfiguration()
 {
     CDisplayConfiguration configuration;
-    
+
     // configuration.m_name = "";
     // configuration.m_profile_ID = 0;
     // configuration.m_useDefaultPadding = true;

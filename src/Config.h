@@ -16,7 +16,7 @@ public:
 
     // Left, Right, Top, Bottom
     static constexpr std::array<std::string_view, 4> names = { "left", "right", "top", "bottom" };
-    std::array<float, 4> rotationBounds{0f, 0f, 0f, 0f};
+    std::array<float, 4> rotationBounds{0.0, 0.0, 0.0, 0.0};
     std::array<int, 4> paddingBounds{0, 0, 0, 0};
 
     bounds_in_degrees(std::array<float, 4>&& rotations, std::array<int, 4>&& padding)
