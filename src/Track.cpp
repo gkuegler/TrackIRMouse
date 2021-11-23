@@ -160,7 +160,7 @@ void TR_Initialize(HWND hWnd, CConfig config)
 		throw Exception("");
 	}
 
-	rslt = NP_RegisterProgramProfileID(config.m_activeDisplayConfiguration.m_profile_ID);
+	rslt = NP_RegisterProgramProfileID(config.m_activeProfile.m_profile_ID);
 	if (NP_OK == rslt)
 	{
 		LogToWix("Register Profile ID:         Success\n");
@@ -298,15 +298,15 @@ void WinSetup(CConfig config)
 	int virtualDesktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN); // height of total bounds of all screens
 
 	// TODO: this check actually happens at the initialization of my configuration file
-	LogToWixError(fmt::format("Displays Specified: {}\nDisplays Found: {}\n", config.m_activeDisplayConfiguration.m_bounds.size(), monitorCount));
+	LogToWixError(fmt::format("Displays Specified: {}\nDisplays Found: {}\n", config.m_activeProfile.m_bounds.size(), monitorCount));
 
-	if (config.m_activeDisplayConfiguration.m_bounds.size() < monitorCount)
+	if (config.m_activeProfile.m_bounds.size() < monitorCount)
 	{
-		LogToWixError(fmt::format("More Displays Connected Then Specified In Settings File.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_activeDisplayConfiguration.m_bounds.size()));
+		LogToWixError(fmt::format("More Displays Connected Then Specified In Settings File.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_activeProfile.m_bounds.size()));
 	}
-	if (config.m_activeDisplayConfiguration.m_bounds.size() > monitorCount)
+	if (config.m_activeProfile.m_bounds.size() > monitorCount)
 	{
-		LogToWixError(fmt::format("Less Displays Connected Then Specified In Settings File.\nThe Wrong Configuration May Be Selected.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_activeDisplayConfiguration.m_bounds.size()));
+		LogToWixError(fmt::format("Less Displays Connected Then Specified In Settings File.\nThe Wrong Configuration May Be Selected.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_activeProfile.m_bounds.size()));
 	}
 
 	LogToWix(fmt::format("{} Monitors Found\n", monitorCount));
@@ -327,17 +327,17 @@ void WinSetup(CConfig config)
 
 void DisplaySetup(const CConfig config)
 {
-	for (int i = 0; i < config.m_monitorCount; i++)
+	for (int i = 0; i < config.m_activeProfile.m_bounds.size(); i++)
 	{
-		g_displays[i].rotationBoundLeft   = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[0];
-		g_displays[i].rotationBoundRight  = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[1];
-		g_displays[i].rotationBoundTop    = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[2];
-		g_displays[i].rotationBoundBottom = config.m_activeDisplayConfiguration.m_bounds[i].rotationBounds[3];
+		g_displays[i].rotationBoundLeft   = config.m_activeProfile.m_bounds[i].rotationBounds[0];
+		g_displays[i].rotationBoundRight  = config.m_activeProfile.m_bounds[i].rotationBounds[1];
+		g_displays[i].rotationBoundTop    = config.m_activeProfile.m_bounds[i].rotationBounds[2];
+		g_displays[i].rotationBoundBottom = config.m_activeProfile.m_bounds[i].rotationBounds[3];
 
-		g_displays[i].paddingLeft         = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[0];
-		g_displays[i].paddingRight        = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[1];
-		g_displays[i].paddingTop          = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[2];
-		g_displays[i].paddingBottom       = config.m_activeDisplayConfiguration.m_bounds[i].paddingBounds[3];
+		g_displays[i].paddingLeft         = config.m_activeProfile.m_bounds[i].paddingBounds[0];
+		g_displays[i].paddingRight        = config.m_activeProfile.m_bounds[i].paddingBounds[1];
+		g_displays[i].paddingTop          = config.m_activeProfile.m_bounds[i].paddingBounds[2];
+		g_displays[i].paddingBottom       = config.m_activeProfile.m_bounds[i].paddingBounds[3];
 
 		g_displays[i].setAbsBounds(g_virtualOriginX, g_virtualOriginY, g_xPixelAbsoluteSlope, g_yPixelAbsoluteSlope);
 	}

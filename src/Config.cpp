@@ -10,6 +10,16 @@
 
 CConfig g_config = CConfig();
 
+CConfig* GetGlobalConfig()
+{
+    return &g_config;
+}
+
+CConfig GetGlobalConfigCopy()
+{
+    return g_config;
+}
+
 typedef struct _RegistryQuery {
     int result;
     std::string resultString;
@@ -206,22 +216,6 @@ void CConfig::LoadSettings()
     //////////////////////////////////////////////////////////////////////
 
     LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
-
-
-    auto& vProfilesArray = toml::find(m_vData, "Profiles");
-
-    for (auto& table: vProfilesArray.as_array())
-    {
-        try
-        {
-            std::string profileName = toml::find<std::string>(table, "name");
-            m_profileNames.push_back(profileName);
-        }
-        catch (std::out_of_range e)
-        {
-            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display.\n{}\n", e.what()));
-        }    
-    }
     
     LoadActiveDisplay(activeDisplayProfile);
 
@@ -229,7 +223,7 @@ void CConfig::LoadSettings()
 
 void CConfig::LoadActiveDisplay(std::string activeProfile)
 {
-    CDisplayConfiguration configuration;
+    CProfile configuration;
     // Find the profiles table that contains all mapping profiles.
     auto& vProfilesArray = toml::find(m_vData, "Profiles");
     std::string tableKey;
@@ -339,7 +333,7 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
                 paddingBottom = m_defaultPaddingBottom;
             }
 
-            configuration.m_bounds.push_back(bounds_in_degrees({ rotLeft, rotRight, rotTop, rotBottom }, { paddingLeft, paddingRight, paddingTop, paddingBottom }));
+            configuration.m_bounds.push_back(CBounds({ rotLeft, rotRight, rotTop, rotBottom }, { paddingLeft, paddingRight, paddingTop, paddingBottom }));
         }
         catch (toml::type_error e)
         {
@@ -352,28 +346,13 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
     }
 
     SetValue("General/active_profile", activeProfile);
-    m_activeDisplayConfiguration = configuration;
+    m_activeProfile = configuration;
 
 }
 
-void CConfig::AddDisplayConfiguration()
-{
-    CDisplayConfiguration configuration;
-
-    // configuration.m_name = "";
-    // configuration.m_profile_ID = 0;
-    // configuration.m_useDefaultPadding = true;
-    // configuration.m_bounds;
-}
-
-void CConfig::SaveSettings()
-{
-    const std::string FileName = "settings.toml";
-
-    std::fstream file(FileName, std::ios_base::out);
-    file << m_vData << std::endl;
-    file.close();
-}
+////////////////////////////////////////////////////
+//                   Getting Values               //
+////////////////////////////////////////////////////
 
 toml::value* CConfig::FindHighestTable(std::vector<std::string> tableHierarchy)
 {
@@ -485,13 +464,98 @@ void CConfig::LogTomlError(const std::exception& ex)
     wxLogFatalError("Incorrect type on reading configuration parameter: %s", ex.what());
 }
 
-
-CConfig* GetGlobalConfig()
+void CConfig::AddProfile(std::string newProfileName)
 {
-    return &g_config;
+    // Create empty profile and add to config
+    auto profileNames = GetProfileNames();
+
+    for(auto name : profileNames)
+    {
+        if (name == newProfileName)
+        {
+            wxLogError("Profile name already exists, please pick another name.");
+            return;
+        }
+    }
+
+    CProfile emptyProfile;
+    auto& vProfilesVector = toml::find(m_vData, "Profiles").as_array();
+
+    toml::value dm = { {"left", 0}, {"right", 0}, {"top", 0}, {"bottom", 0} };
+    toml::value newProfile{
+        {"profileID", emptyProfile.m_profile_ID},
+        {"name", newProfileName},
+        {"use_default_padding", emptyProfile.m_useDefaultPadding},
+
+        // default to adding (2) monitors because this is
+        // the only way toml constructors select the overload to make an array
+        {"DisplayMappings", {dm, dm}}
+    };
+
+    vProfilesVector.push_back(newProfile);
 }
 
-CConfig GetGlobalConfigCopy()
+void CConfig::RemoveProfile(std::string profileName)
 {
-    return g_config;
+    // find profile with name in profile table
+    // delete the key, value pair
+    // TODO: need to make profile names mututally exclusive
+    // returns a vector
+    auto& vProfilesVector = toml::find(m_vData, "Profiles").as_array();
+
+    int index = 0;
+    for (std::size_t i = 0; i < vProfilesVector.size(); i++)
+    {
+        try
+        {
+            std::string profileName2 = toml::find<std::string>(vProfilesVector.at(i), "name");
+            if (profileName == profileName2)
+            {
+                vProfilesVector.erase(vProfilesVector.begin() + i);
+                LogToWix(fmt::format("Deleted profile from array {}", profileName));
+            }
+        }
+        catch (std::out_of_range e)
+        {
+            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display.\n{}\n", e.what()));
+        }
+
+    }
+}
+
+CProfile CConfig::GetActiveProfile()
+{
+    return m_activeProfile;
+}
+
+std::vector <std::string> CConfig::GetProfileNames()
+{
+    const auto vProfilesVector = toml::find(m_vData, "Profiles").as_array();
+    std::vector<std::string> profileNames;
+
+    int index = 0;
+    for (auto& profile : vProfilesVector)
+    {
+        try
+        {
+            std::string profileName = toml::find<std::string>(profile, "name");
+            profileNames.push_back(profileName);
+        }
+        catch (std::out_of_range e)
+        {
+            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display.\n{}\n", e.what()));
+        }
+
+    }
+
+    return profileNames;
+}
+
+void CConfig::SaveSettings()
+{
+    const std::string FileName = "settings_test.toml";
+
+    std::fstream file(FileName, std::ios_base::out);
+    file << m_vData << std::endl;
+    file.close();
 }

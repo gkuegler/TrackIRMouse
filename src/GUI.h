@@ -75,6 +75,8 @@ public:
     wxButton* m_btnStopMouse;
     wxButton * m_btnSaveSettings;
     wxComboBox* m_cmbProfiles;
+    wxButton* m_btnAddProfile;
+    wxButton* m_btnRemoveProfile;
 
     cPanelConfiguration* m_pnlDisplayConfig;
 
@@ -85,7 +87,9 @@ public:
     void LoadSettings();
     void PopulateComboBoxWithProfiles(CConfig config)
     {
-        for (auto& item : config.m_profileNames)
+        m_cmbProfiles->Clear();
+        
+        for (auto& item : config.GetProfileNames())
         {
             m_cmbProfiles->Append(item);
         }
@@ -101,6 +105,8 @@ private:
     void OnTrackIrDllPath(wxCommandEvent& event);
     void OnSaveSettings(wxCommandEvent& event);
     void OnActiveProfile(wxCommandEvent& event);
+    void OnAddProfile(wxCommandEvent& event);
+    void OnRemoveProfile(wxCommandEvent& event);
 
     wxDECLARE_EVENT_TABLE();
 };
@@ -112,6 +118,8 @@ wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
     EVT_TEXT_ENTER(myID_TRACK_IR_DLL_PATH, cPanel::OnTrackIrDllPath)
     EVT_BUTTON(myID_SAVE_SETTINGS, cPanel::OnSaveSettings)
     EVT_COMBOBOX(myID_PROFILE_SELECTION, cPanel::OnActiveProfile)
+    EVT_BUTTON(myID_ADD_PROFILE, cPanel::OnAddProfile)
+    EVT_BUTTON(myID_REMOVE_PROFILE, cPanel::OnRemoveProfile)
 wxEND_EVENT_TABLE()
 
 //////////////////////////////////////////////////////////////////////

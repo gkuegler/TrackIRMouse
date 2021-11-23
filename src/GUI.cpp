@@ -257,6 +257,8 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     m_btnSaveSettings = new wxButton(this, myID_SAVE_SETTINGS, "Save Settings", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
 
     m_cmbProfiles = new wxComboBox(this, myID_PROFILE_SELECTION, "", wxDefaultPosition, wxDefaultSize, 0, 0, wxCB_DROPDOWN, wxDefaultValidator, "");
+    m_btnAddProfile = new wxButton(this, myID_ADD_PROFILE, "Add Profile", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
+    m_btnRemoveProfile = new wxButton(this, myID_REMOVE_PROFILE, "Remove Profile", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
 
     // m_tlcMappingData = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(300, 400), wxDV_HORIZ_RULES, wxDefaultValidator);
 
@@ -288,7 +290,11 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     row2->Add(m_btnStartMouse, 0, wxALL, 0);
     row2->Add(m_btnStopMouse, 0, wxALL, 0);
     row2->Add(m_btnSaveSettings, 0, wxALL, 0);
-    row2->Add(m_cmbProfiles, 0, wxALL, 0);
+
+    wxBoxSizer* row21 = new wxBoxSizer(wxHORIZONTAL);
+    row21->Add(m_cmbProfiles, 0, wxALL, 0);
+    row21->Add(m_btnAddProfile, 0, wxALL, 0);
+    row21->Add(m_btnRemoveProfile, 0, wxALL, 0);
               
     wxBoxSizer* row3 = new wxBoxSizer(wxVERTICAL);
     //row3->Add(tcMappingData, 0, wxALL | wxEXPAND, 0);
@@ -300,6 +306,7 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     wxBoxSizer* leftColumn = new wxBoxSizer(wxVERTICAL);
     leftColumn->Add(row1, 0, wxALL, 10);
     leftColumn->Add(row2, 0, wxALL, 10);
+    leftColumn->Add(row21, 0, wxALL, 10);
     leftColumn->Add(row3, 0, wxALL, 10);
 
     wxBoxSizer* topSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -366,6 +373,28 @@ void cPanel::OnActiveProfile(wxCommandEvent& event)
     m_pnlDisplayConfig->LoadDisplaySettings();
 }
 
+void cPanel::OnAddProfile(wxCommandEvent& event)
+{
+    CConfig* config = GetGlobalConfig();
+    wxTextEntryDialog dlg(this, "Add Profile", "Specify a Name for the New Profile");
+    dlg.SetTextValidator(wxFILTER_ALPHA);
+    if (dlg.ShowModal() == wxID_OK)
+    {
+        // We can be certain that this string contains letters only.
+        wxString value = dlg.GetValue();
+        config->AddProfile(std::string(value.mb_str()));
+        PopulateComboBoxWithProfiles(*config);
+    }
+}
+
+void cPanel::OnRemoveProfile(wxCommandEvent& event)
+{
+    CConfig* config = GetGlobalConfig();
+    CProfile profile = GetGlobalConfig()->GetActiveProfile();
+    config->RemoveProfile(profile.m_name);
+    LogToWix(fmt::format("Profile Removed: {}", profile.m_name));
+}
+
 void cPanel::OnSaveSettings(wxCommandEvent& event)
 {
     CConfig* config = GetGlobalConfig();
@@ -411,7 +440,7 @@ cPanelConfiguration::cPanelConfiguration(wxPanel* panel) : wxPanel(panel)
 void cPanelConfiguration::LoadDisplaySettings()
 {
     CConfig config = GetGlobalConfigCopy();
-    auto& dpConfig = config.m_activeDisplayConfiguration;
+    auto& dpConfig = config.m_activeProfile;
 
     m_name->SetValue(dpConfig.m_name);
     m_profileID->SetValue(wxString::Format("%d", dpConfig.m_profile_ID));
