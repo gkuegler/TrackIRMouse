@@ -9,7 +9,7 @@ quit_on_loss_of_track_ir = true
 watchdog_enabled = true
 # Specify "default" to get value from registry or an absolute path eg. "C:\Program Files..."
 trackir_dll_directory = "default"
-active_profile = "Desktop Single Monitor"
+active_profile = "Desktop Dual Monitor"
 
 [[Profiles]]
 profile_ID = 13302

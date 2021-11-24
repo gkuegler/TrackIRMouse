@@ -551,6 +551,11 @@ std::vector <std::string> CConfig::GetProfileNames()
     return profileNames;
 }
 
+int CConfig::GetActiveProfileDisplayCount()
+{
+    return m_activeProfile.m_bounds.size();
+}
+
 void CConfig::SaveSettings()
 {
     const std::string FileName = "settings_test.toml";

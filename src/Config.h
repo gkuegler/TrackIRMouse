@@ -64,6 +64,7 @@ public:
     // Getter functions
     CProfile GetActiveProfile();
     std::vector <std::string> GetProfileNames();
+    int GetActiveProfileDisplayCount();
 
     void AddProfile(std::string newProfileName);
     void RemoveProfile(std::string profileName);

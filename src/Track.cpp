@@ -17,8 +17,6 @@
 #include "Config.h"
 #include "Log.h"
 
-// #include <wx/wx.h>
-
 #define USHORT_MAX_VAL 65535 // SendInput with absolute mouse movement takes a short int
 
 bool g_bPauseTracking = false;
@@ -172,6 +170,7 @@ void TR_Initialize(HWND hWnd, CConfig config)
 	}
 
 #endif
+	return;
 }
 
 int TR_TrackStart(CConfig config)
@@ -291,23 +290,27 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMon
 
 void WinSetup(CConfig config)
 {
+
+	// TODO: error checking
+	//  - rotations over 180/-180 deg
+	//  - differing # of displays
+	//  - interfering boundaries
+	//  - 
 	LogToWix(fmt::format("\n{:-^50}\n", "Windows Environment Info"));
 
 	const int monitorCount = GetSystemMetrics(SM_CMONITORS);
+
+	int count = config.GetActiveProfileDisplayCount();
+	if (monitorCount != count)
+	{
+		throw Exception(fmt::format("Incompatible config: {} monitors specified but {} monitors found", count, monitorCount));
+	}
+
 	int virtualDesktopWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);  // width of total bounds of all screens
 	int virtualDesktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN); // height of total bounds of all screens
 
 	// TODO: this check actually happens at the initialization of my configuration file
 	LogToWixError(fmt::format("Displays Specified: {}\nDisplays Found: {}\n", config.m_activeProfile.m_bounds.size(), monitorCount));
-
-	if (config.m_activeProfile.m_bounds.size() < monitorCount)
-	{
-		LogToWixError(fmt::format("More Displays Connected Then Specified In Settings File.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_activeProfile.m_bounds.size()));
-	}
-	if (config.m_activeProfile.m_bounds.size() > monitorCount)
-	{
-		LogToWixError(fmt::format("Less Displays Connected Then Specified In Settings File.\nThe Wrong Configuration May Be Selected.\n{} Displays Found.\n{} Displays Specified.\n", monitorCount, config.m_activeProfile.m_bounds.size()));
-	}
 
 	LogToWix(fmt::format("{} Monitors Found\n", monitorCount));
 	LogToWix(fmt::format("Width of Virtual Desktop:  {:>5}\n", virtualDesktopWidth));

@@ -259,12 +259,6 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     m_cmbProfiles = new wxComboBox(this, myID_PROFILE_SELECTION, "", wxDefaultPosition, wxDefaultSize, 0, 0, wxCB_DROPDOWN, wxDefaultValidator, "");
     m_btnAddProfile = new wxButton(this, myID_ADD_PROFILE, "Add Profile", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
     m_btnRemoveProfile = new wxButton(this, myID_REMOVE_PROFILE, "Remove Profile", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
-
-    // m_tlcMappingData = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(300, 400), wxDV_HORIZ_RULES, wxDefaultValidator);
-
-    // m_tlcMappingData->AppendTextColumn("Display #");
-    // m_tlcMappingData->AppendTextColumn("Parameters");
-    // m_tlcMappingData->AppendTextColumn("Values", wxDATAVIEW_CELL_EDITABLE);
     
     m_pnlDisplayConfig = new cPanelConfiguration(this);
 
@@ -286,7 +280,7 @@ cPanel::cPanel(wxFrame* frame) : wxPanel(frame)
     row1->Add(m_txtTrackIrDllPath, 0, wxALL, 0);
     row1->Add(txtTrackLocation2, 0, wxALL, 0);
 
-    wxBoxSizer* row2 = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* row2 = new wxBoxSizer(wxHORIZONTAL);
     row2->Add(m_btnStartMouse, 0, wxALL, 0);
     row2->Add(m_btnStopMouse, 0, wxALL, 0);
     row2->Add(m_btnSaveSettings, 0, wxALL, 0);
@@ -384,6 +378,8 @@ void cPanel::OnAddProfile(wxCommandEvent& event)
         wxString value = dlg.GetValue();
         config->AddProfile(std::string(value.mb_str()));
         PopulateComboBoxWithProfiles(*config);
+        unsigned int count = m_cmbProfiles->GetCount();
+        m_cmbProfiles->SetSelection(count-1, count-1);
     }
 }
 
@@ -516,7 +512,7 @@ wxThread::ExitCode TrackThread::Entry()
         }
 
     }
-    catch (const std::exception& ex)
+    catch (const Exception& ex)
     {
         wxLogError("Exception happened when starting track thread:\n%s", ex.what());
         return NULL;

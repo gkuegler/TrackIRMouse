@@ -47,6 +47,11 @@ public:
     void LoadDisplaySettings();
 
 private:
+    // Controls Handlers
+    void OnName(wxCommandEvent& event);
+    void OnProfileID(wxCommandEvent& event);
+    void OnUseDefaultPadding(wxCommandEvent& event);
+    void OnTlcMappingData(wxCommandEvent& event);
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -96,8 +101,6 @@ public:
     }
 
 private:
-    wxDataViewListCtrl* m_tlcMappingData;
-
     // Control Event Handlers
     void OnEnabledWatchdog(wxCommandEvent& event);
     void OnTrackOnStart(wxCommandEvent& event);

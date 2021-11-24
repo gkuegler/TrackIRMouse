@@ -45,4 +45,12 @@ protected:
     std::string msg_;
 };
 
+enum class TrErrCode
+{
+    OK,
+    ERR,
+    INCOMPATIBLE_CONFIG,
+
+};
+
 #endif /* TRACKIRMOUSE_EXCEPTIONS_H */
