@@ -9,17 +9,15 @@
 
 #include <string>
 
-
 class CBounds
 {
-public:
-
+  public:
     // Left, Right, Top, Bottom
-    static constexpr std::array<std::string_view, 4> names = { "left", "right", "top", "bottom" };
+    static constexpr std::array<std::string_view, 4> names = {"left", "right", "top", "bottom"};
     std::array<float, 4> rotationBounds{0.0, 0.0, 0.0, 0.0};
     std::array<int, 4> paddingBounds{0, 0, 0, 0};
 
-    CBounds(std::array<float, 4>&& rotations, std::array<int, 4>&& padding)
+    CBounds(std::array<float, 4> &&rotations, std::array<int, 4> &&padding)
     {
         rotationBounds = rotations;
         paddingBounds = padding;
@@ -28,7 +26,7 @@ public:
 
 class CProfile
 {
-public:
+  public:
     std::string m_name = "Lorem Ipsum";
     int m_profile_ID = 0;
     bool m_useDefaultPadding = true;
@@ -38,8 +36,7 @@ public:
 
 class CConfig
 {
-public:
-
+  public:
     std::string m_sTrackIrDllLocation = "";
     int m_monitorCount = 0;
 
@@ -50,7 +47,7 @@ public:
 
     CProfile m_activeProfile;
 
-    CConfig() {};
+    CConfig(){};
 
     // Initializations Functions
     void ParseFile(const std::string);
@@ -63,16 +60,16 @@ public:
 
     // Getter functions
     CProfile GetActiveProfile();
-    std::vector <std::string> GetProfileNames();
+    std::vector<std::string> GetProfileNames();
     int GetActiveProfileDisplayCount();
 
     void AddProfile(std::string newProfileName);
     void RemoveProfile(std::string profileName);
-    
-    template <typename T>
-    int SetValue(std::string s, const T value)
+
+    template <typename T> int SetValue(std::string s, const T value)
     {
-        try {
+        try
+        {
             std::vector<std::string> tableHierarchy;
 
             constexpr std::string_view delimiter = "/";
@@ -89,30 +86,31 @@ public:
 
             return SetValueInTable(tableHierarchy, parameterName, value);
         }
-        catch (const std::exception& ex)
+        catch (const std::exception &ex)
         {
             LogToWixError(fmt::format("A big exception happened: {}\n", ex.what()));
             return -1;
         }
     }
-   
+
     int GetInteger(std::string s);
     float GetFloat(std::string s);
     bool GetBool(std::string s);
     std::string GetString(std::string s);
 
-private:
+  private:
     toml::value m_vData; // holds main toml object
 
-    void LogTomlError(const std::exception& ex);
+    void LogTomlError(const std::exception &ex);
     toml::value GetValue(std::string s);
-    toml::value* FindHighestTable(std::vector<std::string> tableHierarchy);
+    toml::value *FindHighestTable(std::vector<std::string> tableHierarchy);
 
     template <typename T>
     int SetValueInTable(std::vector<std::string> tableHierarchy, std::string parameterName, const T value)
     {
-        toml::value* table = this->FindHighestTable(tableHierarchy);
-        if (nullptr == table) return -1;
+        toml::value *table = this->FindHighestTable(tableHierarchy);
+        if (nullptr == table)
+            return -1;
 
         // See link below for explanation on accessing the underlying
         // unordered_map of a toml table
@@ -124,7 +122,7 @@ private:
     }
 };
 
-CConfig* GetGlobalConfig();
+CConfig *GetGlobalConfig();
 CConfig GetGlobalConfigCopy();
 
 extern CConfig g_config;

@@ -1,7 +1,7 @@
 #include "Config.h"
 
-#include "Log.h"
 #include "Exceptions.h"
+#include "Log.h"
 
 #include <Windows.h>
 
@@ -10,7 +10,7 @@
 
 CConfig g_config = CConfig();
 
-CConfig* GetGlobalConfig()
+CConfig *GetGlobalConfig()
 {
     return &g_config;
 }
@@ -20,13 +20,14 @@ CConfig GetGlobalConfigCopy()
     return g_config;
 }
 
-typedef struct _RegistryQuery {
+typedef struct _RegistryQuery
+{
     int result;
     std::string resultString;
     std::string value;
 } RegistryQuery;
 
-RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char* subKey, const char* subValue)
+RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey, const char *subValue)
 {
 
     //////////////////////////////////////////////////////////////////////
@@ -35,25 +36,22 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char* subKey, const c
 
     HKEY hKey = 0;
 
-    LSTATUS statusOpen = RegOpenKeyExA(
-        hParentKey, // should usually be HKEY_CURRENT_USER
-        subKey,
-        0, //[in]           DWORD  ulOptions,
-        KEY_READ, //[in]           REGSAM samDesired,
-        &hKey
-    );
+    LSTATUS statusOpen = RegOpenKeyExA(hParentKey, // should usually be HKEY_CURRENT_USER
+                                       subKey,
+                                       0,        //[in]           DWORD  ulOptions,
+                                       KEY_READ, //[in]           REGSAM samDesired,
+                                       &hKey);
 
     if (ERROR_FILE_NOT_FOUND == statusOpen)
     {
-        return RegistryQuery{ ERROR_FILE_NOT_FOUND , "Registry key not found.", "" };
+        return RegistryQuery{ERROR_FILE_NOT_FOUND, "Registry key not found.", ""};
     }
 
     // Catch all other errors
     if (ERROR_SUCCESS != statusOpen)
     {
-        return RegistryQuery{ statusOpen , "Could not open registry key.", "" };
+        return RegistryQuery{statusOpen, "Could not open registry key.", ""};
     }
-
 
     //////////////////////////////////////////////////////////////////////
     //                    Querying Value Information                    //
@@ -62,31 +60,29 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char* subKey, const c
     DWORD valueType = 0;
     DWORD sizeOfBuffer = 0;
 
-    LSTATUS statusQueryValue = RegQueryValueExA(
-        hKey, // [in]                HKEY    hKey,
-        "Path",// [in, optional]      LPCSTR  lpValueName,
-        0,// LPDWORD lpReserved,
-        &valueType, // [out, optional]     LPDWORD lpType,
-        0, // [out, optional]     LPBYTE  lpData,
-        &sizeOfBuffer // [in, out, optional] LPDWORD lpcbData
+    LSTATUS statusQueryValue = RegQueryValueExA(hKey,         // [in]                HKEY    hKey,
+                                                "Path",       // [in, optional]      LPCSTR  lpValueName,
+                                                0,            // LPDWORD lpReserved,
+                                                &valueType,   // [out, optional]     LPDWORD lpType,
+                                                0,            // [out, optional]     LPBYTE  lpData,
+                                                &sizeOfBuffer // [in, out, optional] LPDWORD lpcbData
     );
 
     if (ERROR_FILE_NOT_FOUND == statusQueryValue)
     {
-        return RegistryQuery{ ERROR_FILE_NOT_FOUND, "Value not found for key.", "" };
+        return RegistryQuery{ERROR_FILE_NOT_FOUND, "Value not found for key.", ""};
     }
 
     // Catch all other errors of RegQueryValueExA
     if (ERROR_SUCCESS != statusQueryValue)
     {
-        return RegistryQuery{ statusQueryValue, "RegQueryValueExA failed.", "" };
+        return RegistryQuery{statusQueryValue, "RegQueryValueExA failed.", ""};
     }
 
     if (REG_SZ != valueType)
     {
-        return RegistryQuery{ 1, "Registry value not a string type.", "" };
+        return RegistryQuery{1, "Registry value not a string type.", ""};
     }
-
 
     //////////////////////////////////////////////////////////////////////
     //                      Getting the hKey Value                       //
@@ -94,24 +90,23 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char* subKey, const c
 
     // Registry key may or may not be stored with a null terminator
     // add one just in case
-    char* szPath = static_cast<char*>(calloc(1, sizeOfBuffer + 1));
+    char *szPath = static_cast<char *>(calloc(1, sizeOfBuffer + 1));
 
     if (NULL == szPath)
     {
-        return RegistryQuery{ 1, "Failed to allocate memory.", "" };
+        return RegistryQuery{1, "Failed to allocate memory.", ""};
     }
 
-    LSTATUS statusGetValue = RegGetValueA(
-        hKey, // [in]                HKEY    hkey,
-        0, // [in, optional]      LPCSTR  lpSubKey,
-        subValue, // [in, optional]      LPCSTR  lpValue,
-        RRF_RT_REG_SZ, // [in, optional]      DWORD   dwFlags,
-        &valueType, // [out, optional]     LPDWORD pdwType,
-        (void*)szPath, // [out, optional]     PVOID   pvData,
-        &sizeOfBuffer // [in, out, optional] LPDWORD pcbData
+    LSTATUS statusGetValue = RegGetValueA(hKey,           // [in]                HKEY    hkey,
+                                          0,              // [in, optional]      LPCSTR  lpSubKey,
+                                          subValue,       // [in, optional]      LPCSTR  lpValue,
+                                          RRF_RT_REG_SZ,  // [in, optional]      DWORD   dwFlags,
+                                          &valueType,     // [out, optional]     LPDWORD pdwType,
+                                          (void *)szPath, // [out, optional]     PVOID   pvData,
+                                          &sizeOfBuffer   // [in, out, optional] LPDWORD pcbData
     );
 
-    return RegistryQuery{ 0, "", std::string(szPath) };
+    return RegistryQuery{0, "", std::string(szPath)};
 }
 
 void CConfig::ParseFile(const std::string fileName)
@@ -125,7 +120,7 @@ void CConfig::LoadSettings()
     m_monitorCount = GetSystemMetrics(SM_CMONITORS);
 
     // Find the general settings table
-    auto& vGeneralSettings = toml::find(m_vData, "General");
+    auto &vGeneralSettings = toml::find(m_vData, "General");
 
     //////////////////////////////////////////////////////////////////////
     //                   Validate In General Settings                   //
@@ -147,7 +142,8 @@ void CConfig::LoadSettings()
 
     if ("default" == m_sTrackIrDllLocation)
     {
-        RegistryQuery path = GetStringFromRegistry(HKEY_CURRENT_USER, "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
+        RegistryQuery path =
+            GetStringFromRegistry(HKEY_CURRENT_USER, "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
 
         if (0 == path.result)
         {
@@ -161,8 +157,6 @@ void CConfig::LoadSettings()
             LogToWixError(fmt::format("  result string: {}", path.resultString));
             throw Exception("See error above.");
         }
-
-        
     }
 
     LogToWix(fmt::format("NPTrackIR DLL Location: {}", m_sTrackIrDllLocation));
@@ -173,13 +167,12 @@ void CConfig::LoadSettings()
         m_sTrackIrDllLocation.push_back('\\');
     }
 
-    // Match to the correct bitness of this application
-    #if defined(_WIN64) || defined(__amd64__)
-        m_sTrackIrDllLocation.append("NPClient64.dll");
-    #else	    
-        m_sTrackIrDllLocation.append("NPClient.dll");
-    #endif
-
+// Match to the correct bitness of this application
+#if defined(_WIN64) || defined(__amd64__)
+    m_sTrackIrDllLocation.append("NPClient64.dll");
+#else
+    m_sTrackIrDllLocation.append("NPClient.dll");
+#endif
 
     //////////////////////////////////////////////////////////////////////
     //                     Finding Default Padding                      //
@@ -196,14 +189,12 @@ void CConfig::LoadSettings()
     catch (std::out_of_range e)
     {
         LogToWixError(fmt::format("Default Padding Table Not Found"));
-        LogToWixError(fmt::format(
-            "Please add the following to the settings.toml file:\n"
-            "[DefaultPadding]"
-            "left   = 0"
-            "right  = 0"
-            "top    = 0"
-            "bottom = 0"
-        ));
+        LogToWixError(fmt::format("Please add the following to the settings.toml file:\n"
+                                  "[DefaultPadding]"
+                                  "left   = 0"
+                                  "right  = 0"
+                                  "top    = 0"
+                                  "bottom = 0"));
     }
 
     m_defaultPaddingLeft = toml::find<int>(vDefaultPaddingTable, "left");
@@ -216,23 +207,22 @@ void CConfig::LoadSettings()
     //////////////////////////////////////////////////////////////////////
 
     LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
-    
-    LoadActiveDisplay(activeDisplayProfile);
 
+    LoadActiveDisplay(activeDisplayProfile);
 }
 
 void CConfig::LoadActiveDisplay(std::string activeProfile)
 {
     CProfile configuration;
     // Find the profiles table that contains all mapping profiles.
-    auto& vProfilesArray = toml::find(m_vData, "Profiles");
+    auto &vProfilesArray = toml::find(m_vData, "Profiles");
     std::string tableKey;
     toml::value vActiveProfileTable;
 
     // Find the table with a matching profile name.
     // .as_table() returns a std::unordered_map<toml::key, toml::table>
     // Conversion is necessary to loop by element.
-    for (auto& table: vProfilesArray.as_array())
+    for (auto &table : vProfilesArray.as_array())
     {
         std::string profileName = toml::find<std::string>(table, "name");
         if (activeProfile == profileName)
@@ -250,13 +240,13 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
     configuration.m_name = activeProfile;
 
     // Find the display mapping table for the given profile
-    auto& vDisplayMappingArray = toml::find(vActiveProfileTable, "DisplayMappings");
-    
+    auto &vDisplayMappingArray = toml::find(vActiveProfileTable, "DisplayMappings");
+
     int index = 0;
-    for (auto& display: vDisplayMappingArray.as_array())
+    for (auto &display : vDisplayMappingArray.as_array())
     {
-        //std::string i = display.first;
-        //auto& vDisplayMapping = display.second;
+        // std::string i = display.first;
+        // auto& vDisplayMapping = display.second;
         int i = index++;
 
         try
@@ -271,17 +261,14 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
             // convert integers in a toml value to a float
             toml::value_t integer = toml::value_t::integer;
 
-            float rotLeft = (left.type() == integer) ? static_cast<float>(left.as_integer())
-                : left.as_floating();
+            float rotLeft = (left.type() == integer) ? static_cast<float>(left.as_integer()) : left.as_floating();
 
-            float rotRight = (right.type() == integer) ? static_cast<float>(right.as_integer())
-                : right.as_floating();
+            float rotRight = (right.type() == integer) ? static_cast<float>(right.as_integer()) : right.as_floating();
 
-            float rotTop = (top.type() == integer) ? static_cast<float>(top.as_integer())
-                : top.as_floating();
+            float rotTop = (top.type() == integer) ? static_cast<float>(top.as_integer()) : top.as_floating();
 
-            float rotBottom = (bottom.type() == integer) ? static_cast<float>(bottom.as_integer())
-                : bottom.as_floating();
+            float rotBottom =
+                (bottom.type() == integer) ? static_cast<float>(bottom.as_integer()) : bottom.as_floating();
 
             // I return an ungodly fake high padding numbelong ,
             // so that I can tell if one was found in the toml config file
@@ -333,37 +320,39 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
                 paddingBottom = m_defaultPaddingBottom;
             }
 
-            configuration.m_bounds.push_back(CBounds({ rotLeft, rotRight, rotTop, rotBottom }, { paddingLeft, paddingRight, paddingTop, paddingBottom }));
+            configuration.m_bounds.push_back(CBounds({rotLeft, rotRight, rotTop, rotBottom},
+                                                     {paddingLeft, paddingRight, paddingTop, paddingBottom}));
         }
         catch (toml::type_error e)
         {
-            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
+            LogToWixError(
+                fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
         }
         catch (std::out_of_range e)
         {
-            LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
+            LogToWixError(
+                fmt::format("TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n", i, e.what()));
         }
     }
 
     SetValue("General/active_profile", activeProfile);
     m_activeProfile = configuration;
-
 }
 
 ////////////////////////////////////////////////////
 //                   Getting Values               //
 ////////////////////////////////////////////////////
 
-toml::value* CConfig::FindHighestTable(std::vector<std::string> tableHierarchy)
+toml::value *CConfig::FindHighestTable(std::vector<std::string> tableHierarchy)
 {
-    toml::value* table = &m_vData;
+    toml::value *table = &m_vData;
 
     if (tableHierarchy.empty())
     {
         return table;
     }
 
-    for (auto& tableName : tableHierarchy)
+    for (auto &tableName : tableHierarchy)
     {
         if (tableName.empty())
         {
@@ -394,8 +383,9 @@ toml::value CConfig::GetValue(std::string s)
 
     std::string parameterName = s.substr(last);
 
-    toml::value* table = this->FindHighestTable(tableHierarchy);
-    if (nullptr == table) return 1;
+    toml::value *table = this->FindHighestTable(tableHierarchy);
+    if (nullptr == table)
+        return 1;
 
     return toml::find(*table, parameterName);
 
@@ -410,7 +400,7 @@ int CConfig::GetInteger(std::string s)
         toml::value value = GetValue(s);
         return value.as_integer();
     }
-    catch (const std::exception& ex)
+    catch (const std::exception &ex)
     {
         LogTomlError(ex);
         return -1;
@@ -424,7 +414,7 @@ float CConfig::GetFloat(std::string s)
         toml::value value = GetValue(s);
         return value.as_floating();
     }
-    catch (const std::exception& ex)
+    catch (const std::exception &ex)
     {
         LogTomlError(ex);
         return -1.0;
@@ -438,7 +428,7 @@ bool CConfig::GetBool(std::string s)
         toml::value value = GetValue(s);
         return value.as_boolean();
     }
-    catch (const std::exception& ex)
+    catch (const std::exception &ex)
     {
         LogTomlError(ex);
         return false;
@@ -452,14 +442,14 @@ std::string CConfig::GetString(std::string s)
         toml::value value = GetValue(s);
         return value.as_string();
     }
-    catch (const std::exception& ex)
+    catch (const std::exception &ex)
     {
         LogTomlError(ex);
         return "";
     }
 }
 
-void CConfig::LogTomlError(const std::exception& ex)
+void CConfig::LogTomlError(const std::exception &ex)
 {
     wxLogFatalError("Incorrect type on reading configuration parameter: %s", ex.what());
 }
@@ -469,7 +459,7 @@ void CConfig::AddProfile(std::string newProfileName)
     // Create empty profile and add to config
     auto profileNames = GetProfileNames();
 
-    for(auto name : profileNames)
+    for (auto name : profileNames)
     {
         if (name == newProfileName)
         {
@@ -479,18 +469,16 @@ void CConfig::AddProfile(std::string newProfileName)
     }
 
     CProfile emptyProfile;
-    auto& vProfilesVector = toml::find(m_vData, "Profiles").as_array();
+    auto &vProfilesVector = toml::find(m_vData, "Profiles").as_array();
 
-    toml::value dm = { {"left", 0}, {"right", 0}, {"top", 0}, {"bottom", 0} };
-    toml::value newProfile{
-        {"profileID", emptyProfile.m_profile_ID},
-        {"name", newProfileName},
-        {"use_default_padding", emptyProfile.m_useDefaultPadding},
+    toml::value dm = {{"left", 0}, {"right", 0}, {"top", 0}, {"bottom", 0}};
+    toml::value newProfile{{"profileID", emptyProfile.m_profile_ID},
+                           {"name", newProfileName},
+                           {"use_default_padding", emptyProfile.m_useDefaultPadding},
 
-        // default to adding (2) monitors because this is
-        // the only way toml constructors select the overload to make an array
-        {"DisplayMappings", {dm, dm}}
-    };
+                           // default to adding (2) monitors because this is
+                           // the only way toml constructors select the overload to make an array
+                           {"DisplayMappings", {dm, dm}}};
 
     vProfilesVector.push_back(newProfile);
 }
@@ -501,7 +489,7 @@ void CConfig::RemoveProfile(std::string profileName)
     // delete the key, value pair
     // TODO: need to make profile names mututally exclusive
     // returns a vector
-    auto& vProfilesVector = toml::find(m_vData, "Profiles").as_array();
+    auto &vProfilesVector = toml::find(m_vData, "Profiles").as_array();
 
     int index = 0;
     for (std::size_t i = 0; i < vProfilesVector.size(); i++)
@@ -519,7 +507,6 @@ void CConfig::RemoveProfile(std::string profileName)
         {
             LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display.\n{}\n", e.what()));
         }
-
     }
 }
 
@@ -528,13 +515,13 @@ CProfile CConfig::GetActiveProfile()
     return m_activeProfile;
 }
 
-std::vector <std::string> CConfig::GetProfileNames()
+std::vector<std::string> CConfig::GetProfileNames()
 {
     const auto vProfilesVector = toml::find(m_vData, "Profiles").as_array();
     std::vector<std::string> profileNames;
 
     int index = 0;
-    for (auto& profile : vProfilesVector)
+    for (auto &profile : vProfilesVector)
     {
         try
         {
@@ -545,7 +532,6 @@ std::vector <std::string> CConfig::GetProfileNames()
         {
             LogToWixError(fmt::format("TOML Exception Thrown!\nIncorrect configuration of display.\n{}\n", e.what()));
         }
-
     }
 
     return profileNames;

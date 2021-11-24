@@ -1,9 +1,9 @@
 #ifndef TRACKIRMOUSE_DISPLAY_H
 #define TRACKIRMOUSE_DISPLAY_H
 
-class CDisplay {
-public:
-
+class CDisplay
+{
+  public:
     // How to use:
     //   1. Set rotational bounds
     //   2. Set pixel bounds
@@ -56,8 +56,8 @@ public:
         pixelBoundBottom = bottom;
     }
 
-    void setAbsBounds(signed int virtualOriginLeft, signed int virtualOriginTop,
-        float x_PxToABS, float y_PxToABS) {
+    void setAbsBounds(signed int virtualOriginLeft, signed int virtualOriginTop, float x_PxToABS, float y_PxToABS)
+    {
         pixelBoundAbsLeft = pixelBoundLeft - virtualOriginLeft;
         pixelBoundAbsRight = pixelBoundRight - virtualOriginLeft;
         pixelBoundAbsTop = pixelBoundTop - virtualOriginTop;
