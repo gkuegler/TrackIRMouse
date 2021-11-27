@@ -43,4 +43,4 @@
 #include "toml/parser.hpp"
 #include "toml/serializer.hpp"
 
-#endif // TOML_FOR_MODERN_CPP
+#endif  // TOML_FOR_MODERN_CPP

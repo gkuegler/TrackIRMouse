@@ -3,12 +3,11 @@
 
 #include <Windows.h>
 
-namespace WatchDog
-{
+namespace WatchDog {
 HANDLE StartWatchdog();
 DWORD WINAPI InstanceThread(LPVOID);
 void Serve(HANDLE);
 void HandleMsg(const char *, char *, LPDWORD);
-} // namespace WatchDog
+}  // namespace WatchDog
 
 #endif /* TRACKIRMOUSE_WATCHDOG_H */
