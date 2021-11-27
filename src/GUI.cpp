@@ -344,7 +344,7 @@ void cPanel::OnActiveProfile(wxCommandEvent &event) {
   int index = m_cmbProfiles->GetSelection();
   CConfig *config = GetGlobalConfig();
   std::string activeProfile((m_cmbProfiles->GetString(index)).mb_str());
-  config->LoadActiveDisplay(activeProfile);
+  config->LoadActiveProfile(activeProfile);
   m_pnlDisplayConfig->LoadDisplaySettings();
 }
 

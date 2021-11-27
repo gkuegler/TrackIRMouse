@@ -113,27 +113,23 @@ void CConfig::LoadSettings() {
   // Find the general settings table
   auto &vGeneralSettings = toml::find(m_vData, "General");
 
-  //////////////////////////////////////////////////////////////////////
-  //                   Validate In General Settings                   //
-  //////////////////////////////////////////////////////////////////////
-
   // Verify values exist and parse to correct type
   toml::find<bool>(vGeneralSettings, "track_on_start");
   toml::find<bool>(vGeneralSettings, "quit_on_loss_of_track_ir");
   toml::find<bool>(vGeneralSettings, "watchdog_enabled");
 
-  std::string activeDisplayProfile =
+  // Optionally the user can specify the location to the trackIR dll
+  m_sTrackIrDllLocation =
+      toml::find<std::string>(vGeneralSettings, "trackir_dll_directory");
+
+  std::string m_activeProfileName =
       toml::find<std::string>(vGeneralSettings, "active_profile");
 
   //////////////////////////////////////////////////////////////////////
   //                  Finding NPTrackIR DLL Location                  //
   //////////////////////////////////////////////////////////////////////
 
-  // Optionally the user can specify the location to the trackIR dll
-  m_sTrackIrDllLocation =
-      toml::find<std::string>(vGeneralSettings, "trackir_dll_directory");
-
-  if ("default" == m_sTrackIrDllLocation) {
+  if ("default" == m_sTrackIrDllLocation) {hello
     RegistryQuery path = GetStringFromRegistry(
         HKEY_CURRENT_USER,
         "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
@@ -195,10 +191,11 @@ void CConfig::LoadSettings() {
 
   LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
 
-  LoadActiveDisplay(activeDisplayProfile);
+  LoadActiveProfile(m_activeProfileName);
 }
 
-void CConfig::LoadActiveDisplay(std::string activeProfile) {
+
+void CConfig::LoadActiveProfile(std::string activeProfile) {
   CProfile configuration;
   // Find the profiles table that contains all mapping profiles.
   auto &vProfilesArray = toml::find(m_vData, "Profiles");

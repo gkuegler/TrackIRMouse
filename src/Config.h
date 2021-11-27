@@ -53,7 +53,7 @@ class CConfig {
 
   // Loads active profile from toml object into
   // m_activeProfile data structure
-  void LoadActiveDisplay(std::string activeProfile);
+  void LoadActiveProfile(std::string activeProfile);
 
   // Getter functions
   CProfile GetActiveProfile();
@@ -94,6 +94,7 @@ class CConfig {
  private:
   toml::value m_vData;  // holds main toml object
 
+  int ValidateSettingsTomlObject();
   void LogTomlError(const std::exception &ex);
   toml::value GetValue(std::string s);
   toml::value *FindHighestTable(std::vector<std::string> tableHierarchy);
