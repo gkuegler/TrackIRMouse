@@ -15,6 +15,7 @@
 #define BUFSIZE 512
 
 namespace WatchDog {
+bool g_bPauseTracking = false;
 
 HANDLE StartWatchdog() {
   HANDLE hThread = INVALID_HANDLE_VALUE;
@@ -126,12 +127,12 @@ DWORD WINAPI InstanceThread(LPVOID param) {
                            &sa);  // default security attribute
 
   if (hPipe == INVALID_HANDLE_VALUE) {
-    LogToWix(fmt::format("CreateNamedPipe failed, GLE={}.\n", GetLastError()));
+    LogToWixError(fmt::format("CreateNamedPipe failed, GLE={}.\n", GetLastError()));
     return -1;
   }
 
-  if (SetEvent(*phEvent) != 0) {
-    LogToWix(fmt::format("Could not set Watchdog Event with error code: {}",
+  if (SetEvent(*phEvent) == 0) {
+    LogToWixError(fmt::format("Could not set Watchdog Event with error code: {}\n",
                          GetLastError()));
   }
 
@@ -156,17 +157,17 @@ void Serve(HANDLE hPipe) {
   // thread fails.
 
   if (pchRequest == NULL) {
-    LogToWix("\nERROR - Pipe Server Failure:\n");
-    LogToWix("   Serve got an unexpected NULL heap allocation.\n");
-    LogToWix("   Serve exitting.\n");
+    LogToWixError("\nERROR - Pipe Server Failure:\n");
+    LogToWixError("   Serve got an unexpected NULL heap allocation.\n");
+    LogToWixError("   Serve exitting.\n");
     if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
     return;
   }
 
   if (pchReply == NULL) {
-    LogToWix("\nERROR - Pipe Server Failure:\n");
-    LogToWix("   Serve got an unexpected NULL heap allocation.\n");
-    LogToWix("   Serve exitting.\n");
+    LogToWixError("\nERROR - Pipe Server Failure:\n");
+    LogToWixError("   Serve got an unexpected NULL heap allocation.\n");
+    LogToWixError("   Serve exitting.\n");
     if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
     return;
   }
@@ -175,7 +176,7 @@ void Serve(HANDLE hPipe) {
     LogToWix("Waiting on client connection...\n");
 
     if (ConnectNamedPipe(hPipe, NULL) == 0) {
-      LogToWix(
+      LogToWixError(
           fmt::format("ConnectNamedPipe failed, GLE={}.\n", GetLastError()));
       break;
     }
@@ -217,7 +218,7 @@ void Serve(HANDLE hPipe) {
       );
 
       if (!bSuccess || cbReplyBytes != cbWritten) {
-        LogToWix(fmt::format("InstanceThread WriteFile failed, GLE={}.\n",
+        LogToWixError(fmt::format("InstanceThread WriteFile failed, GLE={}.\n",
                              GetLastError()));
       } else {
         LogToWix(fmt::format("Number of Bytes Written: {}\n", cbReplyBytes));

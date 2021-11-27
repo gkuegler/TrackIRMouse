@@ -4,6 +4,9 @@
 #include <Windows.h>
 
 namespace WatchDog {
+
+extern bool g_bPauseTracking;
+
 HANDLE StartWatchdog();
 DWORD WINAPI InstanceThread(LPVOID);
 void Serve(HANDLE);

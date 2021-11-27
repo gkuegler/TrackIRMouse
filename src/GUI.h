@@ -17,9 +17,8 @@ class TrackThread : public wxThread {
  public:
   cFrame *m_pHandler = nullptr;
   HWND m_hWnd;
-  CConfig m_Config;
 
-  TrackThread(cFrame *m_pHandler, HWND hWnd, CConfig config);
+  TrackThread(cFrame *m_pHandler, HWND hWnd);
   ~TrackThread();
 
   ExitCode Entry();
@@ -50,6 +49,8 @@ class cPanelConfiguration : public wxPanel {
   void OnProfileID(wxCommandEvent &event);
   void OnUseDefaultPadding(wxCommandEvent &event);
   void OnTlcMappingData(wxCommandEvent &event);
+
+  // wxDECLARE_EVENT_TABLE();
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -83,7 +84,7 @@ class cPanel : public wxPanel {
 
   cTextCtrl *m_textrich;
 
-  cPanel(wxFrame *frame);
+  cPanel(cFrame *frame);
 
   void LoadSettings();
   void PopulateComboBoxWithProfiles(CConfig config) {
@@ -94,8 +95,13 @@ class cPanel : public wxPanel {
     }
   }
 
+  void OnTrackStart(wxCommandEvent &event);
+
  private:
+  cFrame* m_parent;
   // Control Event Handlers
+  void OnTrackStop(wxCommandEvent &event);
+
   void OnEnabledWatchdog(wxCommandEvent &event);
   void OnTrackOnStart(wxCommandEvent &event);
   void OnQuitOnLossOfTrackIr(wxCommandEvent &event);
@@ -108,16 +114,20 @@ class cPanel : public wxPanel {
   wxDECLARE_EVENT_TABLE();
 };
 
-wxBEGIN_EVENT_TABLE(cPanel, wxPanel) EVT_CHECKBOX(myID_WATCHDOG_ENABLED,
-                                                  cPanel::OnEnabledWatchdog)
-    EVT_CHECKBOX(myID_TRACK_ON_START, cPanel::OnTrackOnStart) EVT_CHECKBOX(
-        myID_QUIT_ON_LOSS_OF_TRACK_IR, cPanel::OnQuitOnLossOfTrackIr)
-        EVT_TEXT_ENTER(myID_TRACK_IR_DLL_PATH, cPanel::OnTrackIrDllPath)
-            EVT_BUTTON(myID_SAVE_SETTINGS, cPanel::OnSaveSettings)
-                EVT_COMBOBOX(myID_PROFILE_SELECTION, cPanel::OnActiveProfile)
-                    EVT_BUTTON(myID_ADD_PROFILE, cPanel::OnAddProfile)
-                        EVT_BUTTON(myID_REMOVE_PROFILE, cPanel::OnRemoveProfile)
-                            wxEND_EVENT_TABLE()
+// clang-format off
+wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
+    EVT_BUTTON(myID_START_TRACK, cPanel::OnTrackStart)
+    EVT_BUTTON(myID_STOP_TRACK, cPanel::OnTrackStop)
+    EVT_CHECKBOX(myID_WATCHDOG_ENABLED, cPanel::OnEnabledWatchdog)
+    EVT_CHECKBOX(myID_TRACK_ON_START, cPanel::OnTrackOnStart)
+    EVT_CHECKBOX(myID_QUIT_ON_LOSS_OF_TRACK_IR, cPanel::OnQuitOnLossOfTrackIr)
+    EVT_TEXT_ENTER(myID_TRACK_IR_DLL_PATH, cPanel::OnTrackIrDllPath)
+    EVT_BUTTON(myID_SAVE_SETTINGS, cPanel::OnSaveSettings)
+    EVT_COMBOBOX(myID_PROFILE_SELECTION, cPanel::OnActiveProfile)
+    EVT_BUTTON(myID_ADD_PROFILE, cPanel::OnAddProfile)
+    EVT_BUTTON(myID_REMOVE_PROFILE, cPanel::OnRemoveProfile)
+wxEND_EVENT_TABLE()
+// clang-format on
 
     //////////////////////////////////////////////////////////////////////
     //                              Frame                               //
@@ -127,11 +137,9 @@ wxBEGIN_EVENT_TABLE(cPanel, wxPanel) EVT_CHECKBOX(myID_WATCHDOG_ENABLED,
  public:
   cPanel *m_panel;
   TrackThread *m_pTrackThread = nullptr;
+  wxCriticalSection m_pThreadCS;    // protects the m_pThread pointer
 
   cFrame();
-
-  void OnTrackStart(wxCommandEvent &event);
-  void OnTrackStop(wxCommandEvent &event);
 
  private:
   void OnExit(wxCommandEvent &event);
@@ -142,12 +150,14 @@ wxBEGIN_EVENT_TABLE(cPanel, wxPanel) EVT_CHECKBOX(myID_WATCHDOG_ENABLED,
   wxDECLARE_EVENT_TABLE();
 };
 
-wxBEGIN_EVENT_TABLE(cFrame, wxFrame) EVT_MENU(wxID_EXIT, cFrame::OnExit)
-    EVT_MENU(wxID_ABOUT, cFrame::OnAbout) EVT_MENU(wxID_OPEN, cFrame::OnOpen)
-        EVT_BUTTON(myID_GEN_EXMPL, cFrame::OnGenerateExample)
-            EVT_BUTTON(myID_START_TRACK, cFrame::OnTrackStart)
-                EVT_BUTTON(myID_STOP_TRACK, cFrame::OnTrackStop)
-                    wxEND_EVENT_TABLE()
+// clang-format off
+wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
+    EVT_MENU(wxID_EXIT, cFrame::OnExit)
+    EVT_MENU(wxID_ABOUT, cFrame::OnAbout)
+    EVT_MENU(wxID_OPEN, cFrame::OnOpen)
+    EVT_BUTTON(myID_GEN_EXMPL, cFrame::OnGenerateExample)
+wxEND_EVENT_TABLE()
+// clang-format on
 
     //////////////////////////////////////////////////////////////////////
     //                         Main Application                         //

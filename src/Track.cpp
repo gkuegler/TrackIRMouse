@@ -17,10 +17,11 @@
 #include "NPClient.h"
 #include "Watchdog.h"
 
-#define USHORT_MAX_VAL \
-  65535  // SendInput with absolute mouse movement takes a short int
+// SendInput with absolute mouse movement takes a short int
+#define USHORT_MAX_VAL 65535
 
-bool g_bPauseTracking = false;
+// bool g_bPauseTracking = false;
+bool g_bGracefullyExit = false;
 
 std::vector<CDisplay> g_displays;
 
@@ -60,7 +61,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
   //  - unable to load dll
   //  - any NP dll function call failure
 
-  LogToWix(fmt::format("\nStarting Initialization Of TrackIR\n"));
+  // LogToWix(fmt::format("\nStarting Initialization Of TrackIR\n"));
 
   WinSetup(config);
 
@@ -75,10 +76,10 @@ void TR_Initialize(HWND hWnd, CConfig config) {
     g_hWatchdogThread = WatchDog::StartWatchdog();
 
     if (NULL == g_hWatchdogThread)
-      LogToWix("Watchdog thread failed to initialize!");
+      LogToWixError("Watchdog thread failed to initialize!");
   }
 
-  LogToWix(fmt::format("\n{:-^50}\n", "TrackIR Init Status"));
+  // LogToWix(fmt::format("\n{:-^50}\n", "TrackIR Init Status"));
 
   // Find and load TrackIR DLL
 #ifdef UNICODE
@@ -105,15 +106,18 @@ void TR_Initialize(HWND hWnd, CConfig config) {
   NPRESULT rsltInit = NPClient_Init(sDll);
 
   if (NP_OK == rsltInit)
-    LogToWix("NP Initialization:          Success\n");
-
-  else if (NP_ERR_DLL_NOT_FOUND == rsltInit)
+    LogToFile("NP Initialization: Success");
+  else if (NP_ERR_DLL_NOT_FOUND == rsltInit) {
+    LogToFile(
+        fmt::format("NP Initialization: Failure, Error Code -> {}", rsltInit));
     throw Exception(
         fmt::format("\nFAILED TO LOAD TRACKIR DLL : {}\n\n", rsltInit));
-
-  else
+  } else {
+    LogToFile(fmt::format("NP Initialization: Failure, Error Code -> {}\n",
+                          rsltInit));
     throw Exception(
         fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rsltInit));
+  }
 
   // NP software needs a window handle to know when it should
   // stop sending data frames if window is closed.
@@ -130,51 +134,51 @@ void TR_Initialize(HWND hWnd, CConfig config) {
   // already.
   if (rsltRegWinHandle == 7) {
     NP_UnregisterWindowHandle();
-    LogToWixError(fmt::format(
-        "\nBOOTING CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!\n\n"));
+    LogToWixError(
+        fmt::format("BOOTING CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!"));
     Sleep(2);
     rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
   }
 
   if (NP_OK == rsltRegWinHandle)
-    LogToWix("Register Window Handle:      Success\n");
+    LogToFile("Register Window Handle: Success");
   else
-    throw Exception(fmt::format("Register Window Handle: Failed {:>3}\n",
-                                rsltRegWinHandle));
+    throw Exception(
+        fmt::format("Register Window Handle: Failed {}\n", rsltRegWinHandle));
 
   // I'm skipping query the software version, I don't think its necessary
 
   // Request roll, pitch. See NPClient.h
   NPRESULT rsltReqData = NP_RequestData(NPPitch | NPYaw);
   if (NP_OK == rsltReqData)
-    LogToWix("Request Data:         Success\n");
+    LogToFile("Request Data:  Success");
   else
-    throw Exception(
-        fmt::format("Request Data:        Failed: {:>3}\n", rsltReqData));
+    throw Exception(fmt::format("Request Data: Failed: {}", rsltReqData));
 
   rsltReqData =
       NP_RegisterProgramProfileID(config.m_activeProfile.m_profile_ID);
   if (NP_OK == rsltReqData)
-    LogToWix("Register Profile ID:         Success\n");
+    LogToFile("Register Profile ID: Success");
   else
     throw Exception(
-        fmt::format("Register Profile ID:       Failed: {:>3}\n", rsltReqData));
+        fmt::format("Register Profile ID: Failed: {}\n", rsltReqData));
 
 #endif
   return;
 }
 
 int TR_TrackStart(CConfig config) {
+  g_bGracefullyExit = false;
+  
 #ifndef TEST_NO_TRACK
   // Skipping this api call. I think this is for legacy games.
   // NP_StopCursor
 
   NPRESULT rslt = NP_StartDataTransmission();
   if (NP_OK == rslt)
-    LogToWix("Start Data Transmission:			Success\n");
+    LogToFile("Start Data Transmission: Success");
   else
-    LogToWixError(
-        fmt::format("Start Data Transmission:     Failed: {:>3}\n", rslt));
+    LogToWixError(fmt::format("Start Data Transmission: Failed: {}\n", rslt));
 
 #endif
 
@@ -204,16 +208,21 @@ int TR_TrackStart(CConfig config) {
         continue;
       }
 
-      if (g_bPauseTracking == false)
+      if (WatchDog::g_bPauseTracking == false)
         MouseMove(config.m_monitorCount, yaw, pitch);
+
+      if (g_bGracefullyExit)
+      {
+        return 0;
+      }
 
       lastFrame = framesig;
     }
 
     else if (NP_ERR_DEVICE_NOT_PRESENT == gdf) {
       LogToWixError(
-          "\n\nDEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART "
-          "PROGRAM\n\n");
+          "DEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART "
+          "PROGRAM");
       return 1;
     }
 
@@ -224,6 +233,7 @@ int TR_TrackStart(CConfig config) {
 }
 
 void TR_TrackStop() {
+  g_bGracefullyExit = true;
   NP_StopDataTransmission();
   NP_UnregisterWindowHandle();
 }
@@ -252,10 +262,8 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
   // TODO: michael does not yet support wide character strings
   // LogToWix(fmt::format(L"MON Name:{:>15}\n", Monitor.szDevice));
 
-  LogToWix(fmt::format("MON {} Left:   {:>10}\n", count, left));
-  LogToWix(fmt::format("MON {} Right:  {:>10}\n", count, right));
-  LogToWix(fmt::format("MON {} Top:    {:>10}\n", count, top));
-  LogToWix(fmt::format("MON {} Bottom: {:>10}\n", count, bottom));
+  LogToFile(fmt::format("MON {} Pixel Bounds -> {:>6}, {:>6}, {:>6}, {:>6}",
+                        count, left, right, top, bottom));
 
   if (Monitor.rcMonitor.left < g_virtualOriginX) {
     g_virtualOriginX = Monitor.rcMonitor.left;
@@ -274,7 +282,7 @@ void WinSetup(CConfig config) {
   //  - differing # of displays
   //  - interfering boundaries
   //  -
-  LogToWix(fmt::format("\n{:-^50}\n", "Windows Environment Info"));
+  // LogToWix(fmt::format("\n{:-^50}\n", "Windows Environment Info"));
 
   const int monitorCount = GetSystemMetrics(SM_CMONITORS);
 
@@ -292,28 +300,24 @@ void WinSetup(CConfig config) {
 
   // TODO: this check actually happens at the initialization of my configuration
   // file
-  LogToWixError(fmt::format("Displays Specified: {}\nDisplays Found: {}\n",
-                            config.m_activeProfile.m_bounds.size(),
-                            monitorCount));
-
-  LogToWix(fmt::format("{} Monitors Found\n", monitorCount));
-  LogToWix(
-      fmt::format("Width of Virtual Desktop:  {:>5}\n", virtualDesktopWidth));
-  LogToWix(
-      fmt::format("Height of Virtual Desktop: {:>5}\n", virtualDesktopHeight));
+  LogToFile(fmt::format("{} Monitors Found", monitorCount));
+  LogToFile(
+      fmt::format("Width of Virtual Desktop:  {:>5}", virtualDesktopWidth));
+  LogToFile(
+      fmt::format("Height of Virtual Desktop: {:>5}", virtualDesktopHeight));
 
   g_xPixelAbsoluteSlope =
       USHORT_MAX_VAL / static_cast<float>(virtualDesktopWidth);
   g_yPixelAbsoluteSlope =
       USHORT_MAX_VAL / static_cast<float>(virtualDesktopHeight);
 
-  LogToWix("\nVirtual Desktop Pixel Bounds\n");
+  // LogToFile("\nVirtual Desktop Pixel Bounds\n");
   EnumDisplayMonitors(NULL, NULL, PopulateVirtMonitorBounds, 0);
 
-  LogToWix(fmt::format("\nVirtual Origin Offset Horizontal: {:d}\n",
-                       g_virtualOriginX));
-  LogToWix(fmt::format("Virtual Origin Offset Vertical:   {:d}\n",
-                       g_virtualOriginY));
+  LogToFile(
+      fmt::format("Virtual Origin Offset Horizontal: {:d}", g_virtualOriginX));
+  LogToFile(
+      fmt::format("Virtual Origin Offset Vertical:   {:d}", g_virtualOriginY));
 
   return;
 }
@@ -341,41 +345,27 @@ void DisplaySetup(const CConfig config) {
     g_displays[i].setAbsBounds(g_virtualOriginX, g_virtualOriginY,
                                g_xPixelAbsoluteSlope, g_yPixelAbsoluteSlope);
   }
-  LogToWix("\nVirtual Desktop Pixel Bounds (abs)\n");
+
   for (int i = 0; i < config.m_monitorCount; i++) {
-    LogToWix(fmt::format("MON {} pixelBoundboundAbsLeft:   {:>10d}\n", i,
-                         g_displays[i].pixelBoundAbsLeft));
-    LogToWix(fmt::format("MON {} pixelBoundboundAbsRight:  {:>10d}\n", i,
-                         g_displays[i].pixelBoundAbsRight));
-    LogToWix(fmt::format("MON {} pixelBoundboundAbsTop:    {:>10d}\n", i,
-                         g_displays[i].pixelBoundAbsTop));
-    LogToWix(fmt::format("MON {} pixelBoundboundAbsBottom: {:>10d}\n", i,
-                         g_displays[i].pixelBoundAbsBottom));
-  }
-  LogToWix("\n16-bit Coordinate Bounds\n");
-  for (int i = 0; i < config.m_monitorCount; i++) {
-    LogToWix(fmt::format("MON {} boundAbsLeft:       {:>12.1f}\n", i,
-                         g_displays[i].boundAbsLeft));
-    LogToWix(fmt::format("MON {} boundAbsRight:      {:>12.1f}\n", i,
-                         g_displays[i].boundAbsRight));
-    LogToWix(fmt::format("MON {} boundAbsTop:        {:>12.1f}\n", i,
-                         g_displays[i].boundAbsTop));
-    LogToWix(fmt::format("MON {} boundAbsBottom:     {:>12.1f}\n", i,
-                         g_displays[i].boundAbsBottom));
-  }
-  LogToWix("\nRotational Bounds\n");
-  for (int i = 0; i < config.m_monitorCount; i++) {
-    LogToWix(fmt::format("MON {} rotationBoundLeft:       {:>13.2f}\n", i,
-                         g_displays[i].rotationBoundLeft));
-    LogToWix(fmt::format("MON {} rotationBoundRight:      {:>13.2f}\n", i,
-                         g_displays[i].rotationBoundRight));
-    LogToWix(fmt::format("MON {} rotationBoundTop:        {:>13.2f}\n", i,
-                         g_displays[i].rotationBoundTop));
-    LogToWix(fmt::format("MON {} rotationBoundBottom:     {:>13.2f}\n", i,
-                         g_displays[i].rotationBoundBottom));
+    LogToFile(fmt::format(
+        "MON {} pixelBound: {:>5d}, {:>5d}, {:>5d}, {:>5d}", i,
+        g_displays[i].pixelBoundAbsLeft, g_displays[i].pixelBoundAbsRight,
+        g_displays[i].pixelBoundAbsTop, g_displays[i].pixelBoundAbsBottom));
   }
 
-  LogToWix(fmt::format("\n{:-^}\n", "???"));
+  for (int i = 0; i < config.m_monitorCount; i++) {
+    LogToFile(fmt::format(
+        "MON {} boundAbsLeft: {:>7.1f}, {:>7.1f}, {:>7.1f}, {:>7.1f}", i,
+        g_displays[i].boundAbsLeft, g_displays[i].boundAbsRight,
+        g_displays[i].boundAbsTop, g_displays[i].boundAbsBottom));
+  }
+
+  for (int i = 0; i < config.m_monitorCount; i++) {
+    LogToFile(fmt::format(
+        "MON {} rotationBoundLeft: {:> 6.2f}, {:> 6.2f}, {:> 6.2f}, {:> 6.2f}",
+        i, g_displays[i].rotationBoundLeft, g_displays[i].rotationBoundRight,
+        g_displays[i].rotationBoundTop, g_displays[i].rotationBoundBottom));
+  }
 
   return;
 }

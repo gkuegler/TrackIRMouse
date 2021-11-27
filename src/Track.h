@@ -7,6 +7,6 @@
 
 void TR_Initialize(HWND hWnd, CConfig config);
 int TR_TrackStart(CConfig config);
-void TR_TrackStop(CConfig config);
+void TR_TrackStop();
 
 #endif /* TRACKIRMOUSE_TRACK_H */

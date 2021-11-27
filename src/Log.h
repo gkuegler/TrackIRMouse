@@ -24,22 +24,23 @@
 // Scott Meyers universal reference tips!
 template <typename T>
 void LogToWix(T &&msg) {
-  // std::string msg2(msg);
-  // logger->info(msg2.c_str());
-  // spdlog::get("logger1")->info("hnlogger->info<T>(msg);
-  spdlog::get("mainlogger")->info<T>(msg);
   wxThreadEvent *evt = new wxThreadEvent(wxEVT_THREAD);
   evt->SetString(std::forward<T>(msg));
   wxTheApp->QueueEvent(evt);
 }
 
 template <typename T>
-void LogToWixError(T &&msg) {
-  // logger->warn(msg);
+void LogToWixError(T msg) {
+  spdlog::get("mainlogger")->warn<T>(msg);
   wxThreadEvent *evt = new wxThreadEvent(wxEVT_THREAD);
-  evt->SetString(std::forward<T>(msg));
+  evt->SetString(msg);
   evt->SetExtraLong(1);
   wxTheApp->QueueEvent(evt);
+}
+
+template <typename T>
+void LogToFile(T &&msg) {
+  spdlog::get("mainlogger")->info<T>(msg);
 }
 
 //////////////////////////////////////////////////////////////////////

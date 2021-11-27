@@ -1,5 +1,15 @@
 //#define _CRT_SECURE_NO_WARNINGS
+/*
+label other settings
+label active profile
+move msgs to bottom
 
+profile box:
+  default padding
+  shw brdr
+  move to right hand side
+  set size limitations for text for inputs
+*/
 #include "GUI.h"
 
 #include <wx/colour.h>
@@ -12,11 +22,13 @@
 #include "Log.h"
 #include "Track.h"
 
+const wxSize kDefaultButtonSize = wxSize(100, 25);
+
 wxIMPLEMENT_APP(CGUIApp);
 
 bool CGUIApp::OnInit() {
   // Initialize global logger
-  auto logger = spdlog::basic_logger_mt("mainlogger", "log-trackir.txt");
+  auto logger = spdlog::basic_logger_mt("mainlogger", "log-trackir.txt", true);
   spdlog::set_level(spdlog::level::info);
 
   // Construct child elements
@@ -88,7 +100,7 @@ bool CGUIApp::OnInit() {
   // Start the track IR thread if enabled
   if (config->GetBool("General/watchdog_enabled")) {
     wxCommandEvent event = {};
-    m_frame->OnTrackStart(event);
+    m_frame->m_panel->OnTrackStart(event);
   }
 
   return true;
@@ -100,7 +112,7 @@ bool CGUIApp::OnInit() {
 
 cFrame::cFrame()
     : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", wxPoint(200, 200),
-              wxSize(1200, 800)) {
+              wxSize(950, 600)) {
   wxMenu *menuFile = new wxMenu;
   menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
                    "Open a new settings file from disk.");
@@ -175,32 +187,6 @@ void cFrame::OnGenerateExample(wxCommandEvent &event) {
   wxLogError("Method not implemented yet!");
 }
 
-void cFrame::OnTrackStart(wxCommandEvent &event) {
-  // Threads run in detached mode by default.
-  // It is okay to lose pointer.
-  m_pTrackThread =
-      new TrackThread(this, this->GetHandle(), GetGlobalConfigCopy());
-
-  if (m_pTrackThread->Create() == wxTHREAD_NO_ERROR) {
-    m_pTrackThread->Run();
-  } else {
-    wxLogError("Can't create the thread!");
-    delete m_pTrackThread;
-    m_pTrackThread = NULL;
-  }
-}
-
-void cFrame::OnTrackStop(wxCommandEvent &event) {
-  // Threads run in detached mode by default.
-  // It is okay to lose pointer.
-  if (m_pTrackThread) {
-    // delete T_pTrackThread;
-    // m_pTrackThread = NULL;
-  } else {
-    LogToWix("Track thread not running!\n");
-  }
-}
-
 //////////////////////////////////////////////////////////////////////
 //                            Main Panel                            //
 //////////////////////////////////////////////////////////////////////
@@ -209,7 +195,11 @@ cTextCtrl::cTextCtrl(wxWindow *parent, wxWindowID id, const wxString &value,
                      const wxPoint &pos, const wxSize &size, int style)
     : wxTextCtrl(parent, id, value, pos, size, style) {}
 
-cPanel::cPanel(wxFrame *frame) : wxPanel(frame) {
+cPanel::cPanel(cFrame *frame) : wxPanel(frame) {
+  m_parent = frame;
+
+  wxStaticText *txtGenStgTitle =
+      new wxStaticText(this, wxID_ANY, "General Settings:");
   m_cbxEnableWatchdog = new wxCheckBox(
       this, myID_WATCHDOG_ENABLED, "Watchdog Enabled", wxDefaultPosition,
       wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
@@ -221,79 +211,95 @@ cPanel::cPanel(wxFrame *frame) : wxPanel(frame) {
       wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
 
   wxStaticText *txtTrackLocation1 =
-      new wxStaticText(this, wxID_ANY, "Path of 'NPClient64.dll'");
+      new wxStaticText(this, wxID_ANY, "Path of 'NPClient64.dll':");
   m_txtTrackIrDllPath =
       new cTextCtrl(this, myID_TRACK_IR_DLL_PATH, "(default)",
-                    wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
+                    wxDefaultPosition, wxDefaultSize, wxTE_LEFT);
   wxStaticText *txtTrackLocation2 = new wxStaticText(
       this, wxID_ANY,
       "Note: a value of 'default' will get from install location.");
 
   m_btnStartMouse =
       new wxButton(this, myID_START_TRACK, "Start Mouse", wxDefaultPosition,
-                   wxDefaultSize, 0, wxDefaultValidator, "");
+                   kDefaultButtonSize, 0, wxDefaultValidator, "");
   m_btnStopMouse =
       new wxButton(this, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition,
-                   wxDefaultSize, 0, wxDefaultValidator, "");
+                   kDefaultButtonSize, 0, wxDefaultValidator, "");
   m_btnSaveSettings =
       new wxButton(this, myID_SAVE_SETTINGS, "Save Settings", wxDefaultPosition,
-                   wxDefaultSize, 0, wxDefaultValidator, "");
+                   kDefaultButtonSize, 0, wxDefaultValidator, "");
+
+  wxStaticText *txtProfiles =
+      new wxStaticText(this, wxID_ANY, "Active Profile:   ");
 
   m_cmbProfiles = new wxComboBox(this, myID_PROFILE_SELECTION, "",
                                  wxDefaultPosition, wxDefaultSize, 0, 0,
                                  wxCB_DROPDOWN, wxDefaultValidator, "");
   m_btnAddProfile =
       new wxButton(this, myID_ADD_PROFILE, "Add Profile", wxDefaultPosition,
-                   wxDefaultSize, 0, wxDefaultValidator, "");
-  m_btnRemoveProfile =
-      new wxButton(this, myID_REMOVE_PROFILE, "Remove Profile",
-                   wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, "");
+                   kDefaultButtonSize, 0, wxDefaultValidator, "");
+  m_btnRemoveProfile = new wxButton(this, myID_REMOVE_PROFILE, "Remove Profile",
+                                    wxDefaultPosition, kDefaultButtonSize, 0,
+                                    wxDefaultValidator, "");
 
   m_pnlDisplayConfig = new cPanelConfiguration(this);
 
-  wxString start_message(fmt::format("{:-^50}\n", "MouseTrackIR Application"));
-  m_textrich = new cTextCtrl(this, wxID_ANY, start_message, wxDefaultPosition,
-                             wxDefaultSize, wxTE_RICH | wxTE_MULTILINE);
+  // wxString start_message(fmt::format("{:-^50}\n", "MouseTrackIR
+  // Application"));
+  wxStaticText *txtLogOutputTitle =
+      new wxStaticText(this, wxID_ANY, "Log Output:");
+
+  m_textrich = new cTextCtrl(this, wxID_ANY, "", wxDefaultPosition,
+                             wxSize(300, 10), wxTE_RICH | wxTE_MULTILINE);
 
   m_textrich->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL,
                              wxFONTWEIGHT_NORMAL));
 
-  // wxBoxSizer* rowA = new wxBoxSizer(wxHORIZONTAL);
+  // General Settings Box
+  wxBoxSizer *zrGenStg = new wxBoxSizer(wxVERTICAL);
+  zrGenStg->Add(txtGenStgTitle, 0, wxBOTTOM, 5);
+  zrGenStg->Add(m_cbxEnableWatchdog, 0, wxLEFT, 0);
+  zrGenStg->Add(m_cbxTrackOnStart, 0, wxLEFT, 0);
+  zrGenStg->Add(m_cbxQuitOnLossOfTrackIR, 0, wxLEFT, 0);
+  zrGenStg->Add(txtTrackLocation1, 0, wxTOP, 5);
+  zrGenStg->Add(m_txtTrackIrDllPath, 1, wxALL | wxEXPAND, 0);
+  zrGenStg->Add(txtTrackLocation2, 0, wxALL, 0);
 
-  wxBoxSizer *row1 = new wxBoxSizer(wxVERTICAL);
-  row1->Add(m_cbxEnableWatchdog, 0, wxALL, 0);
-  row1->Add(m_cbxTrackOnStart, 0, wxALL, 0);
-  row1->Add(m_cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
-  row1->Add(txtTrackLocation1, 0, wxALL, 0);
-  row1->Add(m_txtTrackIrDllPath, 0, wxALL, 0);
-  row1->Add(txtTrackLocation2, 0, wxALL, 0);
+  wxBoxSizer *zrTrackCmds = new wxBoxSizer(wxHORIZONTAL);
+  zrTrackCmds->Add(m_btnStartMouse, 0, wxALL, 0);
+  zrTrackCmds->Add(m_btnStopMouse, 0, wxALL, 0);
+  zrTrackCmds->Add(m_btnSaveSettings, 0, wxALL, 0);
 
-  wxBoxSizer *row2 = new wxBoxSizer(wxHORIZONTAL);
-  row2->Add(m_btnStartMouse, 0, wxALL, 0);
-  row2->Add(m_btnStopMouse, 0, wxALL, 0);
-  row2->Add(m_btnSaveSettings, 0, wxALL, 0);
+  wxBoxSizer *zrProfCmds = new wxBoxSizer(wxHORIZONTAL);
+  zrProfCmds->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
+  zrProfCmds->Add(m_cmbProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
+  zrProfCmds->Add(m_btnAddProfile, 0, wxALL, 0);
+  zrProfCmds->Add(m_btnRemoveProfile, 0, wxALL, 0);
 
-  wxBoxSizer *row21 = new wxBoxSizer(wxHORIZONTAL);
-  row21->Add(m_cmbProfiles, 0, wxALL, 0);
-  row21->Add(m_btnAddProfile, 0, wxALL, 0);
-  row21->Add(m_btnRemoveProfile, 0, wxALL, 0);
+  wxBoxSizer *zrBlock1Left = new wxBoxSizer(wxVERTICAL);
+  zrBlock1Left->Add(zrTrackCmds, 0, wxBOTTOM, 10);
+  zrBlock1Left->Add(zrGenStg, 0, wxALL, 0);
 
-  wxBoxSizer *row3 = new wxBoxSizer(wxVERTICAL);
-  // row3->Add(tcMappingData, 0, wxALL | wxEXPAND, 0);
-  row3->Add(m_pnlDisplayConfig, 0, wxALL | wxEXPAND, 0);
+  wxBoxSizer *zrBlock1 = new wxBoxSizer(wxHORIZONTAL);
+  zrBlock1->Add(zrBlock1Left, 0, wxALL, 0);
+  // Future use is for graphical display
+  // zrBlock1->Add(zrBlock1Right, 0, wxALL, 10);
 
-  wxBoxSizer *row4 = new wxBoxSizer(wxHORIZONTAL);
-  row4->Add(m_textrich, 1, wxALL | wxEXPAND, 5);
+  wxBoxSizer *zrBlock2Left = new wxBoxSizer(wxVERTICAL);
+  zrBlock2Left->Add(zrProfCmds, 0, wxBOTTOM, 10);
+  zrBlock2Left->Add(m_pnlDisplayConfig, 0, wxALL, 0);
 
-  wxBoxSizer *leftColumn = new wxBoxSizer(wxVERTICAL);
-  leftColumn->Add(row1, 0, wxALL, 10);
-  leftColumn->Add(row2, 0, wxALL, 10);
-  leftColumn->Add(row21, 0, wxALL, 10);
-  leftColumn->Add(row3, 0, wxALL, 10);
+  wxBoxSizer *zrBlock2Right = new wxBoxSizer(wxVERTICAL);
+  zrBlock2Right->Add(txtLogOutputTitle, 0, wxBOTTOM, 5);
+  zrBlock2Right->Add(m_textrich, 1, wxEXPAND, 0);
 
-  wxBoxSizer *topSizer = new wxBoxSizer(wxHORIZONTAL);
-  topSizer->Add(leftColumn, 0, wxALL | wxEXPAND, 10);
-  topSizer->Add(row4, 1, wxALL | wxEXPAND, 10);
+  wxBoxSizer *zrBlock2 = new wxBoxSizer(wxHORIZONTAL);
+  zrBlock2->Add(zrBlock2Left, 0, wxALL | wxEXPAND, 5);
+  zrBlock2->Add(zrBlock2Right, 1, wxALL | wxEXPAND, 5);
+
+  wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
+  topSizer->Add(zrBlock1, 0, wxALL | wxEXPAND, 10);
+  topSizer->Add(zrBlock2, 0, wxALL | wxEXPAND, 10);
 
   SetSizer(topSizer);
 }
@@ -306,13 +312,45 @@ void cPanel::LoadSettings() {
       config.GetBool("General/quit_on_loss_of_track_ir"));
 
   wxString activeProfile = config.GetString("General/active_profile");
-  LogToWix(fmt::format("activeProfile: {}", activeProfile));
+  LogToFile(fmt::format("activeProfile: {}", activeProfile));
 
   int index = m_cmbProfiles->FindString(activeProfile);
   if (wxNOT_FOUND == index) {
     wxLogError("active profile not found in available loaded profiles");
   } else {
     m_cmbProfiles->SetSelection(index);
+  }
+}
+
+void cPanel::OnTrackStart(wxCommandEvent &event) {
+  // Threads run in detached mode by default.
+  // It is okay to lose pointer.
+  m_parent->m_pTrackThread =
+      new TrackThread(this->m_parent, this->m_parent->GetHandle());
+
+  if (m_parent->m_pTrackThread->Run() != wxTHREAD_NO_ERROR) {
+    wxLogError("Can't create the thread!");
+    delete m_parent->m_pTrackThread;
+    m_parent->m_pTrackThread = NULL;
+  }
+
+  // after the call to wxThread::Run(), the m_pThread pointer is "unsafe":
+  // at any moment the thread may cease to exist (because it completes its
+  // work). To avoid dangling pointers OnThreadExit() will set m_pThread to NULL
+  // when the thread dies.
+}
+
+void cPanel::OnTrackStop(wxCommandEvent &event) {
+  // Threads run in detached mode by default.
+  // Right is responsible for setting m_pTrackThread to nullptr when it finishes
+  // and destroys itself.
+  if (m_parent->m_pTrackThread) {
+    TR_TrackStop();
+    //wxCriticalSectionLocker enter(m_parent->m_pThreadCS);
+    //delete m_parent->m_pTrackThread;
+    //m_parent->m_pTrackThread = nullptr;
+  } else {
+    LogToWix("Track thread not running!\n");
   }
 }
 
@@ -379,40 +417,44 @@ void cPanel::OnSaveSettings(wxCommandEvent &event) {
 //                      Display Settings Panel                      //
 //////////////////////////////////////////////////////////////////////
 
-cPanelConfiguration::cPanelConfiguration(wxPanel *panel) : wxPanel(panel) {
-  m_name = new wxTextCtrl(this, wxID_ANY, "Desktop", wxDefaultPosition,
-                          wxSize(150, 20), wxTE_LEFT, wxDefaultValidator, "");
+cPanelConfiguration::cPanelConfiguration(wxPanel *panel)
+    : wxPanel(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+              wxSIMPLE_BORDER | wxTAB_TRAVERSAL) {
+  m_name = new wxTextCtrl(this, wxID_ANY, "Lorem Ipsum", wxDefaultPosition,
+                          wxSize(200, 20), wxTE_LEFT, wxDefaultValidator, "");
   m_profileID =
       new wxTextCtrl(this, wxID_ANY, "2201576", wxDefaultPosition,
-                     wxDefaultSize, wxTE_LEFT, wxDefaultValidator, "");
+                     wxSize(60, 20), wxTE_LEFT, wxDefaultValidator, "");
   m_useDefaultPadding =
       new wxCheckBox(this, wxID_ANY, "Use Default Padding", wxDefaultPosition,
                      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
 
   m_tlcMappingData = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition,
-                                            wxSize(300, 400), wxDV_HORIZ_RULES,
+                                            wxSize(500, 200), wxDV_HORIZ_RULES,
                                             wxDefaultValidator);
 
   m_tlcMappingData->AppendTextColumn("Display #");
-  m_tlcMappingData->AppendTextColumn("Parameters");
-  m_tlcMappingData->AppendTextColumn("Values", wxDATAVIEW_CELL_EDITABLE);
+  m_tlcMappingData->AppendTextColumn("Type");
+  m_tlcMappingData->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE);
+  m_tlcMappingData->AppendTextColumn("Right", wxDATAVIEW_CELL_EDITABLE);
+  m_tlcMappingData->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE);
+  m_tlcMappingData->AppendTextColumn("Bottom", wxDATAVIEW_CELL_EDITABLE);
 
-  wxStaticText *txtProfileName =
-      new wxStaticText(this, wxID_ANY, "Profile Name:   ");
+  wxStaticText *txtPanelTitle =
+      new wxStaticText(this, wxID_ANY, "Active Profile");
+  wxStaticText *txtProfileName = new wxStaticText(this, wxID_ANY, "Name:   ");
   wxStaticText *txtProfileId =
       new wxStaticText(this, wxID_ANY, "TrackIR Profile ID:   ");
 
   wxBoxSizer *row1 = new wxBoxSizer(wxHORIZONTAL);
-  row1->Add(txtProfileName, 0, 0, 0);
-  row1->Add(m_name, 0, 0, 0);
-
-  wxBoxSizer *row2 = new wxBoxSizer(wxHORIZONTAL);
-  row2->Add(txtProfileId, 0, 0, 0);
-  row2->Add(m_profileID, 0, 0, 0);
+  row1->Add(txtProfileName, 0, wxALIGN_CENTER_VERTICAL, 0);
+  row1->Add(m_name, 0, wxALIGN_CENTER_VERTICAL, 0);
+  row1->Add(txtProfileId, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);
+  row1->Add(m_profileID, 0, wxALIGN_CENTER_VERTICAL, 0);
 
   wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
-  topSizer->Add(row1, 0, wxALL, 5);
-  topSizer->Add(row2, 0, wxALL, 5);
+  topSizer->Add(txtPanelTitle, 0, wxALL, 5);
+  topSizer->Add(row1, 0, wxALL | wxEXPAND, 5);
   topSizer->Add(m_useDefaultPadding, 0, wxALL, 5);
   topSizer->Add(m_tlcMappingData, 0, wxALL, 5);
 
@@ -432,25 +474,30 @@ void cPanelConfiguration::LoadDisplaySettings() {
 
   int displayNum = 0;
   for (auto &display : dpConfig.m_bounds) {
+    wxVector<wxVariant> rowBound;
+    rowBound.push_back(wxVariant(wxString::Format("%d", displayNum)));
+    rowBound.push_back(wxVariant("Bound"));
     for (int i = 0; i < 4; i++) {
-      wxVector<wxVariant> row;
-      row.push_back(wxVariant(wxString::Format("%d", displayNum)));
-      row.push_back(wxVariant(names.at(i)));
-      row.push_back(
+      rowBound.push_back(
           wxVariant(wxString::Format("%7.2f", display.rotationBounds[i])));
-      m_tlcMappingData->AppendItem(row);
+    }
 
-      // Optional Padding Values
+    m_tlcMappingData->AppendItem(rowBound);
+
+    wxVector<wxVariant> rowPadding;
+    rowPadding.push_back(wxVariant(wxString::Format("%d", displayNum)));
+    rowPadding.push_back(wxVariant("Padding"));
+    // Optional Padding Values
+    for (int i = 0; i < 4; i++) {
       if (!m_useDefaultPadding->IsChecked()) {
-        wxVector<wxVariant> row;
-        row.push_back(wxVariant(wxString::Format("%d", displayNum)));
-        row.push_back(wxVariant("pad" + names.at(i)));
-        row.push_back(
+        rowPadding.push_back(
             wxVariant(wxString::Format("%d", display.paddingBounds[i])));
-        row.push_back(wxVariant(wxString::Format("%s", "(default)")));
-        m_tlcMappingData->AppendItem(row);
+      } else {
+        rowPadding.push_back(wxVariant(wxString::Format("%s", "(default)")));
       }
     }
+    m_tlcMappingData->AppendItem(rowPadding);
+
     displayNum++;
   }
 }
@@ -458,16 +505,16 @@ void cPanelConfiguration::LoadDisplaySettings() {
 //                           TrackThread                            //
 //////////////////////////////////////////////////////////////////////
 
-TrackThread::TrackThread(cFrame *pHandler, HWND hWnd, CConfig config)
+TrackThread::TrackThread(cFrame *pHandler, HWND hWnd)
     : wxThread() {
   m_pHandler = pHandler;
   m_hWnd = hWnd;
-  m_Config = config;
 }
 
 TrackThread::~TrackThread() {
   // Will need to provide locks in the future with critical sections
   // https://docs.wxwidgets.org/3.0/classwx_thread.html
+  wxCriticalSectionLocker enter(m_pHandler->m_pThreadCS);
   m_pHandler->m_pTrackThread = NULL;
 }
 
@@ -478,15 +525,17 @@ void CloseApplication() {
 }
 
 wxThread::ExitCode TrackThread::Entry() {
+  CConfig config = GetGlobalConfigCopy();
   try {
-    TR_Initialize(m_hWnd, m_Config);
-    int result = TR_TrackStart(m_Config);
-    if (1 == result) {
-      CConfig *config = GetGlobalConfig();
-      if (config->GetBool("General/quit_on_loss_of_track_ir")) {
-        CloseApplication();
-      }
+    TR_Initialize(m_hWnd, config);
+
+    // This is the loop function
+    int result = TR_TrackStart(config);
+
+    if (1 == result && config.GetBool("General/quit_on_loss_of_track_ir")) {
+      CloseApplication();
     }
+
   } catch (const Exception &ex) {
     wxLogError("Exception happened when starting track thread:\n%s", ex.what());
     return NULL;

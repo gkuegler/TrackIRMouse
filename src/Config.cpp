@@ -129,23 +129,19 @@ void CConfig::LoadSettings() {
   //                  Finding NPTrackIR DLL Location                  //
   //////////////////////////////////////////////////////////////////////
 
-  if ("default" == m_sTrackIrDllLocation) {hello
+  if ("default" == m_sTrackIrDllLocation) {
     RegistryQuery path = GetStringFromRegistry(
         HKEY_CURRENT_USER,
         "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
 
     if (0 == path.result) {
       m_sTrackIrDllLocation = path.value;
-      LogToWix("Acquired DLL location from registry.\n");
+      LogToFile("Acquired DLL location from registry.");
     } else {
-      LogToWixError(fmt::format("Registry get key failed."));
-      LogToWixError(fmt::format("  result: {}", path.result));
-      LogToWixError(fmt::format("  result string: {}", path.resultString));
-      throw Exception("See error above.");
+      throw Exception(fmt::format("See error above.\n  result: {}"
+        "  result string: {}", path.result, path.resultString));
     }
   }
-
-  LogToWix(fmt::format("NPTrackIR DLL Location: {}", m_sTrackIrDllLocation));
 
   // Check if DLL folder path is post fixed with slashes
   if (m_sTrackIrDllLocation.back() != '\\') {
@@ -158,6 +154,8 @@ void CConfig::LoadSettings() {
 #else
   m_sTrackIrDllLocation.append("NPClient.dll");
 #endif
+
+  LogToFile(fmt::format("NPTrackIR DLL Location: {}", m_sTrackIrDllLocation));
 
   //////////////////////////////////////////////////////////////////////
   //                     Finding Default Padding                      //
@@ -189,12 +187,10 @@ void CConfig::LoadSettings() {
   //                       Find Display Mapping                       //
   //////////////////////////////////////////////////////////////////////
 
-  LogToWix(fmt::format("\n{:-^50}\n", "User Mapping Info"));
-
   LoadActiveProfile(m_activeProfileName);
 }
 
-
+// GUI component entry to load the active profile from toml object.
 void CConfig::LoadActiveProfile(std::string activeProfile) {
   CProfile configuration;
   // Find the profiles table that contains all mapping profiles.
@@ -273,18 +269,11 @@ void CConfig::LoadActiveProfile(std::string activeProfile) {
       if (paddingBottom == 5555) paddingBottom = m_defaultPaddingBottom;
 
       // Report padding values
-      LogToWix(fmt::format("Display {} Left:     {:>12} {}\n", i,
-                           m_defaultPaddingLeft,
-                           (paddingLeft == 5555) ? "(default)" : ""));
-      LogToWix(fmt::format("Display {} Right:    {:>12} {}\n", i,
-                           m_defaultPaddingRight,
-                           (paddingRight == 5555) ? "(default)" : ""));
-      LogToWix(fmt::format("Display {} Top:      {:>12} {}\n", i,
-                           m_defaultPaddingTop,
-                           (paddingTop == 5555) ? "(default)" : ""));
-      LogToWix(fmt::format("Display {} Bottom:   {:>12} {}\n", i,
-                           m_defaultPaddingBottom,
-                           (paddingBottom == 5555) ? "(default)" : ""));
+      LogToFile(fmt::format("Display {} Padding -> {:>5}{}, {:>5}{} ,{:>5}{}, {:>5}{}", i,
+                           m_defaultPaddingLeft, (paddingLeft == 5555) ? "(default)" : "",
+                           m_defaultPaddingRight, (paddingRight == 5555) ? "(default)" : "",
+                           m_defaultPaddingTop, (paddingTop == 5555) ? "(default)" : "",
+                           m_defaultPaddingBottom, (paddingBottom == 5555) ? "(default)" : ""));
 
       configuration.m_bounds.push_back(
           CBounds({rotLeft, rotRight, rotTop, rotBottom},
@@ -300,6 +289,7 @@ void CConfig::LoadActiveProfile(std::string activeProfile) {
     }
   }
 
+  // GUI components can set the active profile this way
   SetValue("General/active_profile", activeProfile);
   m_activeProfile = configuration;
 }
