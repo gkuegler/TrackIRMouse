@@ -323,20 +323,27 @@ void cPanel::LoadSettings() {
 }
 
 void cPanel::OnTrackStart(wxCommandEvent &event) {
+  if (m_parent->m_pTrackThread) {
+    LogToWixError("Please stop mouse before restarting.\n");
+    return;
+  }
+
   // Threads run in detached mode by default.
-  // It is okay to lose pointer.
   m_parent->m_pTrackThread =
       new TrackThread(this->m_parent, this->m_parent->GetHandle());
 
   if (m_parent->m_pTrackThread->Run() != wxTHREAD_NO_ERROR) {
-    wxLogError("Can't create the thread!");
+    wxLogError("Can't run the thread!");
     delete m_parent->m_pTrackThread;
-    m_parent->m_pTrackThread = NULL;
+    m_parent->m_pTrackThread = nullptr;
+    return;
   }
+
+  LogToWix("Started Mouse.\n")
 
   // after the call to wxThread::Run(), the m_pThread pointer is "unsafe":
   // at any moment the thread may cease to exist (because it completes its
-  // work). To avoid dangling pointers OnThreadExit() will set m_pThread to NULL
+  // work). To avoid dangling pointers ~MyThread() will set m_pThread to nullptr
   // when the thread dies.
 }
 
@@ -346,9 +353,10 @@ void cPanel::OnTrackStop(wxCommandEvent &event) {
   // and destroys itself.
   if (m_parent->m_pTrackThread) {
     TR_TrackStop();
-    //wxCriticalSectionLocker enter(m_parent->m_pThreadCS);
-    //delete m_parent->m_pTrackThread;
-    //m_parent->m_pTrackThread = nullptr;
+    LogToWix("Stopped mouse.")
+    // wxCriticalSectionLocker enter(m_parent->m_pThreadCS);
+    // delete m_parent->m_pTrackThread;
+    // m_parent->m_pTrackThread = nullptr;
   } else {
     LogToWix("Track thread not running!\n");
   }
@@ -505,8 +513,7 @@ void cPanelConfiguration::LoadDisplaySettings() {
 //                           TrackThread                            //
 //////////////////////////////////////////////////////////////////////
 
-TrackThread::TrackThread(cFrame *pHandler, HWND hWnd)
-    : wxThread() {
+TrackThread::TrackThread(cFrame *pHandler, HWND hWnd) : wxThread() {
   m_pHandler = pHandler;
   m_hWnd = hWnd;
 }

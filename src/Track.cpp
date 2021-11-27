@@ -169,7 +169,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
 
 int TR_TrackStart(CConfig config) {
   g_bGracefullyExit = false;
-  
+
 #ifndef TEST_NO_TRACK
   // Skipping this api call. I think this is for legacy games.
   // NP_StopCursor
@@ -190,7 +190,7 @@ int TR_TrackStart(CConfig config) {
   // used for testing, dropped frames rare and not real world relevant
   // int droppedFrames = 0;
 
-  while (true) {
+  while (!g_bGracefullyExit) {
     gdf = NP_GetData(pTIRData);
     if (NP_OK == gdf) {
       // unsigned short status = (*pTIRData).wNPStatus;
@@ -210,11 +210,6 @@ int TR_TrackStart(CConfig config) {
 
       if (WatchDog::g_bPauseTracking == false)
         MouseMove(config.m_monitorCount, yaw, pitch);
-
-      if (g_bGracefullyExit)
-      {
-        return 0;
-      }
 
       lastFrame = framesig;
     }
