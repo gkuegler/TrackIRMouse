@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+//#define _CRT_SECURE_NO_WARNINGS
 
 #include "GUI.h"
 
@@ -493,7 +493,7 @@ TrackThread::TrackThread(cFrame *pHandler, HWND hWnd, CConfig config) : wxThread
 TrackThread::~TrackThread()
 {
 // Will need to provide locks in the future with critical sections
-https: // docs.wxwidgets.org/3.0/classwx_thread.html
+// https://docs.wxwidgets.org/3.0/classwx_thread.html
     m_pHandler->m_pTrackThread = NULL;
 }
 

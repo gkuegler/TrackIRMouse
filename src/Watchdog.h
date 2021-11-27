@@ -7,7 +7,8 @@ namespace WatchDog
 {
 HANDLE StartWatchdog();
 DWORD WINAPI InstanceThread(LPVOID);
-int Serve(HANDLE);
+void Serve(HANDLE);
 void HandleMsg(const char *, char *, LPDWORD);
 } // namespace WatchDog
+
 #endif /* TRACKIRMOUSE_WATCHDOG_H */

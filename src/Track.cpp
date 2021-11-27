@@ -75,94 +75,85 @@ void TR_Initialize(HWND hWnd, CConfig config)
         g_hWatchdogThread = WatchDog::StartWatchdog();
 
         if (NULL == g_hWatchdogThread)
-        {
             LogToWix("Watchdog thread failed to initialize!");
-        }
     }
 
     LogToWix(fmt::format("\n{:-^50}\n", "TrackIR Init Status"));
 
     // Find and load TrackIR DLL
+#ifdef UNICODE
     TCHAR sDll[MAX_PATH];
-    std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> convert;
-    std::wstring wide_string = convert.from_bytes(config.m_sTrackIrDllLocation);
-    wcscpy_s(sDll, MAX_PATH, wide_string.c_str());
+
+    int resultConvert = MultiByteToWideChar(
+        CP_UTF8,
+        //MB_ERR_INVALID_CHARS, // I feel like this should be the smart choice, but this is an error.
+        MB_COMPOSITE,
+        config.m_sTrackIrDllLocation.c_str(),
+        MAX_PATH,
+        sDll,
+        MAX_PATH
+    );
+
+    if (0 == resultConvert)
+        throw Exception(fmt::format("failed to convert track dll location to wchart* with error code: {}", GetLastError()));
+
+#else
+    TCHAR sDLL = config.m_sTrackIrDllLocation.c_str()
+
+#endif
 
     // Load trackir dll and resolve function addresses
-    NPRESULT rslt = NP_OK;
-    rslt = NPClient_Init(sDll);
+    NPRESULT rsltInit = NPClient_Init(sDll);
 
-    if (NP_OK == rslt)
-    {
+    if (NP_OK == rsltInit)
         LogToWix("NP Initialization:          Success\n");
-    }
-    else if (NP_ERR_DLL_NOT_FOUND == rslt)
-    {
-        LogToWixError(fmt::format("\nFAILED TO LOAD TRACKIR DLL: {}\n\n", rslt));
-        throw Exception("Failed to load track IR DLL.");
-    }
-    else
-    {
-        LogToWixError(fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rslt));
-        throw Exception("Failed to initialize track IR.");
-    }
 
-    // NP needs a window handle to send data frames to
+    else if (NP_ERR_DLL_NOT_FOUND == rsltInit)
+        throw Exception(fmt::format("\nFAILED TO LOAD TRACKIR DLL : {}\n\n", rsltInit));
+
+    else
+        throw Exception(fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rsltInit));
+
+    // NP software needs a window handle to know when it should
+    // stop sending data frames if window is closed.
     HWND hConsole = hWnd;
 
-    // In the program early after the DLL is loaded for testing
-    // so that this program doesn't boot control
-    // from my local copy.
+    // So that this program doesn't boot control of NP software
+    // from my local MouseTrackIR instance.
 #ifndef TEST_NO_TRACK
     // NP_RegisterWindowHandle
-    rslt = NP_OK;
-    rslt = NP_RegisterWindowHandle(hConsole);
+    NPRESULT rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
 
     // 7 is a magic number I found through experimentation.
     // It means another program has its window handle registered
     // already.
-    if (rslt == 7)
+    if (rsltRegWinHandle == 7)
     {
         NP_UnregisterWindowHandle();
         LogToWixError(fmt::format("\nBOOTING CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!\n\n"));
         Sleep(2);
-        rslt = NP_RegisterWindowHandle(hConsole);
+        rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
     }
 
-    if (NP_OK == rslt)
-    {
+    if (NP_OK == rsltRegWinHandle)
         LogToWix("Register Window Handle:      Success\n");
-    }
     else
-    {
-        LogToWixError(fmt::format("Register Window Handle: Failed {:>3}\n", rslt));
-        throw Exception("");
-    }
+        throw Exception(fmt::format("Register Window Handle: Failed {:>3}\n", rsltRegWinHandle));
 
     // I'm skipping query the software version, I don't think its necessary
 
     // Request roll, pitch. See NPClient.h
-    rslt = NP_RequestData(NPPitch | NPYaw);
-    if (NP_OK == rslt)
-    {
+    NPRESULT rsltReqData = NP_RequestData(NPPitch | NPYaw);
+    if (NP_OK == rsltReqData)
         LogToWix("Request Data:         Success\n");
-    }
     else
-    {
-        LogToWixError(fmt::format("Request Data:        Failed: {:>3}\n", rslt));
-        throw Exception("");
-    }
+        throw Exception(fmt::format("Request Data:        Failed: {:>3}\n", rsltReqData));
 
-    rslt = NP_RegisterProgramProfileID(config.m_activeProfile.m_profile_ID);
-    if (NP_OK == rslt)
-    {
+    rsltReqData = NP_RegisterProgramProfileID(config.m_activeProfile.m_profile_ID);
+    if (NP_OK == rsltReqData)
         LogToWix("Register Profile ID:         Success\n");
-    }
     else
-    {
-        LogToWixError(fmt::format("Register Profile ID:       Failed: {:>3}\n", rslt));
-        throw Exception("");
-    }
+        throw Exception(fmt::format("Register Profile ID:       Failed: {:>3}\n", rsltReqData));
 
 #endif
     return;
@@ -176,13 +167,9 @@ int TR_TrackStart(CConfig config)
 
     NPRESULT rslt = NP_StartDataTransmission();
     if (NP_OK == rslt)
-    {
         LogToWix("Start Data Transmission:			Success\n");
-    }
     else
-    {
         LogToWixError(fmt::format("Start Data Transmission:     Failed: {:>3}\n", rslt));
-    }
 
 #endif
 
@@ -199,7 +186,7 @@ int TR_TrackStart(CConfig config)
         gdf = NP_GetData(pTIRData);
         if (NP_OK == gdf)
         {
-            unsigned short status = (*pTIRData).wNPStatus;
+            //unsigned short status = (*pTIRData).wNPStatus;
             unsigned short framesig = (*pTIRData).wPFrameSignature;
             // TODO: apply negative sign on startup to avoid extra operation here
             // yaw and pitch come reversed for some reason from trackIR
@@ -216,9 +203,7 @@ int TR_TrackStart(CConfig config)
             }
 
             if (g_bPauseTracking == false)
-            {
                 MouseMove(config.m_monitorCount, yaw, pitch);
-            }
 
             lastFrame = framesig;
         }

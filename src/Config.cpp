@@ -90,7 +90,7 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey, const c
 
     // Registry key may or may not be stored with a null terminator
     // add one just in case
-    char *szPath = static_cast<char *>(calloc(1, sizeOfBuffer + 1));
+    char *szPath = static_cast<char*>(calloc(1, sizeOfBuffer + 1));
 
     if (NULL == szPath)
     {
@@ -106,7 +106,14 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey, const c
                                           &sizeOfBuffer   // [in, out, optional] LPDWORD pcbData
     );
 
-    return RegistryQuery{0, "", std::string(szPath)};
+    if (ERROR_SUCCESS == statusOpen)
+    {
+        return RegistryQuery{ 0, "", std::string(szPath) };
+    }
+    else
+    {
+        return RegistryQuery{ statusGetValue, "Could not get registry key.", "" };
+    }
 }
 
 void CConfig::ParseFile(const std::string fileName)
@@ -126,10 +133,10 @@ void CConfig::LoadSettings()
     //                   Validate In General Settings                   //
     //////////////////////////////////////////////////////////////////////
 
-    // Values Stored in TOML File
-    bool usrTrackOnStart = toml::find<bool>(vGeneralSettings, "track_on_start");
-    bool usrQuitOnLossOfTrackIr = toml::find<bool>(vGeneralSettings, "quit_on_loss_of_track_ir");
-    bool bWatchdog = toml::find<bool>(vGeneralSettings, "watchdog_enabled");
+    // Verify values exist and parse to correct type
+    toml::find<bool>(vGeneralSettings, "track_on_start");
+    toml::find<bool>(vGeneralSettings, "quit_on_loss_of_track_ir");
+    toml::find<bool>(vGeneralSettings, "watchdog_enabled");
 
     std::string activeDisplayProfile = toml::find<std::string>(vGeneralSettings, "active_profile");
 
@@ -279,46 +286,20 @@ void CConfig::LoadActiveDisplay(std::string activeProfile)
             int paddingTop = toml::find_or<int>(display, "paddingTop", 5555);
             int paddingBottom = toml::find_or<int>(display, "paddingBottom", 5555);
 
-            if (paddingLeft != 5555)
-            {
-                LogToWix(fmt::format("Display {} Left:     {:>12}\n", i, paddingLeft));
-                paddingLeft = paddingLeft;
-            }
-            else
-            {
-                LogToWix(fmt::format("Display {} Left:     {:>12} (Default)\n", i, m_defaultPaddingLeft));
+            if (paddingLeft == 5555)
                 paddingLeft = m_defaultPaddingLeft;
-            }
-            if (paddingRight != 5555)
-            {
-                LogToWix(fmt::format("Display {} Right:    {:>12}\n", i, paddingRight));
-                paddingRight = paddingRight;
-            }
-            else
-            {
-                LogToWix(fmt::format("Display {} Right:    {:>12} (Default)\n", i, m_defaultPaddingRight));
+            if (paddingRight == 5555)
                 paddingRight = m_defaultPaddingRight;
-            }
-            if (paddingTop != 5555)
-            {
-                LogToWix(fmt::format("Display {} Top:      {:>12}\n", i, paddingTop));
-                paddingTop = paddingTop;
-            }
-            else
-            {
-                LogToWix(fmt::format("Display {} Top:      {:>12} (Default)\n", i, m_defaultPaddingTop));
+            if (paddingTop == 5555)
                 paddingTop = m_defaultPaddingTop;
-            }
-            if (paddingBottom != 5555)
-            {
-                LogToWix(fmt::format("Display {} Bottom:   {:>12}\n", i, paddingBottom));
-                paddingBottom = paddingBottom;
-            }
-            else
-            {
-                LogToWix(fmt::format("Display {} Bottom:   {:>12} (Default)\n", i, m_defaultPaddingBottom));
+            if (paddingBottom == 5555)
                 paddingBottom = m_defaultPaddingBottom;
-            }
+
+            // Report padding values
+            LogToWix(fmt::format("Display {} Left:     {:>12} {}\n", i, m_defaultPaddingLeft, (paddingLeft==5555) ? "(default)" : ""));
+            LogToWix(fmt::format("Display {} Right:    {:>12} {}\n", i, m_defaultPaddingRight, (paddingRight==5555) ? "(default)" : ""));
+            LogToWix(fmt::format("Display {} Top:      {:>12} {}\n", i, m_defaultPaddingTop, (paddingTop==5555) ? "(default)" : ""));
+            LogToWix(fmt::format("Display {} Bottom:   {:>12} {}\n", i, m_defaultPaddingBottom, (paddingBottom==5555) ? "(default)" : ""));
 
             configuration.m_bounds.push_back(CBounds({rotLeft, rotRight, rotTop, rotBottom},
                                                      {paddingLeft, paddingRight, paddingTop, paddingBottom}));
@@ -491,7 +472,6 @@ void CConfig::RemoveProfile(std::string profileName)
     // returns a vector
     auto &vProfilesVector = toml::find(m_vData, "Profiles").as_array();
 
-    int index = 0;
     for (std::size_t i = 0; i < vProfilesVector.size(); i++)
     {
         try
@@ -520,7 +500,6 @@ std::vector<std::string> CConfig::GetProfileNames()
     const auto vProfilesVector = toml::find(m_vData, "Profiles").as_array();
     std::vector<std::string> profileNames;
 
-    int index = 0;
     for (auto &profile : vProfilesVector)
     {
         try

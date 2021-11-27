@@ -11,13 +11,6 @@
 #include "Log.h"
 
 #include <windows.h>
-// TODO: 2021-10-23: Delete all unnecessary include statements
-//#include <stdio.h>
-//#include <tchar.h>
-//#include <strsafe.h>
-//#include <aclapi.h>
-
-//#include <iostream>
 
 #define BUFSIZE 512
 
@@ -55,9 +48,15 @@ HANDLE StartWatchdog()
     // it's completed initialization
     if (hEvent)
     {
-        BOOL result = WaitForSingleObject(hEvent,
+        DWORD result = WaitForSingleObject(hEvent,
                                           3000 // timeout in milliseconds
         );
+
+        if (WAIT_FAILED == result)
+            LogToWix(fmt::format("{} Function failed with error code: {}", "WaitForSingleObject", GetLastError()));
+
+        if (WAIT_TIMEOUT == result)
+            LogToWix(fmt::format("{} Timed out on watchdog thread. Objects state is non signaled.", "WaitForSingleObject"));
     }
 
     return hThread;
@@ -70,12 +69,8 @@ DWORD WINAPI InstanceThread(LPVOID param)
     HANDLE *phEvent = reinterpret_cast<HANDLE *>(param);
 
     HANDLE hPipe = INVALID_HANDLE_VALUE;
-    HANDLE hHeap = GetProcessHeap();
 
     LPCSTR lpszPipename = "\\\\.\\pipe\\watchdog";
-    DWORD dwServeRslt = -1;
-    int lala = 0;
-    BOOL result = 0;
 
     // The main loop creates an instance of the named pipe and
     // then waits for a client to connect to it. When the client
@@ -83,18 +78,9 @@ DWORD WINAPI InstanceThread(LPVOID param)
     // with that client, and this loop is free to wait for the
     // next client connect request. It is an infinite loop.
 
-    // Security descriptor needs to go on the Heap
-    // PSECURITY_DESCRIPTOR pSD = (PSECURITY_DESCRIPTOR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY,
-    // SECURITY_DESCRIPTOR_MIN_LENGTH);
+    // May throw std::bad_alloc
     std::unique_ptr<SECURITY_DESCRIPTOR> pSD(new SECURITY_DESCRIPTOR);
     SECURITY_ATTRIBUTES sa;
-    HKEY hkSub = NULL;
-
-    if (NULL == pSD)
-    {
-        LogToWix(fmt::format("Heap allocation for security descriptor failed. GLE=%u\n", GetLastError()));
-        return 1;
-    }
 
     // The InitializeSecurityDescriptor function initializes a security descriptor to have no system
     // access control list(SACL), no discretionary access control list(DACL), no owner, no primary group,
@@ -102,14 +88,12 @@ DWORD WINAPI InstanceThread(LPVOID param)
     if (NULL == InitializeSecurityDescriptor(pSD.get(), SECURITY_DESCRIPTOR_REVISION))
     {
         LogToWix(fmt::format("InitializeSecurityDescriptor Error. GLE=%u\n", GetLastError()));
-        // HeapFree(hHeap, 0, pSD);
-        return 1;
+        return -1;
     }
 
-    // Add the Access Control List (ACL) to the security descriptor.
-
-// Allow all unrestricted access to the pipe
-#pragma warning(disable : 6248)
+    // Add the Access Control List (ACL) to the security descriptor
+    // TODO: make this more robust, maybe limit to just the user process?
+#pragma warning(disable : 6248) // Allow all unrestricted access to the pipe
     if (!SetSecurityDescriptorDacl(
             pSD.get(),
             TRUE,       // bDaclPresent flag
@@ -145,14 +129,18 @@ DWORD WINAPI InstanceThread(LPVOID param)
         return -1;
     }
 
-    result = SetEvent(*phEvent);
-    lala = Serve(hPipe);
+    if (SetEvent(*phEvent) != 0)
+    {
+        LogToWix(fmt::format("Could not set Watchdog Event with error code: {}", GetLastError()));
+    }
 
-    // HeapFree(hHeap, 0, pSD);
+    // Serve errors handled in implementation
+    Serve(hPipe);
+
     return 0;
 }
 
-int Serve(HANDLE hPipe)
+void Serve(HANDLE hPipe)
 {
     // This is a lot of Windows boilerplate code
     HANDLE hHeap = GetProcessHeap();
@@ -172,7 +160,7 @@ int Serve(HANDLE hPipe)
         LogToWix("   Serve exitting.\n");
         if (pchReply != NULL)
             HeapFree(hHeap, 0, pchReply);
-        return (DWORD)-1;
+        return;
     }
 
     if (pchReply == NULL)
@@ -182,7 +170,7 @@ int Serve(HANDLE hPipe)
         LogToWix("   Serve exitting.\n");
         if (pchRequest != NULL)
             HeapFree(hHeap, 0, pchRequest);
-        return (DWORD)-1;
+        return;
     }
 
     while (1)
@@ -225,15 +213,11 @@ int Serve(HANDLE hPipe)
             // Process the incoming message.
             HandleMsg(pchRequest, pchReply, &cbReplyBytes);
 
-            //_tcscpy_s(pchReply, BUFSIZE, TEXT("ACK"));
-            // cbReplyBytes = BUFSIZE * sizeof(char);
             Sleep(100);
 
             // Write the reply to the pipe.
-
             bSuccess = WriteFile(hPipe,    // handle to pipe
                                  pchReply, // buffer to write from
-                                 // pchRequest,
                                  cbReplyBytes, // number of bytes to write
                                  &cbWritten,   // number of bytes written
                                  NULL          // not overlapped I/O
@@ -267,7 +251,7 @@ int Serve(HANDLE hPipe)
     HeapFree(hHeap, 0, pchReply);
 
     LogToWix("InstanceThread exiting.\n");
-    return (DWORD)1;
+    return;
 }
 
 VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
@@ -281,7 +265,8 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
     if (strcmp(pchRequest, "KILL") == 0)
     {
         rslt = strcpy_s(pchReply, BUFSIZE, "KL");
-        int retval = system("taskkill /T /IM TrackIR5.exe");
+        if (system("taskkill /T /IM TrackIR5.exe") == -1)
+            LogToWix("Failed to kill TrackIR5 program with error code");
     }
     else if (strcmp(pchRequest, "HEARTBEAT") == 0)
     {
