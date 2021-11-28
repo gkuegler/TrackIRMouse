@@ -50,8 +50,15 @@ class cPanelConfiguration : public wxPanel {
   void OnUseDefaultPadding(wxCommandEvent &event);
   void OnTlcMappingData(wxCommandEvent &event);
 
-  // wxDECLARE_EVENT_TABLE();
+  wxDECLARE_EVENT_TABLE();
 };
+// clang-format off
+wxBEGIN_EVENT_TABLE(cPanelConfiguration, wxPanel)
+    EVT_TEXT_ENTER(myID_PROFILE_NAME, cPanelConfiguration::OnName)
+    EVT_TEXT_ENTER(myID_PROFILE_ID, cPanelConfiguration::OnProfileID)
+    EVT_CHECKBOX(myID_USE_DEFAULT_PADDING, cPanelConfiguration::OnUseDefaultPadding)
+wxEND_EVENT_TABLE()
+// clang-format on
 
 //////////////////////////////////////////////////////////////////////
 //                Text Control Status Output Window                 //

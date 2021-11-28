@@ -75,6 +75,7 @@ bool CGUIApp::OnInit() {
 
   try {
     config->LoadSettings();
+    //dummy line of code for breakpoint
   }
   // type_error inherits from toml::exception
   catch (const toml::type_error &ex) {
@@ -98,7 +99,7 @@ bool CGUIApp::OnInit() {
   m_frame->Show();
 
   // Start the track IR thread if enabled
-  if (config->GetBool("General/watchdog_enabled")) {
+  if (config->data.watchdogEnabled) {
     wxCommandEvent event = {};
     m_frame->m_panel->OnTrackStart(event);
   }
@@ -306,12 +307,11 @@ cPanel::cPanel(cFrame *frame) : wxPanel(frame) {
 void cPanel::LoadSettings() {
   CConfig config = GetGlobalConfigCopy();
 
-  m_cbxTrackOnStart->SetValue(config.GetBool("General/track_on_start"));
-  m_cbxEnableWatchdog->SetValue(config.GetBool("General/watchdog_enabled"));
-  m_cbxQuitOnLossOfTrackIR->SetValue(
-      config.GetBool("General/quit_on_loss_of_track_ir"));
+  m_cbxTrackOnStart->SetValue(config.data.trackOnStart);
+  m_cbxEnableWatchdog->SetValue(config.data.watchdogEnabled);
+  m_cbxQuitOnLossOfTrackIR->SetValue(config.data.quitOnLossOfTrackIr);
 
-  wxString activeProfile = config.GetString("General/active_profile");
+  wxString activeProfile = config.data.activeProfileName;
   LogToFile(fmt::format("activeProfile: {}", activeProfile));
 
   int index = m_cmbProfiles->FindString(activeProfile);
@@ -339,7 +339,7 @@ void cPanel::OnTrackStart(wxCommandEvent &event) {
     return;
   }
 
-  LogToWix("Started Mouse.\n")
+  LogToWix("Started Mouse.\n");
 
   // after the call to wxThread::Run(), the m_pThread pointer is "unsafe":
   // at any moment the thread may cease to exist (because it completes its
@@ -353,7 +353,7 @@ void cPanel::OnTrackStop(wxCommandEvent &event) {
   // and destroys itself.
   if (m_parent->m_pTrackThread) {
     TR_TrackStop();
-    LogToWix("Stopped mouse.")
+    LogToWix("Stopped mouse.");
     // wxCriticalSectionLocker enter(m_parent->m_pThreadCS);
     // delete m_parent->m_pTrackThread;
     // m_parent->m_pTrackThread = nullptr;
@@ -364,33 +364,35 @@ void cPanel::OnTrackStop(wxCommandEvent &event) {
 
 void cPanel::OnEnabledWatchdog(wxCommandEvent &event) {
   CConfig *config = GetGlobalConfig();
-  config->SetValue("General/watchdog_enabled",
-                   m_cbxEnableWatchdog->IsChecked());
+  config->data.watchdogEnabled = 
+                   m_cbxEnableWatchdog->IsChecked();
 }
 
 void cPanel::OnTrackOnStart(wxCommandEvent &event) {
   CConfig *config = GetGlobalConfig();
-  config->SetValue("General/track_on_start", m_cbxTrackOnStart->IsChecked());
+  config->data.trackOnStart = m_cbxTrackOnStart->IsChecked();
 }
 
 void cPanel::OnQuitOnLossOfTrackIr(wxCommandEvent &event) {
   CConfig *config = GetGlobalConfig();
-  config->SetValue("General/quit_on_loss_of_track_ir",
-                   m_cbxQuitOnLossOfTrackIR->IsChecked());
+  config->data.quitOnLossOfTrackIr = 
+                   m_cbxQuitOnLossOfTrackIR->IsChecked();
 }
 
 void cPanel::OnTrackIrDllPath(wxCommandEvent &event) {
-  CConfig *config = GetGlobalConfig();
   wxString wxsPath = m_txtTrackIrDllPath->GetLineText(0);
   std::string path(wxsPath.mb_str());
-  config->SetValue("General/trackir_dll_dIirectory", path);
+  CConfig *config = GetGlobalConfig();
+  config->data.trackIrDllFolder = path;
 }
 
 void cPanel::OnActiveProfile(wxCommandEvent &event) {
   int index = m_cmbProfiles->GetSelection();
-  CConfig *config = GetGlobalConfig();
   std::string activeProfile((m_cmbProfiles->GetString(index)).mb_str());
-  config->LoadActiveProfile(activeProfile);
+
+  CConfig *config = GetGlobalConfig();
+  config->data.activeProfileName = activeProfile;
+
   m_pnlDisplayConfig->LoadDisplaySettings();
 }
 
@@ -403,17 +405,18 @@ void cPanel::OnAddProfile(wxCommandEvent &event) {
     // We can be certain that this string contains letters only.
     wxString value = dlg.GetValue();
     config->AddProfile(std::string(value.mb_str()));
-    PopulateComboBoxWithProfiles(*config);
+    PopulateComboBoxWithProfiles(GetGlobalConfigCopy());
     unsigned int count = m_cmbProfiles->GetCount();
     m_cmbProfiles->SetSelection(count - 1, count - 1);
   }
 }
 
 void cPanel::OnRemoveProfile(wxCommandEvent &event) {
+int index = m_cmbProfiles->GetSelection();
+  std::string activeProfile((m_cmbProfiles->GetString(index)).mb_str());
   CConfig *config = GetGlobalConfig();
-  CProfile profile = GetGlobalConfig()->GetActiveProfile();
-  config->RemoveProfile(profile.m_name);
-  LogToWix(fmt::format("Profile Removed: {}", profile.m_name));
+  config->RemoveProfile(activeProfile);
+  LogToWix(fmt::format("Profile Removed: {}", activeProfile));
 }
 
 void cPanel::OnSaveSettings(wxCommandEvent &event) {
@@ -428,16 +431,16 @@ void cPanel::OnSaveSettings(wxCommandEvent &event) {
 cPanelConfiguration::cPanelConfiguration(wxPanel *panel)
     : wxPanel(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize,
               wxSIMPLE_BORDER | wxTAB_TRAVERSAL) {
-  m_name = new wxTextCtrl(this, wxID_ANY, "Lorem Ipsum", wxDefaultPosition,
+  m_name = new wxTextCtrl(this, myID_PROFILE_NAME, "Lorem Ipsum", wxDefaultPosition,
                           wxSize(200, 20), wxTE_LEFT, wxDefaultValidator, "");
   m_profileID =
-      new wxTextCtrl(this, wxID_ANY, "2201576", wxDefaultPosition,
+      new wxTextCtrl(this, myID_PROFILE_ID, "2201576", wxDefaultPosition,
                      wxSize(60, 20), wxTE_LEFT, wxDefaultValidator, "");
   m_useDefaultPadding =
-      new wxCheckBox(this, wxID_ANY, "Use Default Padding", wxDefaultPosition,
+      new wxCheckBox(this, myID_USE_DEFAULT_PADDING, "Use Default Padding", wxDefaultPosition,
                      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
 
-  m_tlcMappingData = new wxDataViewListCtrl(this, wxID_ANY, wxDefaultPosition,
+  m_tlcMappingData = new wxDataViewListCtrl(this, myID_MAPPING_DATA, wxDefaultPosition,
                                             wxSize(500, 200), wxDV_HORIZ_RULES,
                                             wxDefaultValidator);
 
@@ -471,17 +474,17 @@ cPanelConfiguration::cPanelConfiguration(wxPanel *panel)
 
 void cPanelConfiguration::LoadDisplaySettings() {
   CConfig config = GetGlobalConfigCopy();
-  auto &dpConfig = config.m_activeProfile;
+  auto& profile = config.GetActiveProfile();
 
-  m_name->SetValue(dpConfig.m_name);
-  m_profileID->SetValue(wxString::Format("%d", dpConfig.m_profile_ID));
-  m_useDefaultPadding->SetValue(dpConfig.m_useDefaultPadding);
+  m_name->SetValue(profile.name);
+  m_profileID->SetValue(wxString::Format("%d", profile.profile_ID));
+  m_useDefaultPadding->SetValue(profile.useDefaultPadding);
 
   std::vector<std::string> names = {"left", "right", "top", "bottom"};
   m_tlcMappingData->DeleteAllItems();
 
   int displayNum = 0;
-  for (auto &display : dpConfig.m_bounds) {
+  for (auto &display : profile.bounds) {
     wxVector<wxVariant> rowBound;
     rowBound.push_back(wxVariant(wxString::Format("%d", displayNum)));
     rowBound.push_back(wxVariant("Bound"));
@@ -509,6 +512,28 @@ void cPanelConfiguration::LoadDisplaySettings() {
     displayNum++;
   }
 }
+
+void cPanelConfiguration::OnName(wxCommandEvent &event){
+  CConfig* config = GetGlobalConfig();
+  wxString wxsPath = m_name->GetLineText(0);
+  std::string name(wxsPath.mb_str());
+  // config->SetProfileName(name);
+  // Reload the combo box
+  
+}
+void cPanelConfiguration::OnProfileID(wxCommandEvent &event){
+  CConfig* config = GetGlobalConfig();
+  // config->
+}
+void cPanelConfiguration::OnUseDefaultPadding(wxCommandEvent &event){
+  CConfig* config = GetGlobalConfig();
+  // config->
+}
+void cPanelConfiguration::OnTlcMappingData(wxCommandEvent &event){
+  CConfig* config = GetGlobalConfig();
+  // config->
+}
+
 //////////////////////////////////////////////////////////////////////
 //                           TrackThread                            //
 //////////////////////////////////////////////////////////////////////
@@ -539,7 +564,7 @@ wxThread::ExitCode TrackThread::Entry() {
     // This is the loop function
     int result = TR_TrackStart(config);
 
-    if (1 == result && config.GetBool("General/quit_on_loss_of_track_ir")) {
+    if (1 == result && config.data.quitOnLossOfTrackIr) {
       CloseApplication();
     }
 

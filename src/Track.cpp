@@ -62,6 +62,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
   //  - any NP dll function call failure
 
   // LogToWix(fmt::format("\nStarting Initialization Of TrackIR\n"));
+    SProfile activeProfile = config.GetActiveProfile();
 
   WinSetup(config);
 
@@ -71,7 +72,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
   // on a named pipe to externally controll the track IR process
   // Start the watchdog thread
   // if (config.m_bWatchdog)
-  if (config.GetBool("General/watchdog_enabled")) {
+  if (config.data.watchdogEnabled) {
     // Watchdog thread may return NULL
     g_hWatchdogThread = WatchDog::StartWatchdog();
 
@@ -89,7 +90,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
       MultiByteToWideChar(CP_UTF8,
                           // MB_ERR_INVALID_CHARS, // I feel like this should be
                           // the smart choice, but this is an error.
-                          MB_COMPOSITE, config.m_sTrackIrDllLocation.c_str(),
+                          MB_COMPOSITE, config.data.trackIrDllFolder.c_str(),
                           MAX_PATH, sDll, MAX_PATH);
 
   if (0 == resultConvert)
@@ -98,7 +99,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
         GetLastError()));
 
 #else
-  TCHAR sDLL = config.m_sTrackIrDllLocation.c_str()
+  TCHAR sDLL = config.data.trackIrDllFolder.c_str()
 
 #endif
 
@@ -156,7 +157,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
     throw Exception(fmt::format("Request Data: Failed: {}", rsltReqData));
 
   rsltReqData =
-      NP_RegisterProgramProfileID(config.m_activeProfile.m_profile_ID);
+      NP_RegisterProgramProfileID(activeProfile.profile_ID);
   if (NP_OK == rsltReqData)
     LogToFile("Register Profile ID: Success");
   else
@@ -317,25 +318,27 @@ void WinSetup(CConfig config) {
   return;
 }
 
-void DisplaySetup(const CConfig config) {
-  for (int i = 0; i < config.m_activeProfile.m_bounds.size(); i++) {
+void DisplaySetup(CConfig config) {
+    SProfile activeProfile = config.GetActiveProfile();
+
+  for (int i = 0; i < activeProfile.bounds.size(); i++) {
     g_displays[i].rotationBoundLeft =
-        config.m_activeProfile.m_bounds[i].rotationBounds[0];
+        activeProfile.bounds[i].rotationBounds[0];
     g_displays[i].rotationBoundRight =
-        config.m_activeProfile.m_bounds[i].rotationBounds[1];
+        activeProfile.bounds[i].rotationBounds[1];
     g_displays[i].rotationBoundTop =
-        config.m_activeProfile.m_bounds[i].rotationBounds[2];
+        activeProfile.bounds[i].rotationBounds[2];
     g_displays[i].rotationBoundBottom =
-        config.m_activeProfile.m_bounds[i].rotationBounds[3];
+        activeProfile.bounds[i].rotationBounds[3];
 
     g_displays[i].paddingLeft =
-        config.m_activeProfile.m_bounds[i].paddingBounds[0];
+        activeProfile.bounds[i].paddingBounds[0];
     g_displays[i].paddingRight =
-        config.m_activeProfile.m_bounds[i].paddingBounds[1];
+        activeProfile.bounds[i].paddingBounds[1];
     g_displays[i].paddingTop =
-        config.m_activeProfile.m_bounds[i].paddingBounds[2];
+        activeProfile.bounds[i].paddingBounds[2];
     g_displays[i].paddingBottom =
-        config.m_activeProfile.m_bounds[i].paddingBounds[3];
+        activeProfile.bounds[i].paddingBounds[3];
 
     g_displays[i].setAbsBounds(g_virtualOriginX, g_virtualOriginY,
                                g_xPixelAbsoluteSlope, g_yPixelAbsoluteSlope);

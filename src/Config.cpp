@@ -114,48 +114,56 @@ void CConfig::LoadSettings() {
   auto &vGeneralSettings = toml::find(m_vData, "General");
 
   // Verify values exist and parse to correct type
-  toml::find<bool>(vGeneralSettings, "track_on_start");
-  toml::find<bool>(vGeneralSettings, "quit_on_loss_of_track_ir");
-  toml::find<bool>(vGeneralSettings, "watchdog_enabled");
+  data.trackOnStart = toml::find<bool>(vGeneralSettings, "track_on_start");
+  data.quitOnLossOfTrackIr =
+      toml::find<bool>(vGeneralSettings, "quit_on_loss_of_track_ir");
+  data.watchdogEnabled = toml::find<bool>(vGeneralSettings, "watchdog_enabled");
 
   // Optionally the user can specify the location to the trackIR dll
-  m_sTrackIrDllLocation =
+  data.trackIrDllFolder =
       toml::find<std::string>(vGeneralSettings, "trackir_dll_directory");
 
-  std::string m_activeProfileName =
+  data.activeProfileName =
       toml::find<std::string>(vGeneralSettings, "active_profile");
 
   //////////////////////////////////////////////////////////////////////
   //                  Finding NPTrackIR DLL Location                  //
   //////////////////////////////////////////////////////////////////////
 
-  if ("default" == m_sTrackIrDllLocation) {
+  std::string trackIrDllFolder;
+  if ("default" == data.trackIrDllFolder) {
     RegistryQuery path = GetStringFromRegistry(
         HKEY_CURRENT_USER,
         "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
 
     if (0 == path.result) {
-      m_sTrackIrDllLocation = path.value;
+        trackIrDllFolder = path.value;
       LogToFile("Acquired DLL location from registry.");
     } else {
-      throw Exception(fmt::format("See error above.\n  result: {}"
-        "  result string: {}", path.result, path.resultString));
+      throw Exception(
+          fmt::format("See error above.\n  result: {}"
+                      "  result string: {}",
+                      path.result, path.resultString));
     }
+  }
+  else
+  {
+      trackIrDllFolder = data.trackIrDllFolder;
   }
 
   // Check if DLL folder path is post fixed with slashes
-  if (m_sTrackIrDllLocation.back() != '\\') {
-    m_sTrackIrDllLocation.push_back('\\');
+  if (trackIrDllFolder.back() != '\\') {
+      trackIrDllFolder.push_back('\\');
   }
 
 // Match to the correct bitness of this application
 #if defined(_WIN64) || defined(__amd64__)
-  m_sTrackIrDllLocation.append("NPClient64.dll");
+  trackIrDllFolder.append("NPClient64.dll");
 #else
   m_sTrackIrDllLocation.append("NPClient.dll");
 #endif
 
-  LogToFile(fmt::format("NPTrackIR DLL Location: {}", m_sTrackIrDllLocation));
+  LogToFile(fmt::format("NPTrackIR DLL Location: {}", trackIrDllFolder));
 
   //////////////////////////////////////////////////////////////////////
   //                     Finding Default Padding                      //
@@ -178,56 +186,36 @@ void CConfig::LoadSettings() {
                     "bottom = 0"));
   }
 
-  m_defaultPaddingLeft = toml::find<int>(vDefaultPaddingTable, "left");
-  m_defaultPaddingRight = toml::find<int>(vDefaultPaddingTable, "right");
-  m_defaultPaddingTop = toml::find<int>(vDefaultPaddingTable, "top");
-  m_defaultPaddingBottom = toml::find<int>(vDefaultPaddingTable, "bottom");
+  data.defaultPaddings[0] = toml::find<int>(vDefaultPaddingTable, "left");
+  data.defaultPaddings[1] = toml::find<int>(vDefaultPaddingTable, "right");
+  data.defaultPaddings[2] = toml::find<int>(vDefaultPaddingTable, "top");
+  data.defaultPaddings[3] = toml::find<int>(vDefaultPaddingTable, "bottom");
 
   //////////////////////////////////////////////////////////////////////
-  //                       Find Display Mapping                       //
+  //                      Find Profiles Mapping                       //
   //////////////////////////////////////////////////////////////////////
 
-  LoadActiveProfile(m_activeProfileName);
-}
-
-// GUI component entry to load the active profile from toml object.
-void CConfig::LoadActiveProfile(std::string activeProfile) {
-  CProfile configuration;
   // Find the profiles table that contains all mapping profiles.
   auto &vProfilesArray = toml::find(m_vData, "Profiles");
-  std::string tableKey;
-  toml::value vActiveProfileTable;
 
   // Find the table with a matching profile name.
   // .as_table() returns a std::unordered_map<toml::key, toml::table>
   // Conversion is necessary to loop by element.
-  for (auto &table : vProfilesArray.as_array()) {
-    std::string profileName = toml::find<std::string>(table, "name");
-    if (activeProfile == profileName) {
-      vActiveProfileTable = table;
-      break;
-    }
-  }
+  int i = 0;
+  for (auto &profile : vProfilesArray.as_array()) {
+    // Load in current profile dependent settings
 
-  // Use the found table key
-  // auto& vActiveProfileTable = toml::find(vProfilesArray, tableKey);
+    SProfile newProfile;
 
-  // Load in current profile dependent settings
-  configuration.m_profile_ID =
-      toml::find_or<int>(vActiveProfileTable, "profile_id", 13302);
-  configuration.m_name = activeProfile;
+    newProfile.name = toml::find<std::string>(profile, "name");
+    newProfile.profile_ID = toml::find<int>(profile, "profile_ID");
+    newProfile.useDefaultPadding =
+        toml::find<bool>(profile, "use_default_padding");
 
-  // Find the display mapping table for the given profile
-  auto &vDisplayMappingArray =
-      toml::find(vActiveProfileTable, "DisplayMappings");
+    // Find the display mapping table for the given profile
+    auto &vDisplayMapping = toml::find(profile, "DisplayMappings");
 
-  int index = 0;
-  for (auto &display : vDisplayMappingArray.as_array()) {
-    // std::string i = display.first;
-    // auto& vDisplayMapping = display.second;
-    int i = index++;
-
-    try {
+    for (auto &display : vDisplayMapping.as_array()) {
       // Bring In The Rotational Bounds
       toml::value left = toml::find(display, "left");
       toml::value right = toml::find(display, "right");
@@ -235,7 +223,7 @@ void CConfig::LoadActiveProfile(std::string activeProfile) {
       toml::value bottom = toml::find(display, "bottom");
 
       // Each value is checked because this toml library cannot
-      // convert integers in a toml value to a float
+      // convert integers to floats from a toml value
       toml::value_t integer = toml::value_t::integer;
 
       float rotLeft = (left.type() == integer)
@@ -263,123 +251,84 @@ void CConfig::LoadActiveProfile(std::string activeProfile) {
       int paddingTop = toml::find_or<int>(display, "paddingTop", 5555);
       int paddingBottom = toml::find_or<int>(display, "paddingBottom", 5555);
 
-      if (paddingLeft == 5555) paddingLeft = m_defaultPaddingLeft;
-      if (paddingRight == 5555) paddingRight = m_defaultPaddingRight;
-      if (paddingTop == 5555) paddingTop = m_defaultPaddingTop;
-      if (paddingBottom == 5555) paddingBottom = m_defaultPaddingBottom;
+      if (paddingLeft == 5555) paddingLeft = data.defaultPaddings[0];
+      if (paddingRight == 5555) paddingRight = data.defaultPaddings[1];
+      if (paddingTop == 5555) paddingTop = data.defaultPaddings[2];
+      if (paddingBottom == 5555) paddingBottom = data.defaultPaddings[3];
 
       // Report padding values
-      LogToFile(fmt::format("Display {} Padding -> {:>5}{}, {:>5}{} ,{:>5}{}, {:>5}{}", i,
-                           m_defaultPaddingLeft, (paddingLeft == 5555) ? "(default)" : "",
-                           m_defaultPaddingRight, (paddingRight == 5555) ? "(default)" : "",
-                           m_defaultPaddingTop, (paddingTop == 5555) ? "(default)" : "",
-                           m_defaultPaddingBottom, (paddingBottom == 5555) ? "(default)" : ""));
+      LogToFile(fmt::format(
+          "Display {} Padding -> {:>5}{}, {:>5}{}, {:>5}{}, {:>5}{}", i++,
+          data.defaultPaddings[0], (paddingLeft == 5555) ? "(default)" : "",
+          data.defaultPaddings[1], (paddingRight == 5555) ? "(default)" : "",
+          data.defaultPaddings[2], (paddingTop == 5555) ? "(default)" : "",
+          data.defaultPaddings[3],
+          (paddingBottom == 5555) ? "(default)" : ""));
 
-      configuration.m_bounds.push_back(
+      newProfile.bounds.push_back(
           CBounds({rotLeft, rotRight, rotTop, rotBottom},
                   {paddingLeft, paddingRight, paddingTop, paddingBottom}));
-    } catch (toml::type_error e) {
-      LogToWixError(fmt::format(
-          "TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n",
-          i, e.what()));
-    } catch (std::out_of_range e) {
-      LogToWixError(fmt::format(
-          "TOML Exception Thrown!\nIncorrect configuration of display:{}\n{}\n",
-          i, e.what()));
-    }
-  }
-
-  // GUI components can set the active profile this way
-  SetValue("General/active_profile", activeProfile);
-  m_activeProfile = configuration;
-}
-
-////////////////////////////////////////////////////
-//                   Getting Values               //
-////////////////////////////////////////////////////
-
-toml::value *CConfig::FindHighestTable(
-    std::vector<std::string> tableHierarchy) {
-  toml::value *table = &m_vData;
-
-  if (tableHierarchy.empty()) {
-    return table;
-  }
-
-  for (auto &tableName : tableHierarchy) {
-    if (tableName.empty()) {
-      LogToWixError("Tablename can't be empty.");
-      return nullptr;
     }
 
-    table = &toml::get<toml::table>(*table).at(tableName);
-  }
-
-  return table;
-}
-
-toml::value CConfig::GetValue(std::string s) {
-  std::vector<std::string> tableHierarchy;
-
-  constexpr std::string_view delimiter = "/";
-  size_t last = 0;
-  size_t next = 0;
-
-  while ((next = s.find(delimiter, last)) != std::string::npos) {
-    std::string key = s.substr(last, next - last);
-    last = next + 1;
-    tableHierarchy.push_back(key);
-  }
-
-  std::string parameterName = s.substr(last);
-
-  toml::value *table = this->FindHighestTable(tableHierarchy);
-  if (nullptr == table) return 1;
-
-  return toml::find(*table, parameterName);
-
-  return 0;
-}
-
-int CConfig::GetInteger(std::string s) {
-  try {
-    toml::value value = GetValue(s);
-    return value.as_integer();
-  } catch (const std::exception &ex) {
-    LogTomlError(ex);
-    return -1;
+    data.profiles.push_back(newProfile);
+    //extra line
   }
 }
 
-float CConfig::GetFloat(std::string s) {
-  try {
-    toml::value value = GetValue(s);
-    return value.as_floating();
-  } catch (const std::exception &ex) {
-    LogTomlError(ex);
-    return -1.0;
-  }
-}
+// ???
+// clang-format off
+void CConfig::SaveSettings() {
+  const std::string FileName = "settings_test.toml";
 
-bool CConfig::GetBool(std::string s) {
-  try {
-    toml::value value = GetValue(s);
-    return value.as_boolean();
-  } catch (const std::exception &ex) {
-    LogTomlError(ex);
-    return false;
-  }
-}
+  toml::value general{
+        {"track_on_start", data.trackOnStart},
+        {"quit_on_loss_of_track_ir", data.quitOnLossOfTrackIr},
+        {"watchdog_enabled", data.watchdogEnabled},
+        {"trackir_dll_directory", data.trackIrDllFolder},
+        {"active_profile", data.activeProfileName},
+    };
 
-std::string CConfig::GetString(std::string s) {
-  try {
-    toml::value value = GetValue(s);
-    return value.as_string();
-  } catch (const std::exception &ex) {
-    LogTomlError(ex);
-    return "";
+  toml::value padding{
+    {"left", data.defaultPaddings[0]},
+    {"right", data.defaultPaddings[1]},
+    {"top", data.defaultPaddings[2]},
+    {"bottom", data.defaultPaddings[3]}
+  };
+
+  std::vector<toml::value> profiles;
+  for(auto& profile : data.profiles){
+    std::vector<toml::value> displays;
+    for(auto& display : profile.bounds){
+        toml::value d{
+          {"left", display.rotationBounds[0]},
+          {"right", display.rotationBounds[1]},
+          {"top", display.rotationBounds[2]},
+          {"bottom", display.rotationBounds[3]}
+        };
+      displays.push_back(d);
+    }
+    toml::value top{
+      {"name", profile.name},
+      {"profile_ID", profile.profile_ID},
+      {"use_default_padding", profile.useDefaultPadding},
+      {"DisplayMappings", displays}
+    };
+    profiles.push_back(top);
   }
+
+  toml::value topTable{
+    {"General", general},
+    {"DefaultPadding", padding},
+    {"Profiles", profiles},
+  };
+
+  // data.as_table()["a"] = a;
+
+  std::fstream file(FileName, std::ios_base::out);
+  file << topTable << std::endl;
+  file.close();
 }
+// clang-format on
 
 void CConfig::LogTomlError(const std::exception &ex) {
   wxLogFatalError("Incorrect type on reading configuration parameter: %s",
@@ -387,9 +336,9 @@ void CConfig::LogTomlError(const std::exception &ex) {
 }
 
 void CConfig::AddProfile(std::string newProfileName) {
-  // Create empty profile and add to config
   auto profileNames = GetProfileNames();
 
+  // Prohibit conflicting names
   for (auto name : profileNames) {
     if (name == newProfileName) {
       wxLogError("Profile name already exists, please pick another name.");
@@ -397,20 +346,10 @@ void CConfig::AddProfile(std::string newProfileName) {
     }
   }
 
-  CProfile emptyProfile;
-  auto &vProfilesVector = toml::find(m_vData, "Profiles").as_array();
-
-  toml::value dm = {{"left", 0}, {"right", 0}, {"top", 0}, {"bottom", 0}};
-  toml::value newProfile{
-      {"profileID", emptyProfile.m_profile_ID},
-      {"name", newProfileName},
-      {"use_default_padding", emptyProfile.m_useDefaultPadding},
-
-      // default to adding (2) monitors because this is
-      // the only way toml constructors select the overload to make an array
-      {"DisplayMappings", {dm, dm}}};
-
-  vProfilesVector.push_back(newProfile);
+  // TODO: optimize to emplace back as rvalue
+  // Default profile
+  SProfile p;
+  data.profiles.push_back(p);
 }
 
 void CConfig::RemoveProfile(std::string profileName) {
@@ -418,52 +357,40 @@ void CConfig::RemoveProfile(std::string profileName) {
   // delete the key, value pair
   // TODO: need to make profile names mututally exclusive
   // returns a vector
-  auto &vProfilesVector = toml::find(m_vData, "Profiles").as_array();
 
-  for (std::size_t i = 0; i < vProfilesVector.size(); i++) {
-    try {
-      std::string profileName2 =
-          toml::find<std::string>(vProfilesVector.at(i), "name");
-      if (profileName == profileName2) {
-        vProfilesVector.erase(vProfilesVector.begin() + i);
-        LogToWix(fmt::format("Deleted profile from array {}", profileName));
-      }
-    } catch (std::out_of_range e) {
-      LogToWixError(fmt::format(
-          "TOML Exception Thrown!\nIncorrect configuration of display.\n{}\n",
-          e.what()));
+  for (std::size_t i = 0; i < data.profiles.size(); i++) {
+    if (profileName == data.profiles[i].name) {
+      data.profiles.erase(data.profiles.begin() + i);
+      LogToWix(fmt::format("Deleted profile: {}", profileName));
+      LogToFile(fmt::format("Deleted profile: {}", profileName));
     }
   }
 }
 
-CProfile CConfig::GetActiveProfile() { return m_activeProfile; }
-
 std::vector<std::string> CConfig::GetProfileNames() {
-  const auto vProfilesVector = toml::find(m_vData, "Profiles").as_array();
   std::vector<std::string> profileNames;
-
-  for (auto &profile : vProfilesVector) {
-    try {
-      std::string profileName = toml::find<std::string>(profile, "name");
-      profileNames.push_back(profileName);
-    } catch (std::out_of_range e) {
-      LogToWixError(fmt::format(
-          "TOML Exception Thrown!\nIncorrect configuration of display.\n{}\n",
-          e.what()));
-    }
+  for (auto &profile : data.profiles) {
+    profileNames.push_back(profile.name);
   }
-
   return profileNames;
 }
 
+SProfile &CConfig::GetActiveProfile() {
+  for (auto &profile : data.profiles) {
+    if (profile.name == data.activeProfileName) {
+      //return &profile;
+      return profile;
+    } else {
+      // code shouldn't be reachable
+        wxFAIL_MSG("Couldn't find active profile by name.");
+    }
+  }
+}
+
 int CConfig::GetActiveProfileDisplayCount() {
-  return m_activeProfile.m_bounds.size();
+  SProfile profile = GetActiveProfile();
+  return profile.bounds.size();
 }
 
-void CConfig::SaveSettings() {
-  const std::string FileName = "settings_test.toml";
-
-  std::fstream file(FileName, std::ios_base::out);
-  file << m_vData << std::endl;
-  file.close();
-}
+void CConfig::SetDisplayMappingParameter(int displayNumber, int parameterType,
+                                         int parameterSide, float parameter) {}
