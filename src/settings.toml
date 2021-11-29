@@ -12,7 +12,7 @@ trackir_dll_directory = "default"
 active_profile = "Desktop Dual Monitor"
 
 [[Profiles]]
-profile_ID = 13302
+profile_id = 13302
 name = "Desktop Dual Monitor"
 use_default_padding = true
 

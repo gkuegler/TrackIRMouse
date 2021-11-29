@@ -45,6 +45,7 @@ struct SData {
 class CConfig {
  public:
   int m_monitorCount = 0;
+  std::string m_trackIrDllPath;
 
   SData data;
 

@@ -130,14 +130,13 @@ void CConfig::LoadSettings() {
   //                  Finding NPTrackIR DLL Location                  //
   //////////////////////////////////////////////////////////////////////
 
-  std::string trackIrDllFolder;
   if ("default" == data.trackIrDllFolder) {
     RegistryQuery path = GetStringFromRegistry(
         HKEY_CURRENT_USER,
         "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
 
     if (0 == path.result) {
-        trackIrDllFolder = path.value;
+      m_trackIrDllPath = path.value;
       LogToFile("Acquired DLL location from registry.");
     } else {
       throw Exception(
@@ -145,25 +144,23 @@ void CConfig::LoadSettings() {
                       "  result string: {}",
                       path.result, path.resultString));
     }
-  }
-  else
-  {
-      trackIrDllFolder = data.trackIrDllFolder;
+  } else {
+    m_trackIrDllPath = data.trackIrDllFolder;
   }
 
-  // Check if DLL folder path is post fixed with slashes
-  if (trackIrDllFolder.back() != '\\') {
-      trackIrDllFolder.push_back('\\');
+  // Check if DLL folder path is postfixed with slashes
+  if (m_trackIrDllPath.back() != '\\') {
+    m_trackIrDllPath.push_back('\\');
   }
 
 // Match to the correct bitness of this application
 #if defined(_WIN64) || defined(__amd64__)
-  trackIrDllFolder.append("NPClient64.dll");
+  m_trackIrDllPath.append("NPClient64.dll");
 #else
   m_sTrackIrDllLocation.append("NPClient.dll");
 #endif
 
-  LogToFile(fmt::format("NPTrackIR DLL Location: {}", trackIrDllFolder));
+  LogToFile(fmt::format("NPTrackIR DLL Path: {}", m_trackIrDllPath));
 
   //////////////////////////////////////////////////////////////////////
   //                     Finding Default Padding                      //
@@ -196,19 +193,21 @@ void CConfig::LoadSettings() {
   //////////////////////////////////////////////////////////////////////
 
   // Find the profiles table that contains all mapping profiles.
-  auto &vProfilesArray = toml::find(m_vData, "Profiles");
+  auto vProfilesArray = toml::find(m_vData, "Profiles");
 
   // Find the table with a matching profile name.
   // .as_table() returns a std::unordered_map<toml::key, toml::table>
   // Conversion is necessary to loop by element.
+  // TODO: check with toml website to try and get better error messages when
+  // validating parameters.6
   int i = 0;
-  for (auto &profile : vProfilesArray.as_array()) {
+  for (auto profile : vProfilesArray.as_array()) {
     // Load in current profile dependent settings
 
     SProfile newProfile;
 
     newProfile.name = toml::find<std::string>(profile, "name");
-    newProfile.profile_ID = toml::find<int>(profile, "profile_ID");
+    newProfile.profile_ID = toml::find<int>(profile, "profile_id");
     newProfile.useDefaultPadding =
         toml::find<bool>(profile, "use_default_padding");
 
@@ -262,8 +261,7 @@ void CConfig::LoadSettings() {
           data.defaultPaddings[0], (paddingLeft == 5555) ? "(default)" : "",
           data.defaultPaddings[1], (paddingRight == 5555) ? "(default)" : "",
           data.defaultPaddings[2], (paddingTop == 5555) ? "(default)" : "",
-          data.defaultPaddings[3],
-          (paddingBottom == 5555) ? "(default)" : ""));
+          data.defaultPaddings[3], (paddingBottom == 5555) ? "(default)" : ""));
 
       newProfile.bounds.push_back(
           CBounds({rotLeft, rotRight, rotTop, rotBottom},
@@ -271,11 +269,11 @@ void CConfig::LoadSettings() {
     }
 
     data.profiles.push_back(newProfile);
-    //extra line
+    // extra line
   }
+  return;
 }
 
-// ???
 // clang-format off
 void CConfig::SaveSettings() {
   const std::string FileName = "settings_test.toml";
@@ -309,7 +307,7 @@ void CConfig::SaveSettings() {
     }
     toml::value top{
       {"name", profile.name},
-      {"profile_ID", profile.profile_ID},
+      {"profile_id", profile.profile_ID},
       {"use_default_padding", profile.useDefaultPadding},
       {"DisplayMappings", displays}
     };
@@ -322,6 +320,8 @@ void CConfig::SaveSettings() {
     {"Profiles", profiles},
   };
 
+  // An example of how to access the underlying std::unordered_map<>
+  // of a toml table. New or existing keyvalue pairs can be modified this way.
   // data.as_table()["a"] = a;
 
   std::fstream file(FileName, std::ios_base::out);
@@ -376,15 +376,15 @@ std::vector<std::string> CConfig::GetProfileNames() {
 }
 
 SProfile &CConfig::GetActiveProfile() {
+  LogToFile(fmt::format("activeProfileName: {}", data.activeProfileName));
   for (auto &profile : data.profiles) {
+    LogToFile(fmt::format("profile name: {}", profile.name));
     if (profile.name == data.activeProfileName) {
-      //return &profile;
       return profile;
-    } else {
-      // code shouldn't be reachable
-        wxFAIL_MSG("Couldn't find active profile by name.");
     }
   }
+  // a profile should exist, codes shouldn't be reachable
+  wxFAIL_MSG("Couldn't find active profile by name.");
 }
 
 int CConfig::GetActiveProfileDisplayCount() {

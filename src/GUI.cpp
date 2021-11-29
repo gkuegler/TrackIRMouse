@@ -86,10 +86,10 @@ bool CGUIApp::OnInit() {
     wxLogFatalError("std::exception:\n%s", ex.what());
   } catch (const Exception &ex) {
     wxLogFatalError("My Custom Exception:\n%s", ex.what());
-  } catch (...) {
+  } /*catch (...) {
     wxLogFatalError(
         "exception has gone unhandled loading and verifying settings");
-  }
+  }*/
 
   // Populate GUI With Settings
   m_frame->m_panel->PopulateComboBoxWithProfiles(GetGlobalConfigCopy());
@@ -113,7 +113,7 @@ bool CGUIApp::OnInit() {
 
 cFrame::cFrame()
     : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", wxPoint(200, 200),
-              wxSize(950, 600)) {
+              wxSize(1050, 600)) {
   wxMenu *menuFile = new wxMenu;
   menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
                    "Open a new settings file from disk.");
@@ -388,8 +388,9 @@ void cPanel::OnTrackIrDllPath(wxCommandEvent &event) {
 
 void cPanel::OnActiveProfile(wxCommandEvent &event) {
   int index = m_cmbProfiles->GetSelection();
+  LogToFile(fmt::format("Profiles get selection: {}", index));
   std::string activeProfile((m_cmbProfiles->GetString(index)).mb_str());
-
+  LogToFile(fmt::format("activeProfile: {}", activeProfile));
   CConfig *config = GetGlobalConfig();
   config->data.activeProfileName = activeProfile;
 

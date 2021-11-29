@@ -90,7 +90,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
       MultiByteToWideChar(CP_UTF8,
                           // MB_ERR_INVALID_CHARS, // I feel like this should be
                           // the smart choice, but this is an error.
-                          MB_COMPOSITE, config.data.trackIrDllFolder.c_str(),
+                          MB_COMPOSITE, config.m_trackIrDllPath.c_str(),
                           MAX_PATH, sDll, MAX_PATH);
 
   if (0 == resultConvert)
@@ -99,7 +99,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
         GetLastError()));
 
 #else
-  TCHAR sDLL = config.data.trackIrDllFolder.c_str()
+  TCHAR sDLL = config.m_trackIrDllPath.c_str()
 
 #endif
 
