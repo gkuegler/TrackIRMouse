@@ -349,6 +349,7 @@ void CConfig::AddProfile(std::string newProfileName) {
   // TODO: optimize to emplace back as rvalue
   // Default profile
   SProfile p;
+  p.name = newProfileName;
   data.profiles.push_back(p);
 }
 

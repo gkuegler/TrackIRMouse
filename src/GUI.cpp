@@ -1,27 +1,40 @@
-//#define _CRT_SECURE_NO_WARNINGS
 /*
 label other settings
 label active profile
 move msgs to bottom
+create advanced settings dialog
+    settings menu bar
+remove profile should open up a dialogue with a list box
+automatically restart tracking
+transform mapping values for head distance
 
 profile box:
-  default padding
-  shw brdr
-  move to right hand side
   set size limitations for text for inputs
+  pick number of displays
+  configuration window?
+  duplicate profile
 */
+
+// This was a bug some point and needed to define.
+// #define _CRT_SECURE_NO_WARNINGS
+
 #include "GUI.h"
 
+#include <wx/bookctrl.h>
 #include <wx/colour.h>
 #include <wx/dataview.h>
 #include <wx/filedlg.h>
+#include <wx/popupwin.h>
 #include <wx/wfstream.h>
+
+#include <string>
 
 #include "Config.h"
 #include "Exceptions.h"
 #include "Log.h"
 #include "Track.h"
 
+constexpr std::string_view kVersionNo = "0.6.0";
 const wxSize kDefaultButtonSize = wxSize(100, 25);
 
 wxIMPLEMENT_APP(CGUIApp);
@@ -50,7 +63,7 @@ bool CGUIApp::OnInit() {
       textrich->AppendText(event.GetString());
       textrich->SetDefaultStyle(attrExisting);
     }
-    // Output text normally; no errorF
+    // Output text normally; no error
     else {
       textrich->AppendText(event.GetString());
     }
@@ -75,7 +88,7 @@ bool CGUIApp::OnInit() {
 
   try {
     config->LoadSettings();
-    //dummy line of code for breakpoint
+    // dummy line of code for breakpoint
   }
   // type_error inherits from toml::exception
   catch (const toml::type_error &ex) {
@@ -99,7 +112,10 @@ bool CGUIApp::OnInit() {
   m_frame->Show();
 
   // Start the track IR thread if enabled
-  if (config->data.watchdogEnabled) {
+  if (config->data.trackOnStart) {
+    LogToFile(fmt::format(
+        "checking the start track at start up -> watchdogEnabled: {}",
+        config->data.trackOnStart));
     wxCommandEvent event = {};
     m_frame->m_panel->OnTrackStart(event);
   }
@@ -115,10 +131,14 @@ cFrame::cFrame()
     : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", wxPoint(200, 200),
               wxSize(1050, 600)) {
   wxMenu *menuFile = new wxMenu;
-  menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
-                   "Open a new settings file from disk.");
+  // menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
+  // "Open a new settings file from disk.");
+  menuFile->Append(wxID_SAVE, "&Save\tCtrl-s", "Save the configuration file.");
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
+
+  wxMenu *menuEdit = new wxMenu;
+  menuEdit->Append(myID_SETTINGS, "&Settings", "Edit settings.");
 
   wxMenu *menuHelp = new wxMenu;
   menuHelp->Append(
@@ -129,6 +149,7 @@ cFrame::cFrame()
 
   wxMenuBar *menuBar = new wxMenuBar;
   menuBar->Append(menuFile, "&File");
+  menuBar->Append(menuEdit, "&Edit");
   menuBar->Append(menuHelp, "&Help");
 
   SetMenuBar(menuBar);
@@ -138,14 +159,20 @@ cFrame::cFrame()
 
   m_panel = new cPanel(this);
   m_panel->GetSizer()->Fit(this);
+
+  m_settingsPopup = new cSettingsPopup(this);
+  m_settingsPopup->GetSizer()->Fit(this);
 }
 
 void cFrame::OnExit(wxCommandEvent &event) { Close(true); }
 
 void cFrame::OnAbout(wxCommandEvent &event) {
-  std::string msg = R"(This is a mouse control application using head tracking.
-Author: George Kuegler
-E-mail: georgekuegler@gmail.com)";
+  std::string msg = fmt::format(
+      "Version No.:  {}\nThis is a mouse control application using head "
+      "tracking.\n"
+      "Author: George Kuegler\n"
+      "E-mail: georgekuegler@gmail.com",
+      kVersionNo);
 
   wxMessageBox(msg, "About TrackIRMouse", wxOK | wxICON_NONE);
 }
@@ -184,8 +211,129 @@ void cFrame::OnOpen(wxCommandEvent &event) {
   wxLogError("Method not implemented yet!");
 }
 
+void cFrame::OnSave(wxCommandEvent &event) {
+  CConfig config = GetGlobalConfigCopy();
+  config.SaveSettings();
+}
+
+void cFrame::OnSettings(wxCommandEvent &event) {
+    CConfig* config = GetGlobalConfig();
+  SData m_userData = config->data;
+  if (true == m_settingsPopup->CreateDlg(&m_userData)) {
+    int results = m_settingsPopup->ShowModal();
+    LogToFile(fmt::format("results of Modal settings: {}", results));
+    if (wxID_OK == results)
+    {
+      LogToFile(fmt::format("user clicked okay on settings"));
+      // values should be saved
+      config->data = *(m_settingsPopup->m_userData);
+    }
+    else if (wxID_CANCEL == results)
+    {
+      LogToFile(fmt::format("user clicked the cancel button on settings"));
+    }
+  }
+}
+
 void cFrame::OnGenerateExample(wxCommandEvent &event) {
   wxLogError("Method not implemented yet!");
+}
+
+cSettingsPopup::cSettingsPopup(cFrame *frame) : wxPropertySheetDialog() {
+  m_parent = frame;
+}
+
+bool cSettingsPopup::CreateDlg(SData* userData) {
+  m_userData = userData;
+  if (!wxPropertySheetDialog::Create(m_parent, wxID_ANY, "Settings",
+                                     wxPoint(200, 200), wxSize(300, 300),
+                                     wxDEFAULT_DIALOG_STYLE, "")) {
+    return false;
+  }
+
+  CreateButtons(wxOK | wxCANCEL);
+
+  wxPanel *panel0 = new cSettingsGeneralPanel(GetBookCtrl(), m_userData);
+  wxPanel *panel1 = new cSettingsAdvancedlPanel(GetBookCtrl(), m_userData);
+
+  GetBookCtrl()->AddPage(panel0, "General");
+  GetBookCtrl()->AddPage(panel1, "Advanced");
+  LayoutDialog();
+  return true;
+}
+
+cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow *parent, SData *data)
+    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+              wxTAB_TRAVERSAL, "") {
+      m_userData = data;
+  m_cbxEnableWatchdog = new wxCheckBox(
+      this, myID_WATCHDOG_ENABLED, "Watchdog Enabled", wxDefaultPosition,
+      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  m_cbxTrackOnStart = new wxCheckBox(
+      this, myID_TRACK_ON_START, "Track On Start", wxDefaultPosition,
+      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  m_cbxQuitOnLossOfTrackIR = new wxCheckBox(
+      this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR",
+      wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+
+  m_cbxEnableWatchdog->SetValue(m_userData->watchdogEnabled);
+  m_cbxTrackOnStart->SetValue(m_userData->trackOnStart);
+  m_cbxQuitOnLossOfTrackIR->SetValue(m_userData->quitOnLossOfTrackIr);
+  
+  wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
+  topSizer->Add(m_cbxEnableWatchdog, 0, wxALL, 0);
+  topSizer->Add(m_cbxTrackOnStart, 0, wxALL, 0);
+  topSizer->Add(m_cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
+
+  wxBoxSizer *border = new wxBoxSizer(wxVERTICAL);
+  border->Add(topSizer, 0, wxALL, 10);
+
+  SetSizer(border);
+}
+
+void cSettingsGeneralPanel::OnEnabledWatchdog(wxCommandEvent &event) {
+  m_userData->watchdogEnabled = m_cbxEnableWatchdog->IsChecked();
+}
+
+void cSettingsGeneralPanel::OnTrackOnStart(wxCommandEvent &event) {
+  m_userData->trackOnStart = m_cbxTrackOnStart->IsChecked();
+}
+
+void cSettingsGeneralPanel::OnQuitOnLossOfTrackIr(wxCommandEvent &event) {
+  m_userData->quitOnLossOfTrackIr = m_cbxQuitOnLossOfTrackIR->IsChecked();
+}
+
+cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow *parent, SData *data)
+    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+              wxTAB_TRAVERSAL, "") {
+  m_userData = data;
+  wxStaticText *txtTrackLocation1 =
+      new wxStaticText(this, wxID_ANY, "Path of 'NPClient64.dll':   ");
+  m_txtTrackIrDllPath =
+      new cTextCtrl(this, myID_TRACK_IR_DLL_PATH, m_userData->trackIrDllFolder,
+                    wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
+  wxStaticText *txtTrackLocation2 = new wxStaticText(
+      this, wxID_ANY,
+      "Note: a value of 'default' will get from install location.");
+
+  wxBoxSizer *zrDllLocation = new wxBoxSizer(wxHORIZONTAL);
+  zrDllLocation->Add(txtTrackLocation1, 0, wxTOP, 5);
+  zrDllLocation->Add(m_txtTrackIrDllPath, 1, wxALL | wxEXPAND, 0);
+
+  wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
+  topSizer->Add(zrDllLocation, 0, wxTOP | wxEXPAND, 10);
+  topSizer->Add(txtTrackLocation2, 0, wxALL, 0);
+
+  wxBoxSizer *border = new wxBoxSizer(wxVERTICAL);
+  border->Add(topSizer, 0, wxALL, 10);
+
+  SetSizer(border);
+}
+
+void cSettingsAdvancedlPanel::OnTrackIrDllPath(wxCommandEvent& event){
+    wxString wxsPath = m_txtTrackIrDllPath->GetLineText(0);
+  std::string path(wxsPath.mb_str());
+  m_userData->trackIrDllFolder = path;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -226,16 +374,14 @@ cPanel::cPanel(cFrame *frame) : wxPanel(frame) {
   m_btnStopMouse =
       new wxButton(this, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition,
                    kDefaultButtonSize, 0, wxDefaultValidator, "");
-  m_btnSaveSettings =
-      new wxButton(this, myID_SAVE_SETTINGS, "Save Settings", wxDefaultPosition,
-                   kDefaultButtonSize, 0, wxDefaultValidator, "");
 
   wxStaticText *txtProfiles =
       new wxStaticText(this, wxID_ANY, "Active Profile:   ");
 
-  m_cmbProfiles = new wxComboBox(this, myID_PROFILE_SELECTION, "",
-                                 wxDefaultPosition, wxDefaultSize, 0, 0,
-                                 wxCB_DROPDOWN, wxDefaultValidator, "");
+  m_cmbProfiles =
+      new wxChoice(this, myID_PROFILE_SELECTION, wxDefaultPosition,
+                   wxDefaultSize, 0, 0, wxCB_SORT, wxDefaultValidator, "");
+
   m_btnAddProfile =
       new wxButton(this, myID_ADD_PROFILE, "Add Profile", wxDefaultPosition,
                    kDefaultButtonSize, 0, wxDefaultValidator, "");
@@ -269,7 +415,6 @@ cPanel::cPanel(cFrame *frame) : wxPanel(frame) {
   wxBoxSizer *zrTrackCmds = new wxBoxSizer(wxHORIZONTAL);
   zrTrackCmds->Add(m_btnStartMouse, 0, wxALL, 0);
   zrTrackCmds->Add(m_btnStopMouse, 0, wxALL, 0);
-  zrTrackCmds->Add(m_btnSaveSettings, 0, wxALL, 0);
 
   wxBoxSizer *zrProfCmds = new wxBoxSizer(wxHORIZONTAL);
   zrProfCmds->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -303,7 +448,13 @@ cPanel::cPanel(cFrame *frame) : wxPanel(frame) {
   topSizer->Add(zrBlock2, 0, wxALL | wxEXPAND, 10);
 
   SetSizer(topSizer);
+
+  // Set Control Tooltips
+  m_btnStartMouse->SetToolTip(
+      wxT("Start controlling mouse with head tracking."));
+  m_btnStopMouse->SetToolTip(wxT("Stop control of the mouse."));
 }
+
 void cPanel::LoadSettings() {
   CConfig config = GetGlobalConfigCopy();
 
@@ -343,14 +494,14 @@ void cPanel::OnTrackStart(wxCommandEvent &event) {
 
   // after the call to wxThread::Run(), the m_pThread pointer is "unsafe":
   // at any moment the thread may cease to exist (because it completes its
-  // work). To avoid dangling pointers ~MyThread() will set m_pThread to nullptr
-  // when the thread dies.
+  // work). To avoid dangling pointers ~MyThread() will set m_pThread to
+  // nullptr when the thread dies.
 }
 
 void cPanel::OnTrackStop(wxCommandEvent &event) {
   // Threads run in detached mode by default.
-  // Right is responsible for setting m_pTrackThread to nullptr when it finishes
-  // and destroys itself.
+  // Right is responsible for setting m_pTrackThread to nullptr when it
+  // finishes and destroys itself.
   if (m_parent->m_pTrackThread) {
     TR_TrackStop();
     LogToWix("Stopped mouse.");
@@ -364,8 +515,7 @@ void cPanel::OnTrackStop(wxCommandEvent &event) {
 
 void cPanel::OnEnabledWatchdog(wxCommandEvent &event) {
   CConfig *config = GetGlobalConfig();
-  config->data.watchdogEnabled = 
-                   m_cbxEnableWatchdog->IsChecked();
+  config->data.watchdogEnabled = m_cbxEnableWatchdog->IsChecked();
 }
 
 void cPanel::OnTrackOnStart(wxCommandEvent &event) {
@@ -375,8 +525,7 @@ void cPanel::OnTrackOnStart(wxCommandEvent &event) {
 
 void cPanel::OnQuitOnLossOfTrackIr(wxCommandEvent &event) {
   CConfig *config = GetGlobalConfig();
-  config->data.quitOnLossOfTrackIr = 
-                   m_cbxQuitOnLossOfTrackIR->IsChecked();
+  config->data.quitOnLossOfTrackIr = m_cbxQuitOnLossOfTrackIR->IsChecked();
 }
 
 void cPanel::OnTrackIrDllPath(wxCommandEvent &event) {
@@ -408,21 +557,16 @@ void cPanel::OnAddProfile(wxCommandEvent &event) {
     config->AddProfile(std::string(value.mb_str()));
     PopulateComboBoxWithProfiles(GetGlobalConfigCopy());
     unsigned int count = m_cmbProfiles->GetCount();
-    m_cmbProfiles->SetSelection(count - 1, count - 1);
+    // m_cmbProfiles->SetSelection(count - 1, count - 1);
   }
 }
 
 void cPanel::OnRemoveProfile(wxCommandEvent &event) {
-int index = m_cmbProfiles->GetSelection();
+  int index = m_cmbProfiles->GetSelection();
   std::string activeProfile((m_cmbProfiles->GetString(index)).mb_str());
   CConfig *config = GetGlobalConfig();
   config->RemoveProfile(activeProfile);
   LogToWix(fmt::format("Profile Removed: {}", activeProfile));
-}
-
-void cPanel::OnSaveSettings(wxCommandEvent &event) {
-  CConfig *config = GetGlobalConfig();
-  config->SaveSettings();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -432,18 +576,19 @@ void cPanel::OnSaveSettings(wxCommandEvent &event) {
 cPanelConfiguration::cPanelConfiguration(wxPanel *panel)
     : wxPanel(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize,
               wxSIMPLE_BORDER | wxTAB_TRAVERSAL) {
-  m_name = new wxTextCtrl(this, myID_PROFILE_NAME, "Lorem Ipsum", wxDefaultPosition,
-                          wxSize(200, 20), wxTE_LEFT, wxDefaultValidator, "");
+  m_name =
+      new wxTextCtrl(this, myID_PROFILE_NAME, "Lorem Ipsum", wxDefaultPosition,
+                     wxSize(200, 20), wxTE_LEFT, wxDefaultValidator, "");
   m_profileID =
       new wxTextCtrl(this, myID_PROFILE_ID, "2201576", wxDefaultPosition,
                      wxSize(60, 20), wxTE_LEFT, wxDefaultValidator, "");
-  m_useDefaultPadding =
-      new wxCheckBox(this, myID_USE_DEFAULT_PADDING, "Use Default Padding", wxDefaultPosition,
-                     wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  m_useDefaultPadding = new wxCheckBox(
+      this, myID_USE_DEFAULT_PADDING, "Use Default Padding", wxDefaultPosition,
+      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
 
-  m_tlcMappingData = new wxDataViewListCtrl(this, myID_MAPPING_DATA, wxDefaultPosition,
-                                            wxSize(500, 200), wxDV_HORIZ_RULES,
-                                            wxDefaultValidator);
+  m_tlcMappingData = new wxDataViewListCtrl(
+      this, myID_MAPPING_DATA, wxDefaultPosition, wxSize(500, 200),
+      wxDV_HORIZ_RULES, wxDefaultValidator);
 
   m_tlcMappingData->AppendTextColumn("Display #");
   m_tlcMappingData->AppendTextColumn("Type");
@@ -471,11 +616,15 @@ cPanelConfiguration::cPanelConfiguration(wxPanel *panel)
   topSizer->Add(m_tlcMappingData, 0, wxALL, 5);
 
   SetSizer(topSizer);
+
+  // Set Tool Tip
+  // myButton->SetToolTip(wxT("Some helpful tip for this button")); // button
+  // is a wxButton*
 }
 
 void cPanelConfiguration::LoadDisplaySettings() {
   CConfig config = GetGlobalConfigCopy();
-  auto& profile = config.GetActiveProfile();
+  auto &profile = config.GetActiveProfile();
 
   m_name->SetValue(profile.name);
   m_profileID->SetValue(wxString::Format("%d", profile.profile_ID));
@@ -514,24 +663,23 @@ void cPanelConfiguration::LoadDisplaySettings() {
   }
 }
 
-void cPanelConfiguration::OnName(wxCommandEvent &event){
-  CConfig* config = GetGlobalConfig();
+void cPanelConfiguration::OnName(wxCommandEvent &event) {
+  CConfig *config = GetGlobalConfig();
   wxString wxsPath = m_name->GetLineText(0);
   std::string name(wxsPath.mb_str());
   // config->SetProfileName(name);
   // Reload the combo box
-  
 }
-void cPanelConfiguration::OnProfileID(wxCommandEvent &event){
-  CConfig* config = GetGlobalConfig();
+void cPanelConfiguration::OnProfileID(wxCommandEvent &event) {
+  CConfig *config = GetGlobalConfig();
   // config->
 }
-void cPanelConfiguration::OnUseDefaultPadding(wxCommandEvent &event){
-  CConfig* config = GetGlobalConfig();
+void cPanelConfiguration::OnUseDefaultPadding(wxCommandEvent &event) {
+  CConfig *config = GetGlobalConfig();
   // config->
 }
-void cPanelConfiguration::OnTlcMappingData(wxCommandEvent &event){
-  CConfig* config = GetGlobalConfig();
+void cPanelConfiguration::OnTlcMappingData(wxCommandEvent &event) {
+  CConfig *config = GetGlobalConfig();
   // config->
 }
 

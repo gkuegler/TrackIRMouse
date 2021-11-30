@@ -4,9 +4,9 @@
 
 
 [General]
-track_on_start = true
+track_on_start = false
 quit_on_loss_of_track_ir = true
-watchdog_enabled = true
+watchdog_enabled = false
 # Specify "default" to get value from registry or an absolute path eg. "C:\Program Files..."
 trackir_dll_directory = "default"
 active_profile = "Desktop Dual Monitor"
@@ -38,6 +38,17 @@ left = -50
 right = 50
 top = 32
 bottom = -32
+
+[[Profiles]]
+name = "Laptop"
+profile_id = 2025
+use_default_padding = true
+
+[[Profiles.DisplayMappings]]
+left = -21.00
+right = 21.00
+top = 15.00
+bottom = -15.00
 
 
 [DefaultPadding]
