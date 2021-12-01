@@ -324,6 +324,7 @@
   <ItemGroup>
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="GUI.cpp" />
+    <ClCompile Include="GUIDialogs.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="NPClient.cpp" />
     <ClCompile Include="Track.cpp" />
@@ -337,6 +338,7 @@
     <ClInclude Include="ExampleSettingsFile.h" />
     <ClInclude Include="Exceptions.h" />
     <ClInclude Include="GUI.h" />
+    <ClInclude Include="GUIDialogs.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="NPClient.h" />
     <ClInclude Include="toml.hpp" />

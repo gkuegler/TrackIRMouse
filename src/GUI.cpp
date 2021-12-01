@@ -22,6 +22,12 @@ The Algorithm Design Manual - Steven S. Skiena
 
 #include "GUI.h"
 
+#include "GUIDialogs.h"
+#include "Config.h"
+#include "Exceptions.h"
+#include "Log.h"
+#include "Track.h"
+
 #include <wx/bookctrl.h>
 #include <wx/colour.h>
 #include <wx/dataview.h>
@@ -30,12 +36,6 @@ The Algorithm Design Manual - Steven S. Skiena
 #include <wx/wfstream.h>
 
 #include <string>
-
-#include "Config.h"
-#include "Exceptions.h"
-#include "Log.h"
-#include "Track.h"
-
 constexpr std::string_view kVersionNo = "0.6.0";
 const wxSize kDefaultButtonSize = wxSize(100, 25);
 
@@ -124,11 +124,12 @@ bool CGUIApp::OnInit() {
   return true;
 }
 
-//cRemoveProfile::cRemoveProfile(cFrame *parent)
-//    : wxMultiChoiceDialog(parent, "delete this profile",
-//                          "press enter to delete the profile", 0,
-//                          std::vector<std::string>{}, wxOK, wxDefaultPosition) {
-//}
+// cRemoveProfile::cRemoveProfile(cFrame *parent)
+//     : wxMultiChoiceDialog(parent, "delete this profile",
+//                           "press enter to delete the profile", 0,
+//                           std::vector<std::string>{}, wxOK,
+//                           wxDefaultPosition) {
+// }
 
 //////////////////////////////////////////////////////////////////////
 //                            Main Frame                            //
@@ -167,9 +168,8 @@ cFrame::cFrame()
   m_panel = new cPanel(this);
   m_panel->GetSizer()->Fit(this);
 
-  m_settingsPopup = new cSettingsPopup(this);
-  m_settingsPopup->GetSizer()->Fit(this);
-
+  //m_settingsPopup = new cSettingsPopup(this);
+  //m_settingsPopup->GetSizer()->Fit(this);
 }
 
 void cFrame::OnExit(wxCommandEvent &event) { Close(true); }
@@ -226,19 +226,20 @@ void cFrame::OnSave(wxCommandEvent &event) {
 
 void cFrame::OnSettings(wxCommandEvent &event) {
   CConfig configd = GetGlobalConfigCopy();
-  SData m_userData = configd.data;
+  SData userData = configd.data;
 
-  m_settingsPopup->LoadUserData(&(configd.data));
+  // Frame inherits from window
+  cSettingsPopup dlg(this, &userData);
 
   // Show the settings pop up while disabling input on main window
-  int results = m_settingsPopup->ShowModal();
+  int results = dlg.ShowModal();
   LogToFile(fmt::format("results of Modal settings: {}", results));
 
   if (wxID_OK == results) {
     LogToFile(fmt::format("user clicked okay on settings"));
     // values should be saved
     CConfig *config = GetGlobalConfig();
-    config->data = *(m_settingsPopup->m_userData);
+    config->data = userData;
   } else if (wxID_CANCEL == results) {
     LogToFile(fmt::format("user clicked the cancel button on settings"));
   }
@@ -246,109 +247,6 @@ void cFrame::OnSettings(wxCommandEvent &event) {
 
 void cFrame::OnGenerateExample(wxCommandEvent &event) {
   wxLogError("Method not implemented yet!");
-}
-
-cSettingsPopup::cSettingsPopup(cFrame *frame)
-    : wxPropertySheetDialog(frame, wxID_ANY, "Settings", wxPoint(200, 200),
-                            wxSize(300, 300), wxDEFAULT_DIALOG_STYLE, "") {
-  m_parent = frame;
-
-  CreateButtons(wxAPPLY | wxCANCEL);
-
-  m_pnlGen = new cSettingsGeneralPanel(GetBookCtrl());
-  m_pnlAdv = new cSettingsAdvancedlPanel(GetBookCtrl());
-
-  GetBookCtrl()->AddPage(m_pnlGen, "General");
-  GetBookCtrl()->AddPage(m_pnlAdv, "Advanced");
-  LayoutDialog();
-}
-
-void cSettingsPopup::LoadUserData(SData *userData) {
-  m_userData = userData;
-  m_pnlGen->UpdateControls(m_userData);
-  m_pnlAdv->UpdateControls(m_userData);
-}
-
-cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow *parent)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-              wxTAB_TRAVERSAL, "") {
-  m_cbxEnableWatchdog = new wxCheckBox(
-      this, myID_WATCHDOG_ENABLED, "Watchdog Enabled", wxDefaultPosition,
-      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-  m_cbxTrackOnStart = new wxCheckBox(
-      this, myID_TRACK_ON_START, "Track On Start", wxDefaultPosition,
-      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-  m_cbxQuitOnLossOfTrackIR = new wxCheckBox(
-      this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR",
-      wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-
-  wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
-  topSizer->Add(m_cbxEnableWatchdog, 0, wxALL, 0);
-  topSizer->Add(m_cbxTrackOnStart, 0, wxALL, 0);
-  topSizer->Add(m_cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
-
-  wxBoxSizer *border = new wxBoxSizer(wxVERTICAL);
-  border->Add(topSizer, 0, wxALL, 10);
-
-  SetSizer(border);
-}
-
-void cSettingsGeneralPanel::UpdateControls(SData *userData) {
-  m_userData = userData;
-  m_cbxEnableWatchdog->SetValue(m_userData->watchdogEnabled);
-  m_cbxTrackOnStart->SetValue(m_userData->trackOnStart);
-  m_cbxQuitOnLossOfTrackIR->SetValue(m_userData->quitOnLossOfTrackIr);
-}
-
-void cSettingsGeneralPanel::OnEnabledWatchdog(wxCommandEvent &event) {
-  m_userData->watchdogEnabled = m_cbxEnableWatchdog->IsChecked();
-}
-
-void cSettingsGeneralPanel::OnTrackOnStart(wxCommandEvent &event) {
-  m_userData->trackOnStart = m_cbxTrackOnStart->IsChecked();
-}
-
-void cSettingsGeneralPanel::OnQuitOnLossOfTrackIr(wxCommandEvent &event) {
-  m_userData->quitOnLossOfTrackIr = m_cbxQuitOnLossOfTrackIR->IsChecked();
-}
-
-cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow *parent)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-              wxTAB_TRAVERSAL, "") {
-  wxStaticText *txtTrackLocation1 =
-      new wxStaticText(this, wxID_ANY, "Path of 'NPClient64.dll':   ");
-  m_txtTrackIrDllPath =
-      new cTextCtrl(this, myID_TRACK_IR_DLL_PATH, "", wxDefaultPosition,
-                    wxSize(300, 20), wxTE_LEFT);
-  wxStaticText *txtTrackLocation2 = new wxStaticText(
-      this, wxID_ANY,
-      "Note: a value of 'default' will get from install location.");
-
-  wxBoxSizer *zrDllLocation = new wxBoxSizer(wxHORIZONTAL);
-  zrDllLocation->Add(txtTrackLocation1, 0, wxTOP, 5);
-  zrDllLocation->Add(m_txtTrackIrDllPath, 1, wxALL | wxEXPAND, 0);
-
-  wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
-  topSizer->Add(zrDllLocation, 0, wxTOP | wxEXPAND, 10);
-  topSizer->Add(txtTrackLocation2, 0, wxALL, 0);
-
-  wxBoxSizer *border = new wxBoxSizer(wxVERTICAL);
-  border->Add(topSizer, 0, wxALL, 10);
-
-  SetSizer(border);
-}
-
-void cSettingsAdvancedlPanel::UpdateControls(SData *userData) {
-  // TOD: I have no idea why trackIrDllFolder gets emptied between calls
-  m_userData = userData;
-  // m_txtTrackIrDllPath->Clear();??????
-  m_txtTrackIrDllPath->AppendText(m_userData->trackIrDllFolder);
-}
-
-void cSettingsAdvancedlPanel::OnTrackIrDllPath(wxCommandEvent &event) {
-  wxString wxsPath = m_txtTrackIrDllPath->GetLineText(0);
-  std::string path(wxsPath.mb_str());
-  m_userData->trackIrDllFolder = path;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -366,14 +264,16 @@ cPanel::cPanel(cFrame *frame) : wxPanel(frame) {
   m_choices.Add("two");
   m_choices.Add("three");
 
-  //m_removeProfile = new wxMultiChoiceDialog(
-  //    this, "delete this profile", "press enter to delete the profile", 3,
-  //    m_choices, wxOK, wxDefaultPosition);
+  // m_removeProfile = new wxMultiChoiceDialog(
+  //     this, "delete this profile", "press enter to delete the profile", 3,
+  //     m_choices, wxOK, wxDefaultPosition);
 
   wxString msg = "Delete a Profile";
   wxString msg2 = "Press OK";
-  //m_removeProfile = new wxMultiChoiceDialog(this, msg, msg2, m_choices, wxOK, wxDefaultPosition);
-  m_removeProfile = new wxMultiChoiceDialog(this, msg, msg2, m_choices, wxOK, wxDefaultPosition);
+  // m_removeProfile = new wxMultiChoiceDialog(this, msg, msg2, m_choices, wxOK,
+  // wxDefaultPosition);
+  //m_removeProfile = new wxMultiChoiceDialog(this, msg, msg2, m_choices, wxOK,
+  //                                          wxDefaultPosition);
 
   m_btnStartMouse =
       new wxButton(this, myID_START_TRACK, "Start Mouse", wxDefaultPosition,
@@ -542,7 +442,7 @@ void cPanel::OnRemoveProfile(wxCommandEvent &event) {
   // CConfig *config = GetGlobalConfig();
   // config->RemoveProfile(activeProfile);
   // LogToWix(fmt::format("Profile Removed: {}", activeProfile));
-  m_removeProfile->ShowModal();
+  //m_removeProfile->ShowModal();
 }
 
 //////////////////////////////////////////////////////////////////////
