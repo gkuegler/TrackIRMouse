@@ -22,12 +22,6 @@ The Algorithm Design Manual - Steven S. Skiena
 
 #include "GUI.h"
 
-#include "GUIDialogs.h"
-#include "Config.h"
-#include "Exceptions.h"
-#include "Log.h"
-#include "Track.h"
-
 #include <wx/bookctrl.h>
 #include <wx/colour.h>
 #include <wx/dataview.h>
@@ -36,6 +30,12 @@ The Algorithm Design Manual - Steven S. Skiena
 #include <wx/wfstream.h>
 
 #include <string>
+
+#include "Config.h"
+#include "Exceptions.h"
+#include "GUIDialogs.h"
+#include "Log.h"
+#include "Track.h"
 constexpr std::string_view kVersionNo = "0.6.0";
 const wxSize kDefaultButtonSize = wxSize(100, 25);
 
@@ -168,8 +168,8 @@ cFrame::cFrame()
   m_panel = new cPanel(this);
   m_panel->GetSizer()->Fit(this);
 
-  //m_settingsPopup = new cSettingsPopup(this);
-  //m_settingsPopup->GetSizer()->Fit(this);
+  // m_settingsPopup = new cSettingsPopup(this);
+  // m_settingsPopup->GetSizer()->Fit(this);
 }
 
 void cFrame::OnExit(wxCommandEvent &event) { Close(true); }
@@ -259,21 +259,6 @@ cTextCtrl::cTextCtrl(wxWindow *parent, wxWindowID id, const wxString &value,
 
 cPanel::cPanel(cFrame *frame) : wxPanel(frame) {
   m_parent = frame;
-
-  m_choices.Add("one");
-  m_choices.Add("two");
-  m_choices.Add("three");
-
-  // m_removeProfile = new wxMultiChoiceDialog(
-  //     this, "delete this profile", "press enter to delete the profile", 3,
-  //     m_choices, wxOK, wxDefaultPosition);
-
-  wxString msg = "Delete a Profile";
-  wxString msg2 = "Press OK";
-  // m_removeProfile = new wxMultiChoiceDialog(this, msg, msg2, m_choices, wxOK,
-  // wxDefaultPosition);
-  //m_removeProfile = new wxMultiChoiceDialog(this, msg, msg2, m_choices, wxOK,
-  //                                          wxDefaultPosition);
 
   m_btnStartMouse =
       new wxButton(this, myID_START_TRACK, "Start Mouse", wxDefaultPosition,
@@ -442,7 +427,19 @@ void cPanel::OnRemoveProfile(wxCommandEvent &event) {
   // CConfig *config = GetGlobalConfig();
   // config->RemoveProfile(activeProfile);
   // LogToWix(fmt::format("Profile Removed: {}", activeProfile));
-  //m_removeProfile->ShowModal();
+  // m_removeProfile->ShowModal();
+  CConfig config = GetGlobalConfigCopy();
+  wxArrayString choices;
+  for (auto &name : config.GetProfileNames()) {
+    choices.Add(name);
+  }
+
+  wxString msg = "Delete a Profile";
+  wxString msg2 = "Press OK";
+  auto dlg = new wxMultiChoiceDialog(this, msg, msg2, choices, wxOK | wxCANCEL,
+                                     wxDefaultPosition);
+  int result = dlg->ShowModal();
+
 }
 
 //////////////////////////////////////////////////////////////////////

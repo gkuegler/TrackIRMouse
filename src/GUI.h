@@ -79,7 +79,6 @@ class cPanel : public wxPanel {
   wxButton *m_btnAddProfile;
   wxButton *m_btnRemoveProfile;
   cTextCtrl *m_textrich;
-  wxArrayString m_choices;
   cPanelConfiguration *m_pnlDisplayConfig;
 
   cPanel(cFrame *frame);
