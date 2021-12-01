@@ -4,6 +4,7 @@
 #include <wx/dataview.h>
 #include <wx/propdlg.h>
 #include <wx/wx.h>
+#include <wx/choicdlg.h>
 
 #include "Config.h"
 #include "ControlIDs.h"
@@ -77,15 +78,13 @@ wxEND_EVENT_TABLE()
 
 class cPanel : public wxPanel {
  public:
-  wxCheckBox *m_cbxEnableWatchdog;
-  wxCheckBox *m_cbxTrackOnStart;
-  wxCheckBox *m_cbxQuitOnLossOfTrackIR;
-  wxTextCtrl *m_txtTrackIrDllPath;
   wxButton *m_btnStartMouse;
   wxButton *m_btnStopMouse;
   wxChoice *m_cmbProfiles;
   wxButton *m_btnAddProfile;
   wxButton *m_btnRemoveProfile;
+
+  wxArrayString m_choices;
 
   cPanelConfiguration *m_pnlDisplayConfig;
 
@@ -93,26 +92,16 @@ class cPanel : public wxPanel {
 
   cPanel(cFrame *frame);
 
-  void LoadSettings();
-  void PopulateComboBoxWithProfiles(CConfig config) {
-    m_cmbProfiles->Clear();
-
-    for (auto &item : config.GetProfileNames()) {
-      m_cmbProfiles->Append(item);
-    }
-  }
+  void PopulateComboBoxWithProfiles(CConfig config);
+  void PopulateSettings();
 
   void OnTrackStart(wxCommandEvent &event);
+  void OnTrackStop(wxCommandEvent &event);
 
  private:
   cFrame *m_parent;
-  // Control Event Handlers
-  void OnTrackStop(wxCommandEvent &event);
+  wxMultiChoiceDialog* m_removeProfile;
 
-  void OnEnabledWatchdog(wxCommandEvent &event);
-  void OnTrackOnStart(wxCommandEvent &event);
-  void OnQuitOnLossOfTrackIr(wxCommandEvent &event);
-  void OnTrackIrDllPath(wxCommandEvent &event);
   void OnActiveProfile(wxCommandEvent &event);
   void OnAddProfile(wxCommandEvent &event);
   void OnRemoveProfile(wxCommandEvent &event);
@@ -124,26 +113,22 @@ class cPanel : public wxPanel {
 wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
   EVT_BUTTON(myID_START_TRACK, cPanel::OnTrackStart)
   EVT_BUTTON(myID_STOP_TRACK, cPanel::OnTrackStop)
-  EVT_CHECKBOX(myID_WATCHDOG_ENABLED, cPanel::OnEnabledWatchdog)
-  EVT_CHECKBOX(myID_TRACK_ON_START, cPanel::OnTrackOnStart)
-  EVT_CHECKBOX(myID_QUIT_ON_LOSS_OF_TRACK_IR, cPanel::OnQuitOnLossOfTrackIr)
-  EVT_TEXT_ENTER(myID_TRACK_IR_DLL_PATH, cPanel::OnTrackIrDllPath)
   EVT_CHOICE(myID_PROFILE_SELECTION, cPanel::OnActiveProfile)
   EVT_BUTTON(myID_ADD_PROFILE, cPanel::OnAddProfile)
   EVT_BUTTON(myID_REMOVE_PROFILE, cPanel::OnRemoveProfile)
 wxEND_EVENT_TABLE()
 // clang-format on
 
-    class cSettingsGeneralPanel : public wxPanel {
+class cSettingsGeneralPanel : public wxPanel {
  public:
   wxCheckBox *m_cbxEnableWatchdog;
   wxCheckBox *m_cbxTrackOnStart;
   wxCheckBox *m_cbxQuitOnLossOfTrackIR;
-
-  cSettingsGeneralPanel(wxWindow *parent, SData *data);
+  cSettingsGeneralPanel(wxWindow* parent);
+  void UpdateControls(SData *userData);
 
  private:
-  SData *m_userData;
+  SData *m_userData = nullptr;
   void OnEnabledWatchdog(wxCommandEvent &event);
   void OnTrackOnStart(wxCommandEvent &event);
   void OnQuitOnLossOfTrackIr(wxCommandEvent &event);
@@ -160,30 +145,37 @@ END_EVENT_TABLE()
 
 class cSettingsAdvancedlPanel : public wxPanel {
  public:
-  wxTextCtrl *m_txtTrackIrDllPath;
-  cSettingsAdvancedlPanel(wxWindow *parent, SData *data);
+  wxTextCtrl* m_txtTrackIrDllPath;
+  cSettingsAdvancedlPanel(wxWindow *parent);
+  void UpdateControls(SData *userData);
 
  private:
-  SData *m_userData;
-  void OnTrackIrDllPath(wxCommandEvent& event);
+  SData *m_userData = nullptr;
+  void OnTrackIrDllPath(wxCommandEvent &event);
   wxDECLARE_EVENT_TABLE();
 };
 
 // clang-format off
 BEGIN_EVENT_TABLE(cSettingsAdvancedlPanel, wxPanel)
-  EVT_TEXT_ENTER(myID_TRACK_IR_DLL_PATH, cSettingsAdvancedlPanel::OnTrackIrDllPath)
+  EVT_TEXT(myID_TRACK_IR_DLL_PATH, cSettingsAdvancedlPanel::OnTrackIrDllPath)
 END_EVENT_TABLE()
 // clang-format on
 
 class cSettingsPopup : public wxPropertySheetDialog {
  public:
-  cSettingsPopup(cFrame *m_parent);
-  bool CreateDlg(SData *userData);
   SData *m_userData = nullptr;
+  cSettingsPopup(cFrame *m_parent);
+  void LoadUserData(SData *userData);
 
  private:
   cFrame *m_parent = nullptr;
+  cSettingsGeneralPanel *m_pnlGen;
+  cSettingsAdvancedlPanel *m_pnlAdv;
 };
+
+//class cRemoveProfile : public wxMultiChoiceDialog {
+//public:
+//};
 
 //////////////////////////////////////////////////////////////////////
 //                              Frame                               //
