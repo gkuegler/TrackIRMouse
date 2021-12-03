@@ -362,10 +362,18 @@ void CConfig::RemoveProfile(std::string profileName) {
   for (std::size_t i = 0; i < data.profiles.size(); i++) {
     if (profileName == data.profiles[i].name) {
       data.profiles.erase(data.profiles.begin() + i);
-      LogToWix(fmt::format("Deleted profile: {}", profileName));
+      LogToWix(fmt::format("Deleted profile: {}\n", profileName));
       LogToFile(fmt::format("Deleted profile: {}", profileName));
     }
   }
+}
+
+void CConfig::DuplicateActiveProfile()
+{
+  auto profile = GetActiveProfile();
+  profile.name.append("2"); // incremental profile name
+  data.profiles.push_back(profile);
+  data.activeProfileName = profile.name;
 }
 
 std::vector<std::string> CConfig::GetProfileNames() {

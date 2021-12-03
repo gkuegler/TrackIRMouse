@@ -9,7 +9,8 @@
 
 #include "toml.hpp"
 
-static constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right", "top", "bottom"};
+static constexpr std::array<std::string_view, 4> kBoundNames = {
+    "left", "right", "top", "bottom"};
 
 class CBounds {
  public:
@@ -17,7 +18,7 @@ class CBounds {
   std::array<float, 4> rotationBounds{0.0, 0.0, 0.0, 0.0};
   std::array<int, 4> paddingBounds{0, 0, 0, 0};
 
-  CBounds() {};
+  CBounds(){};
   CBounds(std::array<float, 4> &&rotations, std::array<int, 4> &&padding) {
     rotationBounds = rotations;
     paddingBounds = padding;
@@ -54,10 +55,10 @@ class CConfig {
   // Initializations Functions
   void ParseFile(const std::string);
   void LoadSettings();
-  void SaveSettings();;
+  void SaveSettings();
 
   // Getter functions
-  SProfile& GetActiveProfile();
+  SProfile &GetActiveProfile();
   std::vector<std::string> GetProfileNames();
   int GetActiveProfileDisplayCount();
 
@@ -66,6 +67,7 @@ class CConfig {
 
   void AddProfile(std::string newProfileName);
   void RemoveProfile(std::string profileName);
+  void DuplicateActiveProfile();
 
  private:
   toml::value m_vData;  // holds main toml object

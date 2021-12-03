@@ -11,6 +11,7 @@
 #include <wx/wx.h>
 
 class cFrame;
+class cPanel;
 
 class TrackThread : public wxThread {
  public:
@@ -21,9 +22,6 @@ class TrackThread : public wxThread {
   ~TrackThread();
 
   ExitCode Entry();
-
- protected:
-  wxEvtHandler *m_parent;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -37,11 +35,12 @@ class cPanelConfiguration : public wxPanel {
   wxCheckBox *m_useDefaultPadding;
   wxDataViewListCtrl *m_tlcMappingData;
 
-  cPanelConfiguration(wxPanel *panel);
+  cPanelConfiguration(cPanel* parent);
 
   void LoadDisplaySettings();
 
  private:
+    cPanel* m_parent;
   void OnName(wxCommandEvent &event);
   void OnProfileID(wxCommandEvent &event);
   void OnUseDefaultPadding(wxCommandEvent &event);
@@ -51,8 +50,8 @@ class cPanelConfiguration : public wxPanel {
 };
 // clang-format off
 wxBEGIN_EVENT_TABLE(cPanelConfiguration, wxPanel)
-    EVT_TEXT_ENTER(myID_PROFILE_NAME, cPanelConfiguration::OnName)
-    EVT_TEXT_ENTER(myID_PROFILE_ID, cPanelConfiguration::OnProfileID)
+    EVT_TEXT(myID_PROFILE_NAME, cPanelConfiguration::OnName)
+    EVT_TEXT(myID_PROFILE_ID, cPanelConfiguration::OnProfileID)
     EVT_CHECKBOX(myID_USE_DEFAULT_PADDING, cPanelConfiguration::OnUseDefaultPadding)
 wxEND_EVENT_TABLE()
     // clang-format on
@@ -78,12 +77,13 @@ class cPanel : public wxPanel {
   wxChoice *m_cmbProfiles;
   wxButton *m_btnAddProfile;
   wxButton *m_btnRemoveProfile;
+  wxButton *m_btnDuplicateProfile;
   cTextCtrl *m_textrich;
   cPanelConfiguration *m_pnlDisplayConfig;
 
-  cPanel(cFrame *frame);
+  cPanel(cFrame *parent);
 
-  void PopulateComboBoxWithProfiles(CConfig config);
+  void PopulateComboBoxWithProfiles();
   void PopulateSettings();
 
   void OnTrackStart(wxCommandEvent &event);
@@ -95,6 +95,7 @@ class cPanel : public wxPanel {
   void OnActiveProfile(wxCommandEvent &event);
   void OnAddProfile(wxCommandEvent &event);
   void OnRemoveProfile(wxCommandEvent &event);
+  void OnDuplicateProfile(wxCommandEvent &event);
 
   wxDECLARE_EVENT_TABLE();
 };
@@ -106,6 +107,7 @@ wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
   EVT_CHOICE(myID_PROFILE_SELECTION, cPanel::OnActiveProfile)
   EVT_BUTTON(myID_ADD_PROFILE, cPanel::OnAddProfile)
   EVT_BUTTON(myID_REMOVE_PROFILE, cPanel::OnRemoveProfile)
+  EVT_BUTTON(myID_DUPLICATE_PROFILE, cPanel::OnDuplicateProfile)
 wxEND_EVENT_TABLE()
 // clang-format on
 

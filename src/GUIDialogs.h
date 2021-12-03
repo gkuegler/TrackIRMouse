@@ -47,6 +47,9 @@ private:
 
 //class cRemoveProfile : public wxMultiChoiceDialog {
 //public:
+//	cRemoveProfile(wxWindow* parent);
+//pr
+//
 //};
 
 #endif /* TRACKIRMOUSE_GUIDIALOGS_H */

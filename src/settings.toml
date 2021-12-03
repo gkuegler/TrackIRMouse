@@ -4,12 +4,12 @@
 
 
 [General]
-track_on_start = false
+track_on_start = true
 quit_on_loss_of_track_ir = true
-watchdog_enabled = false
+watchdog_enabled = true
 # Specify "default" to get value from registry or an absolute path eg. "C:\Program Files..."
 trackir_dll_directory = "default"
-active_profile = "Desktop Dual Monitor"
+active_profile = "Desktop Single Monitor"
 
 [[Profiles]]
 profile_id = 13302
