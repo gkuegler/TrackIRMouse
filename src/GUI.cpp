@@ -10,6 +10,10 @@ profile box:
   configuration window?
   duplicate profile
 
+  maintain selections to move up and down
+  convert values to floats in validation step of handle event
+  fix internal override of handling default display padding
+
 The Algorithm Design Manual - Steven S. Skiena
 */
 
@@ -32,7 +36,10 @@ The Algorithm Design Manual - Steven S. Skiena
 #include "GUIDialogs.h"
 #include "Log.h"
 #include "Track.h"
+
 constexpr std::string_view kVersionNo = "0.6.0";
+const std::string kRotationTitle = "bound (degrees)";
+const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(100, 25);
 
 wxIMPLEMENT_APP(CGUIApp);
@@ -249,7 +256,7 @@ cTextCtrl::cTextCtrl(wxWindow *parent, wxWindowID id, const wxString &value,
                      const wxPoint &pos, const wxSize &size, int style)
     : wxTextCtrl(parent, id, value, pos, size, style) {}
 
-cPanel::cPanel(cFrame* parent) : wxPanel(parent) {
+cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
   m_parent = parent;
 
   m_btnStartMouse =
@@ -289,46 +296,46 @@ cPanel::cPanel(cFrame* parent) : wxPanel(parent) {
   m_textrich->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL,
                              wxFONTWEIGHT_NORMAL));
 
-  wxBoxSizer *zrTrackCmds = new wxBoxSizer(wxHORIZONTAL);
+  auto *zrTrackCmds = new wxBoxSizer(wxHORIZONTAL);
   zrTrackCmds->Add(m_btnStartMouse, 0, wxALL, 0);
   zrTrackCmds->Add(m_btnStopMouse, 0, wxALL, 0);
 
-  wxBoxSizer *zrProfCmds1 = new wxBoxSizer(wxHORIZONTAL);
+  auto *zrProfCmds1 = new wxBoxSizer(wxHORIZONTAL);
   zrProfCmds1->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
   zrProfCmds1->Add(m_cmbProfiles, 1, wxEXPAND, 0);
 
-  wxBoxSizer *zrProfCmds2 = new wxBoxSizer(wxHORIZONTAL);
+  auto *zrProfCmds2 = new wxBoxSizer(wxHORIZONTAL);
   zrProfCmds2->Add(m_btnAddProfile, 0, wxALL, 0);
   zrProfCmds2->Add(m_btnRemoveProfile, 0, wxALL, 0);
   zrProfCmds2->Add(m_btnDuplicateProfile, 0, wxALL, 0);
 
-  wxBoxSizer *zrProfCmds = new wxBoxSizer(wxVERTICAL);
+  auto *zrProfCmds = new wxBoxSizer(wxVERTICAL);
   zrProfCmds->Add(zrProfCmds2, 0, wxBOTTOM, 5);
   zrProfCmds->Add(zrProfCmds1, 1, wxALL | wxEXPAND, 0);
 
-  wxBoxSizer *zrBlock1Left = new wxBoxSizer(wxVERTICAL);
+  auto *zrBlock1Left = new wxBoxSizer(wxVERTICAL);
   zrBlock1Left->Add(zrTrackCmds, 0, wxBOTTOM, 10);
 
-  wxBoxSizer *zrBlock1 = new wxBoxSizer(wxHORIZONTAL);
+  auto *zrBlock1 = new wxBoxSizer(wxHORIZONTAL);
   zrBlock1->Add(zrBlock1Left, 0, wxALL, 0);
   // Future use is for graphical display
   // zrBlock1->Add(zrBlock1Right, 0, wxALL, 10);
 
-  wxBoxSizer *zrBlock2Left = new wxBoxSizer(wxVERTICAL);
+  auto *zrBlock2Left = new wxBoxSizer(wxVERTICAL);
   zrBlock2Left->Add(zrProfCmds, 0, wxBOTTOM, 10);
   zrBlock2Left->Add(m_pnlDisplayConfig, 0, wxALL, 0);
 
-  wxBoxSizer *zrBlock2Right = new wxBoxSizer(wxVERTICAL);
+  auto *zrBlock2Right = new wxBoxSizer(wxVERTICAL);
   zrBlock2Right->Add(txtLogOutputTitle, 0, wxBOTTOM, 5);
   zrBlock2Right->Add(m_textrich, 1, wxEXPAND, 0);
 
-  wxBoxSizer *zrBlock2 = new wxBoxSizer(wxHORIZONTAL);
+  auto *zrBlock2 = new wxBoxSizer(wxHORIZONTAL);
   zrBlock2->Add(zrBlock2Left, 0, wxALL | wxEXPAND, 5);
-  zrBlock2->Add(zrBlock2Right, 1, wxALL | wxEXPAND, 5);
 
-  wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
+  auto *topSizer = new wxBoxSizer(wxVERTICAL);
   topSizer->Add(zrBlock1, 0, wxALL | wxEXPAND, 10);
-  topSizer->Add(zrBlock2, 0, wxALL | wxEXPAND, 10);
+  topSizer->Add(zrBlock2, 1, wxALL | wxEXPAND, 10);
+  topSizer->Add(zrBlock2Right, 1, wxALL | wxEXPAND, 5);
 
   SetSizer(topSizer);
 
@@ -448,10 +455,10 @@ void cPanel::OnDuplicateProfile(wxCommandEvent &event) {
 //                      Display Settings Panel                      //
 //////////////////////////////////////////////////////////////////////
 
-cPanelConfiguration::cPanelConfiguration(cPanel* parent)
+cPanelConfiguration::cPanelConfiguration(cPanel *parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
               wxSIMPLE_BORDER | wxTAB_TRAVERSAL) {
-    m_parent = parent;
+  m_parent = parent;
   m_name =
       new wxTextCtrl(this, myID_PROFILE_NAME, "Lorem Ipsum", wxDefaultPosition,
                      wxSize(200, 20), wxTE_LEFT, wxDefaultValidator, "");
@@ -461,17 +468,46 @@ cPanelConfiguration::cPanelConfiguration(cPanel* parent)
   m_useDefaultPadding = new wxCheckBox(
       this, myID_USE_DEFAULT_PADDING, "Use Default Padding", wxDefaultPosition,
       wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-
+  m_btnAddDisplay = new wxButton(this, myID_ADD_DISPLAY, "+", wxDefaultPosition,
+                                 wxSize(30, 30), 0, wxDefaultValidator, "");
+  m_btnRemoveDisplay =
+      new wxButton(this, myID_REMOVE_DISPLAY, "-", wxDefaultPosition,
+                   wxSize(30, 30), 0, wxDefaultValidator, "");
+  m_btnMoveUp = new wxButton(this, myID_MOVE_UP, "Up", wxDefaultPosition,
+                             wxSize(50, 30), 0, wxDefaultValidator, "");
+  m_btnMoveDown = new wxButton(this, myID_MOVE_DOWN, "Down", wxDefaultPosition,
+                               wxSize(50, 30), 0, wxDefaultValidator, "");
   m_tlcMappingData = new wxDataViewListCtrl(
-      this, myID_MAPPING_DATA, wxDefaultPosition, wxSize(500, 200),
+      this, myID_MAPPING_DATA, wxDefaultPosition, wxSize(800, 150),
       wxDV_HORIZ_RULES, wxDefaultValidator);
 
-  m_tlcMappingData->AppendTextColumn("Display #");
-  m_tlcMappingData->AppendTextColumn("Type");
-  m_tlcMappingData->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE);
-  m_tlcMappingData->AppendTextColumn("Right", wxDATAVIEW_CELL_EDITABLE);
-  m_tlcMappingData->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE);
-  m_tlcMappingData->AppendTextColumn("Bottom", wxDATAVIEW_CELL_EDITABLE);
+  constexpr int kColumnWidth = 120;
+  m_tlcMappingData->AppendTextColumn("Display #", wxDATAVIEW_CELL_INERT, -1,
+                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Rot. Left (deg)",
+                                     wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
+                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Rot. Right (deg)",
+                                     wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
+                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Rot. Top (deg)", wxDATAVIEW_CELL_EDITABLE,
+                                     kColumnWidth, wxALIGN_RIGHT,
+                                     wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Rot. Bottom (deg)",
+                                     wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
+                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Pad. Left (px)", wxDATAVIEW_CELL_EDITABLE,
+                                     kColumnWidth, wxALIGN_RIGHT,
+                                     wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Pad. Right (px)",
+                                     wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
+                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Pad. Top (px)", wxDATAVIEW_CELL_EDITABLE,
+                                     kColumnWidth, wxALIGN_RIGHT,
+                                     wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Pad. Bottom (px)",
+                                     wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
+                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
 
   wxStaticText *txtPanelTitle =
       new wxStaticText(this, wxID_ANY, "Active Profile");
@@ -485,10 +521,17 @@ cPanelConfiguration::cPanelConfiguration(cPanel* parent)
   row1->Add(txtProfileId, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);
   row1->Add(m_profileID, 0, wxALIGN_CENTER_VERTICAL, 0);
 
+  wxBoxSizer *displayControls = new wxBoxSizer(wxHORIZONTAL);
+  displayControls->Add(m_btnMoveUp, 0, wxALL, 0);
+  displayControls->Add(m_btnMoveDown, 0, wxALL, 0);
+  displayControls->Add(m_btnAddDisplay, 0, wxALL, 0);
+  displayControls->Add(m_btnRemoveDisplay, 0, wxALL, 0);
+
   wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
   topSizer->Add(txtPanelTitle, 0, wxALL, 5);
   topSizer->Add(row1, 0, wxALL | wxEXPAND, 5);
   topSizer->Add(m_useDefaultPadding, 0, wxALL, 5);
+  topSizer->Add(displayControls, 0, wxALL, 5);
   topSizer->Add(m_tlcMappingData, 0, wxALL, 5);
 
   SetSizer(topSizer);
@@ -509,37 +552,24 @@ void cPanelConfiguration::LoadDisplaySettings() {
   // SetValue does not cause an event to be sent for checkboxes
   m_useDefaultPadding->SetValue(profile.useDefaultPadding);
 
-  std::vector<std::string> names = {"left", "right", "top", "bottom"};
   m_tlcMappingData->DeleteAllItems();
-
   int displayNum = 0;
   for (auto &display : profile.bounds) {
-    wxVector<wxVariant> rowBound;
-    rowBound.push_back(wxVariant(wxString::Format("%d", displayNum)));
-    rowBound.push_back(wxVariant("bounds (degrees)"));
+    wxVector<wxVariant> row;
+    row.push_back(wxVariant(wxString::Format("%d", displayNum++)));
     for (int i = 0; i < 4; i++) {
-      rowBound.push_back(
+      row.push_back(
           wxVariant(wxString::Format("%7.2f", display.rotationBounds[i])));
     }
-    m_tlcMappingData->AppendItem(rowBound);
-
-    if (!profile.useDefaultPadding) {
-      wxVector<wxVariant> rowPadding;
-      rowPadding.push_back(wxVariant(wxString::Format("%d", displayNum)));
-      rowPadding.push_back(wxVariant("padding (pixels)"));
-      // Optional Padding Values
-      for (int i = 0; i < 4; i++) {
-        if (!m_useDefaultPadding->IsChecked()) {
-          rowPadding.push_back(
-              wxVariant(wxString::Format("%d", display.paddingBounds[i])));
-        } else {
-          rowPadding.push_back(wxVariant(wxString::Format("%s", "(default)")));
-        }
+    for (int i = 0; i < 4; i++) {
+      if (m_useDefaultPadding->IsChecked()) {
+        row.push_back(wxVariant(wxString::Format("%s", "(default)")));
+      } else {
+        row.push_back(
+            wxVariant(wxString::Format("%d", display.paddingBounds[i])));
       }
-      m_tlcMappingData->AppendItem(rowPadding);
     }
-
-    displayNum++;
+    m_tlcMappingData->AppendItem(row);
   }
 }
 
@@ -572,12 +602,93 @@ void cPanelConfiguration::OnUseDefaultPadding(wxCommandEvent &event) {
   LoadDisplaySettings();
 }
 
-void cPanelConfiguration::OnTlcMappingData(wxCommandEvent &event) {
-  // m_tlcMappingData
-  CConfig *config = GetGlobalConfig();
-  auto &profile = config->GetActiveProfile();
-  // profile.useDefaultPadding = m_tlcMappingData->IsChecked();
+void cPanelConfiguration::OnMappingData(wxDataViewEvent &event) {
+  auto &profile = GetGlobalConfig()->GetActiveProfile();
+
+  // finding value and column
+  wxVariant value = event.GetValue();
+  int column = event.GetColumn();
+
+  // finding associated row; there is no event->GetRow()
+  wxDataViewItem item = event.GetItem();
+  wxDataViewIndexListModel *model =
+      (wxDataViewIndexListModel *)(event.GetModel());
+  int row = model->GetRow(item);
+
+  if (column < 5) {
+    double number;
+    if (!value.GetString().ToDouble(&number)) {
+      wxLogError("couldn't convert string to double");
+      return;
+    }
+    profile.bounds[row].rotationBounds[column - 1] =
+        static_cast<double>(number);
+  }
+  if (column > 5) {
+    long number;
+    if (!value.GetString().ToLong(&number)) {
+      wxLogError("couldn't convert string to double");
+      return;
+    }
+    profile.bounds[row].paddingBounds[column - 5] = static_cast<long>(number);
+  }
+
   LoadDisplaySettings();
+}
+
+void cPanelConfiguration::OnAddDisplay(wxCommandEvent &event) {
+  auto &profile = GetGlobalConfig()->GetActiveProfile();
+  profile.bounds.push_back(CBounds());
+  LoadDisplaySettings();
+}
+void cPanelConfiguration::OnRemoveDisplay(wxCommandEvent &event) {
+  auto &profile = GetGlobalConfig()->GetActiveProfile();
+  auto index = m_tlcMappingData->GetSelectedRow();
+  if (wxNOT_FOUND != index) {
+    profile.bounds.erase(profile.bounds.begin() + index);
+    LoadDisplaySettings();
+  } else {
+    wxLogError("Display row not selected.");
+  }
+}
+
+void cPanelConfiguration::OnMoveUp(wxCommandEvent &event) {
+  auto &profile = GetGlobalConfig()->GetActiveProfile();
+  auto index = m_tlcMappingData->GetSelectedRow();
+  if (wxNOT_FOUND == index) {
+    wxLogError("Display row not selected.");
+  } else if (0 == index) {
+    return;  // selection is at the top. do nothing
+  } else {
+    std::swap(profile.bounds[index], profile.bounds[index - 1]);
+    LoadDisplaySettings();
+
+    // This is a terrible hack to find the row of the item we just moved
+    auto model = (wxDataViewIndexListModel *)m_tlcMappingData->GetModel();
+    auto item = (model->GetItem(index - 1));
+    wxDataViewItemArray items(size_t(1));  // no braced init constructor :(
+    items[0] = item;                       // assumed single selection mode
+    m_tlcMappingData->SetSelections(items);
+  }
+}
+void cPanelConfiguration::OnMoveDown(wxCommandEvent &event) {
+  auto &profile = GetGlobalConfig()->GetActiveProfile();
+  auto index = m_tlcMappingData->GetSelectedRow();
+  if (wxNOT_FOUND == index) {
+    wxLogError("Display row not selected.");
+  } else if ((m_tlcMappingData->GetItemCount() - 1) == index) {
+    return;  // selection is at the bottom. do nothing
+  } else {
+    std::swap(profile.bounds[index], profile.bounds[index + 1]);
+    LoadDisplaySettings();
+
+    // This is a terrible hack to find the row of the item we just moved
+    auto model = (wxDataViewIndexListModel *)m_tlcMappingData->GetModel();
+    auto item = (model->GetItem(index + 1));
+    wxDataViewItemArray items(size_t(1));  // no braced init constructor :(
+    items[0] = item;                       // assumed single selection mode
+    m_tlcMappingData->SetSelections(items);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////

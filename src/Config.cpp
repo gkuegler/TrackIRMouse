@@ -368,10 +368,9 @@ void CConfig::RemoveProfile(std::string profileName) {
   }
 }
 
-void CConfig::DuplicateActiveProfile()
-{
+void CConfig::DuplicateActiveProfile() {
   auto profile = GetActiveProfile();
-  profile.name.append("2"); // incremental profile name
+  profile.name.append("2");  // incremental profile name
   data.profiles.push_back(profile);
   data.activeProfileName = profile.name;
 }

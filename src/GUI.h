@@ -1,14 +1,14 @@
 #ifndef TRACKIRMOUSE_GUI_H
 #define TRACKIRMOUSE_GUI_H
 
+#include <wx/dataview.h>
+#include <wx/wx.h>
+
 #include "Config.h"
 #include "ControlIDs.h"
 #include "Exceptions.h"
 #include "Log.h"
 #include "Track.h"
-
-#include <wx/dataview.h>
-#include <wx/wx.h>
 
 class cFrame;
 class cPanel;
@@ -33,34 +33,49 @@ class cPanelConfiguration : public wxPanel {
   wxTextCtrl *m_name;
   wxTextCtrl *m_profileID;
   wxCheckBox *m_useDefaultPadding;
+  wxButton *m_btnAddDisplay;
+  wxButton *m_btnRemoveDisplay;
+  wxButton *m_btnMoveUp;
+  wxButton *m_btnMoveDown;
   wxDataViewListCtrl *m_tlcMappingData;
 
-  cPanelConfiguration(cPanel* parent);
+  cPanelConfiguration(cPanel *parent);
 
   void LoadDisplaySettings();
 
  private:
-    cPanel* m_parent;
+  cPanel *m_parent;
   void OnName(wxCommandEvent &event);
   void OnProfileID(wxCommandEvent &event);
   void OnUseDefaultPadding(wxCommandEvent &event);
-  void OnTlcMappingData(wxCommandEvent &event);
+  void OnMappingData(wxDataViewEvent &event);
+  void OnAddDisplay(wxCommandEvent &event);
+  void OnRemoveDisplay(wxCommandEvent &event);
+  void OnMoveUp(wxCommandEvent &event);
+  void OnMoveDown(wxCommandEvent &event);
 
   wxDECLARE_EVENT_TABLE();
 };
+
 // clang-format off
 wxBEGIN_EVENT_TABLE(cPanelConfiguration, wxPanel)
     EVT_TEXT(myID_PROFILE_NAME, cPanelConfiguration::OnName)
     EVT_TEXT(myID_PROFILE_ID, cPanelConfiguration::OnProfileID)
     EVT_CHECKBOX(myID_USE_DEFAULT_PADDING, cPanelConfiguration::OnUseDefaultPadding)
+    // EVT_BUTTON(myID_MANAGE_DISPLAYS, cPanelConfiguration::OnManageDisplays)
+    EVT_DATAVIEW_ITEM_EDITING_DONE(myID_MAPPING_DATA, cPanelConfiguration::OnMappingData)
+    EVT_BUTTON(myID_ADD_DISPLAY, cPanelConfiguration::OnAddDisplay)
+    EVT_BUTTON(myID_REMOVE_DISPLAY, cPanelConfiguration::OnRemoveDisplay)
+    EVT_BUTTON(myID_MOVE_UP, cPanelConfiguration::OnMoveUp)
+    EVT_BUTTON(myID_MOVE_DOWN, cPanelConfiguration::OnMoveDown)
 wxEND_EVENT_TABLE()
     // clang-format on
 
-//////////////////////////////////////////////////////////////////////
-//                Text Control Status Output Window                 //
-//////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////
+    //                Text Control Status Output Window                 //
+    //////////////////////////////////////////////////////////////////////
 
-class cTextCtrl : public wxTextCtrl {
+    class cTextCtrl : public wxTextCtrl {
  public:
   cTextCtrl(wxWindow *parent, wxWindowID id, const wxString &value,
             const wxPoint &pos, const wxSize &size, int style = 0);
@@ -109,13 +124,13 @@ wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
   EVT_BUTTON(myID_REMOVE_PROFILE, cPanel::OnRemoveProfile)
   EVT_BUTTON(myID_DUPLICATE_PROFILE, cPanel::OnDuplicateProfile)
 wxEND_EVENT_TABLE()
-// clang-format on
+    // clang-format on
 
-//////////////////////////////////////////////////////////////////////
-//                              Frame                               //
-//////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////
+    //                              Frame                               //
+    //////////////////////////////////////////////////////////////////////
 
-class cFrame : public wxFrame {
+    class cFrame : public wxFrame {
  public:
   cPanel *m_panel;
   TrackThread *m_pTrackThread = nullptr;
@@ -145,11 +160,11 @@ wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
 wxEND_EVENT_TABLE()
     // clang-format on
 
-//////////////////////////////////////////////////////////////////////
-//                         Main Application                         //
-//////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////
+    //                         Main Application                         //
+    //////////////////////////////////////////////////////////////////////
 
-class CGUIApp : public wxApp {
+    class CGUIApp : public wxApp {
  public:
   CGUIApp(){};
   ~CGUIApp(){};
