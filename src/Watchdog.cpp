@@ -127,13 +127,14 @@ DWORD WINAPI InstanceThread(LPVOID param) {
                            &sa);  // default security attribute
 
   if (hPipe == INVALID_HANDLE_VALUE) {
-    LogToWixError(fmt::format("CreateNamedPipe failed, GLE={}.\n", GetLastError()));
+    LogToWixError(
+        fmt::format("CreateNamedPipe failed, GLE={}.\n", GetLastError()));
     return -1;
   }
 
   if (SetEvent(*phEvent) == 0) {
-    LogToWixError(fmt::format("Could not set Watchdog Event with error code: {}\n",
-                         GetLastError()));
+    LogToWixError(fmt::format(
+        "Could not set Watchdog Event with error code: {}\n", GetLastError()));
   }
 
   // Serve errors handled in implementation
@@ -219,7 +220,7 @@ void Serve(HANDLE hPipe) {
 
       if (!bSuccess || cbReplyBytes != cbWritten) {
         LogToWixError(fmt::format("InstanceThread WriteFile failed, GLE={}.\n",
-                             GetLastError()));
+                                  GetLastError()));
       } else {
         LogToWix(fmt::format("Number of Bytes Written: {}\n", cbReplyBytes));
       }

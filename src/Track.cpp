@@ -62,7 +62,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
   //  - any NP dll function call failure
 
   // LogToWix(fmt::format("\nStarting Initialization Of TrackIR\n"));
-    SProfile activeProfile = config.GetActiveProfile();
+  SProfile activeProfile = config.GetActiveProfile();
 
   WinSetup(config);
 
@@ -86,12 +86,11 @@ void TR_Initialize(HWND hWnd, CConfig config) {
 #ifdef UNICODE
   TCHAR sDll[MAX_PATH];
 
-  int resultConvert =
-      MultiByteToWideChar(CP_UTF8,
-                          // MB_ERR_INVALID_CHARS, // I feel like this should be
-                          // the smart choice, but this is an error.
-                          MB_COMPOSITE, config.m_trackIrDllPath.c_str(),
-                          MAX_PATH, sDll, MAX_PATH);
+  int resultConvert = MultiByteToWideChar(
+      CP_UTF8,
+      // MB_ERR_INVALID_CHARS, // I feel like this should be
+      // the smart choice, but this is an error.
+      MB_COMPOSITE, config.m_trackIrDllPath.c_str(), MAX_PATH, sDll, MAX_PATH);
 
   if (0 == resultConvert)
     throw Exception(fmt::format(
@@ -156,8 +155,7 @@ void TR_Initialize(HWND hWnd, CConfig config) {
   else
     throw Exception(fmt::format("Request Data: Failed: {}", rsltReqData));
 
-  rsltReqData =
-      NP_RegisterProgramProfileID(activeProfile.profile_ID);
+  rsltReqData = NP_RegisterProgramProfileID(activeProfile.profile_ID);
   if (NP_OK == rsltReqData)
     LogToFile("Register Profile ID: Success");
   else
@@ -319,26 +317,20 @@ void WinSetup(CConfig config) {
 }
 
 void DisplaySetup(CConfig config) {
-    SProfile activeProfile = config.GetActiveProfile();
+  SProfile activeProfile = config.GetActiveProfile();
 
   for (int i = 0; i < activeProfile.bounds.size(); i++) {
-    g_displays[i].rotationBoundLeft =
-        activeProfile.bounds[i].rotationBounds[0];
+    g_displays[i].rotationBoundLeft = activeProfile.bounds[i].rotationBounds[0];
     g_displays[i].rotationBoundRight =
         activeProfile.bounds[i].rotationBounds[1];
-    g_displays[i].rotationBoundTop =
-        activeProfile.bounds[i].rotationBounds[2];
+    g_displays[i].rotationBoundTop = activeProfile.bounds[i].rotationBounds[2];
     g_displays[i].rotationBoundBottom =
         activeProfile.bounds[i].rotationBounds[3];
 
-    g_displays[i].paddingLeft =
-        activeProfile.bounds[i].paddingBounds[0];
-    g_displays[i].paddingRight =
-        activeProfile.bounds[i].paddingBounds[1];
-    g_displays[i].paddingTop =
-        activeProfile.bounds[i].paddingBounds[2];
-    g_displays[i].paddingBottom =
-        activeProfile.bounds[i].paddingBounds[3];
+    g_displays[i].paddingLeft = activeProfile.bounds[i].paddingBounds[0];
+    g_displays[i].paddingRight = activeProfile.bounds[i].paddingBounds[1];
+    g_displays[i].paddingTop = activeProfile.bounds[i].paddingBounds[2];
+    g_displays[i].paddingBottom = activeProfile.bounds[i].paddingBounds[3];
 
     g_displays[i].setAbsBounds(g_virtualOriginX, g_virtualOriginY,
                                g_xPixelAbsoluteSlope, g_yPixelAbsoluteSlope);
