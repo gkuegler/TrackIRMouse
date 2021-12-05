@@ -233,6 +233,7 @@ void cFrame::UpdateGuiFromSettings() {
 }
 
 void cFrame::OnReload(wxCommandEvent &event) {
+  ClearGlobalData();
   LoadSettingsFromFile();
   UpdateGuiFromSettings();
 }

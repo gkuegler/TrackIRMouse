@@ -69,6 +69,11 @@ class CConfig {
   void RemoveProfile(std::string profileName);
   void DuplicateActiveProfile();
 
+  void ClearData(){
+    m_vData = toml::value();
+    data = SData();
+  }
+
  private:
   toml::value m_vData;  // holds main toml object
 
@@ -77,6 +82,7 @@ class CConfig {
 
 CConfig *GetGlobalConfig();
 CConfig GetGlobalConfigCopy();
+void ClearGlobalData();
 
 extern CConfig g_config;
 

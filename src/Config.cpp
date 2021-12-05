@@ -14,6 +14,8 @@ CConfig *GetGlobalConfig() { return &g_config; }
 
 CConfig GetGlobalConfigCopy() { return g_config; }
 
+void ClearGlobalData(){ g_config = CConfig(); }
+
 typedef struct _RegistryQuery {
   int result;
   std::string resultString;
