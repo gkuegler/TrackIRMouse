@@ -14,7 +14,7 @@ class cFrame;
 class cPanel;
 
 class TrackThread : public wxThread {
- public:
+public:
   cFrame *m_pHandler = nullptr;
   HWND m_hWnd;
 
@@ -29,7 +29,7 @@ class TrackThread : public wxThread {
 //////////////////////////////////////////////////////////////////////
 
 class cPanelConfiguration : public wxPanel {
- public:
+public:
   wxTextCtrl *m_name;
   wxTextCtrl *m_profileID;
   wxCheckBox *m_useDefaultPadding;
@@ -43,7 +43,7 @@ class cPanelConfiguration : public wxPanel {
 
   void LoadDisplaySettings();
 
- private:
+private:
   cPanel *m_parent;
   void OnName(wxCommandEvent &event);
   void OnProfileID(wxCommandEvent &event);
@@ -76,7 +76,7 @@ wxEND_EVENT_TABLE()
     //////////////////////////////////////////////////////////////////////
 
     class cTextCtrl : public wxTextCtrl {
- public:
+public:
   cTextCtrl(wxWindow *parent, wxWindowID id, const wxString &value,
             const wxPoint &pos, const wxSize &size, int style = 0);
 };
@@ -86,7 +86,7 @@ wxEND_EVENT_TABLE()
 //////////////////////////////////////////////////////////////////////
 
 class cPanel : public wxPanel {
- public:
+public:
   wxButton *m_btnStartMouse;
   wxButton *m_btnStopMouse;
   wxChoice *m_cmbProfiles;
@@ -104,7 +104,7 @@ class cPanel : public wxPanel {
   void OnTrackStart(wxCommandEvent &event);
   void OnTrackStop(wxCommandEvent &event);
 
- private:
+private:
   cFrame *m_parent;
 
   void OnActiveProfile(wxCommandEvent &event);
@@ -115,7 +115,7 @@ class cPanel : public wxPanel {
   wxDECLARE_EVENT_TABLE();
 };
 
-// clang-format off
+//clang-format off
 wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
   EVT_BUTTON(myID_START_TRACK, cPanel::OnTrackStart)
   EVT_BUTTON(myID_STOP_TRACK, cPanel::OnTrackStop)
@@ -124,25 +124,29 @@ wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
   EVT_BUTTON(myID_REMOVE_PROFILE, cPanel::OnRemoveProfile)
   EVT_BUTTON(myID_DUPLICATE_PROFILE, cPanel::OnDuplicateProfile)
 wxEND_EVENT_TABLE()
-    // clang-format on
+// clang-format on
 
-    //////////////////////////////////////////////////////////////////////
-    //                              Frame                               //
-    //////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//                              Frame                               //
+//////////////////////////////////////////////////////////////////////
 
-    class cFrame : public wxFrame {
- public:
+// Main frame of program
+class cFrame : public wxFrame {
+public:
   cPanel *m_panel;
   TrackThread *m_pTrackThread = nullptr;
-  wxCriticalSection m_pThreadCS;  // protects the m_pThread pointer
+  wxCriticalSection m_pThreadCS; // protects the m_pThread pointer
 
   cFrame();
+  void LoadSettingsFromFile();
+  void UpdateGuiFromSettings();
 
- private:
+private:
   void OnExit(wxCommandEvent &event);
   void OnAbout(wxCommandEvent &event);
   void OnOpen(wxCommandEvent &event);
   void OnSave(wxCommandEvent &event);
+  void OnReload(wxCommandEvent &event);
   void OnSettings(wxCommandEvent &event);
   void OnGenerateExample(wxCommandEvent &event);
 
@@ -151,21 +155,22 @@ wxEND_EVENT_TABLE()
 
 // clang-format off
 wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
-    EVT_MENU(wxID_EXIT, cFrame::OnExit)
-    EVT_MENU(wxID_ABOUT, cFrame::OnAbout)
-    EVT_MENU(wxID_OPEN, cFrame::OnOpen)
-    EVT_MENU(wxID_SAVE, cFrame::OnSave)
-    EVT_MENU(myID_SETTINGS, cFrame::OnSettings)
-    EVT_BUTTON(myID_GEN_EXMPL, cFrame::OnGenerateExample)
+  EVT_MENU(wxID_EXIT, cFrame::OnExit)
+  EVT_MENU(wxID_ABOUT, cFrame::OnAbout)
+  EVT_MENU(wxID_OPEN, cFrame::OnOpen)
+  EVT_MENU(wxID_SAVE, cFrame::OnSave)
+  EVT_MENU(wxID_RELOAD, cFrame::OnReload)
+  EVT_MENU(myID_SETTINGS, cFrame::OnSettings)
+  EVT_BUTTON(myID_GEN_EXMPL, cFrame::OnGenerateExample)
 wxEND_EVENT_TABLE()
-    // clang-format on
+// clang-format on
 
-    //////////////////////////////////////////////////////////////////////
-    //                         Main Application                         //
-    //////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//                         Main Application                         //
+//////////////////////////////////////////////////////////////////////
 
-    class CGUIApp : public wxApp {
- public:
+class CGUIApp : public wxApp {
+public:
   CGUIApp(){};
   ~CGUIApp(){};
 
@@ -175,7 +180,7 @@ wxEND_EVENT_TABLE()
     std::terminate();
   }
 
- private:
+private:
   cFrame *m_frame = nullptr;
 };
 

@@ -49,7 +49,7 @@ bool CGUIApp::OnInit() {
   auto logger = spdlog::basic_logger_mt("mainlogger", "log-trackir.txt", true);
   spdlog::set_level(spdlog::level::info);
 
-  // Construct child elements
+  // Construct child elements first.
   m_frame = new cFrame();
 
   // Build out this function in order to past more than
@@ -74,52 +74,20 @@ bool CGUIApp::OnInit() {
     }
   });
 
-  CConfig *config = GetGlobalConfig();
+  // Member function will catch and terminate program on fatal errors
+  m_frame->LoadSettingsFromFile();
 
-  // Parse Settings File
-  try {
-    // wxLogError("press okay to continue");
-    config->ParseFile("settings.toml");
-  } catch (const toml::syntax_error &ex) {
-    wxLogFatalError("Failed To Parse toml Settings File:\n%s", ex.what());
-  } catch (std::runtime_error &ex) {
-    wxLogFatalError(
-        "Failed To Parse Settings File.\n\"settings.toml\" File Likely Not "
-        "Found.\n%s",
-        ex.what());
-  } catch (...) {
-    wxLogFatalError("An unhandled exception occurred when loading toml file.");
-  }
-
-  try {
-    config->LoadSettings();
-  }
-  // type_error inherits from toml::exception, needs to be caught first
-  catch (const toml::type_error &ex) {
-    wxLogFatalError("Incorrect type when loading settings.\n\n%s", ex.what());
-  }
-  // toml::exception is base exception class
-  catch (const toml::exception &ex) {
-    wxLogFatalError("std::exception:\n%s", ex.what());
-  } catch (const Exception &ex) {
-    wxLogFatalError("My Custom Exception:\n%s", ex.what());
-  } /*catch (...) {
-    wxLogFatalError(
-        "exception has gone unhandled loading and verifying settings");
-  }*/
-
-  // Populate GUI With Settings
-  m_frame->m_panel->PopulateComboBoxWithProfiles();
-  // m_frame->m_panel->m_pnlDisplayConfig->LoadDisplaySettings();
+  // Internally uses global config object
+  m_frame->UpdateGuiFromSettings();
 
   m_frame->Show();
 
   // Start the track IR thread if enabled
-  if (config->data.trackOnStart) {
+  if (GetGlobalConfig()->data.trackOnStart) {
     LogToFile(fmt::format(
         "checking the start track at start up -> watchdogEnabled: {}",
-        config->data.trackOnStart));
-    wxCommandEvent event = {};  // blank event to reuse start handler
+        GetGlobalConfig()->data.trackOnStart));
+    wxCommandEvent event = {}; // blank event to reuse start handler code
     m_frame->m_panel->OnTrackStart(event);
   }
 
@@ -144,6 +112,7 @@ cFrame::cFrame()
   // menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
   // "Open a new settings file from disk.");
   menuFile->Append(wxID_SAVE, "&Save\tCtrl-s", "Save the configuration file.");
+  menuFile->Append(wxID_RELOAD, "&Reload", "Reload the configuration file.");
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
 
@@ -205,7 +174,7 @@ void cFrame::OnOpen(wxCommandEvent &event) {
                               wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
   if (openFileDialog.ShowModal() == wxID_CANCEL) {
-    return;  // the user changed their mind...
+    return; // the user changed their mind...
   }
 
   // proceed loading the file chosen by the user;
@@ -221,6 +190,51 @@ void cFrame::OnOpen(wxCommandEvent &event) {
 void cFrame::OnSave(wxCommandEvent &event) {
   CConfig config = GetGlobalConfigCopy();
   config.SaveSettings();
+}
+
+void cFrame::LoadSettingsFromFile() {
+  CConfig *config = GetGlobalConfig();
+
+  // Parse Settings File
+  try {
+    // wxLogError("press okay to continue");
+    config->ParseFile("settings.toml");
+  } catch (const toml::syntax_error &ex) {
+    wxLogFatalError("Failed To Parse toml Settings File:\n%s", ex.what());
+  } catch (std::runtime_error &ex) {
+    wxLogFatalError(
+        "Failed To Parse Settings File.\n\"settings.toml\" File Likely Not "
+        "Found.\n%s",
+        ex.what());
+  } catch (...) {
+    wxLogFatalError("An unhandled exception occurred when loading toml file.");
+  }
+
+  try {
+    config->LoadSettings();
+  }
+  // type_error inherits from toml::exception, needs to be caught first
+  catch (const toml::type_error &ex) {
+    wxLogFatalError("Incorrect type when loading settings.\n\n%s", ex.what());
+  }
+  // toml::exception is base exception class
+  catch (const toml::exception &ex) {
+    wxLogFatalError("std::exception:\n%s", ex.what());
+  } catch (const Exception &ex) {
+    wxLogFatalError("My Custom Exception:\n%s", ex.what());
+  } /*catch (...) {
+    wxLogFatalError(
+        "exception has gone unhandled loading and verifying settings");
+  }*/
+}
+void cFrame::UpdateGuiFromSettings() {
+  // Populate GUI With Settings
+  m_panel->PopulateComboBoxWithProfiles();
+}
+
+void cFrame::OnReload(wxCommandEvent &event) {
+  LoadSettingsFromFile();
+  UpdateGuiFromSettings();
 }
 
 void cFrame::OnSettings(wxCommandEvent &event) {
@@ -658,7 +672,7 @@ void cPanelConfiguration::OnMoveUp(wxCommandEvent &event) {
   if (wxNOT_FOUND == index) {
     wxLogError("Display row not selected.");
   } else if (0 == index) {
-    return;  // selection is at the top. do nothing
+    return; // selection is at the top. do nothing
   } else {
     std::swap(profile.bounds[index], profile.bounds[index - 1]);
     LoadDisplaySettings();
@@ -666,8 +680,8 @@ void cPanelConfiguration::OnMoveUp(wxCommandEvent &event) {
     // This is a terrible hack to find the row of the item we just moved
     auto model = (wxDataViewIndexListModel *)m_tlcMappingData->GetModel();
     auto item = (model->GetItem(index - 1));
-    wxDataViewItemArray items(size_t(1));  // no braced init constructor :(
-    items[0] = item;                       // assumed single selection mode
+    wxDataViewItemArray items(size_t(1)); // no braced init constructor :(
+    items[0] = item;                      // assumed single selection mode
     m_tlcMappingData->SetSelections(items);
   }
 }
@@ -677,7 +691,7 @@ void cPanelConfiguration::OnMoveDown(wxCommandEvent &event) {
   if (wxNOT_FOUND == index) {
     wxLogError("Display row not selected.");
   } else if ((m_tlcMappingData->GetItemCount() - 1) == index) {
-    return;  // selection is at the bottom. do nothing
+    return; // selection is at the bottom. do nothing
   } else {
     std::swap(profile.bounds[index], profile.bounds[index + 1]);
     LoadDisplaySettings();
@@ -685,8 +699,8 @@ void cPanelConfiguration::OnMoveDown(wxCommandEvent &event) {
     // This is a terrible hack to find the row of the item we just moved
     auto model = (wxDataViewIndexListModel *)m_tlcMappingData->GetModel();
     auto item = (model->GetItem(index + 1));
-    wxDataViewItemArray items(size_t(1));  // no braced init constructor :(
-    items[0] = item;                       // assumed single selection mode
+    wxDataViewItemArray items(size_t(1)); // no braced init constructor :(
+    items[0] = item;                      // assumed single selection mode
     m_tlcMappingData->SetSelections(items);
   }
 }
