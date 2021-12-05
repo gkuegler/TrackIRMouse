@@ -37,7 +37,7 @@ The Algorithm Design Manual - Steven S. Skiena
 #include "Log.h"
 #include "Track.h"
 
-constexpr std::string_view kVersionNo = "0.6.0";
+constexpr std::string_view kVersionNo = "0.6.1";
 const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(100, 25);
