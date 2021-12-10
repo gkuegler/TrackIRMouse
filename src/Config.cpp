@@ -278,7 +278,7 @@ void CConfig::LoadSettings() {
 
 // clang-format off
 void CConfig::SaveSettings() {
-  const std::string FileName = "settings_test.toml";
+  const std::string FileName = "settings.toml";
 
   toml::value general{
         {"track_on_start", data.trackOnStart},
