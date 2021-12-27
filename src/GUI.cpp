@@ -87,7 +87,7 @@ bool CGUIApp::OnInit() {
     LogToFile(fmt::format(
         "checking the start track at start up -> watchdogEnabled: {}",
         GetGlobalConfig()->data.trackOnStart));
-    wxCommandEvent event = {}; // blank event to reuse start handler code
+    wxCommandEvent event = {};  // blank event to reuse start handler code
     m_frame->m_panel->OnTrackStart(event);
   }
 
@@ -106,8 +106,8 @@ bool CGUIApp::OnInit() {
 //////////////////////////////////////////////////////////////////////
 
 cFrame::cFrame()
-    : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", wxPoint(200, 200),
-              wxSize(1050, 600)) {
+    : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", wxPoint(100, 100),
+              wxSize(720, 700)) {
   wxMenu *menuFile = new wxMenu;
   // menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
   // "Open a new settings file from disk.");
@@ -138,9 +138,7 @@ cFrame::cFrame()
 
   m_panel = new cPanel(this);
   m_panel->GetSizer()->Fit(this);
-
-  // m_settingsPopup = new cSettingsPopup(this);
-  // m_settingsPopup->GetSizer()->Fit(this);
+  m_panel->Fit();
 }
 
 void cFrame::OnExit(wxCommandEvent &event) { Close(true); }
@@ -174,7 +172,7 @@ void cFrame::OnOpen(wxCommandEvent &event) {
                               wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
   if (openFileDialog.ShowModal() == wxID_CANCEL) {
-    return; // the user changed their mind...
+    return;  // the user changed their mind...
   }
 
   // proceed loading the file chosen by the user;
@@ -336,21 +334,18 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
   // Future use is for graphical display
   // zrBlock1->Add(zrBlock1Right, 0, wxALL, 10);
 
-  auto *zrBlock2Left = new wxBoxSizer(wxVERTICAL);
-  zrBlock2Left->Add(zrProfCmds, 0, wxBOTTOM, 10);
-  zrBlock2Left->Add(m_pnlDisplayConfig, 0, wxALL, 0);
+  auto *zrBlock2 = new wxBoxSizer(wxVERTICAL);
+  zrBlock2->Add(zrProfCmds, 0, wxBOTTOM, 10);
+  zrBlock2->Add(m_pnlDisplayConfig, 0, wxALL, 0);
 
-  auto *zrBlock2Right = new wxBoxSizer(wxVERTICAL);
-  zrBlock2Right->Add(txtLogOutputTitle, 0, wxBOTTOM, 5);
-  zrBlock2Right->Add(m_textrich, 1, wxEXPAND, 0);
-
-  auto *zrBlock2 = new wxBoxSizer(wxHORIZONTAL);
-  zrBlock2->Add(zrBlock2Left, 0, wxALL | wxEXPAND, 5);
+  auto *zrLogWindow = new wxBoxSizer(wxVERTICAL);
+  zrLogWindow->Add(txtLogOutputTitle, 0, wxBOTTOM, 5);
+  zrLogWindow->Add(m_textrich, 1, wxEXPAND, 0);
 
   auto *topSizer = new wxBoxSizer(wxVERTICAL);
   topSizer->Add(zrBlock1, 0, wxALL | wxEXPAND, 10);
   topSizer->Add(zrBlock2, 1, wxALL | wxEXPAND, 10);
-  topSizer->Add(zrBlock2Right, 1, wxALL | wxEXPAND, 5);
+  topSizer->Add(zrLogWindow, 1, wxALL | wxEXPAND, 5);
 
   SetSizer(topSizer);
 
@@ -492,35 +487,37 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
                              wxSize(50, 30), 0, wxDefaultValidator, "");
   m_btnMoveDown = new wxButton(this, myID_MOVE_DOWN, "Down", wxDefaultPosition,
                                wxSize(50, 30), 0, wxDefaultValidator, "");
+
+  constexpr int kColumnWidth = 70;
+
   m_tlcMappingData = new wxDataViewListCtrl(
-      this, myID_MAPPING_DATA, wxDefaultPosition, wxSize(800, 150),
+      this, myID_MAPPING_DATA, wxDefaultPosition, wxSize(680, 180),
       wxDV_HORIZ_RULES, wxDefaultValidator);
 
-  constexpr int kColumnWidth = 120;
   m_tlcMappingData->AppendTextColumn("Display #", wxDATAVIEW_CELL_INERT, -1,
                                      wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Rot. Left (deg)",
+  m_tlcMappingData->AppendTextColumn("Left",
                                      wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
                                      wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Rot. Right (deg)",
+  m_tlcMappingData->AppendTextColumn("Right",
                                      wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
                                      wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Rot. Top (deg)", wxDATAVIEW_CELL_EDITABLE,
+  m_tlcMappingData->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE,
                                      kColumnWidth, wxALIGN_RIGHT,
                                      wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Rot. Bottom (deg)",
+  m_tlcMappingData->AppendTextColumn("Bottom",
                                      wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
                                      wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Pad. Left (px)", wxDATAVIEW_CELL_EDITABLE,
+  m_tlcMappingData->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE,
                                      kColumnWidth, wxALIGN_RIGHT,
                                      wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Pad. Right (px)",
+  m_tlcMappingData->AppendTextColumn("Right",
                                      wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
                                      wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Pad. Top (px)", wxDATAVIEW_CELL_EDITABLE,
+  m_tlcMappingData->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE,
                                      kColumnWidth, wxALIGN_RIGHT,
                                      wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Pad. Bottom (px)",
+  m_tlcMappingData->AppendTextColumn("Bottom",
                                      wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
                                      wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
 
@@ -529,6 +526,9 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
   wxStaticText *txtProfileName = new wxStaticText(this, wxID_ANY, "Name:   ");
   wxStaticText *txtProfileId =
       new wxStaticText(this, wxID_ANY, "TrackIR Profile ID:   ");
+  wxStaticText* txtHeaders = new wxStaticText(this, wxID_ANY, 
+      "                           |----------------- Rotational Bounds Mapping ----------------|");
+
 
   wxBoxSizer *row1 = new wxBoxSizer(wxHORIZONTAL);
   row1->Add(txtProfileName, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -547,6 +547,7 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
   topSizer->Add(row1, 0, wxALL | wxEXPAND, 5);
   topSizer->Add(m_useDefaultPadding, 0, wxALL, 5);
   topSizer->Add(displayControls, 0, wxALL, 5);
+  topSizer->Add(txtHeaders, 0, wxLEFT, 5);
   topSizer->Add(m_tlcMappingData, 0, wxALL, 5);
 
   SetSizer(topSizer);
@@ -673,7 +674,7 @@ void cPanelConfiguration::OnMoveUp(wxCommandEvent &event) {
   if (wxNOT_FOUND == index) {
     wxLogError("Display row not selected.");
   } else if (0 == index) {
-    return; // selection is at the top. do nothing
+    return;  // selection is at the top. do nothing
   } else {
     std::swap(profile.bounds[index], profile.bounds[index - 1]);
     LoadDisplaySettings();
@@ -681,8 +682,8 @@ void cPanelConfiguration::OnMoveUp(wxCommandEvent &event) {
     // This is a terrible hack to find the row of the item we just moved
     auto model = (wxDataViewIndexListModel *)m_tlcMappingData->GetModel();
     auto item = (model->GetItem(index - 1));
-    wxDataViewItemArray items(size_t(1)); // no braced init constructor :(
-    items[0] = item;                      // assumed single selection mode
+    wxDataViewItemArray items(size_t(1));  // no braced init constructor :(
+    items[0] = item;                       // assumed single selection mode
     m_tlcMappingData->SetSelections(items);
   }
 }
@@ -692,7 +693,7 @@ void cPanelConfiguration::OnMoveDown(wxCommandEvent &event) {
   if (wxNOT_FOUND == index) {
     wxLogError("Display row not selected.");
   } else if ((m_tlcMappingData->GetItemCount() - 1) == index) {
-    return; // selection is at the bottom. do nothing
+    return;  // selection is at the bottom. do nothing
   } else {
     std::swap(profile.bounds[index], profile.bounds[index + 1]);
     LoadDisplaySettings();
@@ -700,8 +701,8 @@ void cPanelConfiguration::OnMoveDown(wxCommandEvent &event) {
     // This is a terrible hack to find the row of the item we just moved
     auto model = (wxDataViewIndexListModel *)m_tlcMappingData->GetModel();
     auto item = (model->GetItem(index + 1));
-    wxDataViewItemArray items(size_t(1)); // no braced init constructor :(
-    items[0] = item;                      // assumed single selection mode
+    wxDataViewItemArray items(size_t(1));  // no braced init constructor :(
+    items[0] = item;                       // assumed single selection mode
     m_tlcMappingData->SetSelections(items);
   }
 }
