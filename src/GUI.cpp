@@ -49,8 +49,17 @@ bool CGUIApp::OnInit() {
   auto logger = spdlog::basic_logger_mt("mainlogger", "log-trackir.txt", true);
   spdlog::set_level(spdlog::level::info);
 
+  int w = GetSystemMetrics(SM_CXMAXIMIZED);
+  int h = GetSystemMetrics(SM_CYMAXIMIZED);
+
+  constexpr int appWidth = 1200;
+  constexpr int appHeight = 800;
+
+  auto origin = wxPoint((w / 2) - (appWidth / 2), (h / 2) - (appHeight / 2));
+  auto dimensions = wxSize(appWidth, appHeight);
+
   // Construct child elements first.
-  m_frame = new cFrame();
+  m_frame = new cFrame(origin, dimensions);
 
   // Build out this function in order to past more than
   // log messages back to my main application
@@ -105,9 +114,9 @@ bool CGUIApp::OnInit() {
 //                            Main Frame                            //
 //////////////////////////////////////////////////////////////////////
 
-cFrame::cFrame()
-    : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", wxPoint(100, 100),
-              wxSize(720, 700)) {
+cFrame::cFrame(wxPoint origin, wxSize dimensions)
+    : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", origin,
+              dimensions) {
   wxMenu *menuFile = new wxMenu;
   // menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
   // "Open a new settings file from disk.");
@@ -309,42 +318,31 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
   m_textrich->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL,
                              wxFONTWEIGHT_NORMAL));
 
+  // Main Panel Layout
   auto *zrTrackCmds = new wxBoxSizer(wxHORIZONTAL);
   zrTrackCmds->Add(m_btnStartMouse, 0, wxALL, 0);
   zrTrackCmds->Add(m_btnStopMouse, 0, wxALL, 0);
 
-  auto *zrProfCmds1 = new wxBoxSizer(wxHORIZONTAL);
-  zrProfCmds1->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
-  zrProfCmds1->Add(m_cmbProfiles, 1, wxEXPAND, 0);
+  auto* zrDisplayCanvas = new wxBoxSizer(wxHORIZONTAL);
 
-  auto *zrProfCmds2 = new wxBoxSizer(wxHORIZONTAL);
-  zrProfCmds2->Add(m_btnAddProfile, 0, wxALL, 0);
-  zrProfCmds2->Add(m_btnRemoveProfile, 0, wxALL, 0);
-  zrProfCmds2->Add(m_btnDuplicateProfile, 0, wxALL, 0);
+  auto *zrProfCmds = new wxBoxSizer(wxHORIZONTAL);
+  zrProfCmds->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
+  zrProfCmds->Add(m_cmbProfiles, 1, wxEXPAND, 0);
+  zrProfCmds->Add(m_btnAddProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+  zrProfCmds->Add(m_btnRemoveProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+  zrProfCmds->Add(m_btnDuplicateProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
-  auto *zrProfCmds = new wxBoxSizer(wxVERTICAL);
-  zrProfCmds->Add(zrProfCmds2, 0, wxBOTTOM, 5);
-  zrProfCmds->Add(zrProfCmds1, 1, wxALL | wxEXPAND, 0);
-
-  auto *zrBlock1Left = new wxBoxSizer(wxVERTICAL);
-  zrBlock1Left->Add(zrTrackCmds, 0, wxBOTTOM, 10);
-
-  auto *zrBlock1 = new wxBoxSizer(wxHORIZONTAL);
-  zrBlock1->Add(zrBlock1Left, 0, wxALL, 0);
-  // Future use is for graphical display
-  // zrBlock1->Add(zrBlock1Right, 0, wxALL, 10);
-
-  auto *zrBlock2 = new wxBoxSizer(wxVERTICAL);
-  zrBlock2->Add(zrProfCmds, 0, wxBOTTOM, 10);
-  zrBlock2->Add(m_pnlDisplayConfig, 0, wxALL, 0);
+  auto *zrBlockLeft = new wxBoxSizer(wxVERTICAL);
+  zrBlockLeft->Add(zrTrackCmds, 0, wxBOTTOM, 10);
+  zrBlockLeft->Add(zrProfCmds, 0, wxEXPAND | wxBOTTOM, 10);
+  zrBlockLeft->Add(m_pnlDisplayConfig, 0, wxALL, 0);
 
   auto *zrLogWindow = new wxBoxSizer(wxVERTICAL);
   zrLogWindow->Add(txtLogOutputTitle, 0, wxBOTTOM, 5);
   zrLogWindow->Add(m_textrich, 1, wxEXPAND, 0);
 
-  auto *topSizer = new wxBoxSizer(wxVERTICAL);
-  topSizer->Add(zrBlock1, 0, wxALL | wxEXPAND, 10);
-  topSizer->Add(zrBlock2, 1, wxALL | wxEXPAND, 10);
+  auto *topSizer = new wxBoxSizer(wxHORIZONTAL);
+  topSizer->Add(zrBlockLeft, 0, wxALL | wxEXPAND, 10);
   topSizer->Add(zrLogWindow, 1, wxALL | wxEXPAND, 5);
 
   SetSizer(topSizer);

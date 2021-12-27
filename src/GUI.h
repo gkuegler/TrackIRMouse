@@ -137,7 +137,7 @@ public:
   TrackThread *m_pTrackThread = nullptr;
   wxCriticalSection m_pThreadCS; // protects the m_pThread pointer
 
-  cFrame();
+  cFrame(wxPoint, wxSize);
   void LoadSettingsFromFile();
   void UpdateGuiFromSettings();
 
