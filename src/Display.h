@@ -44,6 +44,7 @@ class CDisplay {
   float boundAbsBottom = 0;
 
   // Ratio of input rotation to abolutized integer
+  // used for linear interpolation
   float ySlope{};
   float xSlope{};
 
@@ -57,6 +58,14 @@ class CDisplay {
 
   void setAbsBounds(signed int virtualOriginLeft, signed int virtualOriginTop,
                     float x_PxToABS, float y_PxToABS) {
+    // Maps user defined roational bounds (representing the direction of head
+    // pointing) to the boundaries of a display. Uses linear interpolation.
+    // SendInput for mouse accepts an unsigned 16bit input representing the
+    // virtual desktop area with (0, 0) starting at the top left most monitor.
+    // Th windows api querries to obtain the RECT struct or each monitor return
+    // values relative to the main display.
+    // Transformation is as follows:
+    // virtual pixel bounds (with origin at main display) -> absolute
     pixelBoundAbsLeft = pixelBoundLeft - virtualOriginLeft;
     pixelBoundAbsRight = pixelBoundRight - virtualOriginLeft;
     pixelBoundAbsTop = pixelBoundTop - virtualOriginTop;
@@ -67,11 +76,16 @@ class CDisplay {
     boundAbsTop = pixelBoundAbsTop * y_PxToABS;
     boundAbsBottom = pixelBoundAbsBottom * y_PxToABS;
 
+    // convert to 16bit values because natural point software
+    // gives head tracking data in 16bit values.
+    // mapping the values to 16bit now saves and extra conversion
+    // step later
     rotationBound16BitLeft = rotationBoundLeft * (16383 / 180);
     rotationBound16BitRight = rotationBoundRight * (16383 / 180);
     rotationBound16BitTop = rotationBoundTop * (16383 / 180);
     rotationBound16BitBottom = rotationBoundBottom * (16383 / 180);
 
+    // setup linear interpolation parameters
     float rl = rotationBound16BitLeft;
     float rr = rotationBound16BitRight;
     float al = boundAbsLeft;

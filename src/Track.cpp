@@ -240,11 +240,11 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
   GetMonitorInfo(hMonitor, &Monitor);
 
   // Monitor Pixel Bounds in the Virtual Desktop
-  // static_cast is long -> signed int
-  signed int left = static_cast<unsigned int>(Monitor.rcMonitor.left);
-  signed int right = static_cast<unsigned int>(Monitor.rcMonitor.right);
-  signed int top = static_cast<unsigned int>(Monitor.rcMonitor.top);
-  signed int bottom = static_cast<unsigned int>(Monitor.rcMonitor.bottom);
+  // static_cast: long -> signed int
+  auto left = static_cast<signed int>(Monitor.rcMonitor.left);
+  auto right = static_cast<signed int>(Monitor.rcMonitor.right);
+  auto top = static_cast<signed int>(Monitor.rcMonitor.top);
+  auto bottom = static_cast<signed int>(Monitor.rcMonitor.bottom);
 
   // CDisplay may create an extra copy constructor, but I want to guarantee
   // overload resolution uses my initializer list to instantiate a single item.
@@ -305,7 +305,7 @@ void WinSetup(CConfig config) {
   g_yPixelAbsoluteSlope =
       USHORT_MAX_VAL / static_cast<float>(virtualDesktopHeight);
 
-  // LogToFile("\nVirtual Desktop Pixel Bounds\n");
+  // Use a callback to go through each monitor
   EnumDisplayMonitors(NULL, NULL, PopulateVirtMonitorBounds, 0);
 
   LogToFile(
