@@ -7,8 +7,8 @@
 #include <wx/propdlg.h>
 #include <wx/textctrl.h>
 
-#include "Config.h"
-#include "ControlIDs.h"
+#include "Config.hpp"
+#include "ControlIDs.hpp"
 
 class cSettingsGeneralPanel : public wxPanel {
  public:

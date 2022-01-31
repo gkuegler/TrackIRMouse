@@ -20,7 +20,7 @@ The Algorithm Design Manual - Steven S. Skiena
 // This was a bug some point and needed to define.
 // #define _CRT_SECURE_NO_WARNINGS
 
-#include "GUI.h"
+#include "GUI.hpp"
 
 #include <wx/bookctrl.h>
 #include <wx/colour.h>
@@ -31,11 +31,11 @@ The Algorithm Design Manual - Steven S. Skiena
 
 #include <string>
 
-#include "Config.h"
-#include "Exceptions.h"
-#include "GUIDialogs.h"
-#include "Log.h"
-#include "Track.h"
+#include "Config.hpp"
+#include "Exceptions.hpp"
+#include "GUIDialogs.hpp"
+#include "Log.hpp"
+#include "Track.hpp"
 
 constexpr std::string_view kVersionNo = "0.6.1";
 const std::string kRotationTitle = "bound (degrees)";

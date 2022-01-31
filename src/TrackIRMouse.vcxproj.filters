@@ -47,34 +47,31 @@
     <ClInclude Include="NPClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Watchdog.h">
+    <ClInclude Include="Watchdog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Config.h">
+    <ClInclude Include="Config.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Display.h">
+    <ClInclude Include="Display.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GUI.h">
+    <ClInclude Include="GUI.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Track.h">
+    <ClInclude Include="Track.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Log.h">
+    <ClInclude Include="Log.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Exceptions.h">
+    <ClInclude Include="Exceptions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ControlIDs.h">
+    <ClInclude Include="ControlIDs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ExampleSettingsFile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GUIDialogs.h">
+    <ClInclude Include="GUIDialogs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

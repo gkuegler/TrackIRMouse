@@ -1,9 +1,9 @@
-#include "GUIDialogs.h"
+#include "GUIDialogs.hpp"
 
 #include <wx/font.h>
 
-#include "Config.h"
-#include "ControlIDs.h"
+#include "Config.hpp"
+#include "ControlIDs.hpp"
 
 //#include <wx/wx.h>
 

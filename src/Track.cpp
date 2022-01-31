@@ -8,14 +8,14 @@
  */
 
 #pragma warning(disable : 4996)
-#include "Track.h"
+#include "Track.hpp"
 
-#include "Config.h"
-#include "Display.h"
-#include "Exceptions.h"
-#include "Log.h"
+#include "Config.hpp"
+#include "Display.hpp"
+#include "Exceptions.hpp"
+#include "Log.hpp"
 #include "NPClient.h"
-#include "Watchdog.h"
+#include "Watchdog.hpp"
 
 // SendInput with absolute mouse movement takes a short int
 #define USHORT_MAX_VAL 65535

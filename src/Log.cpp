@@ -1,4 +1,4 @@
-// #include "Log.h"
+// #include "Log.hpp"
 
 // #include <wx/wx.h>
 

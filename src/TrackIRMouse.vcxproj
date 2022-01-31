@@ -331,19 +331,18 @@
     <ClCompile Include="Watchdog.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Config.h" />
+    <ClInclude Include="Config.hpp" />
     <ClInclude Include="Constants.h" />
-    <ClInclude Include="ControlIDs.h" />
-    <ClInclude Include="Display.h" />
-    <ClInclude Include="ExampleSettingsFile.h" />
-    <ClInclude Include="Exceptions.h" />
-    <ClInclude Include="GUI.h" />
-    <ClInclude Include="GUIDialogs.h" />
-    <ClInclude Include="Log.h" />
+    <ClInclude Include="ControlIDs.hpp" />
+    <ClInclude Include="Display.hpp" />
+    <ClInclude Include="Exceptions.hpp" />
+    <ClInclude Include="GUI.hpp" />
+    <ClInclude Include="GUIDialogs.hpp" />
+    <ClInclude Include="Log.hpp" />
     <ClInclude Include="NPClient.h" />
     <ClInclude Include="toml.hpp" />
-    <ClInclude Include="Track.h" />
-    <ClInclude Include="Watchdog.h" />
+    <ClInclude Include="Track.hpp" />
+    <ClInclude Include="Watchdog.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

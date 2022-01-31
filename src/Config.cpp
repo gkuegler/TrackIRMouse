@@ -1,12 +1,12 @@
-#include "Config.h"
+#include "Config.hpp"
 
 #include <Windows.h>
 
 #include <iostream>
 #include <string>
 
-#include "Exceptions.h"
-#include "Log.h"
+#include "Exceptions.hpp"
+#include "Log.hpp"
 
 CConfig g_config = CConfig();
 

@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 
-#include "Log.h"
+#include "Log.hpp"
 
 PF_NP_REGISTERWINDOWHANDLE gpfNP_RegisterWindowHandle = NULL;
 PF_NP_UNREGISTERWINDOWHANDLE gpfNP_UnregisterWindowHandle = NULL;
