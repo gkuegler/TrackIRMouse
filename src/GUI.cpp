@@ -61,11 +61,12 @@ bool CGUIApp::OnInit() {
   // Construct child elements first.
   m_frame = new cFrame(origin, dimensions);
 
-  // Build out this function in order to past more than
-  // log messages back to my main application
+  // Handle and display messages to log widget sent from outside GUI thread
   Bind(wxEVT_THREAD, [this](wxThreadEvent &event) {
     cTextCtrl *textrich = m_frame->m_panel->m_textrich;
 
+    // TODO: non urgent
+    // find out if this works and is used to close the application
     if (1 == event.GetInt()) {
       m_frame->Close(true);
     }
@@ -115,8 +116,7 @@ bool CGUIApp::OnInit() {
 //////////////////////////////////////////////////////////////////////
 
 cFrame::cFrame(wxPoint origin, wxSize dimensions)
-    : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", origin,
-              dimensions) {
+    : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", origin, dimensions) {
   wxMenu *menuFile = new wxMenu;
   // menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
   // "Open a new settings file from disk.");
@@ -323,7 +323,7 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
   zrTrackCmds->Add(m_btnStartMouse, 0, wxALL, 0);
   zrTrackCmds->Add(m_btnStopMouse, 0, wxALL, 0);
 
-  auto* zrDisplayCanvas = new wxBoxSizer(wxHORIZONTAL);
+  auto *zrDisplayCanvas = new wxBoxSizer(wxHORIZONTAL);
 
   auto *zrProfCmds = new wxBoxSizer(wxHORIZONTAL);
   zrProfCmds->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -494,39 +494,41 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
 
   m_tlcMappingData->AppendTextColumn("Display #", wxDATAVIEW_CELL_INERT, -1,
                                      wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Left",
-                                     wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
-                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Right",
-                                     wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
-                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE,
-                                     kColumnWidth, wxALIGN_RIGHT,
-                                     wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Bottom",
-                                     wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
-                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
   m_tlcMappingData->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE,
                                      kColumnWidth, wxALIGN_RIGHT,
                                      wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Right",
-                                     wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
-                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Right", wxDATAVIEW_CELL_EDITABLE,
+                                     kColumnWidth, wxALIGN_RIGHT,
+                                     wxDATAVIEW_COL_RESIZABLE);
   m_tlcMappingData->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE,
                                      kColumnWidth, wxALIGN_RIGHT,
                                      wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Bottom",
-                                     wxDATAVIEW_CELL_EDITABLE, kColumnWidth,
-                                     wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Bottom", wxDATAVIEW_CELL_EDITABLE,
+                                     kColumnWidth, wxALIGN_RIGHT,
+                                     wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE,
+                                     kColumnWidth, wxALIGN_RIGHT,
+                                     wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Right", wxDATAVIEW_CELL_EDITABLE,
+                                     kColumnWidth, wxALIGN_RIGHT,
+                                     wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE,
+                                     kColumnWidth, wxALIGN_RIGHT,
+                                     wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Bottom", wxDATAVIEW_CELL_EDITABLE,
+                                     kColumnWidth, wxALIGN_RIGHT,
+                                     wxDATAVIEW_COL_RESIZABLE);
 
   wxStaticText *txtPanelTitle =
       new wxStaticText(this, wxID_ANY, "Active Profile");
   wxStaticText *txtProfileName = new wxStaticText(this, wxID_ANY, "Name:   ");
   wxStaticText *txtProfileId =
       new wxStaticText(this, wxID_ANY, "TrackIR Profile ID:   ");
-  wxStaticText* txtHeaders = new wxStaticText(this, wxID_ANY, 
-      "                           |----------------- Rotational Bounds Mapping ----------------|");
-
+  wxStaticText *txtHeaders =
+      new wxStaticText(this, wxID_ANY,
+                       "                           |------------- Rotational "
+                       "Bounds Mapping -----------|-------------------- "
+                       "Display Edge Padding -------------------|");
 
   wxBoxSizer *row1 = new wxBoxSizer(wxHORIZONTAL);
   row1->Add(txtProfileName, 0, wxALIGN_CENTER_VERTICAL, 0);

@@ -363,6 +363,9 @@ void CConfig::RemoveProfile(std::string profileName) {
 
   for (std::size_t i = 0; i < data.profiles.size(); i++) {
     if (profileName == data.profiles[i].name) {
+      // TODO: urgent for release
+      // update dropdown to remove profile and
+      // select dropdown
       data.profiles.erase(data.profiles.begin() + i);
       LogToWix(fmt::format("Deleted profile: {}\n", profileName));
       LogToFile(fmt::format("Deleted profile: {}", profileName));

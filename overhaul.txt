@@ -14,15 +14,15 @@ Convert To Graphical Utility:
         // wxWidget logging (stdout but MessageBox on critical error?)
         //     or spd logging?
         // create separate hidden frame for track thread to register with trackIR? no
-        wxFileInputStream to open file first, then hand off to toml library?
+        // wxFileInputStream to open file first, then hand off to toml library? no
 
     User Interface Needs:
         // Program in a switch to not register window handle for debug and launch
             // use function directives to deactivate register window handle function call
             // use watchdog pipe server to discard tracking information
             // use custom-built event to turn on and off tracking of existing instance
-        button to add profiles
-        button to delete profiles
+        // button to add profiles
+        // button to delete profiles
         
     Optional Features:
         // profile selection (drop down?)
@@ -37,6 +37,35 @@ Convert To Graphical Utility:
 implement installer?
 implement scrolling ability with paused mouse (for AutoCAD), add to pipe server
 
+## Testing Behaviors for User Interaction
+- Config File
+    - missing file
+    - can't parse toml correctly
+    - warn on degrees > 180deg
+    - warn on overlapping rotational bounds
+    - warn on general parameters not correct, but set to defaults
+- Start/Stop Mouse
+    - error on incompatible no. of displays
+    - error on larger than 180deg
+    - error on overlapping rotational bounds
+    - error on trackir not running
+- Add Profile
+    1. text entry dialog
+    2. cmbx should switch to new profile
+    3. load profile into slot
+- Active Profile Dropdown
+    - reload displayconfig panel on active profile switch
+    - 
+
+## Documentation
+- User Input
+- Watchdog
+- TrackIR?
+- Common Problems
+    - display number
+
+
+## Future:
 Automatic Detection Of Display Configuration:
     "EnumDisplayDevicesA" to get device names and device strings
     "EnumDisplayMonitors" to get device names of active monitors
