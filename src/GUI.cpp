@@ -602,12 +602,14 @@ void cPanelConfiguration::OnProfileID(wxCommandEvent &event) {
   CConfig *config = GetGlobalConfig();
   auto &profile = config->GetActiveProfile();
   wxString number = m_profileID->GetLineText(0);
-  double value;
-  if (!number.ToDouble(&value)) {
-    wxLogError("couldn't convert string to double");
+  long value;
+  if (!number.ToLong(&value)) {
+    // Text control should only allow numbers.
+    // TODO: verify only numbers allowed in profile id text control
+    wxLogError("Couldn't convert profile_ID string to integer.");
     return;
   };
-  profile.profile_ID = static_cast<double>(value);
+  profile.profile_ID = static_cast<int>(value);
   LoadDisplaySettings();
 }
 
