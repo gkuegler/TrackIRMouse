@@ -27,8 +27,8 @@ std::vector<CDisplay> g_displays;
 
 signed int g_virtualOriginX = 0;
 signed int g_virtualOriginY = 0;
-float g_xPixelAbsoluteSlope = 0;
-float g_yPixelAbsoluteSlope = 0;
+double g_xPixelAbsoluteSlope = 0;
+double g_yPixelAbsoluteSlope = 0;
 
 HANDLE g_hWatchdogThread = NULL;
 
@@ -40,7 +40,7 @@ HANDLE g_hWatchdogThread = NULL;
 BOOL PopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT);
 void WinSetup(CConfig);
 void DisplaySetup(const CConfig);
-void MouseMove(int, float, float);
+void MouseMove(int, double, double);
 
 void TR_Initialize(HWND hWnd, CConfig config) {
   // ## Program flow ##
@@ -195,9 +195,10 @@ int TR_TrackStart(CConfig config) {
       // unsigned short status = (*pTIRData).wNPStatus;
       unsigned short framesig = (*pTIRData).wPFrameSignature;
       // TODO: apply negative sign on startup to avoid extra operation here
-      // yaw and pitch come reversed for some reason from trackIR
-      float yaw = -(*pTIRData).fNPYaw;
-      float pitch = -(*pTIRData).fNPPitch;
+      // yaw and pitch come reversed relative to GUI profgram for some reason
+      // from trackIR
+      double yaw = (-(*pTIRData).fNPYaw); // implicit float to double
+      double pitch = (-(*pTIRData).fNPPitch); // implicit float to double
 
       // Don't move the mouse when TrackIR is paused
       if (framesig == lastFrame) {
@@ -207,6 +208,11 @@ int TR_TrackStart(CConfig config) {
         continue;
       }
 
+      // Watchdog enables software to be controlled via a named pipe. This is
+      // primarily used during testing so that my test instance can latch on to
+      // active tracking data without re-registering a window handle. A disbale
+      // msg is sent before my test instance launches, then my normal instance
+      // is enables after as part of my build script.
       if (WatchDog::g_bPauseTracking == false)
         MouseMove(config.m_monitorCount, yaw, pitch);
 
@@ -301,9 +307,9 @@ void WinSetup(CConfig config) {
       fmt::format("Height of Virtual Desktop: {:>5}", virtualDesktopHeight));
 
   g_xPixelAbsoluteSlope =
-      USHORT_MAX_VAL / static_cast<float>(virtualDesktopWidth);
+      USHORT_MAX_VAL / static_cast<double>(virtualDesktopWidth);
   g_yPixelAbsoluteSlope =
-      USHORT_MAX_VAL / static_cast<float>(virtualDesktopHeight);
+      USHORT_MAX_VAL / static_cast<double>(virtualDesktopHeight);
 
   // Use a callback to go through each monitor
   EnumDisplayMonitors(NULL, NULL, PopulateVirtMonitorBounds, 0);
@@ -360,7 +366,7 @@ void DisplaySetup(CConfig config) {
   return;
 }
 
-inline void SendMyInput(float x, float y) {
+inline void SendMyInput(double x, double y) {
   static MOUSEINPUT mi = {
       0, 0,
       0, MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK,
@@ -376,20 +382,20 @@ inline void SendMyInput(float x, float y) {
   return;
 }
 
-void MouseMove(int monitorCount, float yaw, float pitch) {
+void MouseMove(int monitorCount, double yaw, double pitch) {
   // set the last screen initially equal to the main display for me
   // TODO: find a way to specify in settings or get from windows
   static int lastScreen = 0;
 
   // variables used for linear interpolation
-  static float rl;
-  static float al;
-  static float mx;
-  static float x;
-  static float rt;
-  static float at;
-  static float my;
-  static float y;
+  static double rl;
+  static double al;
+  static double mx;
+  static double x;
+  static double rt;
+  static double at;
+  static double my;
+  static double y;
 
   // Check if the head is pointing to a screen
   // The return statement is never reached if the head is pointing outside the
@@ -411,7 +417,7 @@ void MouseMove(int monitorCount, float yaw, float pitch) {
       my = g_displays[i].ySlope;
       y = my * (rt - pitch) + at;
       // load the coordinates into my input structure
-      // need to cast to an integer because resulting calcs are floats
+      // need to cast to an integer because resulting calcs are doubles
       SendMyInput(x, y);
       lastScreen = i;
       // LogToWix(fmt::format("(%f, %f)", y, x); // for testing

@@ -9,15 +9,15 @@ class CDisplay {
   //   3. Call setAbsBounds()
 
   // User inputed rotational bounds of display
-  float rotationBoundLeft = 0;
-  float rotationBoundRight = 0;
-  float rotationBoundTop = 0;
-  float rotationBoundBottom = 0;
+  double rotationBoundLeft = 0;
+  double rotationBoundRight = 0;
+  double rotationBoundTop = 0;
+  double rotationBoundBottom = 0;
 
-  float rotationBound16BitLeft = 0;
-  float rotationBound16BitRight = 0;
-  float rotationBound16BitTop = 0;
-  float rotationBound16BitBottom = 0;
+  double rotationBound16BitLeft = 0;
+  double rotationBound16BitRight = 0;
+  double rotationBound16BitTop = 0;
+  double rotationBound16BitBottom = 0;
 
   // User-specified
   int paddingLeft = 3;
@@ -38,15 +38,15 @@ class CDisplay {
   signed int pixelBoundAbsBottom = 0;
 
   // Resulting Mapped bounds of display in absolute from top left most display
-  float boundAbsLeft = 0;
-  float boundAbsRight = 0;
-  float boundAbsTop = 0;
-  float boundAbsBottom = 0;
+  double boundAbsLeft = 0;
+  double boundAbsRight = 0;
+  double boundAbsTop = 0;
+  double boundAbsBottom = 0;
 
   // Ratio of input rotation to abolutized integer
   // used for linear interpolation
-  float ySlope{};
-  float xSlope{};
+  double ySlope{};
+  double xSlope{};
 
   CDisplay(signed int left, signed int right, signed int top,
            signed int bottom) {
@@ -57,7 +57,7 @@ class CDisplay {
   }
 
   void setAbsBounds(signed int virtualOriginLeft, signed int virtualOriginTop,
-                    float x_PxToABS, float y_PxToABS) {
+                    double x_PxToABS, double y_PxToABS) {
     // Maps user defined roational bounds (representing the direction of head
     // pointing) to the boundaries of a display. Uses linear interpolation.
     // SendInput for mouse accepts an unsigned 16bit input representing the
@@ -71,8 +71,8 @@ class CDisplay {
     pixelBoundAbsTop = pixelBoundTop - virtualOriginTop;
     pixelBoundAbsBottom = pixelBoundBottom - virtualOriginTop;
 
-    boundAbsLeft = static_cast<float>(pixelBoundAbsLeft) * x_PxToABS;
-    boundAbsRight = static_cast<float>(pixelBoundAbsRight) * x_PxToABS;
+    boundAbsLeft = static_cast<double>(pixelBoundAbsLeft) * x_PxToABS;
+    boundAbsRight = static_cast<double>(pixelBoundAbsRight) * x_PxToABS;
     boundAbsTop = pixelBoundAbsTop * y_PxToABS;
     boundAbsBottom = pixelBoundAbsBottom * y_PxToABS;
 
@@ -86,16 +86,16 @@ class CDisplay {
     rotationBound16BitBottom = rotationBoundBottom * (16383 / 180);
 
     // setup linear interpolation parameters
-    float rl = rotationBound16BitLeft;
-    float rr = rotationBound16BitRight;
-    float al = boundAbsLeft;
-    float ar = boundAbsRight;
+    double rl = rotationBound16BitLeft;
+    double rr = rotationBound16BitRight;
+    double al = boundAbsLeft;
+    double ar = boundAbsRight;
     xSlope = (ar - al) / (rr - rl);
 
-    float rt = rotationBound16BitTop;
-    float rb = rotationBound16BitBottom;
-    float at = boundAbsTop;
-    float ab = boundAbsBottom;
+    double rt = rotationBound16BitTop;
+    double rb = rotationBound16BitBottom;
+    double at = boundAbsTop;
+    double ab = boundAbsBottom;
     ySlope = -(at - ab) / (rt - rb);
 
     return;

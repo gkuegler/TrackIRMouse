@@ -15,11 +15,11 @@ static constexpr std::array<std::string_view, 4> kBoundNames = {
 class CBounds {
  public:
   // Left, Right, Top, Bottom
-  std::array<float, 4> rotationBounds{0.0, 0.0, 0.0, 0.0};
+  std::array<double, 4> rotationBounds{0.0, 0.0, 0.0, 0.0};
   std::array<int, 4> paddingBounds{0, 0, 0, 0};
 
   CBounds(){};
-  CBounds(std::array<float, 4> &&rotations, std::array<int, 4> &&padding) {
+  CBounds(std::array<double, 4> &&rotations, std::array<int, 4> &&padding) {
     rotationBounds = rotations;
     paddingBounds = padding;
   }
@@ -63,7 +63,7 @@ class CConfig {
   int GetActiveProfileDisplayCount();
 
   void SetDisplayMappingParameter(int displayNumber, int parameterType,
-                                  int parameterSide, float parameter);
+                                  int parameterSide, double parameter);
 
   void AddProfile(std::string newProfileName);
   void RemoveProfile(std::string profileName);

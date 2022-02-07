@@ -224,23 +224,23 @@ void CConfig::LoadSettings() {
       toml::value bottom = toml::find(display, "bottom");
 
       // Each value is checked because this toml library cannot
-      // convert integers to floats from a toml value
+      // convert integers to doubles from a toml value
       toml::value_t integer = toml::value_t::integer;
 
-      float rotLeft = (left.type() == integer)
-                          ? static_cast<float>(left.as_integer())
+      double rotLeft = (left.type() == integer)
+                          ? static_cast<double>(left.as_integer())
                           : left.as_floating();
 
-      float rotRight = (right.type() == integer)
-                           ? static_cast<float>(right.as_integer())
+      double rotRight = (right.type() == integer)
+                           ? static_cast<double>(right.as_integer())
                            : right.as_floating();
 
-      float rotTop = (top.type() == integer)
-                         ? static_cast<float>(top.as_integer())
+      double rotTop = (top.type() == integer)
+                         ? static_cast<double>(top.as_integer())
                          : top.as_floating();
 
-      float rotBottom = (bottom.type() == integer)
-                            ? static_cast<float>(bottom.as_integer())
+      double rotBottom = (bottom.type() == integer)
+                            ? static_cast<double>(bottom.as_integer())
                             : bottom.as_floating();
 
       // I return an ungodly fake high padding numbelong ,
@@ -406,4 +406,4 @@ int CConfig::GetActiveProfileDisplayCount() {
 }
 
 void CConfig::SetDisplayMappingParameter(int displayNumber, int parameterType,
-                                         int parameterSide, float parameter) {}
+                                         int parameterSide, double parameter) {}

@@ -11,7 +11,7 @@ profile box:
   duplicate profile
 
   maintain selections to move up and down
-  convert values to floats in validation step of handle event
+  convert values to doubles in validation step of handle event
   fix internal override of handling default display padding
 
 The Algorithm Design Manual - Steven S. Skiena
@@ -607,7 +607,7 @@ void cPanelConfiguration::OnProfileID(wxCommandEvent &event) {
     wxLogError("couldn't convert string to double");
     return;
   };
-  profile.profile_ID = static_cast<float>(value);
+  profile.profile_ID = static_cast<double>(value);
   LoadDisplaySettings();
 }
 
