@@ -208,8 +208,6 @@ int TR_Initialize(HWND hWnd, CConfig config) {
       spdlog::warn("Watchdog thread failed to initialize.");
   }
 
-  // spdlog::info("\n{:-^50}\n", "TrackIR Init Status");
-
   // Find and load TrackIR DLL
 #ifdef UNICODE
   TCHAR sDll[MAX_PATH];

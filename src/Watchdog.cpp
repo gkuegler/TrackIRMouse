@@ -36,6 +36,8 @@ HANDLE StartWatchdog() {
   // TODO: make exception safe
   // make sure all return paths cleanup correctly
   // possibly wrap Windows resource in a class
+  // move call to StartWatchdog to outside of track initialize.
+  // I would like watchdog to run as part of program.
   HANDLE hThread = INVALID_HANDLE_VALUE;
   DWORD dwThreadId = 0;
   LPCSTR eventName = "WatchdogInitThread";
@@ -44,7 +46,7 @@ HANDLE StartWatchdog() {
   // to ensure pipe initialization occurs before continuing.
   // This mostly matters so that the print statements
   // of the pipe initialization are not mixed in with the rest of the program
-  HANDLE hEvent = CreateEventA(NULL, TRUE, 0, eventName);
+  HANDLE hEvent = CreateEventA(NULL, FALSE, FALSE, eventName);
 
   hThread = CreateThread(NULL,           // no security attribute
                          0,              // default stack size
@@ -121,7 +123,7 @@ DWORD WINAPI InstanceThread(LPVOID param) {
                       // all access is allowed
           FALSE))     // not a default DACL
   {
-    spdlog::error("SetSecurityDescriptorDacl Error %u\n", GetLastError());
+    spdlog::warn("SetSecurityDescriptorDacl Error %u\n", GetLastError());
     // goto Cleanup;
   }
 #pragma warning(default : 4700)
@@ -146,19 +148,19 @@ DWORD WINAPI InstanceThread(LPVOID param) {
                            &sa); // default security attribute
 
   if (hPipe == INVALID_HANDLE_VALUE) {
-    spdlog::error("CreateNamedPipe failed, GLE={}.\n", GetLastError());
-    return -1;
+    spdlog::warn("CreateNamedPipe failed, GLE={}.\n", GetLastError());
+    return FAILURE;
   }
 
   if (SetEvent(*phEvent) == 0) {
-    spdlog::error("Could not set Watchdog Event with error code: {}\n",
+    spdlog::warn("Could not set Watchdog Event with error code: {}\n",
                   GetLastError());
   }
 
   // Serve errors handled in implementation
   Serve(hPipe);
 
-  return 0;
+  return SUCCESS;
 }
 
 void Serve(HANDLE hPipe) {
@@ -176,28 +178,24 @@ void Serve(HANDLE hPipe) {
   // thread fails.
 
   if (pchRequest == NULL) {
-    spdlog::info("\nERROR - Pipe Server Failure:\n");
-    spdlog::info("   Serve got an unexpected NULL heap allocation.\n");
-    spdlog::info("   Serve exitting.\n");
+    spdlog::warn("Pipe Server Failure. Server got an unexpected NULL heap allocation. Serve exitting.");
     if (pchReply != NULL)
       HeapFree(hHeap, 0, pchReply);
     return;
   }
 
   if (pchReply == NULL) {
-    spdlog::info("\nERROR - Pipe Server Failure:\n");
-    spdlog::info("   Serve got an unexpected NULL heap allocation.\n");
-    spdlog::info("   Serve exitting.\n");
+    spdlog::warn("Pipe Server Failure. Server got an unexpected NULL heap allocation. Serve exitting.");
     if (pchRequest != NULL)
       HeapFree(hHeap, 0, pchRequest);
     return;
   }
 
   while (1) {
-    spdlog::info("Waiting on client connection...\n");
+    spdlog::info("Waiting on client connection...");
 
     if (ConnectNamedPipe(hPipe, NULL) == 0) {
-      spdlog::error("ConnectNamedPipe failed, GLE={}.\n", GetLastError());
+      spdlog::warn("ConnectNamedPipe failed, GLE={}.", GetLastError());
       break;
     }
     spdlog::info("Client Connected!\n");
