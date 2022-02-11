@@ -15,9 +15,9 @@
 //#include <afxext.h>         // MFC extensions
 //#include <afxcmn.h>	      // MFC support for Windows Common Controls
 
-#include "NPClient.h"
+#include "np-client.h"
 
-#include "Log.hpp"
+#include "log.hpp"
 
 #include <stdio.h>
 

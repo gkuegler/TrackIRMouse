@@ -10,14 +10,14 @@
  */
 
 #pragma warning(disable : 4996)
-#include "Track.hpp"
+#include "track.hpp"
 
-#include "Config.hpp"
-#include "Display.hpp"
-#include "Exceptions.hpp"
-#include "Log.hpp"
-#include "NPClient.h"
-#include "Watchdog.hpp"
+#include "config.hpp"
+#include "display.hpp"
+#include "exceptions.hpp"
+#include "log.hpp"
+#include "np-client.h"
+#include "watchdog.hpp"
 
 // SendInput with absolute mouse movement takes a short int
 #define USHORT_MAX_VAL 65535
@@ -262,7 +262,7 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
   static int count{0};
   MONITORINFOEX Monitor;
   Monitor.cbSize = sizeof(MONITORINFOEX);
-  if !(GetMonitorInfo(hMonitor, &Monitor)){
+  if (!GetMonitorInfo(hMonitor, &Monitor)){
     spdlog::warn("Couldn't get display info for display #: {}", count);
     return true;
   }

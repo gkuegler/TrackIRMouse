@@ -6,15 +6,15 @@
  * --License Boilerplate Placeholder--
  */
 
-#include "Config.hpp"
+#include "config.hpp"
 
 #include <Windows.h>
 
 #include <iostream>
 #include <string>
 
-#include "Exceptions.hpp"
-#include "Log.hpp"
+#include "exceptions.hpp"
+#include "log.hpp"
 
 CConfig g_config = CConfig();
 

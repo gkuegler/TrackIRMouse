@@ -20,12 +20,12 @@
  *
  */
 
-#include "Watchdog.hpp"
+#include "watchdog.hpp"
 
 #include <windows.h>
 
-#include "Constants.h"
-#include "Log.hpp"
+#include "constants.hpp"
+#include "log.hpp"
 
 #define BUFSIZE 512
 

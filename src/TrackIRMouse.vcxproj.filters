@@ -15,63 +15,63 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Config.cpp">
+    <ClCompile Include="config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Track.cpp">
+    <ClCompile Include="track.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Watchdog.cpp">
+    <ClCompile Include="watchdog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GUI.cpp">
+    <ClCompile Include="gui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Log.cpp">
+    <ClCompile Include="log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NPClient.cpp">
+    <ClCompile Include="np-client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GUIDialogs.cpp">
+    <ClCompile Include="gui-dialogs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Constants.h">
+    <ClInclude Include="constants.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="toml.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NPClient.h">
+    <ClInclude Include="np-client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Watchdog.hpp">
+    <ClInclude Include="watchdog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Config.hpp">
+    <ClInclude Include="config.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Display.hpp">
+    <ClInclude Include="display.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GUI.hpp">
+    <ClInclude Include="gui.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Track.hpp">
+    <ClInclude Include="track.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Log.hpp">
+    <ClInclude Include="log.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Exceptions.hpp">
+    <ClInclude Include="exceptions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ControlIDs.hpp">
+    <ClInclude Include="gui-control-id.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GUIDialogs.hpp">
+    <ClInclude Include="gui-dialogs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

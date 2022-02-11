@@ -33,11 +33,11 @@
 
 #include <string>
 
-#include "Config.hpp"
-#include "Exceptions.hpp"
-#include "GUIDialogs.hpp"
-#include "Log.hpp"
-#include "Track.hpp"
+#include "config.hpp"
+#include "exceptions.hpp"
+#include "gui-dialogs.hpp"
+#include "log.hpp"
+#include "track.hpp"
 
 constexpr std::string_view kVersionNo = "0.6.1";
 const std::string kRotationTitle = "bound (degrees)";

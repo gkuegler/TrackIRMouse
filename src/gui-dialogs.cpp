@@ -5,12 +5,12 @@
  * --License Boilerplate Placeholder--
  */
 
-#include "GUIDialogs.hpp"
+#include "gui-dialogs.hpp"
 
 #include <wx/font.h>
 
-#include "Config.hpp"
-#include "ControlIDs.hpp"
+#include "config.hpp"
+#include "gui-control-id.hpp"
 
 // clang-format off
 BEGIN_EVENT_TABLE(cSettingsGeneralPanel, wxPanel)

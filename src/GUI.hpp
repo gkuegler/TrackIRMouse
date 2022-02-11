@@ -4,11 +4,11 @@
 #include <wx/dataview.h>
 #include <wx/wx.h>
 
-#include "Config.hpp"
-#include "ControlIDs.hpp"
-#include "Exceptions.hpp"
-#include "Log.hpp"
-#include "Track.hpp"
+#include "config.hpp"
+#include "gui-control-id.hpp"
+#include "exceptions.hpp"
+#include "log.hpp"
+#include "track.hpp"
 
 class cFrame;
 class cPanel;

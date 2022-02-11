@@ -322,27 +322,27 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Config.cpp" />
-    <ClCompile Include="GUI.cpp" />
-    <ClCompile Include="GUIDialogs.cpp" />
-    <ClCompile Include="Log.cpp" />
-    <ClCompile Include="NPClient.cpp" />
-    <ClCompile Include="Track.cpp" />
-    <ClCompile Include="Watchdog.cpp" />
+    <ClCompile Include="config.cpp" />
+    <ClCompile Include="gui.cpp" />
+    <ClCompile Include="gui-dialogs.cpp" />
+    <ClCompile Include="log.cpp" />
+    <ClCompile Include="np-client.cpp" />
+    <ClCompile Include="track.cpp" />
+    <ClCompile Include="watchdog.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Config.hpp" />
-    <ClInclude Include="Constants.h" />
-    <ClInclude Include="ControlIDs.hpp" />
-    <ClInclude Include="Display.hpp" />
-    <ClInclude Include="Exceptions.hpp" />
-    <ClInclude Include="GUI.hpp" />
-    <ClInclude Include="GUIDialogs.hpp" />
-    <ClInclude Include="Log.hpp" />
-    <ClInclude Include="NPClient.h" />
+    <ClInclude Include="config.hpp" />
+    <ClInclude Include="constants.hpp" />
+    <ClInclude Include="gui-control-id.hpp" />
+    <ClInclude Include="display.hpp" />
+    <ClInclude Include="exceptions.hpp" />
+    <ClInclude Include="gui.hpp" />
+    <ClInclude Include="gui-dialogs.hpp" />
+    <ClInclude Include="log.hpp" />
+    <ClInclude Include="np-client.h" />
     <ClInclude Include="toml.hpp" />
-    <ClInclude Include="Track.hpp" />
-    <ClInclude Include="Watchdog.hpp" />
+    <ClInclude Include="track.hpp" />
+    <ClInclude Include="watchdog.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

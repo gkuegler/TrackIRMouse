@@ -3,7 +3,7 @@
 
 #include <windows.h>
 
-#include "Config.hpp"
+#include "config.hpp"
 
 int TR_Initialize(HWND hWnd, CConfig config);
 int TR_TrackStart(CConfig config);

@@ -4,7 +4,7 @@
  * --License Boilerplate Placeholder--
  */
 
-#include "Log.hpp"
+#include "log.hpp"
 
 #include <spdlog/details/null_mutex.h>
 #include <spdlog/sinks/base_sink.h>
