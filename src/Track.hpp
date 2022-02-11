@@ -5,7 +5,7 @@
 
 #include "Config.hpp"
 
-void TR_Initialize(HWND hWnd, CConfig config);
+int TR_Initialize(HWND hWnd, CConfig config);
 int TR_TrackStart(CConfig config);
 void TR_TrackStop();
 

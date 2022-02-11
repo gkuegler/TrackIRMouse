@@ -37,7 +37,7 @@ HANDLE StartWatchdog() {
   );
 
   if (hThread == NULL) {
-    LogToWix(fmt::format("CreateThread failed, GLE={}.\n", GetLastError()));
+    spdlog::error("CreateThread failed, GLE={}.\n", GetLastError());
     return NULL;
   }
 
@@ -45,17 +45,17 @@ HANDLE StartWatchdog() {
   // it's completed initialization
   if (hEvent) {
     DWORD result = WaitForSingleObject(hEvent,
-                                       3000  // timeout in milliseconds
+      3000  // timeout in milliseconds
     );
 
     if (WAIT_FAILED == result)
-      LogToWix(fmt::format("{} Function failed with error code: {}",
-                           "WaitForSingleObject", GetLastError()));
+      spdlog::error("{} Function failed with error code: {}",
+      "WaitForSingleObject", GetLastError());
 
-    if (WAIT_TIMEOUT == result)
-      LogToWix(fmt::format(
+      if (WAIT_TIMEOUT == result)
+        spdlog::info(
           "{} Timed out on watchdog thread. Objects state is non signaled.",
-          "WaitForSingleObject"));
+          "WaitForSingleObject");
   }
 
   return hThread;
@@ -64,7 +64,7 @@ HANDLE StartWatchdog() {
 DWORD WINAPI InstanceThread(LPVOID param) {
   // Signal event when set up of the pipe completes,
   // allowing main program flow to continue
-  HANDLE *phEvent = reinterpret_cast<HANDLE *>(param);
+  HANDLE* phEvent = reinterpret_cast<HANDLE*>(param);
 
   HANDLE hPipe = INVALID_HANDLE_VALUE;
 
@@ -85,25 +85,24 @@ DWORD WINAPI InstanceThread(LPVOID param) {
   // control list(DACL), no owner, no primary group, and all control flags set
   // to FALSE(NULL). Thus, except for its revision level, it is empty
   if (NULL ==
-      InitializeSecurityDescriptor(pSD.get(), SECURITY_DESCRIPTOR_REVISION)) {
-    LogToWix(fmt::format("InitializeSecurityDescriptor Error. GLE=%u\n",
-                         GetLastError()));
-    return -1;
+    InitializeSecurityDescriptor(pSD.get(), SECURITY_DESCRIPTOR_REVISION)) {
+    spdlog::error("InitializeSecurityDescriptor Error. GLE=%u\n",
+      GetLastError());
+      return -1;
   }
 
   // Add the Access Control List (ACL) to the security descriptor
   // TODO: make this more robust, maybe limit to just the user process?
 #pragma warning(disable : 6248)  // Allow all unrestricted access to the pipe
   if (!SetSecurityDescriptorDacl(
-          pSD.get(),
-          TRUE,        // bDaclPresent flag
-          (PACL)NULL,  // if a NULL DACL is assigned to the security descriptor,
-                       // all access is allowed
-          FALSE))      // not a default DACL
+    pSD.get(),
+    TRUE,        // bDaclPresent flag
+    (PACL)NULL,  // if a NULL DACL is assigned to the security descriptor,
+                 // all access is allowed
+    FALSE))      // not a default DACL
   {
-    LogToWix(
-        fmt::format("SetSecurityDescriptorDacl Error %u\n", GetLastError()));
-    // goto Cleanup;
+    spdlog::error("SetSecurityDescriptorDacl Error %u\n", GetLastError());
+  // goto Cleanup;
   }
 #pragma warning(default : 4700)
 
@@ -112,29 +111,28 @@ DWORD WINAPI InstanceThread(LPVOID param) {
   sa.lpSecurityDescriptor = pSD.get();
   sa.bInheritHandle = FALSE;
 
-  // LogToWix(fmt::format("\nPipe Server: Main thread awaiting client connection
-  // on {}\n", lpszPipename));
+  // spdlog::info("\nPipe Server: Main thread awaiting client connection
+  // on {}\n", lpszPipename);
 
   hPipe = CreateNamedPipeA(lpszPipename,                // pipe name
-                           PIPE_ACCESS_DUPLEX,          // read/write access
-                           PIPE_TYPE_MESSAGE |          // message type pipe
-                               PIPE_READMODE_MESSAGE |  // message-read mode
-                               PIPE_WAIT,               // blocking mode
-                           PIPE_UNLIMITED_INSTANCES,    // max. instances
-                           BUFSIZE,                     // output buffer size
-                           BUFSIZE,                     // input buffer size
-                           0,                           // client time-out
-                           &sa);  // default security attribute
+    PIPE_ACCESS_DUPLEX,          // read/write access
+    PIPE_TYPE_MESSAGE |          // message type pipe
+    PIPE_READMODE_MESSAGE |  // message-read mode
+    PIPE_WAIT,               // blocking mode
+    PIPE_UNLIMITED_INSTANCES,    // max. instances
+    BUFSIZE,                     // output buffer size
+    BUFSIZE,                     // input buffer size
+    0,                           // client time-out
+    &sa);  // default security attribute
 
   if (hPipe == INVALID_HANDLE_VALUE) {
-    LogToWixError(
-        fmt::format("CreateNamedPipe failed, GLE={}.\n", GetLastError()));
+    spdlog::error("CreateNamedPipe failed, GLE={}.\n", GetLastError());
     return -1;
   }
 
   if (SetEvent(*phEvent) == 0) {
-    LogToWixError(fmt::format(
-        "Could not set Watchdog Event with error code: {}\n", GetLastError()));
+    spdlog::error(
+      "Could not set Watchdog Event with error code: {}\n", GetLastError());
   }
 
   // Serve errors handled in implementation
@@ -146,10 +144,10 @@ DWORD WINAPI InstanceThread(LPVOID param) {
 void Serve(HANDLE hPipe) {
   // This is a lot of Windows boilerplate code
   HANDLE hHeap = GetProcessHeap();
-  char *pchRequest =
-      (char *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, BUFSIZE * sizeof(char));
-  char *pchReply =
-      (char *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, BUFSIZE * sizeof(char));
+  char* pchRequest =
+    (char*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, BUFSIZE * sizeof(char));
+  char* pchReply =
+    (char*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, BUFSIZE * sizeof(char));
 
   DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
   BOOL bSuccess = FALSE;
@@ -158,52 +156,52 @@ void Serve(HANDLE hPipe) {
   // thread fails.
 
   if (pchRequest == NULL) {
-    LogToWixError("\nERROR - Pipe Server Failure:\n");
-    LogToWixError("   Serve got an unexpected NULL heap allocation.\n");
-    LogToWixError("   Serve exitting.\n");
+    spdlog::info("\nERROR - Pipe Server Failure:\n");
+    spdlog::info("   Serve got an unexpected NULL heap allocation.\n");
+    spdlog::info("   Serve exitting.\n");
     if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
     return;
   }
 
   if (pchReply == NULL) {
-    LogToWixError("\nERROR - Pipe Server Failure:\n");
-    LogToWixError("   Serve got an unexpected NULL heap allocation.\n");
-    LogToWixError("   Serve exitting.\n");
+    spdlog::info("\nERROR - Pipe Server Failure:\n");
+    spdlog::info("   Serve got an unexpected NULL heap allocation.\n");
+    spdlog::info("   Serve exitting.\n");
     if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
     return;
   }
 
   while (1) {
-    LogToWix("Waiting on client connection...\n");
+    spdlog::info("Waiting on client connection...\n");
 
     if (ConnectNamedPipe(hPipe, NULL) == 0) {
-      LogToWixError(
-          fmt::format("ConnectNamedPipe failed, GLE={}.\n", GetLastError()));
+      spdlog::error("ConnectNamedPipe failed, GLE={}.\n", GetLastError());
       break;
     }
-    LogToWix("Client Connected!\n");
+    spdlog::info("Client Connected!\n");
 
     while (1) {
       // Read client requests from the pipe. This simplistic code only allows
       // messages up to BUFSIZE characters in length.
       bSuccess = ReadFile(hPipe,       // handle to pipe
-                          pchRequest,  // buffer to receive data
-                          BUFSIZE * sizeof(unsigned char),  // size of buffer
-                          &cbBytesRead,  // number of bytes read
-                          NULL);         // not overlapped I/O
+        pchRequest,  // buffer to receive data
+        BUFSIZE * sizeof(unsigned char),  // size of buffer
+        &cbBytesRead,  // number of bytes read
+        NULL);         // not overlapped I/O
 
       if (!bSuccess || cbBytesRead == 0) {
         if (GetLastError() == ERROR_BROKEN_PIPE) {
-          LogToWix("Serve: client disconnected.\n");
+          spdlog::info("Serve: client disconnected.\n");
           break;
-        } else {
-          LogToWix(fmt::format("InstanceThread ReadFile failed, GLE={}.\n",
-                               GetLastError()));
+        }
+        else {
+          spdlog::error("InstanceThread ReadFile failed, GLE={}.\n",
+                               GetLastError());
           break;
         }
       }
 
-      // LogToWix(fmt::format("CLIENT MSG: {}\n", pchRequest));
+      // spdlog::info("CLIENT MSG: {}\n", pchRequest);
 
       // Process the incoming message.
       HandleMsg(pchRequest, pchReply, &cbReplyBytes);
@@ -219,10 +217,10 @@ void Serve(HANDLE hPipe) {
       );
 
       if (!bSuccess || cbReplyBytes != cbWritten) {
-        LogToWixError(fmt::format("InstanceThread WriteFile failed, GLE={}.\n",
-                                  GetLastError()));
+        spdlog::error("InstanceThread WriteFile failed, GLE={}.\n",
+                                  GetLastError());
       } else {
-        LogToWix(fmt::format("Number of Bytes Written: {}\n", cbReplyBytes));
+        spdlog::info("Number of Bytes Written: {}\n", cbReplyBytes);
       }
 
       // Flush the pipe to allow the client to read the pipe's contents
@@ -243,7 +241,7 @@ void Serve(HANDLE hPipe) {
   HeapFree(hHeap, 0, pchRequest);
   HeapFree(hHeap, 0, pchReply);
 
-  LogToWix("InstanceThread exiting.\n");
+  spdlog::info("InstanceThread exiting.\n");
   return;
 }
 
@@ -253,12 +251,12 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
 {
   errno_t rslt = 1;
 
-  LogToWix(fmt::format("Client Request:\n{}\n", pchRequest));
+  spdlog::info("Client Request:\n{}\n", pchRequest);
 
   if (strcmp(pchRequest, "KILL") == 0) {
     rslt = strcpy_s(pchReply, BUFSIZE, "KL");
     if (system("taskkill /T /IM TrackIR5.exe") == -1)
-      LogToWix("Failed to kill TrackIR5 program with error code");
+      spdlog::info("Failed to kill TrackIR5 program with error code");
   } else if (strcmp(pchRequest, "HEARTBEAT") == 0) {
     rslt = strcpy_s(pchReply, BUFSIZE, "HB");
   } else if (strcmp(pchRequest, "PAUSE") == 0) {
@@ -277,7 +275,7 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
   else {
     *pchBytes = 0;
     pchReply[0] = 0;
-    LogToWix("strcpy_s failed, no outgoing message.\n");
+    spdlog::info("strcpy_s failed, no outgoing message.\n");
     return;
   }
 }

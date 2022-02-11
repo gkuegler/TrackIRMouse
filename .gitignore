@@ -1,5 +1,9 @@
 ## I went with the standard Visual Studio ignore file - GK
-*log-*
+*log-*.txt
+*log-*.log
+*log.txt
+*log.log
+
 src/settings_test.toml
 src/ignore*
 

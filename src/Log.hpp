@@ -1,59 +1,27 @@
 #ifndef TRACKIRMOUSE_LOG_H
 #define TRACKIRMOUSE_LOG_H
 
-#define FMT_HEADER_ONLY
-// #include <fmt\xchar.h>
-#include <fmt\format.h>
+// format library not needed anymore with spdlog
+//#define FMT_HEADER_ONLY
+//#include <fmt\xchar.h>
+//#include <fmt\format.h>
 
 #define SPDLOG_NO_THREAD_ID
+// code never modifies a logger's log levels concurrently by
+// different threads.
 #define SPDLOG_NO_ATOMIC_LEVELS
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/spdlog.h>
-#include <wx/file.h>
-#include <wx/log.h>
-#include <wx/string.h>
-#include <wx/wx.h>
-
-#include <string>
+#include <spdlog/spdlog.h> // used to export default logging
 
 //////////////////////////////////////////////////////////////////////
 //        Functions Logging Specifically to the Text Control        //
 //////////////////////////////////////////////////////////////////////
 
-// Scott Meyers universal reference tips!
-template <typename T>
-void LogToWix(T &&msg) {
-  wxThreadEvent *evt = new wxThreadEvent(wxEVT_THREAD);
-  evt->SetString(std::forward<T>(msg));
-  wxTheApp->QueueEvent(evt);
+// set up global logger
+// have app set up logger first thing
+
+namespace MyLogging {
+  void SetUpLogging();
 }
-
-template <typename T>
-void LogToWixError(T msg) {
-  spdlog::get("mainlogger")->warn<T>(msg);
-  wxThreadEvent *evt = new wxThreadEvent(wxEVT_THREAD);
-  evt->SetString(msg);
-  evt->SetExtraLong(1);
-  wxTheApp->QueueEvent(evt);
-}
-
-template <typename T>
-void LogToFile(T &&msg) {
-  spdlog::get("mainlogger")->info<T>(msg);
-}
-
-//////////////////////////////////////////////////////////////////////
-//     Functions for General-purpose Logging, to File, etc ...      //
-//////////////////////////////////////////////////////////////////////
-
-class CMyLogger : public wxLog {
- public:
-  wxString m_filename = "log-trackir.txt";
-  wxFile m_file;
-
-  CMyLogger();
-  void DoLogText(const wxString &msg);
-};
 
 #endif /* TRACKIRMOUSE_LOG_H */

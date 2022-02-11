@@ -45,9 +45,8 @@ const wxSize kDefaultButtonSize = wxSize(100, 25);
 wxIMPLEMENT_APP(CGUIApp);
 
 bool CGUIApp::OnInit() {
-  // Initialize global logger
-  auto logger = spdlog::basic_logger_mt("mainlogger", "log-trackir.txt", true);
-  spdlog::set_level(spdlog::level::info);
+  // Initialize global default logger
+  MyLogging::SetUpLogging();
 
   int w = GetSystemMetrics(SM_CXMAXIMIZED);
   int h = GetSystemMetrics(SM_CYMAXIMIZED);
@@ -94,9 +93,9 @@ bool CGUIApp::OnInit() {
 
   // Start the track IR thread if enabled
   if (GetGlobalConfig()->data.trackOnStart) {
-    LogToFile(fmt::format(
+    spdlog::debug(
         "checking the start track at start up -> watchdogEnabled: {}",
-        GetGlobalConfig()->data.trackOnStart));
+        GetGlobalConfig()->data.trackOnStart);
     wxCommandEvent event = {};  // blank event to reuse start handler code
     m_frame->m_panel->OnTrackStart(event);
   }
@@ -172,7 +171,7 @@ void cFrame::OnOpen(wxCommandEvent &event) {
     defaultFilePath =
         executablePath.substr(0, executablePath.find_last_of("\\/"));
     // defaultFilePath = wxString(lpFilename, static_cast<size_t>(result));
-    LogToWix(defaultFilePath);
+    spdlog::debug("default file path for dialog: {}", defaultFilePath);
   } else {
     defaultFilePath = wxEmptyString;
   }
@@ -204,7 +203,6 @@ void cFrame::LoadSettingsFromFile() {
 
   // Parse Settings File
   try {
-    // wxLogError("press okay to continue");
     config->ParseFile("settings.toml");
   } catch (const toml::syntax_error &ex) {
     wxLogFatalError("Failed To Parse toml Settings File:\n%s", ex.what());
@@ -254,15 +252,15 @@ void cFrame::OnSettings(wxCommandEvent &event) {
 
   // Show the settings pop up while disabling input on main window
   int results = dlg.ShowModal();
-  LogToFile(fmt::format("results of Modal settings: {}", results));
+  spdlog::info("results of Modal settings: {}", results);
 
   if (wxID_OK == results) {
-    LogToFile(fmt::format("user clicked okay on settings"));
+    spdlog::info("user clicked okay on settings");
     // values should be saved
     CConfig *config = GetGlobalConfig();
     config->data = userData;
   } else if (wxID_CANCEL == results) {
-    LogToFile(fmt::format("user clicked the cancel button on settings"));
+    spdlog::info("user clicked the cancel button on settings");
   }
 }
 
@@ -307,8 +305,6 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
 
   m_pnlDisplayConfig = new cPanelConfiguration(this);
 
-  // wxString start_message(fmt::format("{:-^50}\n", "MouseTrackIR
-  // Application"));
   wxStaticText *txtLogOutputTitle =
       new wxStaticText(this, wxID_ANY, "Log Output:");
 
@@ -354,6 +350,7 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
 }
 
 void cPanel::PopulateComboBoxWithProfiles() {
+  spdlog::trace("repopulating profiles combobox");
   CConfig config = GetGlobalConfigCopy();
   m_cmbProfiles->Clear();
   for (auto &item : config.GetProfileNames()) {
@@ -371,7 +368,7 @@ void cPanel::PopulateComboBoxWithProfiles() {
 
 void cPanel::OnTrackStart(wxCommandEvent &event) {
   if (m_parent->m_pTrackThread) {
-    LogToWixError("Please stop mouse before restarting.\n");
+    spdlog::warn("Please stop mouse before restarting.");
     wxCommandEvent event = {};
     OnTrackStop(event);
   }
@@ -387,7 +384,7 @@ void cPanel::OnTrackStart(wxCommandEvent &event) {
     return;
   }
 
-  LogToWix("Started Mouse.\n");
+  spdlog::info("Started Mouse.");
 
   // after the call to wxThread::Run(), the m_pThread pointer is "unsafe":
   // at any moment the thread may cease to exist (because it completes its
@@ -403,17 +400,17 @@ void cPanel::OnTrackStop(wxCommandEvent &event) {
     // This will gracefully exit the tracking loop and return control to the
     // thread. This will cause the thread to die off and delete itself.
     TR_TrackStop();
-    LogToWix("Stopped mouse.\n");
+    spdlog::info("Stopped mouse.");
   } else {
-    LogToWix("Track thread not running!\n");
+    spdlog::warn("Track thread not running!");
   }
 }
 
 void cPanel::OnActiveProfile(wxCommandEvent &event) {
   int index = m_cmbProfiles->GetSelection();
-  LogToFile(fmt::format("Profiles get selection: {}", index));
+  spdlog::trace("Profiles get selection index: {}", index);
   std::string activeProfile((m_cmbProfiles->GetString(index)).mb_str());
-  LogToFile(fmt::format("activeProfile: {}", activeProfile));
+  spdlog::debug("Active Profile name selected: {}", activeProfile);
   CConfig *config = GetGlobalConfig();
   config->data.activeProfileName = activeProfile;
 
@@ -429,6 +426,9 @@ void cPanel::OnAddProfile(wxCommandEvent &event) {
     wxString value = dlg.GetValue();
     config->AddProfile(std::string(value.mb_str()));
     PopulateComboBoxWithProfiles();
+  }
+  else {
+    spdlog::debug("Add profile action canceled.");
   }
 }
 
@@ -733,19 +733,14 @@ void CloseApplication() {
 
 wxThread::ExitCode TrackThread::Entry() {
   CConfig config = GetGlobalConfigCopy();
-  try {
-    TR_Initialize(m_hWnd, config);
-
-    // This is the loop function
-    int result = TR_TrackStart(config);
-
-    if (1 == result && config.data.quitOnLossOfTrackIr) {
-      CloseApplication();
-    }
-
-  } catch (const Exception &ex) {
-    wxLogError("Exception happened when starting track thread:\n%s", ex.what());
+  if (0 != TR_Initialize(m_hWnd, config)) {
     return NULL;
+  }
+
+  // This is the loop function
+  int result = TR_TrackStart(config);
+  if (1 == result && config.data.quitOnLossOfTrackIr) {
+    CloseApplication();
   }
 
   return NULL;

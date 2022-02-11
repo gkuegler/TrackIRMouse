@@ -21,6 +21,8 @@
 #define USHORT_MAX_VAL 65535
 
 // bool g_bPauseTracking = false;
+// TODO: in future change this to an atomic type or
+// or handle this way unsing os level thread signals?
 bool g_bGracefullyExit = false;
 
 std::vector<CDisplay> g_displays;
@@ -38,11 +40,11 @@ HANDLE g_hWatchdogThread = NULL;
 
 // Function Prototypes
 BOOL PopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT);
-void WinSetup(CConfig);
-void DisplaySetup(const CConfig);
+int WinSetup(CConfig);
+int DisplaySetup(const CConfig);
 void MouseMove(int, double, double);
 
-void TR_Initialize(HWND hWnd, CConfig config) {
+int TR_Initialize(HWND hWnd, CConfig config) {
   // ## Program flow ##
   //
   // first thing is ping windows for info
@@ -61,12 +63,17 @@ void TR_Initialize(HWND hWnd, CConfig config) {
   //  - unable to load dll
   //  - any NP dll function call failure
 
-  // LogToWix(fmt::format("\nStarting Initialization Of TrackIR\n"));
+  spdlog::debug("Starting Initialization Of TrackIR");
+
   SProfile activeProfile = config.GetActiveProfile();
 
-  WinSetup(config);
+  if (0 != WinSetup(config)) {
+    return -1;
+  }
 
-  DisplaySetup(config);
+  if (0 != DisplaySetup(config)) {
+    return -1;
+  }
 
   // After settings are loaded, start accepting connections & msgs
   // on a named pipe to externally controll the track IR process
@@ -77,46 +84,43 @@ void TR_Initialize(HWND hWnd, CConfig config) {
     g_hWatchdogThread = WatchDog::StartWatchdog();
 
     if (NULL == g_hWatchdogThread)
-      LogToWixError("Watchdog thread failed to initialize!");
+      spdlog::warn("Watchdog thread failed to initialize.");
   }
 
-  // LogToWix(fmt::format("\n{:-^50}\n", "TrackIR Init Status"));
+  // spdlog::info("\n{:-^50}\n", "TrackIR Init Status");
 
   // Find and load TrackIR DLL
 #ifdef UNICODE
   TCHAR sDll[MAX_PATH];
 
   int resultConvert = MultiByteToWideChar(
-      CP_UTF8,
-      // MB_ERR_INVALID_CHARS, // I feel like this should be
-      // the smart choice, but this is an error.
-      MB_COMPOSITE, config.m_trackIrDllPath.c_str(), MAX_PATH, sDll, MAX_PATH);
+    CP_UTF8,
+    // MB_ERR_INVALID_CHARS, // I feel like this should be
+    // the smart choice, but this is an error.
+    MB_COMPOSITE, config.m_trackIrDllPath.c_str(), MAX_PATH, sDll, MAX_PATH);
 
-  if (0 == resultConvert)
-    throw Exception(fmt::format(
-        "failed to convert track dll location to wchart* with error code: {}",
-        GetLastError()));
+  if (0 == resultConvert) {
+    spdlog::error("failed to convert track dll location to wchart* with error code: {}",
+      GetLastError());
+    return -1;
+  }
 
 #else
   TCHAR sDLL = config.m_trackIrDllPath.c_str()
-
 #endif
 
   // Load trackir dll and resolve function addresses
-  NPRESULT rsltInit = NPClient_Init(sDll);
+    NPRESULT rsltInit = NPClient_Init(sDll);
 
   if (NP_OK == rsltInit)
-    LogToFile("NP Initialization: Success");
+    spdlog::info("NP Initialization: Success");
   else if (NP_ERR_DLL_NOT_FOUND == rsltInit) {
-    LogToFile(
-        fmt::format("NP Initialization: Failure, Error Code -> {}", rsltInit));
-    throw Exception(
-        fmt::format("\nFAILED TO LOAD TRACKIR DLL : {}\n\n", rsltInit));
-  } else {
-    LogToFile(fmt::format("NP Initialization: Failure, Error Code -> {}\n",
-                          rsltInit));
-    throw Exception(
-        fmt::format("\nNP INITIALIZATION FAILED WITH CODE: {}\n\n", rsltInit));
+    spdlog::error("NP Initialization: Failure, DLL not found, Error Code -> {}", rsltInit);
+    return -1;
+  }
+  else {
+    spdlog::error("NP Initialization: Failure, Error Code -> {}\n", rsltInit);
+    return -1;
   }
 
   // NP software needs a window handle to know when it should
@@ -129,44 +133,55 @@ void TR_Initialize(HWND hWnd, CConfig config) {
   // NP_RegisterWindowHandle
   NPRESULT rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
 
+  if (NP_OK == rsltRegWinHandle) {
+    spdlog::info("Registered Handle.");
+  }
+
   // 7 is a magic number I found through experimentation.
   // It means another program has its window handle registered
   // already.
-  if (rsltRegWinHandle == 7) {
+  else if (rsltRegWinHandle == 7) {
     NP_UnregisterWindowHandle();
-    LogToWixError(
-        fmt::format("BOOTING CONTROL OF PREVIOUS MOUSETRACKER INSTANCE!"));
+    spdlog::warn("Booting control of previous mousetracker instance!");
     Sleep(2);
     rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
+    if (!NP_OK == rsltRegWinHandle)
+    {
+      spdlog::error("could not re-register window handle. NP error code: {}", rsltRegWinHandle);
+      return -1;
+    }
+  }
+  else {
+    spdlog::error("Failed to register window handle. NP error code: {}", rsltRegWinHandle);
+    return -1;
   }
 
-  if (NP_OK == rsltRegWinHandle)
-    LogToFile("Register Window Handle: Success");
-  else
-    throw Exception(
-        fmt::format("Register Window Handle: Failed {}\n", rsltRegWinHandle));
 
   // I'm skipping query the software version, I don't think its necessary
 
   // Request roll, pitch. See NPClient.h
   NPRESULT rsltReqData = NP_RequestData(NPPitch | NPYaw);
   if (NP_OK == rsltReqData)
-    LogToFile("Request Data:  Success");
-  else
-    throw Exception(fmt::format("Request Data: Failed: {}", rsltReqData));
+    spdlog::info("NP Request Data Success");
+  else {
+    spdlog::error("NP Request Data Failed: {}", rsltReqData);
+  return -1;
+}
 
-  rsltReqData = NP_RegisterProgramProfileID(activeProfile.profile_ID);
-  if (NP_OK == rsltReqData)
-    LogToFile("Register Profile ID: Success");
-  else
-    throw Exception(
-        fmt::format("Register Profile ID: Failed: {}\n", rsltReqData));
+  NPRESULT rsltProfileId = NP_RegisterProgramProfileID(activeProfile.profile_ID);
+  if (NP_OK == rsltProfileId)
+    spdlog::info("NP Registered Profile ID.");
+  else {
+    spdlog::error("NP Register Profile ID: Failed: {}\n", rsltProfileId);
+    return -1;
+  }
 
 #endif
-  return;
+  return 0;
 }
 
 int TR_TrackStart(CConfig config) {
+  // TODO: change variable to g_bTrackingEnabledAtomic
   g_bGracefullyExit = false;
 
 #ifndef TEST_NO_TRACK
@@ -175,9 +190,11 @@ int TR_TrackStart(CConfig config) {
 
   NPRESULT rslt = NP_StartDataTransmission();
   if (NP_OK == rslt)
-    LogToFile("Start Data Transmission: Success");
-  else
-    LogToWixError(fmt::format("Start Data Transmission: Failed: {}\n", rslt));
+    spdlog::info("NP Started data transmission.");
+  else {
+    spdlog::error("NP Start Data Transmission: Failed: {}\n", rslt);
+    return 1;
+  }
 
 #endif
 
@@ -220,8 +237,8 @@ int TR_TrackStart(CConfig config) {
     }
 
     else if (NP_ERR_DEVICE_NOT_PRESENT == gdf) {
-      LogToWixError(
-          "DEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART "
+      spdlog::warn(
+          "DEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART TRACKING"
           "PROGRAM");
       return 1;
     }
@@ -260,10 +277,10 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
 
   // Display monitor info to user
   // TODO: michael does not yet support wide character strings
-  // LogToWix(fmt::format(L"MON Name:{:>15}\n", Monitor.szDevice));
+  // spdlog::info(L"MON Name:{:>15}\n", Monitor.szDevice);
 
-  LogToFile(fmt::format("MON {} Pixel Bounds -> {:>6}, {:>6}, {:>6}, {:>6}",
-                        count, left, right, top, bottom));
+  spdlog::info("MON {} Pixel Bounds -> {:>6}, {:>6}, {:>6}, {:>6}",
+                        count, left, right, top, bottom);
 
   if (Monitor.rcMonitor.left < g_virtualOriginX) {
     g_virtualOriginX = Monitor.rcMonitor.left;
@@ -276,21 +293,22 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
   return true;
 };
 
-void WinSetup(CConfig config) {
+int WinSetup(CConfig config) {
   // TODO: error checking
   //  - rotations over 180/-180 deg
   //  - differing # of displays
   //  - interfering boundaries
   //  -
-  // LogToWix(fmt::format("\n{:-^50}\n", "Windows Environment Info"));
+  // spdlog::info("\n{:-^50}\n", "Windows Environment Info");
 
   const int monitorCount = GetSystemMetrics(SM_CMONITORS);
 
   int count = config.GetActiveProfileDisplayCount();
   if (monitorCount != count) {
-    throw Exception(fmt::format(
+    spdlog::error(
         "Incompatible config: {} monitors specified but {} monitors found",
-        count, monitorCount));
+        count, monitorCount);
+    return -1;
   }
 
   int virtualDesktopWidth = GetSystemMetrics(
@@ -300,11 +318,9 @@ void WinSetup(CConfig config) {
 
   // TODO: this check actually happens at the initialization of my configuration
   // file
-  LogToFile(fmt::format("{} Monitors Found", monitorCount));
-  LogToFile(
-      fmt::format("Width of Virtual Desktop:  {:>5}", virtualDesktopWidth));
-  LogToFile(
-      fmt::format("Height of Virtual Desktop: {:>5}", virtualDesktopHeight));
+  spdlog::debug("{} Monitors Found", monitorCount);
+  spdlog::debug("Width of Virtual Desktop:  {:>5}", virtualDesktopWidth);
+  spdlog::debug("Height of Virtual Desktop: {:>5}", virtualDesktopHeight);
 
   g_xPixelAbsoluteSlope =
       USHORT_MAX_VAL / static_cast<double>(virtualDesktopWidth);
@@ -314,15 +330,13 @@ void WinSetup(CConfig config) {
   // Use a callback to go through each monitor
   EnumDisplayMonitors(NULL, NULL, PopulateVirtMonitorBounds, 0);
 
-  LogToFile(
-      fmt::format("Virtual Origin Offset Horizontal: {:d}", g_virtualOriginX));
-  LogToFile(
-      fmt::format("Virtual Origin Offset Vertical:   {:d}", g_virtualOriginY));
+  spdlog::debug("Virtual Origin Offset Horizontal: {:>5d}", g_virtualOriginX);
+  spdlog::debug("Virtual Origin Offset Vertical:   {:>5d}", g_virtualOriginY);
 
-  return;
+  return 0;
 }
 
-void DisplaySetup(CConfig config) {
+int DisplaySetup(CConfig config) {
   SProfile activeProfile = config.GetActiveProfile();
 
   for (int i = 0; i < activeProfile.bounds.size(); i++) {
@@ -343,27 +357,27 @@ void DisplaySetup(CConfig config) {
   }
 
   for (int i = 0; i < config.m_monitorCount; i++) {
-    LogToFile(fmt::format(
-        "MON {} pixelBound: {:>5d}, {:>5d}, {:>5d}, {:>5d}", i,
+    spdlog::debug(
+        "Display {} pixel bound: {}, {}, {}, {}", i,
         g_displays[i].pixelBoundAbsLeft, g_displays[i].pixelBoundAbsRight,
-        g_displays[i].pixelBoundAbsTop, g_displays[i].pixelBoundAbsBottom));
+        g_displays[i].pixelBoundAbsTop, g_displays[i].pixelBoundAbsBottom);
   }
 
   for (int i = 0; i < config.m_monitorCount; i++) {
-    LogToFile(fmt::format(
-        "MON {} boundAbsLeft: {:>7.1f}, {:>7.1f}, {:>7.1f}, {:>7.1f}", i,
+    spdlog::info(
+        "Display {} abs bounds: {:>.1f}, {:>.1f}, {:>.1f}, {:>.1f}", i,
         g_displays[i].boundAbsLeft, g_displays[i].boundAbsRight,
-        g_displays[i].boundAbsTop, g_displays[i].boundAbsBottom));
+        g_displays[i].boundAbsTop, g_displays[i].boundAbsBottom);
   }
 
   for (int i = 0; i < config.m_monitorCount; i++) {
-    LogToFile(fmt::format(
-        "MON {} rotationBoundLeft: {:> 6.2f}, {:> 6.2f}, {:> 6.2f}, {:> 6.2f}",
+    spdlog::info(
+        "Display {} rotationBoundLeft: {:>.2f}, {:>.2f}, {:>.2f}, {:>.2f}",
         i, g_displays[i].rotationBoundLeft, g_displays[i].rotationBoundRight,
-        g_displays[i].rotationBoundTop, g_displays[i].rotationBoundBottom));
+        g_displays[i].rotationBoundTop, g_displays[i].rotationBoundBottom);
   }
 
-  return;
+  return 0;
 }
 
 inline void SendMyInput(double x, double y) {
@@ -377,7 +391,9 @@ inline void SendMyInput(double x, double y) {
   ip.mi.dx = static_cast<LONG>(x);
   ip.mi.dy = static_cast<LONG>(y);
 
-  SendInput(1, &ip, sizeof(INPUT));
+  if (0 == SendInput(1, &ip, sizeof(INPUT))) {
+    spdlog::warn("SendInput was already blocked by another thread.");
+  }
 
   return;
 }

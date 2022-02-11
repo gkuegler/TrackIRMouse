@@ -139,7 +139,7 @@ void CConfig::LoadSettings() {
 
     if (0 == path.result) {
       m_trackIrDllPath = path.value;
-      LogToFile("Acquired DLL location from registry.");
+      spdlog::info("Acquired DLL location from registry.");
     } else {
       throw Exception(
           fmt::format("See error above.\n  result: {}"
@@ -162,7 +162,7 @@ void CConfig::LoadSettings() {
   m_sTrackIrDllLocation.append("NPClient.dll");
 #endif
 
-  LogToFile(fmt::format("NPTrackIR DLL Path: {}", m_trackIrDllPath));
+  spdlog::debug("NPTrackIR DLL Path: {}", m_trackIrDllPath);
 
   //////////////////////////////////////////////////////////////////////
   //                     Finding Default Padding                      //
@@ -175,14 +175,13 @@ void CConfig::LoadSettings() {
   try {
     vDefaultPaddingTable = toml::find(m_vData, "DefaultPadding");
   } catch (std::out_of_range e) {
-    LogToWixError(fmt::format("Default Padding Table Not Found"));
-    LogToWixError(
-        fmt::format("Please add the following to the settings.toml file:\n"
+    spdlog::warn("Default Padding Table Not Found");
+    spdlog::warn("Please add the following to the settings.toml file:\n"
                     "[DefaultPadding]"
                     "left   = 0"
                     "right  = 0"
                     "top    = 0"
-                    "bottom = 0"));
+                    "bottom = 0");
   }
 
   data.defaultPaddings[0] = toml::find<int>(vDefaultPaddingTable, "left");
@@ -258,12 +257,12 @@ void CConfig::LoadSettings() {
       if (paddingBottom == 5555) paddingBottom = data.defaultPaddings[3];
 
       // Report padding values
-      LogToFile(fmt::format(
-          "Display {} Padding -> {:>5}{}, {:>5}{}, {:>5}{}, {:>5}{}", i++,
+      spdlog::debug(
+          "Display {} Padding -> {}{}, {}{}, {}{}, {}{}", i++,
           data.defaultPaddings[0], (paddingLeft == 5555) ? "(default)" : "",
           data.defaultPaddings[1], (paddingRight == 5555) ? "(default)" : "",
           data.defaultPaddings[2], (paddingTop == 5555) ? "(default)" : "",
-          data.defaultPaddings[3], (paddingBottom == 5555) ? "(default)" : ""));
+          data.defaultPaddings[3], (paddingBottom == 5555) ? "(default)" : "");
 
       newProfile.bounds.push_back(
           CBounds({rotLeft, rotRight, rotTop, rotBottom},
@@ -296,6 +295,8 @@ void CConfig::SaveSettings() {
   };
 
   std::vector<toml::value> profiles;
+  // write out profile data
+  // TODO: use emplace_back
   for(auto& profile : data.profiles){
     std::vector<toml::value> displays;
     for(auto& display : profile.bounds){
@@ -332,10 +333,10 @@ void CConfig::SaveSettings() {
 }
 // clang-format on
 
-void CConfig::LogTomlError(const std::exception &ex) {
-  wxLogFatalError("Incorrect type on reading configuration parameter: %s",
-                  ex.what());
-}
+// void CConfig::LogTomlError(const std::exception &ex) {
+//   spdlog::critical("Incorrect type on reading configuration parameter: %s",
+//                   ex.what());
+// }
 
 void CConfig::AddProfile(std::string newProfileName) {
   auto profileNames = GetProfileNames();
@@ -343,7 +344,7 @@ void CConfig::AddProfile(std::string newProfileName) {
   // Prohibit conflicting names
   for (auto name : profileNames) {
     if (name == newProfileName) {
-      wxLogError("Profile name already exists, please pick another name.");
+      spdlog::error("Profile name already exists, please pick another name.");
       return;
     }
   }
@@ -367,8 +368,7 @@ void CConfig::RemoveProfile(std::string profileName) {
       // update dropdown to remove profile and
       // select dropdown
       data.profiles.erase(data.profiles.begin() + i);
-      LogToWix(fmt::format("Deleted profile: {}\n", profileName));
-      LogToFile(fmt::format("Deleted profile: {}", profileName));
+      spdlog::info("Deleted profile: {}", profileName);
     }
   }
 }
@@ -389,15 +389,15 @@ std::vector<std::string> CConfig::GetProfileNames() {
 }
 
 SProfile &CConfig::GetActiveProfile() {
-  LogToFile(fmt::format("activeProfileName: {}", data.activeProfileName));
+  spdlog::debug("Active Profile Name: {}", data.activeProfileName);
   for (auto &profile : data.profiles) {
-    LogToFile(fmt::format("profile name: {}", profile.name));
+    spdlog::trace("profile name compared: {}", profile.name);
     if (profile.name == data.activeProfileName) {
       return profile;
     }
   }
   // a profile should exist, codes shouldn't be reachable
-  wxFAIL_MSG("Couldn't find active profile by name.");
+  spdlog::critical("Couldn't find active profile by name.");
 }
 
 int CConfig::GetActiveProfileDisplayCount() {
