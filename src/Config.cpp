@@ -1,3 +1,11 @@
+/**
+ * Singleton holding user & environment data.
+ * Loads user data from json file and environment data from registry and other
+ * system calls.
+ *
+ * --License Boilerplate Placeholder--
+ */
+
 #include "Config.hpp"
 
 #include <Windows.h>
@@ -14,7 +22,7 @@ CConfig *GetGlobalConfig() { return &g_config; }
 
 CConfig GetGlobalConfigCopy() { return g_config; }
 
-void ClearGlobalData(){ g_config = CConfig(); }
+void ClearGlobalData() { g_config = CConfig(); }
 
 typedef struct _RegistryQuery {
   int result;
@@ -31,10 +39,10 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
   HKEY hKey = 0;
 
   LSTATUS statusOpen =
-      RegOpenKeyExA(hParentKey,  // should usually be HKEY_CURRENT_USER
+      RegOpenKeyExA(hParentKey, // should usually be HKEY_CURRENT_USER
                     subKey,
-                    0,         //[in]           DWORD  ulOptions,
-                    KEY_READ,  //[in]           REGSAM samDesired,
+                    0,        //[in]           DWORD  ulOptions,
+                    KEY_READ, //[in]           REGSAM samDesired,
                     &hKey);
 
   if (ERROR_FILE_NOT_FOUND == statusOpen) {
@@ -54,12 +62,12 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
   DWORD sizeOfBuffer = 0;
 
   LSTATUS statusQueryValue =
-      RegQueryValueExA(hKey,        // [in]                HKEY    hKey,
-                       "Path",      // [in, optional]      LPCSTR  lpValueName,
-                       0,           // LPDWORD lpReserved,
-                       &valueType,  // [out, optional]     LPDWORD lpType,
-                       0,           // [out, optional]     LPBYTE  lpData,
-                       &sizeOfBuffer  // [in, out, optional] LPDWORD lpcbData
+      RegQueryValueExA(hKey,         // [in]                HKEY    hKey,
+                       "Path",       // [in, optional]      LPCSTR  lpValueName,
+                       0,            // LPDWORD lpReserved,
+                       &valueType,   // [out, optional]     LPDWORD lpType,
+                       0,            // [out, optional]     LPBYTE  lpData,
+                       &sizeOfBuffer // [in, out, optional] LPDWORD lpcbData
       );
 
   if (ERROR_FILE_NOT_FOUND == statusQueryValue) {
@@ -88,13 +96,13 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
   }
 
   LSTATUS statusGetValue =
-      RegGetValueA(hKey,            // [in]                HKEY    hkey,
-                   0,               // [in, optional]      LPCSTR  lpSubKey,
-                   subValue,        // [in, optional]      LPCSTR  lpValue,
-                   RRF_RT_REG_SZ,   // [in, optional]      DWORD   dwFlags,
-                   &valueType,      // [out, optional]     LPDWORD pdwType,
-                   (void *)szPath,  // [out, optional]     PVOID   pvData,
-                   &sizeOfBuffer    // [in, out, optional] LPDWORD pcbData
+      RegGetValueA(hKey,           // [in]                HKEY    hkey,
+                   0,              // [in, optional]      LPCSTR  lpSubKey,
+                   subValue,       // [in, optional]      LPCSTR  lpValue,
+                   RRF_RT_REG_SZ,  // [in, optional]      DWORD   dwFlags,
+                   &valueType,     // [out, optional]     LPDWORD pdwType,
+                   (void *)szPath, // [out, optional]     PVOID   pvData,
+                   &sizeOfBuffer   // [in, out, optional] LPDWORD pcbData
       );
 
   if (ERROR_SUCCESS == statusOpen) {
@@ -108,8 +116,11 @@ void CConfig::ParseFile(const std::string fileName) {
   m_vData = toml::parse<toml::preserve_comments>(fileName);
 }
 
-// Should be changed to verify
-void CConfig::LoadSettings() {
+/**
+ * Loads json user data into config class.
+ * @return error_code
+ */
+void  CConfig::LoadSettings() {
   m_monitorCount = GetSystemMetrics(SM_CMONITORS);
 
   // Find the general settings table
@@ -141,10 +152,9 @@ void CConfig::LoadSettings() {
       m_trackIrDllPath = path.value;
       spdlog::info("Acquired DLL location from registry.");
     } else {
-      throw Exception(
-          fmt::format("See error above.\n  result: {}"
-                      "  result string: {}",
-                      path.result, path.resultString));
+      spdlog::error("Could not find registry path\n  path.result: {}"
+                    "  path.resultString: {}",
+                    path.result, path.resultString);
     }
   } else {
     m_trackIrDllPath = data.trackIrDllFolder;
@@ -177,11 +187,11 @@ void CConfig::LoadSettings() {
   } catch (std::out_of_range e) {
     spdlog::warn("Default Padding Table Not Found");
     spdlog::warn("Please add the following to the settings.toml file:\n"
-                    "[DefaultPadding]"
-                    "left   = 0"
-                    "right  = 0"
-                    "top    = 0"
-                    "bottom = 0");
+                 "[DefaultPadding]"
+                 "left   = 0"
+                 "right  = 0"
+                 "top    = 0"
+                 "bottom = 0");
   }
 
   data.defaultPaddings[0] = toml::find<int>(vDefaultPaddingTable, "left");
@@ -203,8 +213,6 @@ void CConfig::LoadSettings() {
   // validating parameters.6
   int i = 0;
   for (auto profile : vProfilesArray.as_array()) {
-    // Load in current profile dependent settings
-
     SProfile newProfile;
 
     newProfile.name = toml::find<std::string>(profile, "name");
@@ -216,7 +224,9 @@ void CConfig::LoadSettings() {
     auto &vDisplayMapping = toml::find(profile, "DisplayMappings");
 
     for (auto &display : vDisplayMapping.as_array()) {
-      // Bring In The Rotational Bounds
+      /** bring in the rotational bounds
+       * further information
+       */
       toml::value left = toml::find(display, "left");
       toml::value right = toml::find(display, "right");
       toml::value top = toml::find(display, "top");
@@ -227,20 +237,20 @@ void CConfig::LoadSettings() {
       toml::value_t integer = toml::value_t::integer;
 
       double rotLeft = (left.type() == integer)
-                          ? static_cast<double>(left.as_integer())
-                          : left.as_floating();
+                           ? static_cast<double>(left.as_integer())
+                           : left.as_floating();
 
       double rotRight = (right.type() == integer)
-                           ? static_cast<double>(right.as_integer())
-                           : right.as_floating();
+                            ? static_cast<double>(right.as_integer())
+                            : right.as_floating();
 
       double rotTop = (top.type() == integer)
-                         ? static_cast<double>(top.as_integer())
-                         : top.as_floating();
+                          ? static_cast<double>(top.as_integer())
+                          : top.as_floating();
 
       double rotBottom = (bottom.type() == integer)
-                            ? static_cast<double>(bottom.as_integer())
-                            : bottom.as_floating();
+                             ? static_cast<double>(bottom.as_integer())
+                             : bottom.as_floating();
 
       // I return an ungodly fake high padding numbelong ,
       // so that I can tell if one was found in the toml config file
@@ -251,10 +261,14 @@ void CConfig::LoadSettings() {
       int paddingTop = toml::find_or<int>(display, "paddingTop", 5555);
       int paddingBottom = toml::find_or<int>(display, "paddingBottom", 5555);
 
-      if (paddingLeft == 5555) paddingLeft = data.defaultPaddings[0];
-      if (paddingRight == 5555) paddingRight = data.defaultPaddings[1];
-      if (paddingTop == 5555) paddingTop = data.defaultPaddings[2];
-      if (paddingBottom == 5555) paddingBottom = data.defaultPaddings[3];
+      if (paddingLeft == 5555)
+        paddingLeft = data.defaultPaddings[0];
+      if (paddingRight == 5555)
+        paddingRight = data.defaultPaddings[1];
+      if (paddingTop == 5555)
+        paddingTop = data.defaultPaddings[2];
+      if (paddingBottom == 5555)
+        paddingBottom = data.defaultPaddings[3];
 
       // Report padding values
       spdlog::debug(
@@ -276,6 +290,7 @@ void CConfig::LoadSettings() {
 }
 
 // clang-format off
+
 void CConfig::SaveSettings() {
   const std::string FileName = "settings_test.toml";
 
@@ -333,11 +348,6 @@ void CConfig::SaveSettings() {
 }
 // clang-format on
 
-// void CConfig::LogTomlError(const std::exception &ex) {
-//   spdlog::critical("Incorrect type on reading configuration parameter: %s",
-//                   ex.what());
-// }
-
 void CConfig::AddProfile(std::string newProfileName) {
   auto profileNames = GetProfileNames();
 
@@ -375,7 +385,7 @@ void CConfig::RemoveProfile(std::string profileName) {
 
 void CConfig::DuplicateActiveProfile() {
   auto profile = GetActiveProfile();
-  profile.name.append("2");  // incremental profile name
+  profile.name.append("2"); // incremental profile name
   data.profiles.push_back(profile);
   data.activeProfileName = profile.name;
 }

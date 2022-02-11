@@ -1,5 +1,13 @@
+/**
+ * Logging interface for program.
+ *
+ * --License Boilerplate Placeholder--
+ */
+
 #include "Log.hpp"
 
+#include <spdlog/details/null_mutex.h>
+#include <spdlog/sinks/base_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_sinks.h>
 #include <spdlog/spdlog.h>
@@ -7,12 +15,7 @@
 
 #include <mutex>
 
-#include "spdlog/details/null_mutex.h"
-#include "spdlog/sinks/base_sink.h"
-//#include <iostream>
-//#include <Windows.h>
-
-// GreWin strings used to chang to spdlog
+// GrepWin strings used to change to spdlog
 // regex match string: LogToWix\(fmt::format\(([^ \)] *)\)\);
 // replacement format string: spdlog::info\(\1);
 
@@ -20,8 +23,8 @@ namespace MyLogging {
 
 template <typename Mutex>
 class WxSink : public spdlog::sinks::base_sink<Mutex> {
- protected:
-  void sink_it_(const spdlog::details::log_msg& msg) override {
+protected:
+  void sink_it_(const spdlog::details::log_msg &msg) override {
     // log_msg is a struct containing the log entry info like level, timestamp,
     // thread id etc. msg.raw contains pre formatted log
 
@@ -36,7 +39,7 @@ class WxSink : public spdlog::sinks::base_sink<Mutex> {
       wxLogError(wxString(fmt::to_string(formatted)));
     } else {
       // send output to log consol in app
-      wxThreadEvent* event = new wxThreadEvent(wxEVT_THREAD);
+      wxThreadEvent *event = new wxThreadEvent(wxEVT_THREAD);
       event->SetString(fmt::to_string(formatted));
       if (msg.level > spdlog::level::info) {
         // used by txt control event handler to turn
@@ -47,7 +50,8 @@ class WxSink : public spdlog::sinks::base_sink<Mutex> {
     }
   }
 
-  void flush_() override { std::cout << std::flush; }
+  // Nothing to manually flush. Message queue handles everything.
+  void flush_() override { return; }
 };
 
 // Standard implementation from wiki:
@@ -55,6 +59,7 @@ class WxSink : public spdlog::sinks::base_sink<Mutex> {
 using WxSink_mt = WxSink<std::mutex>;
 using WxSink_st = WxSink<spdlog::details::null_mutex>;
 
+// clang-format off
 void SetUpLogging() {
   // Creating multithreaded loggers with multiple sinks
   std::vector<spdlog::sink_ptr> sinks;
@@ -69,17 +74,18 @@ void SetUpLogging() {
   sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("log.txt", true));
   sinks.push_back(wx_txtctrl_sink);
 
-  auto combined_logger = std::make_shared<spdlog::logger>("main", begin(sinks), end(sinks));
-  combined_logger->set_level(spdlog::level::info);  // this should be set by default anyway
-  combined_logger->set_pattern("[%T][%n][%l] %v");  // "[HH:MM:SS][logger_name][level] msg"
+  auto combined_logger =std::make_shared<spdlog::logger>("main", begin(sinks), end(sinks));
+  combined_logger->set_level(spdlog::level::info); // this should be set by default anyway
+  combined_logger->set_pattern("[%T][%n][%l] %v"); // "[HH:MM:SS][logger_name][level] msg"
 
   // set sink specific format pattern after becuase setting pattern on logger
-  // ovrrides the sink
-  wx_txtctrl_sink->set_pattern("%v");  // "msg"
+  // overrides the sink specific format pattern
+  wx_txtctrl_sink->set_pattern("%v"); // "msg"
 
-  // NOTE: setting as default also registers it in the logger registry
+  // NOTE: setting as default also registers it in the logger registry by name
   spdlog::set_default_logger(std::move(combined_logger));
 
   return;
 }
-}  // namespace MyLogging
+// clang-format on
+} // namespace MyLogging

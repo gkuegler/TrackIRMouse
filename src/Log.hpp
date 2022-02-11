@@ -13,6 +13,10 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
 #include <spdlog/spdlog.h> // used to export default logging
 
+// TODO: push these out to all internal functions.
+constexpr int SUCCESS = 0;
+constexpr int FAILURE = -1;
+
 //////////////////////////////////////////////////////////////////////
 //        Functions Logging Specifically to the Text Control        //
 //////////////////////////////////////////////////////////////////////

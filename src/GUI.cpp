@@ -1,21 +1,23 @@
-/*
-label other settings
-label active profile
-automatically restart tracking
-transform mapping values for head distance
-
-profile box:
-  set size limitations for text for inputs
-  pick number of displays
-  configuration window?
-  duplicate profile
-
-  maintain selections to move up and down
-  convert values to doubles in validation step of handle event
-  fix internal override of handling default display padding
-
-The Algorithm Design Manual - Steven S. Skiena
-*/
+/**
+ * Main app entry and GUI components.
+ *
+ * --License Boilerplate Placeholder--
+ *
+ * TODO section:
+ * label active profile
+ * automatically restart tracking
+ * transform mapping values for head distance
+ * 
+ * profile box:
+ *   set size limitations for text for inputs
+ *   pick number of displays
+ *   configuration window?
+ *   duplicate profile
+ * 
+ *   maintain selections to move up and down
+ *   convert values to doubles in validation step of handle event
+ *   fix internal override of handling default display padding
+ */
 
 // This was a bug some point and needed to define.
 // #define _CRT_SECURE_NO_WARNINGS
@@ -48,12 +50,11 @@ bool CGUIApp::OnInit() {
   // Initialize global default logger
   MyLogging::SetUpLogging();
 
-  int w = GetSystemMetrics(SM_CXMAXIMIZED);
-  int h = GetSystemMetrics(SM_CYMAXIMIZED);
-
+  // Center app on main display
   constexpr int appWidth = 1200;
   constexpr int appHeight = 800;
-
+  int w = GetSystemMetrics(SM_CXMAXIMIZED);
+  int h = GetSystemMetrics(SM_CYMAXIMIZED);
   auto origin = wxPoint((w / 2) - (appWidth / 2), (h / 2) - (appHeight / 2));
   auto dimensions = wxSize(appWidth, appHeight);
 
@@ -85,10 +86,8 @@ bool CGUIApp::OnInit() {
 
   // Member function will catch and terminate program on fatal errors
   m_frame->LoadSettingsFromFile();
-
   // Internally uses global config object
   m_frame->UpdateGuiFromSettings();
-
   m_frame->Show();
 
   // Start the track IR thread if enabled
@@ -102,13 +101,6 @@ bool CGUIApp::OnInit() {
 
   return true;
 }
-
-// cRemoveProfile::cRemoveProfile(cFrame *parent)
-//     : wxMultiChoiceDialog(parent, "delete this profile",
-//                           "press enter to delete the profile", 0,
-//                           std::vector<std::string>{}, wxOK,
-//                           wxDefaultPosition) {
-// }
 
 //////////////////////////////////////////////////////////////////////
 //                            Main Frame                            //
@@ -205,14 +197,14 @@ void cFrame::LoadSettingsFromFile() {
   try {
     config->ParseFile("settings.toml");
   } catch (const toml::syntax_error &ex) {
-    wxLogFatalError("Failed To Parse toml Settings File:\n%s", ex.what());
+    spdlog::critical("Failed To Parse toml Settings File:\n%s", ex.what());
   } catch (std::runtime_error &ex) {
-    wxLogFatalError(
-        "Failed To Parse Settings File.\n\"settings.toml\" File Likely Not "
+    spdlog::error(
+        "Failed To Parse Settings File -> \"settings.toml\" File Likely Not "
         "Found.\n%s",
         ex.what());
   } catch (...) {
-    wxLogFatalError("An unhandled exception occurred when loading toml file.");
+    spdlog::critical("An unhandled exception occurred when loading/parsing toml file.");
   }
 
   try {
@@ -220,17 +212,16 @@ void cFrame::LoadSettingsFromFile() {
   }
   // type_error inherits from toml::exception, needs to be caught first
   catch (const toml::type_error &ex) {
-    wxLogFatalError("Incorrect type when loading settings.\n\n%s", ex.what());
+    spdlog::critical("Incorrect type when loading settings.\n\n%s", ex.what());
   }
   // toml::exception is base exception class
   catch (const toml::exception &ex) {
-    wxLogFatalError("std::exception:\n%s", ex.what());
+    spdlog::critical("std::exception:\n%s", ex.what());
   } catch (const Exception &ex) {
-    wxLogFatalError("My Custom Exception:\n%s", ex.what());
-  } /*catch (...) {
-    wxLogFatalError(
-        "exception has gone unhandled loading and verifying settings");
-  }*/
+    spdlog::critical("My Custom Exception:\n%s", ex.what());
+  } catch (...) {
+    spdlog::critical("exception has gone unhandled loading and verifying settings");
+  }
 }
 void cFrame::UpdateGuiFromSettings() {
   // Populate GUI With Settings

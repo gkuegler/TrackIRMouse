@@ -1,11 +1,16 @@
+/**
+ * GUI components for pop-up dialogues.
+ * - Settings dialog pop-up
+ *
+ * --License Boilerplate Placeholder--
+ */
+
 #include "GUIDialogs.hpp"
 
 #include <wx/font.h>
 
 #include "Config.hpp"
 #include "ControlIDs.hpp"
-
-//#include <wx/wx.h>
 
 // clang-format off
 BEGIN_EVENT_TABLE(cSettingsGeneralPanel, wxPanel)

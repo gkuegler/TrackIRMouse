@@ -1,3 +1,13 @@
+/**
+ * Natural Point TrackIR5 interface.
+ * 
+ * Supplied by Natural Point SDK.
+ *
+ * --License Boilerplate Placeholder--
+ *
+ * TODO section:
+ *     update and include natural point license boilerplate
+ */
 
 // The trackIR DLL requires
 //#define _AFXDLL
@@ -7,10 +17,11 @@
 
 #include "NPClient.h"
 
-#include <stdio.h>
-
 #include "Log.hpp"
 
+#include <stdio.h>
+
+// clang-format off
 PF_NP_REGISTERWINDOWHANDLE gpfNP_RegisterWindowHandle = NULL;
 PF_NP_UNREGISTERWINDOWHANDLE gpfNP_UnregisterWindowHandle = NULL;
 PF_NP_REGISTERPROGRAMPROFILEID gpfNP_RegisterProgramProfileID = NULL;
@@ -135,70 +146,53 @@ NPRESULT __stdcall NP_StopDataTransmission() {
 NPRESULT NPClient_Init(LPTSTR pszDLLPath) {
   ghNPClientDLL = LoadLibrary(pszDLLPath);
 
-  if (NULL != ghNPClientDLL) {
-    // verify the dll signature
-    gpfNP_GetSignature =
-        (PF_NP_GETSIGNATURE)::GetProcAddress(ghNPClientDLL, "NP_GetSignature");
-
-    SIGNATUREDATA pSignature;
-    SIGNATUREDATA verifySignature;
-    // init the signatures
-    strcpy_s(verifySignature.DllSignature, 200,
-             "precise head tracking\n put your head into the game\n now go "
-             "look around\n\n Copyright EyeControl "
-             "Technologies");
-    strcpy_s(verifySignature.AppSignature, 200,
-             "hardware camera\n software processing data\n track user "
-             "movement\n\n Copyright EyeControl Technologies");
-    // query the dll and compare the results
-    NPRESULT signature_result = NP_GetSignature(&pSignature);
-
-    if (signature_result == NP_OK) {
-      if ((strcmp(verifySignature.DllSignature, pSignature.DllSignature) ==
-           0) &&
-          (strcmp(verifySignature.AppSignature, pSignature.AppSignature) ==
-           0)) {
-        // Get addresses of all exported functions
-        gpfNP_RegisterWindowHandle =
-            (PF_NP_REGISTERWINDOWHANDLE)::GetProcAddress(
-                ghNPClientDLL, "NP_RegisterWindowHandle");
-        gpfNP_UnregisterWindowHandle =
-            (PF_NP_UNREGISTERWINDOWHANDLE)::GetProcAddress(
-                ghNPClientDLL, "NP_UnregisterWindowHandle");
-        gpfNP_RegisterProgramProfileID =
-            (PF_NP_REGISTERPROGRAMPROFILEID)::GetProcAddress(
-                ghNPClientDLL, "NP_RegisterProgramProfileID");
-        gpfNP_QueryVersion = (PF_NP_QUERYVERSION)::GetProcAddress(
-            ghNPClientDLL, "NP_QueryVersion");
-        gpfNP_RequestData = (PF_NP_REQUESTDATA)::GetProcAddress(
-            ghNPClientDLL, "NP_RequestData");
-        gpfNP_GetData =
-            (PF_NP_GETDATA)::GetProcAddress(ghNPClientDLL, "NP_GetData");
-        gpfNP_StartCursor = (PF_NP_STARTCURSOR)::GetProcAddress(
-            ghNPClientDLL, "NP_StartCursor");
-        gpfNP_StopCursor =
-            (PF_NP_STOPCURSOR)::GetProcAddress(ghNPClientDLL, "NP_StopCursor");
-        gpfNP_ReCenter =
-            (PF_NP_RECENTER)::GetProcAddress(ghNPClientDLL, "NP_ReCenter");
-        gpfNP_StartDataTransmission =
-            (PF_NP_STARTDATATRANSMISSION)::GetProcAddress(
-                ghNPClientDLL, "NP_StartDataTransmission");
-        gpfNP_StopDataTransmission =
-            (PF_NP_STOPDATATRANSMISSION)::GetProcAddress(
-                ghNPClientDLL, "NP_StopDataTransmission");
-
-        return NP_OK;
-      } else {
-        spdlog::error("\nNP TRACKIR PROGRAM NOT RUNNING!\n");
-        return NP_ERR;
-      }
-    } else {
-      spdlog::error("\nNP GET SIGNATURE FAILED!\n");
-      return NP_ERR;
-    }
-  } else {
-    spdlog::error(
-        fmt::format("\nDLL LOAD FAILED!\nERROR CODE: {}\n", GetLastError()));
+  if (NULL == ghNPClientDLL) {
+    spdlog::error("NP DLL load failed with error code: {}", GetLastError());
     return NP_ERR_DLL_NOT_FOUND;
   }
+
+  // resolve address to verify signature
+  gpfNP_GetSignature = (PF_NP_GETSIGNATURE)::GetProcAddress(ghNPClientDLL, "NP_GetSignature");
+
+  SIGNATUREDATA pSignature;
+  SIGNATUREDATA verifySignature;
+
+  // initialize the signatures
+  strcpy_s(verifySignature.DllSignature, 200,
+           "precise head tracking\n put your head into the game\n now go "
+           "look around\n\n Copyright EyeControl "
+           "Technologies");
+  strcpy_s(verifySignature.AppSignature, 200,
+           "hardware camera\n software processing data\n track user "
+           "movement\n\n Copyright EyeControl Technologies");
+
+  // query the dll and compare the results
+  NPRESULT signature_result = NP_GetSignature(&pSignature);
+
+  if (NP_GetSignature(&pSignature) != NP_OK) {
+    spdlog::error("NP Get Signature Failed");
+    return NP_ERR;
+  }
+
+  if ((strcmp(verifySignature.DllSignature, pSignature.DllSignature) != 0) 
+      && (strcmp(verifySignature.AppSignature, pSignature.AppSignature) != 0)){
+    spdlog::error("NP TrackIR Program Not Running");
+    return NP_ERR;
+  }
+
+  // Get addresses of all exported functions
+  gpfNP_RegisterWindowHandle = (PF_NP_REGISTERWINDOWHANDLE)::GetProcAddress(ghNPClientDLL, "NP_RegisterWindowHandle");
+  gpfNP_UnregisterWindowHandle = (PF_NP_UNREGISTERWINDOWHANDLE)::GetProcAddress(ghNPClientDLL, "NP_UnregisterWindowHandle");
+  gpfNP_RegisterProgramProfileID = (PF_NP_REGISTERPROGRAMPROFILEID)::GetProcAddress(ghNPClientDLL, "NP_RegisterProgramProfileID");
+  gpfNP_QueryVersion = (PF_NP_QUERYVERSION)::GetProcAddress(ghNPClientDLL, "NP_QueryVersion");
+  gpfNP_RequestData = (PF_NP_REQUESTDATA)::GetProcAddress(ghNPClientDLL, "NP_RequestData");
+  gpfNP_GetData =(PF_NP_GETDATA)::GetProcAddress(ghNPClientDLL, "NP_GetData");
+  gpfNP_StartCursor = (PF_NP_STARTCURSOR)::GetProcAddress(ghNPClientDLL, "NP_StartCursor");
+  gpfNP_StopCursor = (PF_NP_STOPCURSOR)::GetProcAddress(ghNPClientDLL, "NP_StopCursor");
+  gpfNP_ReCenter = (PF_NP_RECENTER)::GetProcAddress(ghNPClientDLL, "NP_ReCenter");
+  gpfNP_StartDataTransmission = (PF_NP_STARTDATATRANSMISSION)::GetProcAddress(ghNPClientDLL, "NP_StartDataTransmission");
+  gpfNP_StopDataTransmission = (PF_NP_STOPDATATRANSMISSION)::GetProcAddress(ghNPClientDLL, "NP_StopDataTransmission");
+
+  return NP_OK;
 }
+// clang-format on

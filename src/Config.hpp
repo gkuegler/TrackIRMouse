@@ -77,8 +77,6 @@ class CConfig {
  private:
   // toml data is not used after it's loaded
   toml::value m_vData;  // holds main toml object
-
-  void LogTomlError(const std::exception &ex);
 };
 
 CConfig *GetGlobalConfig();

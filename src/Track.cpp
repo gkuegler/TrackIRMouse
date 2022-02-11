@@ -1,7 +1,9 @@
-/*
+/**
+ * Interface to start tracking with TrackIR.
+ * 
  * The release version is designed to run as an administrator
  * UAC Execution Level /level=requireAdministrator
- * The debug version leaves UAC alone.
+ * The debug version leaves UAC alone and runs as a user.
  *
  * I'm building to x64 primarily because fmt library
  * only 64-bit.
@@ -260,7 +262,10 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
   static int count{0};
   MONITORINFOEX Monitor;
   Monitor.cbSize = sizeof(MONITORINFOEX);
-  GetMonitorInfo(hMonitor, &Monitor);
+  if !(GetMonitorInfo(hMonitor, &Monitor)){
+    spdlog::warn("Couldn't get display info for display #: {}", count);
+    return true;
+  }
 
   // Monitor Pixel Bounds in the Virtual Desktop
   // static_cast: long -> signed int
