@@ -1,6 +1,6 @@
 /**
  * Interface to start tracking with TrackIR.
- * 
+ *
  * The release version is designed to run as an administrator
  * UAC Execution Level /level=requireAdministrator
  * The debug version leaves UAC alone and runs as a user.
@@ -19,13 +19,16 @@
 #include "np-client.h"
 #include "watchdog.hpp"
 
-// SendInput with absolute mouse movement takes a short int
-#define USHORT_MAX_VAL 65535
+// Uncomment this line for testing to prevent program
+// from attaching to NPTrackIR and supersede control
+ //#define TEST_NO_TRACK
 
-// bool g_bPauseTracking = false;
-// TODO: in future change this to an atomic type or
-// or handle this way unsing os level thread signals?
-bool g_bGracefullyExit = false;
+// SendInput with absolute mouse movement flag takes a short int
+constexpr auto USHORT_MAX_VAL = 65535;
+
+// Tracking loop uses this to check if it should break, return to thread, then
+// have thread auto clean up
+std::atomic<bool> g_bGracefullyExit = false;
 
 std::vector<CDisplay> g_displays;
 
@@ -36,233 +39,12 @@ double g_yPixelAbsoluteSlope = 0;
 
 HANDLE g_hWatchdogThread = NULL;
 
-// Uncomment this line for testing to prevent program
-// from attaching to NPTrackIR and supersede control
-//#define TEST_NO_TRACK
-
-// Function Prototypes
-BOOL PopulateVirtMonitorBounds(HMONITOR, HDC, LPRECT);
-int WinSetup(CConfig);
-int DisplaySetup(const CConfig);
-void MouseMove(int, double, double);
-
-int TR_Initialize(HWND hWnd, CConfig config) {
-  // ## Program flow ##
-  //
-  // first thing is ping windows for info
-  // validate settings and build display structures
-  // start watchdog thread
-  // load trackir dll and getproc addresses
-  // connect to trackir and request data type
-  // receive data frames
-  // decode data
-  // hand data off to track program
-  // calculate mouse position
-  // form & send mouse move command
-
-  // Error Conditions To Check For RAII:
-  //  - unable to initialize thread
-  //  - unable to load dll
-  //  - any NP dll function call failure
-
-  spdlog::debug("Starting Initialization Of TrackIR");
-
-  SProfile activeProfile = config.GetActiveProfile();
-
-  if (0 != WinSetup(config)) {
-    return -1;
-  }
-
-  if (0 != DisplaySetup(config)) {
-    return -1;
-  }
-
-  // After settings are loaded, start accepting connections & msgs
-  // on a named pipe to externally controll the track IR process
-  // Start the watchdog thread
-  // if (config.m_bWatchdog)
-  if (config.data.watchdogEnabled) {
-    // Watchdog thread may return NULL
-    g_hWatchdogThread = WatchDog::StartWatchdog();
-
-    if (NULL == g_hWatchdogThread)
-      spdlog::warn("Watchdog thread failed to initialize.");
-  }
-
-  // spdlog::info("\n{:-^50}\n", "TrackIR Init Status");
-
-  // Find and load TrackIR DLL
-#ifdef UNICODE
-  TCHAR sDll[MAX_PATH];
-
-  int resultConvert = MultiByteToWideChar(
-    CP_UTF8,
-    // MB_ERR_INVALID_CHARS, // I feel like this should be
-    // the smart choice, but this is an error.
-    MB_COMPOSITE, config.m_trackIrDllPath.c_str(), MAX_PATH, sDll, MAX_PATH);
-
-  if (0 == resultConvert) {
-    spdlog::error("failed to convert track dll location to wchart* with error code: {}",
-      GetLastError());
-    return -1;
-  }
-
-#else
-  TCHAR sDLL = config.m_trackIrDllPath.c_str()
-#endif
-
-  // Load trackir dll and resolve function addresses
-    NPRESULT rsltInit = NPClient_Init(sDll);
-
-  if (NP_OK == rsltInit)
-    spdlog::info("NP Initialization: Success");
-  else if (NP_ERR_DLL_NOT_FOUND == rsltInit) {
-    spdlog::error("NP Initialization: Failure, DLL not found, Error Code -> {}", rsltInit);
-    return -1;
-  }
-  else {
-    spdlog::error("NP Initialization: Failure, Error Code -> {}\n", rsltInit);
-    return -1;
-  }
-
-  // NP software needs a window handle to know when it should
-  // stop sending data frames if window is closed.
-  HWND hConsole = hWnd;
-
-  // So that this program doesn't boot control of NP software
-  // from my local MouseTrackIR instance.
-#ifndef TEST_NO_TRACK
-  // NP_RegisterWindowHandle
-  NPRESULT rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
-
-  if (NP_OK == rsltRegWinHandle) {
-    spdlog::info("Registered Handle.");
-  }
-
-  // 7 is a magic number I found through experimentation.
-  // It means another program has its window handle registered
-  // already.
-  else if (rsltRegWinHandle == 7) {
-    NP_UnregisterWindowHandle();
-    spdlog::warn("Booting control of previous mousetracker instance!");
-    Sleep(2);
-    rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
-    if (!NP_OK == rsltRegWinHandle)
-    {
-      spdlog::error("could not re-register window handle. NP error code: {}", rsltRegWinHandle);
-      return -1;
-    }
-  }
-  else {
-    spdlog::error("Failed to register window handle. NP error code: {}", rsltRegWinHandle);
-    return -1;
-  }
-
-
-  // I'm skipping query the software version, I don't think its necessary
-
-  // Request roll, pitch. See NPClient.h
-  NPRESULT rsltReqData = NP_RequestData(NPPitch | NPYaw);
-  if (NP_OK == rsltReqData)
-    spdlog::info("NP Request Data Success");
-  else {
-    spdlog::error("NP Request Data Failed: {}", rsltReqData);
-  return -1;
-}
-
-  NPRESULT rsltProfileId = NP_RegisterProgramProfileID(activeProfile.profile_ID);
-  if (NP_OK == rsltProfileId)
-    spdlog::info("NP Registered Profile ID.");
-  else {
-    spdlog::error("NP Register Profile ID: Failed: {}\n", rsltProfileId);
-    return -1;
-  }
-
-#endif
-  return 0;
-}
-
-int TR_TrackStart(CConfig config) {
-  // TODO: change variable to g_bTrackingEnabledAtomic
-  g_bGracefullyExit = false;
-
-#ifndef TEST_NO_TRACK
-  // Skipping this api call. I think this is for legacy games.
-  // NP_StopCursor
-
-  NPRESULT rslt = NP_StartDataTransmission();
-  if (NP_OK == rslt)
-    spdlog::info("NP Started data transmission.");
-  else {
-    spdlog::error("NP Start Data Transmission: Failed: {}\n", rslt);
-    return 1;
-  }
-
-#endif
-
-  NPRESULT gdf;
-  tagTrackIRData *pTIRData, TIRData;
-  pTIRData = &TIRData;
-
-  unsigned short lastFrame = 0;
-  // used for testing, dropped frames rare and not real world relevant
-  // int droppedFrames = 0;
-
-  while (!g_bGracefullyExit) {
-    gdf = NP_GetData(pTIRData);
-    if (NP_OK == gdf) {
-      // unsigned short status = (*pTIRData).wNPStatus;
-      unsigned short framesig = (*pTIRData).wPFrameSignature;
-      // TODO: apply negative sign on startup to avoid extra operation here
-      // yaw and pitch come reversed relative to GUI profgram for some reason
-      // from trackIR
-      double yaw = (-(*pTIRData).fNPYaw); // implicit float to double
-      double pitch = (-(*pTIRData).fNPPitch); // implicit float to double
-
-      // Don't move the mouse when TrackIR is paused
-      if (framesig == lastFrame) {
-        // TrackIR 5 supposedly operates at 120hz
-        // 8ms is approximately 1 frame
-        Sleep(8);
-        continue;
-      }
-
-      // Watchdog enables software to be controlled via a named pipe. This is
-      // primarily used during testing so that my test instance can latch on to
-      // active tracking data without re-registering a window handle. A disbale
-      // msg is sent before my test instance launches, then my normal instance
-      // is enables after as part of my build script.
-      if (WatchDog::g_bPauseTracking == false)
-        MouseMove(config.m_monitorCount, yaw, pitch);
-
-      lastFrame = framesig;
-    }
-
-    else if (NP_ERR_DEVICE_NOT_PRESENT == gdf) {
-      spdlog::warn(
-          "DEVICE NOT PRESENT\nSTOPPING TRACKING...\nPLEASE RESTART TRACKING"
-          "PROGRAM");
-      return 1;
-    }
-
-    Sleep(8);
-  }
-
-  return 0;
-}
-
-void TR_TrackStop() {
-  g_bGracefullyExit = true;
-  NP_StopDataTransmission();
-  NP_UnregisterWindowHandle();
-}
-
 BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
                                LPRECT lprcMonitor, LPARAM lParam) {
   static int count{0};
   MONITORINFOEX Monitor;
   Monitor.cbSize = sizeof(MONITORINFOEX);
-  if (!GetMonitorInfo(hMonitor, &Monitor)){
+  if (!GetMonitorInfo(hMonitor, &Monitor)) {
     spdlog::warn("Couldn't get display info for display #: {}", count);
     return true;
   }
@@ -284,8 +66,8 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
   // TODO: michael does not yet support wide character strings
   // spdlog::info(L"MON Name:{:>15}\n", Monitor.szDevice);
 
-  spdlog::info("MON {} Pixel Bounds -> {:>6}, {:>6}, {:>6}, {:>6}",
-                        count, left, right, top, bottom);
+  spdlog::info("MON {} Pixel Bounds -> {:>6}, {:>6}, {:>6}, {:>6}", count, left,
+               right, top, bottom);
 
   if (Monitor.rcMonitor.left < g_virtualOriginX) {
     g_virtualOriginX = Monitor.rcMonitor.left;
@@ -296,8 +78,7 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
 
   count++;
   return true;
-};
-
+}
 int WinSetup(CConfig config) {
   // TODO: error checking
   //  - rotations over 180/-180 deg
@@ -369,19 +150,152 @@ int DisplaySetup(CConfig config) {
   }
 
   for (int i = 0; i < config.m_monitorCount; i++) {
-    spdlog::info(
-        "Display {} abs bounds: {:>.1f}, {:>.1f}, {:>.1f}, {:>.1f}", i,
-        g_displays[i].boundAbsLeft, g_displays[i].boundAbsRight,
-        g_displays[i].boundAbsTop, g_displays[i].boundAbsBottom);
+    spdlog::info("Display {} abs bounds: {:>.1f}, {:>.1f}, {:>.1f}, {:>.1f}", i,
+                 g_displays[i].boundAbsLeft, g_displays[i].boundAbsRight,
+                 g_displays[i].boundAbsTop, g_displays[i].boundAbsBottom);
   }
 
   for (int i = 0; i < config.m_monitorCount; i++) {
     spdlog::info(
-        "Display {} rotationBoundLeft: {:>.2f}, {:>.2f}, {:>.2f}, {:>.2f}",
-        i, g_displays[i].rotationBoundLeft, g_displays[i].rotationBoundRight,
+        "Display {} rotationBoundLeft: {:>.2f}, {:>.2f}, {:>.2f}, {:>.2f}", i,
+        g_displays[i].rotationBoundLeft, g_displays[i].rotationBoundRight,
         g_displays[i].rotationBoundTop, g_displays[i].rotationBoundBottom);
   }
 
+  return 0;
+}
+
+int TR_Initialize(HWND hWnd, CConfig config) {
+  // ## Program flow ##
+  //
+  // first thing is ping windows for info
+  // validate settings and build display structures
+  // start watchdog thread
+  // load trackir dll and getproc addresses
+  // connect to trackir and request data type
+  // receive data frames
+  // decode data
+  // hand data off to track program
+  // calculate mouse position
+  // form & send mouse move command
+
+  // Error Conditions To Check For RAII:
+  //  - unable to initialize thread
+  //  - unable to load dll
+  //  - any NP dll function call failure
+
+  spdlog::debug("Starting Initialization Of TrackIR");
+
+  SProfile activeProfile = config.GetActiveProfile();
+
+  if (0 != WinSetup(config)) {
+    return -1;
+  }
+
+  if (0 != DisplaySetup(config)) {
+    return -1;
+  }
+
+  // After settings are loaded, start accepting connections & msgs
+  // on a named pipe to externally controll the track IR process
+  // Start the watchdog thread
+  // if (config.m_bWatchdog)
+  if (config.data.watchdogEnabled) {
+    // Watchdog thread may return NULL
+    g_hWatchdogThread = WatchDog::StartWatchdog();
+
+    if (NULL == g_hWatchdogThread)
+      spdlog::warn("Watchdog thread failed to initialize.");
+  }
+
+  // spdlog::info("\n{:-^50}\n", "TrackIR Init Status");
+
+  // Find and load TrackIR DLL
+#ifdef UNICODE
+  TCHAR sDll[MAX_PATH];
+
+  int resultConvert = MultiByteToWideChar(
+      CP_UTF8,
+      // MB_ERR_INVALID_CHARS, // I feel like this should be
+      // the smart choice, but this is an error.
+      MB_COMPOSITE, config.m_trackIrDllPath.c_str(), MAX_PATH, sDll, MAX_PATH);
+
+  if (0 == resultConvert) {
+    spdlog::error(
+        "failed to convert track dll location to wchart* with error code: {}",
+        GetLastError());
+    return FAILURE;
+  }
+
+#else
+  TCHAR sDLL = config.m_trackIrDllPath.c_str()
+#endif
+
+  // Load trackir dll and resolve function addresses
+  NPRESULT rsltInit = NPClient_Init(sDll);
+
+  if (NP_OK == rsltInit) {
+    spdlog::info("NP Initialization: Success");
+  }
+  else {
+    // logging handled within the function implementation
+    return FAILURE;
+  }
+
+  // NP software needs a window handle to know when it should
+  // stop sending data frames if window is closed.
+  HWND hConsole = hWnd;
+
+  // So that this program doesn't boot control of NP software
+  // from my local MouseTrackIR instance.
+#ifndef TEST_NO_TRACK
+  // NP_RegisterWindowHandle
+  NPRESULT rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
+
+  if (NP_OK == rsltRegWinHandle) {
+    spdlog::info("Registered window handle.");
+  }
+
+  // 7 is a magic number I found through experimentation.
+  // It means another program has its window handle registered
+  // already.
+  else if (rsltRegWinHandle == 7) {
+    NP_UnregisterWindowHandle();
+    spdlog::warn("Booting control of previous mousetracker instance.");
+    Sleep(2);
+    rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
+    if (!NP_OK == rsltRegWinHandle) {
+      spdlog::error("Failed to re-register window handle with NP code: {}",
+                    rsltRegWinHandle);
+      return FAILURE;
+    }
+  } else {
+    spdlog::error("Failed to register window handle with NP code: {}",
+                  rsltRegWinHandle);
+    return FAILURE;
+  }
+
+  // I'm skipping query the software version, I don't think its necessary
+
+  // Request roll, pitch. See NPClient.h
+  NPRESULT rsltReqData = NP_RequestData(NPPitch | NPYaw);
+  if (NP_OK == rsltReqData)
+    spdlog::info("NP Request Data Success");
+  else {
+    spdlog::error("NP Request Data failed with NP code: {}", rsltReqData);
+    return FAILURE;
+  }
+
+  NPRESULT rsltProfileId =
+      NP_RegisterProgramProfileID(activeProfile.profile_ID);
+  if (NP_OK == rsltProfileId)
+    spdlog::info("NP Registered Profile ID.");
+  else {
+    spdlog::error("NP Register Profile ID failed with NP code: {}", rsltProfileId);
+    return FAILURE;
+  }
+
+#endif
   return 0;
 }
 
@@ -402,7 +316,6 @@ inline void SendMyInput(double x, double y) {
 
   return;
 }
-
 void MouseMove(int monitorCount, double yaw, double pitch) {
   // set the last screen initially equal to the main display for me
   // TODO: find a way to specify in settings or get from windows
@@ -480,4 +393,76 @@ void MouseMove(int monitorCount, double yaw, double pitch) {
   SendMyInput(x, y);
 
   return;
+}
+int TR_TrackStart(CConfig config) {
+  // TODO: change variable to g_bTrackingEnabledAtomic
+  g_bGracefullyExit = false;
+
+#ifndef TEST_NO_TRACK
+  // Skipping this api call. I think this is for legacy games.
+  // NP_StopCursor
+
+  NPRESULT rslt = NP_StartDataTransmission();
+  if (NP_OK == rslt)
+    spdlog::info("NP Started data transmission.");
+  else {
+    spdlog::error("NP Start Data Transmission failed with code: {}\n", rslt);
+    return 1;
+  }
+
+#endif
+
+  NPRESULT gdf;
+  tagTrackIRData *pTIRData, TIRData;
+  pTIRData = &TIRData;
+
+  unsigned short lastFrame = 0;
+  // used for testing, dropped frames rare and not real world relevant
+  // int droppedFrames = 0;
+
+  while (!g_bGracefullyExit) {
+    gdf = NP_GetData(pTIRData);
+    if (NP_OK == gdf) {
+      // unsigned short status = (*pTIRData).wNPStatus;
+      unsigned short framesig = (*pTIRData).wPFrameSignature;
+      // TODO: apply negative sign on startup to avoid extra operation here
+      // yaw and pitch come reversed relative to GUI profgram for some reason
+      // from trackIR
+      double yaw = (-(*pTIRData).fNPYaw);      // implicit float to double
+      double pitch = (-(*pTIRData).fNPPitch);  // implicit float to double
+
+      // Don't move the mouse when TrackIR is paused
+      if (framesig == lastFrame) {
+        // TrackIR 5 supposedly operates at 120hz
+        // 8ms is approximately 1 frame
+        Sleep(8);
+        continue;
+      }
+
+      // Watchdog enables software to be controlled via a named pipe. This is
+      // primarily used during testing so that my test instance can latch on to
+      // active tracking data without re-registering a window handle. A disbale
+      // msg is sent before my test instance launches, then my normal instance
+      // is enables after as part of my build script.
+      if (WatchDog::g_bPauseTracking == false)
+        MouseMove(config.m_monitorCount, yaw, pitch);
+
+      lastFrame = framesig;
+    }
+
+    else if (NP_ERR_DEVICE_NOT_PRESENT == gdf) {
+      spdlog::warn("device not present, tracking stopped");
+      return 1;
+    }
+
+    Sleep(8);
+  }
+
+  return 0;
+}
+
+void TR_TrackStop() {
+  g_bGracefullyExit = true;
+  NP_StopDataTransmission();
+  NP_UnregisterWindowHandle();
 }

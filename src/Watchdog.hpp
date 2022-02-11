@@ -5,7 +5,7 @@
 
 namespace WatchDog {
 
-extern bool g_bPauseTracking;
+extern std::atomic<bool> g_bPauseTracking;
 
 HANDLE StartWatchdog();
 DWORD WINAPI InstanceThread(LPVOID);

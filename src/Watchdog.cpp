@@ -27,12 +27,15 @@
 #include "constants.hpp"
 #include "log.hpp"
 
-#define BUFSIZE 512
+constexpr auto BUFSIZE = 512;
 
 namespace WatchDog {
-bool g_bPauseTracking = false;
+std::atomic<bool> g_bPauseTracking = false;
 
 HANDLE StartWatchdog() {
+  // TODO: make exception safe
+  // make sure all return paths cleanup correctly
+  // possibly wrap Windows resource in a class
   HANDLE hThread = INVALID_HANDLE_VALUE;
   DWORD dwThreadId = 0;
   LPCSTR eventName = "WatchdogInitThread";
@@ -52,7 +55,7 @@ HANDLE StartWatchdog() {
   );
 
   if (hThread == NULL) {
-    spdlog::error("CreateThread failed, GLE={}.\n", GetLastError());
+    spdlog::warn("CreateThread failed, GLE={}.\n", GetLastError());
     return NULL;
   }
 
@@ -63,14 +66,16 @@ HANDLE StartWatchdog() {
                                        3000 // timeout in milliseconds
     );
 
-    if (WAIT_FAILED == result)
-      spdlog::error("{} Function failed with error code: {}",
-                    "WaitForSingleObject", GetLastError());
+    if (WAIT_FAILED == result) {
+      spdlog::warn("{} Function failed with error code: {}",
+        "WaitForSingleObject", GetLastError());
+    }
 
-    if (WAIT_TIMEOUT == result)
-      spdlog::info(
-          "{} Timed out on watchdog thread. Objects state is non signaled.",
-          "WaitForSingleObject");
+    else if (WAIT_TIMEOUT == result) {
+      spdlog::warn(
+        "{} Timed out on watchdog thread. Objects state is non signaled.",
+        "WaitForSingleObject");
+    }
   }
 
   return hThread;
