@@ -1,14 +1,11 @@
 #ifndef TRACKIRMOUSE_GUIDIALOGS_H
 #define TRACKIRMOUSE_GUIDIALOGS_H
 
-#include <wx/bookctrl.h>
-#include <wx/choicdlg.h>
-#include <wx/listctrl.h>
 #include <wx/propdlg.h>
 #include <wx/textctrl.h>
+#include <wx/wx.h>
 
 #include "config.hpp"
-#include "gui-control-id.hpp"
 
 class cSettingsGeneralPanel : public wxPanel {
  public:
@@ -45,10 +42,5 @@ class cSettingsPopup : public wxPropertySheetDialog {
   cSettingsGeneralPanel* m_pnlGen;
   cSettingsAdvancedlPanel* m_pnlAdv;
 };
-
-// class cRemoveProfile : public wxMultiChoiceDialog {
-// public:
-//	cRemoveProfile(wxWindow* parent);
-// };
 
 #endif /* TRACKIRMOUSE_GUIDIALOGS_H */

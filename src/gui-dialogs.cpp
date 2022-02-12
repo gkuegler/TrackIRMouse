@@ -7,7 +7,7 @@
 
 #include "gui-dialogs.hpp"
 
-#include <wx/font.h>
+#include <wx/bookctrl.h>
 
 #include "config.hpp"
 #include "gui-control-id.hpp"
