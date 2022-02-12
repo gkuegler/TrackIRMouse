@@ -327,6 +327,7 @@
     <ClCompile Include="gui-dialogs.cpp" />
     <ClCompile Include="log.cpp" />
     <ClCompile Include="np-client.cpp" />
+    <ClCompile Include="threads.cpp" />
     <ClCompile Include="track.cpp" />
     <ClCompile Include="watchdog.cpp" />
   </ItemGroup>
@@ -340,6 +341,7 @@
     <ClInclude Include="gui-dialogs.hpp" />
     <ClInclude Include="log.hpp" />
     <ClInclude Include="np-client.h" />
+    <ClInclude Include="threads.hpp" />
     <ClInclude Include="toml.hpp" />
     <ClInclude Include="track.hpp" />
     <ClInclude Include="watchdog.hpp" />

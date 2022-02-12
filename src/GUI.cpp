@@ -39,6 +39,7 @@
 #include "exceptions.hpp"
 #include "gui-dialogs.hpp"
 #include "log.hpp"
+#include "threads.hpp"
 #include "track.hpp"
 #include "watchdog.hpp"
 
@@ -47,7 +48,40 @@ const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(100, 25);
 
+// clang-format off
+wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
+  EVT_MENU(wxID_EXIT, cFrame::OnExit)
+  EVT_MENU(wxID_ABOUT, cFrame::OnAbout)
+  EVT_MENU(wxID_OPEN, cFrame::OnOpen)
+  EVT_MENU(wxID_SAVE, cFrame::OnSave)
+  EVT_MENU(wxID_RELOAD, cFrame::OnReload)
+  EVT_MENU(myID_SETTINGS, cFrame::OnSettings)
+  EVT_BUTTON(myID_GEN_EXMPL, cFrame::OnGenerateExample)
+wxEND_EVENT_TABLE()
+
+wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
+  EVT_BUTTON(myID_START_TRACK, cPanel::OnTrackStart)
+  EVT_BUTTON(myID_STOP_TRACK, cPanel::OnTrackStop)
+  EVT_CHOICE(myID_PROFILE_SELECTION, cPanel::OnActiveProfile)
+  EVT_BUTTON(myID_ADD_PROFILE, cPanel::OnAddProfile)
+  EVT_BUTTON(myID_REMOVE_PROFILE, cPanel::OnRemoveProfile)
+  EVT_BUTTON(myID_DUPLICATE_PROFILE, cPanel::OnDuplicateProfile)
+wxEND_EVENT_TABLE()
+
+wxBEGIN_EVENT_TABLE(cPanelConfiguration, wxPanel)
+  EVT_TEXT(myID_PROFILE_NAME, cPanelConfiguration::OnName)
+  EVT_TEXT(myID_PROFILE_ID, cPanelConfiguration::OnProfileID)
+  EVT_CHECKBOX(myID_USE_DEFAULT_PADDING, cPanelConfiguration::OnUseDefaultPadding)
+  // EVT_BUTTON(myID_MANAGE_DISPLAYS, cPanelConfiguration::OnManageDisplays)
+  EVT_DATAVIEW_ITEM_EDITING_DONE(myID_MAPPING_DATA, cPanelConfiguration::OnMappingData)
+  EVT_BUTTON(myID_ADD_DISPLAY, cPanelConfiguration::OnAddDisplay)
+  EVT_BUTTON(myID_REMOVE_DISPLAY, cPanelConfiguration::OnRemoveDisplay)
+  EVT_BUTTON(myID_MOVE_UP, cPanelConfiguration::OnMoveUp)
+  EVT_BUTTON(myID_MOVE_DOWN, cPanelConfiguration::OnMoveDown)
+wxEND_EVENT_TABLE()
+
 wxIMPLEMENT_APP(CGUIApp);
+// clang-format on
 
 bool CGUIApp::OnInit() {
   // Initialize global default logger
@@ -709,69 +743,4 @@ void cPanelConfiguration::OnMoveDown(wxCommandEvent &event) {
     items[0] = item;                       // assumed single selection mode
     m_tlcMappingData->SetSelections(items);
   }
-}
-
-//////////////////////////////////////////////////////////////////////
-//                           TrackThread                            //
-//////////////////////////////////////////////////////////////////////
-
-TrackThread::TrackThread(cFrame *pHandler, HWND hWnd) : wxThread() {
-  m_pHandler = pHandler;
-  m_hWnd = hWnd;
-}
-
-TrackThread::~TrackThread() {
-  // Will need to provide locks in the future with critical sections
-  // https://docs.wxwidgets.org/3.0/classwx_thread.html
-  wxCriticalSectionLocker enter(m_pHandler->m_pThreadCS);
-  m_pHandler->m_pTrackThread = NULL;
-}
-
-void CloseApplication() {
-  wxThreadEvent *evt = new wxThreadEvent(wxEVT_THREAD);
-  evt->SetInt(1);
-  wxTheApp->QueueEvent(evt);
-}
-
-wxThread::ExitCode TrackThread::Entry() {
-  CConfig config = GetGlobalConfigCopy();
-  if (0 != TR_Initialize(m_hWnd, config)) {
-    return NULL;
-  }
-
-  // This is the loop function
-  int result = TR_TrackStart(config);
-  if (1 == result && config.data.quitOnLossOfTrackIr) {
-    CloseApplication();
-  }
-
-  return NULL;
-}
-//////////////////////////////////////////////////////////////////////
-//                         WatchdogThread                           //
-//////////////////////////////////////////////////////////////////////
-
-WatchdogThread::WatchdogThread(cFrame *pHandler) : wxThread() {
-  m_pHandler = pHandler;
-  m_hPipe = WatchDog::StartWatchdog();
-}
-
-WatchdogThread::~WatchdogThread() {
-  // Will need to provide locks in the future with critical sections
-  // https://docs.wxwidgets.org/3.0/classwx_thread.html
-  wxCriticalSectionLocker enter(m_pHandler->m_pThreadCS);
-  m_pHandler->m_pWatchdogThread = NULL;
-
-  // TODO: close named pipe
-  // TODO: find other resources to close
-  // TODO: explicitly prevent
-}
-
-wxThread::ExitCode WatchdogThread::Entry() {
-  if (m_hPipe) {
-    WatchDog::Serve(m_hPipe);
-  } else {
-    spdlog::warn("Watchdog thread isn't.");
-  }
-  return NULL;
 }

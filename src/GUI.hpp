@@ -10,19 +10,11 @@
 #include "log.hpp"
 #include "track.hpp"
 
-class cFrame;
+// forward decl of thread classes
+class TrackThread;
+class WatchdogThread;
 class cPanel;
-
-class TrackThread : public wxThread {
- public:
-  cFrame *m_pHandler = nullptr;
-  HWND m_hWnd;
-
-  TrackThread(cFrame *m_pHandler, HWND hWnd);
-  ~TrackThread();
-
-  ExitCode Entry();
-};
+class cFrame;
 
 class WatchdogThread : public wxThread {
  public:
@@ -68,25 +60,11 @@ class cPanelConfiguration : public wxPanel {
   wxDECLARE_EVENT_TABLE();
 };
 
-// clang-format off
-wxBEGIN_EVENT_TABLE(cPanelConfiguration, wxPanel)
-    EVT_TEXT(myID_PROFILE_NAME, cPanelConfiguration::OnName)
-    EVT_TEXT(myID_PROFILE_ID, cPanelConfiguration::OnProfileID)
-    EVT_CHECKBOX(myID_USE_DEFAULT_PADDING, cPanelConfiguration::OnUseDefaultPadding)
-    // EVT_BUTTON(myID_MANAGE_DISPLAYS, cPanelConfiguration::OnManageDisplays)
-    EVT_DATAVIEW_ITEM_EDITING_DONE(myID_MAPPING_DATA, cPanelConfiguration::OnMappingData)
-    EVT_BUTTON(myID_ADD_DISPLAY, cPanelConfiguration::OnAddDisplay)
-    EVT_BUTTON(myID_REMOVE_DISPLAY, cPanelConfiguration::OnRemoveDisplay)
-    EVT_BUTTON(myID_MOVE_UP, cPanelConfiguration::OnMoveUp)
-    EVT_BUTTON(myID_MOVE_DOWN, cPanelConfiguration::OnMoveDown)
-wxEND_EVENT_TABLE()
-    // clang-format on
+//////////////////////////////////////////////////////////////////////
+//                Text Control Status Output Window                 //
+//////////////////////////////////////////////////////////////////////
 
-    //////////////////////////////////////////////////////////////////////
-    //                Text Control Status Output Window                 //
-    //////////////////////////////////////////////////////////////////////
-
-    class cTextCtrl : public wxTextCtrl {
+class cTextCtrl : public wxTextCtrl {
  public:
   cTextCtrl(wxWindow *parent, wxWindowID id, const wxString &value,
             const wxPoint &pos, const wxSize &size, int style = 0);
@@ -126,24 +104,12 @@ class cPanel : public wxPanel {
   wxDECLARE_EVENT_TABLE();
 };
 
-//clang-format off
-wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
-    EVT_BUTTON(myID_START_TRACK, cPanel::OnTrackStart)
-        EVT_BUTTON(myID_STOP_TRACK, cPanel::OnTrackStop)
-            EVT_CHOICE(myID_PROFILE_SELECTION, cPanel::OnActiveProfile)
-                EVT_BUTTON(myID_ADD_PROFILE, cPanel::OnAddProfile)
-                    EVT_BUTTON(myID_REMOVE_PROFILE, cPanel::OnRemoveProfile)
-                        EVT_BUTTON(myID_DUPLICATE_PROFILE,
-                                   cPanel::OnDuplicateProfile)
-                            wxEND_EVENT_TABLE()
-    // clang-format on
+//////////////////////////////////////////////////////////////////////
+//                              Frame                               //
+//////////////////////////////////////////////////////////////////////
 
-    //////////////////////////////////////////////////////////////////////
-    //                              Frame                               //
-    //////////////////////////////////////////////////////////////////////
-
-    // Main frame of program
-    class cFrame : public wxFrame {
+// Main frame of program
+class cFrame : public wxFrame {
  public:
   cPanel *m_panel;
   TrackThread *m_pTrackThread = nullptr;
@@ -166,23 +132,11 @@ wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
   wxDECLARE_EVENT_TABLE();
 };
 
-// clang-format off
-wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
-  EVT_MENU(wxID_EXIT, cFrame::OnExit)
-  EVT_MENU(wxID_ABOUT, cFrame::OnAbout)
-  EVT_MENU(wxID_OPEN, cFrame::OnOpen)
-  EVT_MENU(wxID_SAVE, cFrame::OnSave)
-  EVT_MENU(wxID_RELOAD, cFrame::OnReload)
-  EVT_MENU(myID_SETTINGS, cFrame::OnSettings)
-  EVT_BUTTON(myID_GEN_EXMPL, cFrame::OnGenerateExample)
-wxEND_EVENT_TABLE()
-    // clang-format on
+//////////////////////////////////////////////////////////////////////
+//                         Main Application                         //
+//////////////////////////////////////////////////////////////////////
 
-    //////////////////////////////////////////////////////////////////////
-    //                         Main Application                         //
-    //////////////////////////////////////////////////////////////////////
-
-    class CGUIApp : public wxApp {
+class CGUIApp : public wxApp {
  public:
   CGUIApp(){};
   ~CGUIApp(){};
