@@ -80,16 +80,12 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
   return true;
 }
 int WinSetup(CConfig config) {
-  // TODO: error checking
-  //  - rotations over 180/-180 deg
-  //  - differing # of displays
-  //  - interfering boundaries
-  //  -
-  // spdlog::info("\n{:-^50}\n", "Windows Environment Info");
+  spdlog::trace("entering WinSetup");
 
   const int monitorCount = GetSystemMetrics(SM_CMONITORS);
 
   int count = config.GetActiveProfileDisplayCount();
+
   if (monitorCount != count) {
     spdlog::error(
         "Incompatible config: {} monitors specified but {} monitors found",
@@ -102,8 +98,6 @@ int WinSetup(CConfig config) {
   int virtualDesktopHeight = GetSystemMetrics(
       SM_CYVIRTUALSCREEN);  // height of total bounds of all screens
 
-  // TODO: this check actually happens at the initialization of my configuration
-  // file
   spdlog::debug("{} Monitors Found", monitorCount);
   spdlog::debug("Width of Virtual Desktop:  {:>5}", virtualDesktopWidth);
   spdlog::debug("Height of Virtual Desktop: {:>5}", virtualDesktopHeight);
@@ -119,7 +113,7 @@ int WinSetup(CConfig config) {
   spdlog::debug("Virtual Origin Offset Horizontal: {:>5d}", g_virtualOriginX);
   spdlog::debug("Virtual Origin Offset Vertical:   {:>5d}", g_virtualOriginY);
 
-  return 0;
+  return SUCCESS;
 }
 
 int DisplaySetup(CConfig config) {
@@ -188,10 +182,13 @@ int TR_Initialize(HWND hWnd, CConfig config) {
   if (FAILURE == WinSetup(config)) {
     return -1;
   }
+  spdlog::trace("win setup a success");
 
   if (FAILURE == DisplaySetup(config)) {
     return -1;
   }
+
+  spdlog::trace("display setup a success");
 
   // After settings are loaded, start accepting connections & msgs
   // on a named pipe to externally controll the track IR process

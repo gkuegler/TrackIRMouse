@@ -397,9 +397,8 @@ std::vector<std::string> CConfig::GetProfileNames() {
 }
 
 SProfile &CConfig::GetActiveProfile() {
-  spdlog::debug("Active Profile Name: {}", data.activeProfileName);
+  spdlog::trace("Active Profile Name: {}", data.activeProfileName);
   for (auto &profile : data.profiles) {
-    spdlog::trace("profile name compared: {}", profile.name);
     if (profile.name == data.activeProfileName) {
       return profile;
     }
@@ -430,9 +429,9 @@ bool ValidateUserInput(const UserInput &displays) {
             "rotation bound param \"{}\" on display #{} is outside "
             "allowable range of -180deg -> 180deg.",
             kBoundNames[j], i);
-        return FAILURE;
+        return false;
       }
     }
   }
-  return SUCCESS;
+  return true;
 }
