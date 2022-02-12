@@ -16,17 +16,6 @@ class WatchdogThread;
 class cPanel;
 class cFrame;
 
-class WatchdogThread : public wxThread {
- public:
-  cFrame *m_pHandler = nullptr;
-  HANDLE m_hPipe = INVALID_HANDLE_VALUE;
-
-  WatchdogThread(cFrame *pHandler);
-  ~WatchdogThread();
-
-  ExitCode Entry();
-};
-
 //////////////////////////////////////////////////////////////////////
 //                  Display Configuration SubPanel                  //
 //////////////////////////////////////////////////////////////////////
