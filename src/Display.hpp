@@ -2,58 +2,36 @@
 #define TRACKIRMOUSE_DISPLAY_H
 
 class CDisplay {
- public:
+public:
   // How to use:
-  //   1. Set rotational bounds
-  //   2. Set pixel bounds
+  //   1. Set pixel bounds by windows call
+  //   2. Set rotational bounds from config active profile
   //   3. Call setAbsBounds()
 
-  // User inputed rotational bounds of display
-  double rotationBoundLeft = 0;
-  double rotationBoundRight = 0;
-  double rotationBoundTop = 0;
-  double rotationBoundBottom = 0;
-
-  double rotationBound16BitLeft = 0;
-  double rotationBound16BitRight = 0;
-  double rotationBound16BitTop = 0;
-  double rotationBound16BitBottom = 0;
-
-  // User-specified
-  int paddingLeft = 3;
-  int paddingRight = 3;
-  int paddingTop = 0;
-  int paddingBottom = 0;
-
-  // Virtual desktop bounds of display relative to main monitor
-  signed int pixelBoundLeft = 0;
-  signed int pixelBoundRight = 0;
-  signed int pixelBoundTop = 0;
-  signed int pixelBoundBottom = 0;
-
-  // Resulting Virtualized virtual desktop bounds
-  signed int pixelBoundAbsLeft = 0;
-  signed int pixelBoundAbsRight = 0;
-  signed int pixelBoundAbsTop = 0;
-  signed int pixelBoundAbsBottom = 0;
-
-  // Resulting Mapped bounds of display in absolute from top left most display
-  double boundAbsLeft = 0;
-  double boundAbsRight = 0;
-  double boundAbsTop = 0;
-  double boundAbsBottom = 0;
+  std::std::vector<double, 4> rotation;      // User-specified
+  std::std::vector<double, 4> rotation16bit; // Virtual desktop bounds of
+                                             // display relative to main monitor
+  std::std::vector<int, 4> padding;          // padding
+  std::std::vector<signed int, 4> relPixel; // Virtual desktop bounds of
+                                            // display relative to main monitor
+  std::std::vector<signed int, 4> absPixel; // Resulting Virtualized virtual
+                                            //desktop bounds
+  std::std::vector<double, 4> absCached; // Resulting Mapped bounds of display
+                                         // in absolute from top left most 
+                                         // display
 
   // Ratio of input rotation to abolutized integer
   // used for linear interpolation
-  double ySlope{};
-  double xSlope{};
+  double ySlope{0.0};
+  double xSlope{0.0};
 
+  // interface used by WindowsSetup
   CDisplay(signed int left, signed int right, signed int top,
            signed int bottom) {
-    pixelBoundLeft = left;
-    pixelBoundRight = right;
-    pixelBoundTop = top;
-    pixelBoundBottom = bottom;
+    relPixel[0] = left;
+    relPixel[1] = right;
+    relPixel[2] = top;
+    relPixel[3] = bottom;
   }
 
   void setAbsBounds(signed int virtualOriginLeft, signed int virtualOriginTop,
@@ -66,36 +44,37 @@ class CDisplay {
     // values relative to the main display.
     // Transformation is as follows:
     // virtual pixel bounds (with origin at main display) -> absolute
-    pixelBoundAbsLeft = pixelBoundLeft - virtualOriginLeft;
-    pixelBoundAbsRight = pixelBoundRight - virtualOriginLeft;
-    pixelBoundAbsTop = pixelBoundTop - virtualOriginTop;
-    pixelBoundAbsBottom = pixelBoundBottom - virtualOriginTop;
+    // left right top bottom
+    absPixel[0] = relPixel[0] - virtualOriginLeft; // left
+    absPixel[1] = relPixel[1] - virtualOriginLeft; // right
+    absPixel[2] = relPixel[2] - virtualOriginTop;  // top
+    absPixel[3] = relPixel[3] - virtualOriginTop;  // bottom
 
-    boundAbsLeft = static_cast<double>(pixelBoundAbsLeft) * x_PxToABS;
-    boundAbsRight = static_cast<double>(pixelBoundAbsRight) * x_PxToABS;
-    boundAbsTop = pixelBoundAbsTop * y_PxToABS;
-    boundAbsBottom = pixelBoundAbsBottom * y_PxToABS;
+    absCached[0] = static_cast<double>(absPixel[0]) * x_PxToABS;
+    absCached[1] = static_cast<double>(absPixel[1]) * x_PxToABS;
+    absCached[2] = static_cast<double>(absPixel[2]) * y_PxToABS;
+    absCached[3] = static_cast<double>(absPixel[3]) * y_PxToABS;
 
     // convert to 16bit values because natural point software
     // gives head tracking data in 16bit values.
     // mapping the values to 16bit now saves and extra conversion
     // step later
-    rotationBound16BitLeft = rotationBoundLeft * (16383 / 180);
-    rotationBound16BitRight = rotationBoundRight * (16383 / 180);
-    rotationBound16BitTop = rotationBoundTop * (16383 / 180);
-    rotationBound16BitBottom = rotationBoundBottom * (16383 / 180);
+    rotation16bit[0] = rotation[0] * (16383 / 180);
+    rotation16bit[1] = rotation[1] * (16383 / 180);
+    rotation16bit[2] = rotation[2] * (16383 / 180);
+    rotation16bit[3] = rotation[3] * (16383 / 180);
 
     // setup linear interpolation parameters
-    double rl = rotationBound16BitLeft;
-    double rr = rotationBound16BitRight;
-    double al = boundAbsLeft;
-    double ar = boundAbsRight;
+    double rl = rotation16bit[0]; // left
+    double rr = rotation16bit[1]; // right
+    double al = absCached[0];
+    double ar = absCached[1];
     xSlope = (ar - al) / (rr - rl);
 
-    double rt = rotationBound16BitTop;
-    double rb = rotationBound16BitBottom;
-    double at = boundAbsTop;
-    double ab = boundAbsBottom;
+    double rt = rotation16bit[2];
+    double rb = rotation16bit[3];
+    double at = absCached[2];
+    double ab = absCached[3];
     ySlope = -(at - ab) / (rt - rb);
 
     return;

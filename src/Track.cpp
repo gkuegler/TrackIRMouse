@@ -12,7 +12,6 @@
 #pragma warning(disable : 4996)
 #include "track.hpp"
 
-
 #include "config.hpp"
 #include "display.hpp"
 #include "exceptions.hpp"
@@ -22,7 +21,7 @@
 
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
- //#define TEST_NO_TRACK
+//#define TEST_NO_TRACK
 
 // SendInput with absolute mouse movement flag takes a short int
 constexpr auto USHORT_MAX_VAL = 65535;
@@ -99,9 +98,9 @@ int WinSetup(CConfig config) {
   }
 
   int virtualDesktopWidth = GetSystemMetrics(
-      SM_CXVIRTUALSCREEN);  // width of total bounds of all screens
+      SM_CXVIRTUALSCREEN); // width of total bounds of all screens
   int virtualDesktopHeight = GetSystemMetrics(
-      SM_CYVIRTUALSCREEN);  // height of total bounds of all screens
+      SM_CYVIRTUALSCREEN); // height of total bounds of all screens
 
   // TODO: this check actually happens at the initialization of my configuration
   // file
@@ -126,44 +125,42 @@ int WinSetup(CConfig config) {
 int DisplaySetup(CConfig config) {
   SProfile activeProfile = config.GetActiveProfile();
 
-  for (int i = 0; i < activeProfile.bounds.size(); i++) {
-    g_displays[i].rotationBoundLeft = activeProfile.bounds[i].rotationBounds[0];
-    g_displays[i].rotationBoundRight =
-        activeProfile.bounds[i].rotationBounds[1];
-    g_displays[i].rotationBoundTop = activeProfile.bounds[i].rotationBounds[2];
-    g_displays[i].rotationBoundBottom =
-        activeProfile.bounds[i].rotationBounds[3];
+  if (false == ValidateUserInput(activeProfile.bounds)) {
+    return FAILURE;
+  }
 
-    g_displays[i].paddingLeft = activeProfile.bounds[i].paddingBounds[0];
-    g_displays[i].paddingRight = activeProfile.bounds[i].paddingBounds[1];
-    g_displays[i].paddingTop = activeProfile.bounds[i].paddingBounds[2];
-    g_displays[i].paddingBottom = activeProfile.bounds[i].paddingBounds[3];
+  for (int i = 0; i < activeProfile.bounds.size(); i++) {
+    // transfer config data to internal strucuture
+    for (int j = 0; j < 4; j++) {
+      g_displays[i].rotation =
+          activeProfile.bounds[i].rotationBounds[j] g_displays[i].padding =
+              activeProfile.bounds[i].paddingBounds[j]
+    }
 
     g_displays[i].setAbsBounds(g_virtualOriginX, g_virtualOriginY,
                                g_xPixelAbsoluteSlope, g_yPixelAbsoluteSlope);
   }
 
-  for (int i = 0; i < config.m_monitorCount; i++) {
-    spdlog::debug(
-        "Display {} pixel bound: {}, {}, {}, {}", i,
-        g_displays[i].pixelBoundAbsLeft, g_displays[i].pixelBoundAbsRight,
-        g_displays[i].pixelBoundAbsTop, g_displays[i].pixelBoundAbsBottom);
-  }
-
-  for (int i = 0; i < config.m_monitorCount; i++) {
-    spdlog::info("Display {} abs bounds: {:>.1f}, {:>.1f}, {:>.1f}, {:>.1f}", i,
-                 g_displays[i].boundAbsLeft, g_displays[i].boundAbsRight,
-                 g_displays[i].boundAbsTop, g_displays[i].boundAbsBottom);
-  }
-
+  // debug messages only
   for (int i = 0; i < config.m_monitorCount; i++) {
     spdlog::info(
-        "Display {} rotationBoundLeft: {:>.2f}, {:>.2f}, {:>.2f}, {:>.2f}", i,
-        g_displays[i].rotationBoundLeft, g_displays[i].rotationBoundRight,
-        g_displays[i].rotationBoundTop, g_displays[i].rotationBoundBottom);
+        "Display {} user rotations: {:>.2f}, {:>.2f}, {:>.2f}, {:>.2f}", i,
+        g_displays[i].rotation[0], g_displays[i].rotation[1],
+        g_displays[i].rotation[2], g_displays[i].rotation[3]);
+  }
+  for (int i = 0; i < config.m_monitorCount; i++) {
+    spdlog::debug("Display {} pixel bounds: {}, {}, {}, {}", i,
+                  g_displays[i].absPixel[0], g_displays[i].absPixel[1],
+                  g_displays[i].absPixel[2], g_displays[i].absPixel[3]);
+  }
+  for (int i = 0; i < config.m_monitorCount; i++) {
+    spdlog::info(
+        "Display {} absolute bounds: {:>.1f}, {:>.1f}, {:>.1f}, {:>.1f}", i,
+        g_displays[i].absCached[0], g_displays[i].absCached[1],
+        g_displays[i].absCached[2], g_displays[i].absCached[3]);
   }
 
-  return 0;
+  return SUCCESS;
 }
 
 int TR_Initialize(HWND hWnd, CConfig config) {
@@ -185,15 +182,15 @@ int TR_Initialize(HWND hWnd, CConfig config) {
   //  - unable to load dll
   //  - any NP dll function call failure
 
-  spdlog::debug("Starting Initialization Of TrackIR");
+  spdlog::trace("Starting Initialization Of TrackIR");
 
   SProfile activeProfile = config.GetActiveProfile();
 
-  if (0 != WinSetup(config)) {
+  if (FAILURE == WinSetup(config)) {
     return -1;
   }
 
-  if (0 != DisplaySetup(config)) {
+  if (FAILURE == DisplaySetup(config)) {
     return -1;
   }
 
@@ -235,8 +232,7 @@ int TR_Initialize(HWND hWnd, CConfig config) {
 
   if (NP_OK == rsltInit) {
     spdlog::info("NP Initialization: Success");
-  }
-  else {
+  } else {
     // logging handled within the function implementation
     return FAILURE;
   }
@@ -290,7 +286,8 @@ int TR_Initialize(HWND hWnd, CConfig config) {
   if (NP_OK == rsltProfileId)
     spdlog::info("NP Registered Profile ID.");
   else {
-    spdlog::error("NP Register Profile ID failed with NP code: {}", rsltProfileId);
+    spdlog::error("NP Register Profile ID failed with NP code: {}",
+                  rsltProfileId);
     return FAILURE;
   }
 
@@ -316,44 +313,30 @@ inline void SendMyInput(double x, double y) {
   return;
 }
 void MouseMove(int monitorCount, double yaw, double pitch) {
-  // set the last screen initially equal to the main display for me
-  // TODO: find a way to specify in settings or get from windows
   static int lastScreen = 0;
-
-  // variables used for linear interpolation
-  static double rl;
-  static double al;
-  static double mx;
-  static double x;
-  static double rt;
-  static double at;
-  static double my;
-  static double y;
 
   // Check if the head is pointing to a screen
   // The return statement is never reached if the head is pointing outside the
   // bounds of any of the screens
-
   for (int i = 0; i <= monitorCount - 1; i++) {
-    if ((yaw > g_displays[i].rotationBound16BitLeft) &&
-        (yaw < g_displays[i].rotationBound16BitRight) &&
-        (pitch < g_displays[i].rotationBound16BitTop) &&
-        (pitch > g_displays[i].rotationBound16BitBottom)) {
-      // I wrote it out for maintainability
-      // its plenty fast anyway for a 60hz limited display
-      rl = g_displays[i].rotationBound16BitLeft;
-      al = g_displays[i].boundAbsLeft;
-      mx = g_displays[i].xSlope;
-      x = mx * (yaw - rl) + al;
-      rt = g_displays[i].rotationBound16BitTop;
-      at = g_displays[i].boundAbsTop;
-      my = g_displays[i].ySlope;
-      y = my * (rt - pitch) + at;
-      // load the coordinates into my input structure
-      // need to cast to an integer because resulting calcs are doubles
+    double rl = g_displays[i].rotation16bit[0];
+    double rr = g_displays[i].rotation16bit[1];
+    double rt = g_displays[i].rotation16bit[2];
+    double rb = g_displays[i].rotation16bit[3];
+    if ((yaw > rl) && (yaw < rr) && (pitch < rt) && (pitch > rb)) {
+      
+      // interpolate horizontal position from left edge of display
+      double al = g_displays[i].absCached[0];
+      double mx = g_displays[i].xSlope;
+      double x = mx * (yaw - rl) + al;
+
+      // interpolate vertical position from top edge of display
+      double at = g_displays[i].absCached[0];
+      double my = g_displays[i].ySlope;
+      double y = my * (rt - pitch) + at;
+
       SendMyInput(x, y);
       lastScreen = i;
-      // LogToWix(fmt::format("(%f, %f)", y, x); // for testing
       return;
     }
   }
@@ -363,34 +346,41 @@ void MouseMove(int monitorCount, double yaw, double pitch) {
   // yaw axis that is too great or too little to do this assume the pointer
   // came from the last screen, just asign the mouse position to the absolute
   // limit from the screen it came from.
-  if (yaw < g_displays[lastScreen].rotationBound16BitLeft) {
-    x = g_displays[lastScreen].boundAbsLeft +
-        g_displays[lastScreen].paddingLeft * g_xPixelAbsoluteSlope;
-  } else if (yaw > g_displays[lastScreen].rotationBound16BitRight) {
-    x = g_displays[lastScreen].boundAbsRight -
-        g_displays[lastScreen].paddingRight * g_xPixelAbsoluteSlope;
-  } else {
-    rl = g_displays[lastScreen].rotationBound16BitLeft;
-    al = g_displays[lastScreen].boundAbsLeft;
-    mx = g_displays[lastScreen].xSlope;
-    x = mx * (yaw - rl) + al;
+  static double x;
+  static double y;
+
+  double rl = g_displays[lastScreen].rotation16bit[0];
+  double rr = g_displays[lastScreen].rotation16bit[1];
+  double rt = g_displays[lastScreen].rotation16bit[2];
+  double rb = g_displays[lastScreen].rotation16bit[3];
+
+  if (yaw < rl) { // horizontal rotaion is below last used display
+    x = g_displays[lastScreen].absCached[0] +
+        g_displays[lastScreen].padding[0] * g_xPixelAbsoluteSlope;
+  } else if (yaw > rr) { // horizontal rotation is above last used display
+    x = g_displays[lastScreen].absCached[1] -
+        g_displays[lastScreen].padding[1] * g_xPixelAbsoluteSlope;
+  } else { // horizontal roation within last display bounds as normal
+    double al = g_displays[lastScreen].absCached[0];
+    double mx = g_displays[lastScreen].xSlope;
+    x = mx * (yaw - rl) + al; // interpolate horizontal position from left
+                              // edge of display
   }
 
-  if (pitch > g_displays[lastScreen].rotationBound16BitTop) {
-    y = g_displays[lastScreen].boundAbsTop +
-        g_displays[lastScreen].paddingTop * g_yPixelAbsoluteSlope;
-  } else if (pitch < g_displays[lastScreen].rotationBound16BitBottom) {
-    y = g_displays[lastScreen].boundAbsBottom -
-        g_displays[lastScreen].paddingBottom * g_yPixelAbsoluteSlope;
+  if (pitch > rt) {
+    y = g_displays[lastScreen].absCached[2] +
+        g_displays[lastScreen].padding[2] * g_yPixelAbsoluteSlope;
+  } else if (pitch < rb) {
+    y = g_displays[lastScreen].absCached[3] -
+        g_displays[lastScreen].padding[3] * g_yPixelAbsoluteSlope;
   } else {
-    rt = g_displays[lastScreen].rotationBound16BitTop;
-    at = g_displays[lastScreen].boundAbsTop;
-    my = g_displays[lastScreen].ySlope;
-    y = my * (rt - pitch) + at;
+    double at = g_displays[lastScreen].absCached[2];
+    double my = g_displays[lastScreen].ySlope;
+    y = my * (rt - pitch) + at; // interpolate vertical position from top edge
+                                // of display
   }
 
   SendMyInput(x, y);
-
   return;
 }
 int TR_TrackStart(CConfig config) {
@@ -427,8 +417,8 @@ int TR_TrackStart(CConfig config) {
       // TODO: apply negative sign on startup to avoid extra operation here
       // yaw and pitch come reversed relative to GUI profgram for some reason
       // from trackIR
-      double yaw = (-(*pTIRData).fNPYaw);      // implicit float to double
-      double pitch = (-(*pTIRData).fNPPitch);  // implicit float to double
+      double yaw = (-(*pTIRData).fNPYaw);     // implicit float to double
+      double pitch = (-(*pTIRData).fNPPitch); // implicit float to double
 
       // Don't move the mouse when TrackIR is paused
       if (framesig == lastFrame) {
