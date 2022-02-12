@@ -23,7 +23,7 @@ namespace MyLogging {
 
 template <typename Mutex>
 class WxSink : public spdlog::sinks::base_sink<Mutex> {
-protected:
+ protected:
   void sink_it_(const spdlog::details::log_msg &msg) override {
     // log_msg is a struct containing the log entry info like level, timestamp,
     // thread id etc. msg.raw contains pre formatted log
@@ -71,11 +71,11 @@ void SetUpLogging() {
 
   // create sinks (3) in total
   sinks.push_back(std::make_shared<spdlog::sinks::stdout_sink_mt>());
-  sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("log.txt", true));
+  sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("log-trackir.txt", true));
   sinks.push_back(wx_txtctrl_sink);
 
   auto combined_logger =std::make_shared<spdlog::logger>("main", begin(sinks), end(sinks));
-  combined_logger->set_level(spdlog::level::info); // this should be set by default anyway
+  combined_logger->set_level(spdlog::level::trace);
   combined_logger->set_pattern("[%T][%n][%l] %v"); // "[HH:MM:SS][logger_name][level] msg"
 
   // set sink specific format pattern after becuase setting pattern on logger
@@ -88,4 +88,4 @@ void SetUpLogging() {
   return;
 }
 // clang-format on
-} // namespace MyLogging
+}  // namespace MyLogging

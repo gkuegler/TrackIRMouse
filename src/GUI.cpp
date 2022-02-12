@@ -7,13 +7,15 @@
  * label active profile
  * automatically restart tracking
  * transform mapping values for head distance
- * 
+ * use default padding overwrites user padding values
+ * active profile bar is not aligned
+ *
  * profile box:
  *   set size limitations for text for inputs
  *   pick number of displays
  *   configuration window?
  *   duplicate profile
- * 
+ *
  *   maintain selections to move up and down
  *   convert values to doubles in validation step of handle event
  *   fix internal override of handling default display padding
@@ -38,6 +40,7 @@
 #include "gui-dialogs.hpp"
 #include "log.hpp"
 #include "track.hpp"
+#include "watchdog.hpp"
 
 constexpr std::string_view kVersionNo = "0.6.1";
 const std::string kRotationTitle = "bound (degrees)";
@@ -58,7 +61,8 @@ bool CGUIApp::OnInit() {
   auto origin = wxPoint((w / 2) - (appWidth / 2), (h / 2) - (appHeight / 2));
   auto dimensions = wxSize(appWidth, appHeight);
 
-  // Construct child elements first.
+  // Construct child elements first. The main panel contains a text control that
+  // is a log target.
   m_frame = new cFrame(origin, dimensions);
 
   // Handle and display messages to log widget sent from outside GUI thread
@@ -84,19 +88,25 @@ bool CGUIApp::OnInit() {
     }
   });
 
-  // Member function will catch and terminate program on fatal errors
   m_frame->LoadSettingsFromFile();
-  // Internally uses global config object
   m_frame->UpdateGuiFromSettings();
   m_frame->Show();
 
   // Start the track IR thread if enabled
-  if (GetGlobalConfig()->data.trackOnStart) {
-    spdlog::debug(
-        "checking the start track at start up -> watchdogEnabled: {}",
-        GetGlobalConfig()->data.trackOnStart);
+  auto config = GetGlobalConfig();
+  if (config->data.trackOnStart) {
     wxCommandEvent event = {};  // blank event to reuse start handler code
     m_frame->m_panel->OnTrackStart(event);
+  }
+
+  // Start the watchdog thread
+  if (config->data.watchdogEnabled) {
+    m_frame->m_pWatchdogThread = new WatchdogThread(m_frame);
+    if (m_frame->m_pWatchdogThread->Run() != wxTHREAD_NO_ERROR) {
+      spdlog::error("Can't run watchdog thread.");
+      delete m_frame->m_pWatchdogThread;
+      m_frame->m_pTrackThread = nullptr;
+    }
   }
 
   return true;
@@ -204,7 +214,8 @@ void cFrame::LoadSettingsFromFile() {
         "Found.\n%s",
         ex.what());
   } catch (...) {
-    spdlog::critical("An unhandled exception occurred when loading/parsing toml file.");
+    spdlog::critical(
+        "An unhandled exception occurred when loading/parsing toml file.");
   }
 
   try {
@@ -220,7 +231,8 @@ void cFrame::LoadSettingsFromFile() {
   } catch (const Exception &ex) {
     spdlog::critical("My Custom Exception:\n%s", ex.what());
   } catch (...) {
-    spdlog::critical("exception has gone unhandled loading and verifying settings");
+    spdlog::critical(
+        "exception has gone unhandled loading and verifying settings");
   }
 }
 void cFrame::UpdateGuiFromSettings() {
@@ -417,8 +429,7 @@ void cPanel::OnAddProfile(wxCommandEvent &event) {
     wxString value = dlg.GetValue();
     config->AddProfile(std::string(value.mb_str()));
     PopulateComboBoxWithProfiles();
-  }
-  else {
+  } else {
     spdlog::debug("Add profile action canceled.");
   }
 }
@@ -734,5 +745,33 @@ wxThread::ExitCode TrackThread::Entry() {
     CloseApplication();
   }
 
+  return NULL;
+}
+//////////////////////////////////////////////////////////////////////
+//                         WatchdogThread                           //
+//////////////////////////////////////////////////////////////////////
+
+WatchdogThread::WatchdogThread(cFrame *pHandler) : wxThread() {
+  m_pHandler = pHandler;
+  m_hPipe = WatchDog::StartWatchdog();
+}
+
+WatchdogThread::~WatchdogThread() {
+  // Will need to provide locks in the future with critical sections
+  // https://docs.wxwidgets.org/3.0/classwx_thread.html
+  wxCriticalSectionLocker enter(m_pHandler->m_pThreadCS);
+  m_pHandler->m_pWatchdogThread = NULL;
+
+  // TODO: close named pipe
+  // TODO: find other resources to close
+  // TODO: explicitly prevent
+}
+
+wxThread::ExitCode WatchdogThread::Entry() {
+  if (m_hPipe) {
+    WatchDog::Serve(m_hPipe);
+  } else {
+    spdlog::warn("Watchdog thread isn't.");
+  }
   return NULL;
 }

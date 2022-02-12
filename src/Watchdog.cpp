@@ -1,6 +1,6 @@
 /**
  * Thread to control head tracker from a namedpipe.
- * 
+ *
  * Send explicit commands via a named pipe to internally pause or kill track our
  * program.
  *  - PAUSE: suspends fetching of track data and mouse send input commands
@@ -33,63 +33,8 @@ namespace WatchDog {
 std::atomic<bool> g_bPauseTracking = false;
 
 HANDLE StartWatchdog() {
-  // TODO: make exception safe
-  // make sure all return paths cleanup correctly
-  // possibly wrap Windows resource in a class
-  // move call to StartWatchdog to outside of track initialize.
-  // I would like watchdog to run as part of program.
-  HANDLE hThread = INVALID_HANDLE_VALUE;
-  DWORD dwThreadId = 0;
-  LPCSTR eventName = "WatchdogInitThread";
-
-  // Create an event for the thread to signal on
-  // to ensure pipe initialization occurs before continuing.
-  // This mostly matters so that the print statements
-  // of the pipe initialization are not mixed in with the rest of the program
-  HANDLE hEvent = CreateEventA(NULL, FALSE, FALSE, eventName);
-
-  hThread = CreateThread(NULL,           // no security attribute
-                         0,              // default stack size
-                         InstanceThread, // thread proc
-                         &hEvent,        // thread parameter
-                         0,              // not suspended
-                         &dwThreadId     // returns thread ID
-  );
-
-  if (hThread == NULL) {
-    spdlog::warn("CreateThread failed, GLE={}.\n", GetLastError());
-    return NULL;
-  }
-
-  // Wait for the thread to signal when
-  // it's completed initialization
-  if (hEvent) {
-    DWORD result = WaitForSingleObject(hEvent,
-                                       3000 // timeout in milliseconds
-    );
-
-    if (WAIT_FAILED == result) {
-      spdlog::warn("{} Function failed with error code: {}",
-        "WaitForSingleObject", GetLastError());
-    }
-
-    else if (WAIT_TIMEOUT == result) {
-      spdlog::warn(
-        "{} Timed out on watchdog thread. Objects state is non signaled.",
-        "WaitForSingleObject");
-    }
-  }
-
-  return hThread;
-}
-
-DWORD WINAPI InstanceThread(LPVOID param) {
-  // Signal event when set up of the pipe completes,
-  // allowing main program flow to continue
-  HANDLE *phEvent = reinterpret_cast<HANDLE *>(param);
-
+  spdlog::trace("StartWatchdog");
   HANDLE hPipe = INVALID_HANDLE_VALUE;
-
   LPCSTR lpszPipename = "\\\\.\\pipe\\watchdog";
 
   // The main loop creates an instance of the named pipe and
@@ -98,6 +43,7 @@ DWORD WINAPI InstanceThread(LPVOID param) {
   // with that client, and this loop is free to wait for the
   // next client connect request. It is an infinite loop.
 
+  // Initialize Security Descriptor For Named Pipe
   // May throw std::bad_alloc
   std::unique_ptr<SECURITY_DESCRIPTOR> pSD(new SECURITY_DESCRIPTOR);
   SECURITY_ATTRIBUTES sa;
@@ -108,23 +54,25 @@ DWORD WINAPI InstanceThread(LPVOID param) {
   // to FALSE(NULL). Thus, except for its revision level, it is empty
   if (NULL ==
       InitializeSecurityDescriptor(pSD.get(), SECURITY_DESCRIPTOR_REVISION)) {
-    spdlog::error("InitializeSecurityDescriptor Error. GLE=%u\n",
-                  GetLastError());
-    return -1;
+    spdlog::error(
+        "Failed to initialize watchdog security descriptor with error code: {}",
+        GetLastError());
+    return NULL;
   }
 
   // Add the Access Control List (ACL) to the security descriptor
   // TODO: make this more robust, maybe limit to just the user process?
-#pragma warning(disable : 6248) // Allow all unrestricted access to the pipe
+#pragma warning(disable : 6248)  // Allow all unrestricted access to the pipe
   if (!SetSecurityDescriptorDacl(
           pSD.get(),
-          TRUE,       // bDaclPresent flag
-          (PACL)NULL, // if a NULL DACL is assigned to the security descriptor,
-                      // all access is allowed
-          FALSE))     // not a default DACL
+          TRUE,        // bDaclPresent flag
+          (PACL)NULL,  // if a NULL DACL is assigned to the security descriptor,
+                       // all access is allowed
+          FALSE))      // not a default DACL
   {
     spdlog::warn("SetSecurityDescriptorDacl Error %u\n", GetLastError());
     // goto Cleanup;
+    // TODO: what happens here?
   }
 #pragma warning(default : 4700)
 
@@ -133,37 +81,27 @@ DWORD WINAPI InstanceThread(LPVOID param) {
   sa.lpSecurityDescriptor = pSD.get();
   sa.bInheritHandle = FALSE;
 
-  // spdlog::info("\nPipe Server: Main thread awaiting client connection
-  // on {}\n", lpszPipename);
-
-  hPipe = CreateNamedPipeA(lpszPipename,               // pipe name
-                           PIPE_ACCESS_DUPLEX,         // read/write access
-                           PIPE_TYPE_MESSAGE |         // message type pipe
-                               PIPE_READMODE_MESSAGE | // message-read mode
-                               PIPE_WAIT,              // blocking mode
-                           PIPE_UNLIMITED_INSTANCES,   // max. instances
-                           BUFSIZE,                    // output buffer size
-                           BUFSIZE,                    // input buffer size
-                           0,                          // client time-out
-                           &sa); // default security attribute
+  hPipe = CreateNamedPipeA(lpszPipename,                // pipe name
+                           PIPE_ACCESS_DUPLEX,          // read/write access
+                           PIPE_TYPE_MESSAGE |          // message type pipe
+                               PIPE_READMODE_MESSAGE |  // message-read mode
+                               PIPE_WAIT,               // blocking mode
+                           PIPE_UNLIMITED_INSTANCES,    // max. instances
+                           BUFSIZE,                     // output buffer size
+                           BUFSIZE,                     // input buffer size
+                           0,                           // client time-out
+                           &sa);  // default security attribute
 
   if (hPipe == INVALID_HANDLE_VALUE) {
     spdlog::warn("CreateNamedPipe failed, GLE={}.\n", GetLastError());
-    return FAILURE;
+    return NULL;
   }
 
-  if (SetEvent(*phEvent) == 0) {
-    spdlog::warn("Could not set Watchdog Event with error code: {}\n",
-                  GetLastError());
-  }
-
-  // Serve errors handled in implementation
-  Serve(hPipe);
-
-  return SUCCESS;
+  return hPipe;
 }
 
 void Serve(HANDLE hPipe) {
+  spdlog::trace("starting watchdog serve");
   // This is a lot of Windows boilerplate code
   HANDLE hHeap = GetProcessHeap();
   char *pchRequest =
@@ -178,16 +116,18 @@ void Serve(HANDLE hPipe) {
   // thread fails.
 
   if (pchRequest == NULL) {
-    spdlog::warn("Pipe Server Failure. Server got an unexpected NULL heap allocation. Serve exitting.");
-    if (pchReply != NULL)
-      HeapFree(hHeap, 0, pchReply);
+    spdlog::warn(
+        "Pipe Server Failure. Server got an unexpected NULL heap allocation. "
+        "Serve exitting.");
+    if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
     return;
   }
 
   if (pchReply == NULL) {
-    spdlog::warn("Pipe Server Failure. Server got an unexpected NULL heap allocation. Serve exitting.");
-    if (pchRequest != NULL)
-      HeapFree(hHeap, 0, pchRequest);
+    spdlog::warn(
+        "Pipe Server Failure. Server got an unexpected NULL heap allocation. "
+        "Serve exitting.");
+    if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
     return;
   }
 
@@ -203,11 +143,11 @@ void Serve(HANDLE hPipe) {
     while (1) {
       // Read client requests from the pipe. This simplistic code only allows
       // messages up to BUFSIZE characters in length.
-      bSuccess = ReadFile(hPipe,      // handle to pipe
-                          pchRequest, // buffer to receive data
-                          BUFSIZE * sizeof(unsigned char), // size of buffer
-                          &cbBytesRead, // number of bytes read
-                          NULL);        // not overlapped I/O
+      bSuccess = ReadFile(hPipe,       // handle to pipe
+                          pchRequest,  // buffer to receive data
+                          BUFSIZE * sizeof(unsigned char),  // size of buffer
+                          &cbBytesRead,  // number of bytes read
+                          NULL);         // not overlapped I/O
 
       if (!bSuccess || cbBytesRead == 0) {
         if (GetLastError() == ERROR_BROKEN_PIPE) {
@@ -228,11 +168,11 @@ void Serve(HANDLE hPipe) {
       Sleep(100);
 
       // Write the reply to the pipe.
-      bSuccess = WriteFile(hPipe,        // handle to pipe
-                           pchReply,     // buffer to write from
-                           cbReplyBytes, // number of bytes to write
-                           &cbWritten,   // number of bytes written
-                           NULL          // not overlapped I/O
+      bSuccess = WriteFile(hPipe,         // handle to pipe
+                           pchReply,      // buffer to write from
+                           cbReplyBytes,  // number of bytes to write
+                           &cbWritten,    // number of bytes written
+                           NULL           // not overlapped I/O
       );
 
       if (!bSuccess || cbReplyBytes != cbWritten) {
@@ -260,7 +200,6 @@ void Serve(HANDLE hPipe) {
   HeapFree(hHeap, 0, pchRequest);
   HeapFree(hHeap, 0, pchReply);
 
-  spdlog::info("InstanceThread exiting.\n");
   return;
 }
 
@@ -270,12 +209,12 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
 {
   errno_t rslt = 1;
 
-  spdlog::info("Client Request:\n{}\n", pchRequest);
+  spdlog::info("Client Request:{}", pchRequest);
 
   if (strcmp(pchRequest, "KILL") == 0) {
     rslt = strcpy_s(pchReply, BUFSIZE, "KL");
     if (system("taskkill /T /IM TrackIR5.exe") == -1)
-      spdlog::info("Failed to kill TrackIR5 program with error code");
+      spdlog::error("Failed to kill TrackIR5 program with error code");
   } else if (strcmp(pchRequest, "HEARTBEAT") == 0) {
     rslt = strcpy_s(pchReply, BUFSIZE, "HB");
   } else if (strcmp(pchRequest, "PAUSE") == 0) {
@@ -294,10 +233,10 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
   else {
     *pchBytes = 0;
     pchReply[0] = 0;
-    spdlog::info("strcpy_s failed, no outgoing message.\n");
+    spdlog::warn("strcpy_s failed, no outgoing message.");
     return;
   }
 }
 
-} // namespace WatchDog
+}  // namespace WatchDog
 #undef BUFSIZE

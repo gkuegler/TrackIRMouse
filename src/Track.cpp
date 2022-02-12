@@ -12,6 +12,7 @@
 #pragma warning(disable : 4996)
 #include "track.hpp"
 
+
 #include "config.hpp"
 #include "display.hpp"
 #include "exceptions.hpp"
