@@ -420,6 +420,7 @@ void CConfig::SetDisplayMappingParameter(int displayNumber, int parameterType,
 // padding should not take up the whole display
 // maybe warn on some other ideas? suggestions?
 bool ValidateUserInput(const UserInput &displays) {
+  // compare bounds not more than abs|180|
   for (int i = 0; i < displays.size(); i++) {
     for (int j = 0; j < 4; j++) {
       double degrees = displays[i].rotationBounds[j];
@@ -429,6 +430,27 @@ bool ValidateUserInput(const UserInput &displays) {
             "rotation bound param \"{}\" on display #{} is outside "
             "allowable range of -180deg -> 180deg.",
             kBoundNames[j], i);
+        return false;
+      }
+    }
+  }
+  // see if any rectangles overlap
+  // visualization: https://silentmatt.com/rectangle-intersection/
+  for (int i = 0; i < displays.size(); i++) {
+    int j = 1;
+    while (j < displays.size()) {
+      double A_left = displays[i].rotationBounds[0];
+      double A_right = displays[j].rotationBounds[1];
+      double A_top = displays[j].rotationBounds[2];
+      double A_bottom = displays[j].rotationBounds[3];
+      double B_left = displays[j].rotationBounds[0];
+      double B_right = displays[j].rotationBounds[1];
+      double B_top = displays[j].rotationBounds[2];
+      double B_bottom = displays[j].rotationBounds[3];
+      if (A_left < B_right && A_right > B_left && A_top > B_bottom &&
+          A_bottom < B_top) {
+        spdlog::error(
+            "Overlapping rotational bounds between display #{} and #{}", i, j);
         return false;
       }
     }
