@@ -39,10 +39,10 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
   HKEY hKey = 0;
 
   LSTATUS statusOpen =
-      RegOpenKeyExA(hParentKey, // should usually be HKEY_CURRENT_USER
+      RegOpenKeyExA(hParentKey,  // should usually be HKEY_CURRENT_USER
                     subKey,
-                    0,        //[in]           DWORD  ulOptions,
-                    KEY_READ, //[in]           REGSAM samDesired,
+                    0,         //[in]           DWORD  ulOptions,
+                    KEY_READ,  //[in]           REGSAM samDesired,
                     &hKey);
 
   if (ERROR_FILE_NOT_FOUND == statusOpen) {
@@ -62,12 +62,12 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
   DWORD sizeOfBuffer = 0;
 
   LSTATUS statusQueryValue =
-      RegQueryValueExA(hKey,         // [in]                HKEY    hKey,
-                       "Path",       // [in, optional]      LPCSTR  lpValueName,
-                       0,            // LPDWORD lpReserved,
-                       &valueType,   // [out, optional]     LPDWORD lpType,
-                       0,            // [out, optional]     LPBYTE  lpData,
-                       &sizeOfBuffer // [in, out, optional] LPDWORD lpcbData
+      RegQueryValueExA(hKey,        // [in]                HKEY    hKey,
+                       "Path",      // [in, optional]      LPCSTR  lpValueName,
+                       0,           // LPDWORD lpReserved,
+                       &valueType,  // [out, optional]     LPDWORD lpType,
+                       0,           // [out, optional]     LPBYTE  lpData,
+                       &sizeOfBuffer  // [in, out, optional] LPDWORD lpcbData
       );
 
   if (ERROR_FILE_NOT_FOUND == statusQueryValue) {
@@ -96,13 +96,13 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
   }
 
   LSTATUS statusGetValue =
-      RegGetValueA(hKey,           // [in]                HKEY    hkey,
-                   0,              // [in, optional]      LPCSTR  lpSubKey,
-                   subValue,       // [in, optional]      LPCSTR  lpValue,
-                   RRF_RT_REG_SZ,  // [in, optional]      DWORD   dwFlags,
-                   &valueType,     // [out, optional]     LPDWORD pdwType,
-                   (void *)szPath, // [out, optional]     PVOID   pvData,
-                   &sizeOfBuffer   // [in, out, optional] LPDWORD pcbData
+      RegGetValueA(hKey,            // [in]                HKEY    hkey,
+                   0,               // [in, optional]      LPCSTR  lpSubKey,
+                   subValue,        // [in, optional]      LPCSTR  lpValue,
+                   RRF_RT_REG_SZ,   // [in, optional]      DWORD   dwFlags,
+                   &valueType,      // [out, optional]     LPDWORD pdwType,
+                   (void *)szPath,  // [out, optional]     PVOID   pvData,
+                   &sizeOfBuffer    // [in, out, optional] LPDWORD pcbData
       );
 
   if (ERROR_SUCCESS == statusOpen) {
@@ -120,7 +120,7 @@ void CConfig::ParseFile(const std::string fileName) {
  * Loads json user data into config class.
  * @return error_code
  */
-void  CConfig::LoadSettings() {
+void CConfig::LoadSettings() {
   m_monitorCount = GetSystemMetrics(SM_CMONITORS);
 
   // Find the general settings table
@@ -152,9 +152,10 @@ void  CConfig::LoadSettings() {
       m_trackIrDllPath = path.value;
       spdlog::info("Acquired DLL location from registry.");
     } else {
-      spdlog::error("Could not find registry path\n  path.result: {}"
-                    "  path.resultString: {}",
-                    path.result, path.resultString);
+      spdlog::error(
+          "Could not find registry path\n  path.result: {}"
+          "  path.resultString: {}",
+          path.result, path.resultString);
     }
   } else {
     m_trackIrDllPath = data.trackIrDllFolder;
@@ -186,12 +187,13 @@ void  CConfig::LoadSettings() {
     vDefaultPaddingTable = toml::find(m_vData, "DefaultPadding");
   } catch (std::out_of_range e) {
     spdlog::warn("Default Padding Table Not Found");
-    spdlog::warn("Please add the following to the settings.toml file:\n"
-                 "[DefaultPadding]"
-                 "left   = 0"
-                 "right  = 0"
-                 "top    = 0"
-                 "bottom = 0");
+    spdlog::warn(
+        "Please add the following to the settings.toml file:\n"
+        "[DefaultPadding]"
+        "left   = 0"
+        "right  = 0"
+        "top    = 0"
+        "bottom = 0");
   }
 
   data.defaultPaddings[0] = toml::find<int>(vDefaultPaddingTable, "left");
@@ -261,14 +263,10 @@ void  CConfig::LoadSettings() {
       int paddingTop = toml::find_or<int>(display, "paddingTop", 5555);
       int paddingBottom = toml::find_or<int>(display, "paddingBottom", 5555);
 
-      if (paddingLeft == 5555)
-        paddingLeft = data.defaultPaddings[0];
-      if (paddingRight == 5555)
-        paddingRight = data.defaultPaddings[1];
-      if (paddingTop == 5555)
-        paddingTop = data.defaultPaddings[2];
-      if (paddingBottom == 5555)
-        paddingBottom = data.defaultPaddings[3];
+      if (paddingLeft == 5555) paddingLeft = data.defaultPaddings[0];
+      if (paddingRight == 5555) paddingRight = data.defaultPaddings[1];
+      if (paddingTop == 5555) paddingTop = data.defaultPaddings[2];
+      if (paddingBottom == 5555) paddingBottom = data.defaultPaddings[3];
 
       // Report padding values
       spdlog::debug(
@@ -385,7 +383,7 @@ void CConfig::RemoveProfile(std::string profileName) {
 
 void CConfig::DuplicateActiveProfile() {
   auto profile = GetActiveProfile();
-  profile.name.append("2"); // incremental profile name
+  profile.name.append("2");  // incremental profile name
   data.profiles.push_back(profile);
   data.activeProfileName = profile.name;
 }
@@ -417,3 +415,24 @@ int CConfig::GetActiveProfileDisplayCount() {
 
 void CConfig::SetDisplayMappingParameter(int displayNumber, int parameterType,
                                          int parameterSide, double parameter) {}
+
+// TODO: make more thourough validation
+// rotation bound space should not overlap between monitors
+// padding should not take up the whole display
+// maybe warn on some other ideas? suggestions?
+bool ValidateUserInput(const UserInput &displays) {
+  for (int i = 0; i < displays.size(); i++) {
+    for (int j = 0; j < 4; j++) {
+      double degrees = displays[i].rotationBounds[j];
+      int padding = displays[i].paddingBounds[j];
+      if (degrees > 180.0 || degrees < -180.0) {
+        spdlog::error(
+            "rotation bound param \"{}\" on display #{} is outside "
+            "allowable range of -180deg -> 180deg.",
+            kBoundNames[j], i);
+        return FAILURE;
+      }
+    }
+  }
+  return SUCCESS;
+}

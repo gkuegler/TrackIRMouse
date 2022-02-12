@@ -98,9 +98,9 @@ int WinSetup(CConfig config) {
   }
 
   int virtualDesktopWidth = GetSystemMetrics(
-      SM_CXVIRTUALSCREEN); // width of total bounds of all screens
+      SM_CXVIRTUALSCREEN);  // width of total bounds of all screens
   int virtualDesktopHeight = GetSystemMetrics(
-      SM_CYVIRTUALSCREEN); // height of total bounds of all screens
+      SM_CYVIRTUALSCREEN);  // height of total bounds of all screens
 
   // TODO: this check actually happens at the initialization of my configuration
   // file
@@ -132,9 +132,8 @@ int DisplaySetup(CConfig config) {
   for (int i = 0; i < activeProfile.bounds.size(); i++) {
     // transfer config data to internal strucuture
     for (int j = 0; j < 4; j++) {
-      g_displays[i].rotation =
-          activeProfile.bounds[i].rotationBounds[j] g_displays[i].padding =
-              activeProfile.bounds[i].paddingBounds[j]
+      g_displays[i].rotation[j] = activeProfile.bounds[i].rotationBounds[j];
+      g_displays[i].padding[j] = activeProfile.bounds[i].paddingBounds[j];
     }
 
     g_displays[i].setAbsBounds(g_virtualOriginX, g_virtualOriginY,
@@ -324,7 +323,6 @@ void MouseMove(int monitorCount, double yaw, double pitch) {
     double rt = g_displays[i].rotation16bit[2];
     double rb = g_displays[i].rotation16bit[3];
     if ((yaw > rl) && (yaw < rr) && (pitch < rt) && (pitch > rb)) {
-      
       // interpolate horizontal position from left edge of display
       double al = g_displays[i].absCached[0];
       double mx = g_displays[i].xSlope;
@@ -354,17 +352,17 @@ void MouseMove(int monitorCount, double yaw, double pitch) {
   double rt = g_displays[lastScreen].rotation16bit[2];
   double rb = g_displays[lastScreen].rotation16bit[3];
 
-  if (yaw < rl) { // horizontal rotaion is below last used display
+  if (yaw < rl) {  // horizontal rotaion is below last used display
     x = g_displays[lastScreen].absCached[0] +
         g_displays[lastScreen].padding[0] * g_xPixelAbsoluteSlope;
-  } else if (yaw > rr) { // horizontal rotation is above last used display
+  } else if (yaw > rr) {  // horizontal rotation is above last used display
     x = g_displays[lastScreen].absCached[1] -
         g_displays[lastScreen].padding[1] * g_xPixelAbsoluteSlope;
-  } else { // horizontal roation within last display bounds as normal
+  } else {  // horizontal roation within last display bounds as normal
     double al = g_displays[lastScreen].absCached[0];
     double mx = g_displays[lastScreen].xSlope;
-    x = mx * (yaw - rl) + al; // interpolate horizontal position from left
-                              // edge of display
+    x = mx * (yaw - rl) + al;  // interpolate horizontal position from left
+                               // edge of display
   }
 
   if (pitch > rt) {
@@ -376,8 +374,8 @@ void MouseMove(int monitorCount, double yaw, double pitch) {
   } else {
     double at = g_displays[lastScreen].absCached[2];
     double my = g_displays[lastScreen].ySlope;
-    y = my * (rt - pitch) + at; // interpolate vertical position from top edge
-                                // of display
+    y = my * (rt - pitch) + at;  // interpolate vertical position from top edge
+                                 // of display
   }
 
   SendMyInput(x, y);
@@ -417,8 +415,8 @@ int TR_TrackStart(CConfig config) {
       // TODO: apply negative sign on startup to avoid extra operation here
       // yaw and pitch come reversed relative to GUI profgram for some reason
       // from trackIR
-      double yaw = (-(*pTIRData).fNPYaw);     // implicit float to double
-      double pitch = (-(*pTIRData).fNPPitch); // implicit float to double
+      double yaw = (-(*pTIRData).fNPYaw);      // implicit float to double
+      double pitch = (-(*pTIRData).fNPPitch);  // implicit float to double
 
       // Don't move the mouse when TrackIR is paused
       if (framesig == lastFrame) {

@@ -8,15 +8,15 @@ public:
   //   2. Set rotational bounds from config active profile
   //   3. Call setAbsBounds()
 
-  std::std::vector<double, 4> rotation;      // User-specified
-  std::std::vector<double, 4> rotation16bit; // Virtual desktop bounds of
+  std::array<double, 4> rotation;      // User-specified
+  std::array<double, 4> rotation16bit; // Virtual desktop bounds of
                                              // display relative to main monitor
-  std::std::vector<int, 4> padding;          // padding
-  std::std::vector<signed int, 4> relPixel; // Virtual desktop bounds of
+  std::array<int, 4> padding;          // padding
+  std::array<signed int, 4> relPixel; // Virtual desktop bounds of
                                             // display relative to main monitor
-  std::std::vector<signed int, 4> absPixel; // Resulting Virtualized virtual
+  std::array<signed int, 4> absPixel; // Resulting Virtualized virtual
                                             //desktop bounds
-  std::std::vector<double, 4> absCached; // Resulting Mapped bounds of display
+  std::array<double, 4> absCached; // Resulting Mapped bounds of display
                                          // in absolute from top left most 
                                          // display
 
