@@ -209,8 +209,8 @@ void  CConfig::LoadSettings() {
   // Find the table with a matching profile name.
   // .as_table() returns a std::unordered_map<toml::key, toml::table>
   // Conversion is necessary to loop by element.
-  // TODO: check with toml website to try and get better error messages when
-  // validating parameters.6
+  // TODO: improve tonl error messages. check with toml website
+  // to try and get better error messages when
   int i = 0;
   for (auto profile : vProfilesArray.as_array()) {
     SProfile newProfile;

@@ -1,9 +1,11 @@
-## I went with the standard Visual Studio ignore file - GK
-*log-*.txt
-*log-*.log
-*log.txt
-*log.log
+## My specific ignores
+log-*.txt
+log-*.log
+log.txt
+log.log
+todo-notes-output.txt
 
+## I went with the standard Visual Studio ignore file - GK
 src/settings_test.toml
 src/ignore*
 
