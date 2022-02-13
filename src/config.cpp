@@ -290,7 +290,7 @@ void CConfig::LoadSettings() {
 // clang-format off
 
 void CConfig::SaveSettings() {
-  const std::string FileName = "settings_test.toml";
+  const std::string FileName = "settings.toml";
 
   toml::value general{
         {"track_on_start", data.trackOnStart},
@@ -346,6 +346,27 @@ void CConfig::SaveSettings() {
 }
 // clang-format on
 
+bool CConfig::SetActiveProfile(std::string profileName) {
+  // check if a valid name
+  // set the name
+  auto profileNames = GetProfileNames();
+
+  bool found = false;
+  for (auto name : profileNames) {
+    if (name == profileName) {
+      found = true;
+    }
+  }
+
+  if (!found) {
+    spdlog::error("Profile could not be found.");
+    return false;
+  }
+
+  data.activeProfileName = profileName;
+  return true;
+}
+
 void CConfig::AddProfile(std::string newProfileName) {
   auto profileNames = GetProfileNames();
 
@@ -365,11 +386,6 @@ void CConfig::AddProfile(std::string newProfileName) {
 }
 
 void CConfig::RemoveProfile(std::string profileName) {
-  // find profile with name in profile table
-  // delete the key, value pair
-  // TODO: need to make profile names mututally exclusive
-  // returns a vector
-
   for (std::size_t i = 0; i < data.profiles.size(); i++) {
     if (profileName == data.profiles[i].name) {
       // TODO: urgent for release
@@ -378,6 +394,11 @@ void CConfig::RemoveProfile(std::string profileName) {
       data.profiles.erase(data.profiles.begin() + i);
       spdlog::info("Deleted profile: {}", profileName);
     }
+  }
+  // change the active profile if deleted
+  if (data.activeProfileName == profileName) {
+    auto name = data.profiles[0].name;
+    SetActiveProfile(name);
   }
 }
 

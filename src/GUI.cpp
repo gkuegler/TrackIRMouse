@@ -4,11 +4,8 @@
  * --License Boilerplate Placeholder--
  *
  * TODO section:
- * label active profile
- * automatically restart tracking
  * transform mapping values for head distance
  * use default padding overwrites user padding values
- * active profile bar is not aligned
  *
  * profile box:
  *   set size limitations for text for inputs
@@ -46,7 +43,7 @@
 constexpr std::string_view kVersionNo = "0.6.1";
 const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
-const wxSize kDefaultButtonSize = wxSize(100, 25);
+const wxSize kDefaultButtonSize = wxSize(110, 25);
 
 // clang-format off
 wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
@@ -331,7 +328,7 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
                    wxSize(100, 25), 0, 0, wxCB_SORT, wxDefaultValidator, "");
 
   m_btnAddProfile =
-      new wxButton(this, myID_ADD_PROFILE, "Add Profile", wxDefaultPosition,
+      new wxButton(this, myID_ADD_PROFILE, "Add a Profile", wxDefaultPosition,
                    kDefaultButtonSize, 0, wxDefaultValidator, "");
   m_btnRemoveProfile = new wxButton(this, myID_REMOVE_PROFILE, "Remove Profile",
                                     wxDefaultPosition, kDefaultButtonSize, 0,
@@ -360,7 +357,7 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
 
   auto *zrProfCmds = new wxBoxSizer(wxHORIZONTAL);
   zrProfCmds->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
-  zrProfCmds->Add(m_cmbProfiles, 1, wxEXPAND, 0);
+  zrProfCmds->Add(m_cmbProfiles, 1, wxEXPAND | wxTOP | wxRIGHT, 1);
   zrProfCmds->Add(m_btnAddProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
   zrProfCmds->Add(m_btnRemoveProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
   zrProfCmds->Add(m_btnDuplicateProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
@@ -485,6 +482,9 @@ void cPanel::OnRemoveProfile(wxCommandEvent &event) {
     for (auto &index : selections) {
       config->RemoveProfile(choices[index].ToStdString());
     }
+
+    m_pnlDisplayConfig->LoadDisplaySettings();
+    PopulateComboBoxWithProfiles();
   }
 }
 
@@ -670,21 +670,37 @@ void cPanelConfiguration::OnMappingData(wxDataViewEvent &event) {
   int row = model->GetRow(item);
 
   if (column < 5) {
-    double number;
+    double number;  // wxWidgets has odd string conversion procedures
     if (!value.GetString().ToDouble(&number)) {
-      wxLogError("couldn't convert string to double");
+      spdlog::error("Value could not be converted to a number.");
+      return;
+    }
+    if (number > 180) {
+      spdlog::error(
+          "Value can't be greater than 180. This is a limitation of the "
+          "TrackIR software.");
+      return;
+    }
+    if (number < -180) {
+      spdlog::error(
+          "Value can't be less than -180. This is a limitation of the TrackIR "
+          "software.");
       return;
     }
     profile.bounds[row].rotationBounds[column - 1] =
         static_cast<double>(number);
   }
   if (column > 5) {
-    long number;
+    long number;  // wxWidgets has odd string conversion procedures
     if (!value.GetString().ToLong(&number)) {
-      wxLogError("couldn't convert string to double");
+      wxLogError("Value could not be converted to a number.");
       return;
     }
-    profile.bounds[row].paddingBounds[column - 5] = static_cast<long>(number);
+    if (number < 0) {
+      spdlog::error("Padding value can't be negative.");
+      return;
+    }
+    profile.bounds[row].paddingBounds[column - 5] = static_cast<int>(number);
   }
 
   LoadDisplaySettings();

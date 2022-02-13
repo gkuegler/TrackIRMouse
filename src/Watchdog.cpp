@@ -22,8 +22,6 @@
 
 #include "watchdog.hpp"
 
-#include <windows.h>
-
 #include "constants.hpp"
 #include "log.hpp"
 
@@ -70,9 +68,8 @@ HANDLE StartWatchdog() {
                        // all access is allowed
           FALSE))      // not a default DACL
   {
-    spdlog::warn("SetSecurityDescriptorDacl Error %u\n", GetLastError());
-    // goto Cleanup;
-    // TODO: what happens here?
+    spdlog::warn("SetSecurityDescriptorDacl Error {}", GetLastError());
+    return NULL;
   }
 #pragma warning(default : 4700)
 
@@ -93,7 +90,7 @@ HANDLE StartWatchdog() {
                            &sa);  // default security attribute
 
   if (hPipe == INVALID_HANDLE_VALUE) {
-    spdlog::warn("CreateNamedPipe failed, GLE={}.\n", GetLastError());
+    spdlog::warn("CreateNamedPipe failed, GLE={}.", GetLastError());
     return NULL;
   }
 
@@ -102,65 +99,68 @@ HANDLE StartWatchdog() {
 
 void Serve(HANDLE hPipe) {
   spdlog::trace("starting watchdog serve");
-  // This is a lot of Windows boilerplate code
+
+  // Initialize send and returN buffers
   HANDLE hHeap = GetProcessHeap();
   char *pchRequest =
       (char *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, BUFSIZE * sizeof(char));
   char *pchReply =
       (char *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, BUFSIZE * sizeof(char));
 
-  DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
-  BOOL bSuccess = FALSE;
-
-  // Do some extra error checking since the app will keep running even if this
-  // thread fails.
-
   if (pchRequest == NULL) {
     spdlog::warn(
-        "Pipe Server Failure. Server got an unexpected NULL heap allocation. "
-        "Serve exitting.");
-    if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
+        "Pipe Server Failure. Failed to allocate request buffer"
+        "Server exitting.");
+    if (pchReply != NULL) {
+      HeapFree(hHeap, 0, pchReply);
+    }
     return;
   }
 
   if (pchReply == NULL) {
     spdlog::warn(
-        "Pipe Server Failure. Server got an unexpected NULL heap allocation. "
-        "Serve exitting.");
-    if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
+        "Pipe Server Failure. Failed to allocate reply buffer"
+        "Server exitting.");
+    if (pchRequest != NULL) {
+      HeapFree(hHeap, 0, pchRequest);
+    }
     return;
   }
 
+  // Main serve loop
   while (1) {
-    spdlog::info("Waiting on client connection...");
+    spdlog::info("waiting on client connection...");
 
     if (ConnectNamedPipe(hPipe, NULL) == 0) {
       spdlog::warn("ConnectNamedPipe failed, GLE={}.", GetLastError());
       break;
     }
-    spdlog::info("Client Connected!\n");
+    spdlog::info("client connected");
 
     while (1) {
+      DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
+
       // Read client requests from the pipe. This simplistic code only allows
       // messages up to BUFSIZE characters in length.
-      bSuccess = ReadFile(hPipe,       // handle to pipe
-                          pchRequest,  // buffer to receive data
-                          BUFSIZE * sizeof(unsigned char),  // size of buffer
-                          &cbBytesRead,  // number of bytes read
-                          NULL);         // not overlapped I/O
+      BOOL bSuccess =
+          ReadFile(hPipe,                            // handle to pipe
+                   pchRequest,                       // buffer to receive data
+                   BUFSIZE * sizeof(unsigned char),  // size of buffer
+                   &cbBytesRead,                     // number of bytes read
+                   NULL);                            // not overlapped I/O
 
       if (!bSuccess || cbBytesRead == 0) {
         if (GetLastError() == ERROR_BROKEN_PIPE) {
-          spdlog::info("Serve: client disconnected.\n");
+          spdlog::info("Server: client disconnected.");
           break;
         } else {
-          spdlog::error("InstanceThread ReadFile failed, GLE={}.\n",
+          spdlog::error("InstanceThread ReadFile failed, GLE={}.",
                         GetLastError());
           break;
         }
       }
 
-      // spdlog::info("CLIENT MSG: {}\n", pchRequest);
+      spdlog::debug("client message: {}", pchRequest);
 
       // Process the incoming message.
       HandleMsg(pchRequest, pchReply, &cbReplyBytes);
@@ -204,12 +204,12 @@ void Serve(HANDLE hPipe) {
 }
 
 VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
-// Reads message and performs actions based on the content
-// Writes a reply into the reply char*
+// Reads message and performs actions based on the content.
+// Writes a reply into the reply char* buffer.
 {
   errno_t rslt = 1;
 
-  spdlog::info("Client Request:{}", pchRequest);
+  spdlog::debug("Client Request:{}", pchRequest);
 
   if (strcmp(pchRequest, "KILL") == 0) {
     rslt = strcpy_s(pchReply, BUFSIZE, "KL");
@@ -239,4 +239,3 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
 }
 
 }  // namespace WatchDog
-#undef BUFSIZE

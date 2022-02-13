@@ -28,7 +28,7 @@ constexpr auto USHORT_MAX_VAL = 65535;
 
 // Tracking loop uses this to check if it should break, return to thread, then
 // have thread auto clean up
-std::atomic<bool> g_bGracefullyExit = false;
+std::atomic<bool> g_bTrackingAllowedToRun = false;
 
 std::vector<CDisplay> g_displays;
 
@@ -381,8 +381,7 @@ void MouseMove(double yaw, double pitch) {
   return;
 }
 int TR_TrackStart(CConfig config) {
-  // TODO: change variable to g_bTrackingEnabledAtomic
-  g_bGracefullyExit = false;
+  g_bTrackingAllowedToRun = true;
 
 #ifndef TEST_NO_TRACK
   // Skipping this api call. I think this is for legacy games.
@@ -406,7 +405,7 @@ int TR_TrackStart(CConfig config) {
   // used for testing, dropped frames rare and not real world relevant
   // int droppedFrames = 0;
 
-  while (!g_bGracefullyExit) {
+  while (g_bTrackingAllowedToRun) {
     gdf = NP_GetData(pTIRData);
     if (NP_OK == gdf) {
       // unsigned short status = (*pTIRData).wNPStatus;
@@ -449,7 +448,7 @@ int TR_TrackStart(CConfig config) {
 }
 
 void TR_TrackStop() {
-  g_bGracefullyExit = true;
+  g_bTrackingAllowedToRun = false;
   NP_StopDataTransmission();
   NP_UnregisterWindowHandle();
 }

@@ -57,15 +57,18 @@ WatchdogThread::~WatchdogThread() {
   m_pHandler->m_pWatchdogThread = NULL;
 
   // TODO: close named pipe
-  // TODO: find other resources to close
-  // TODO: explicitly prevent
+  if (0 == CloseHandle(m_hPipe)) {
+    spdlog::error(
+        "Could not close named pipe on destruction of watchdog. GLE={}",
+        GetLastError());
+  }
 }
 
 wxThread::ExitCode WatchdogThread::Entry() {
   if (m_hPipe) {
     WatchDog::Serve(m_hPipe);
   } else {
-    spdlog::warn("Watchdog thread isn't.");
+    spdlog::warn("watchdog thread already stopped");
   }
   return NULL;
 }

@@ -66,6 +66,7 @@ class CConfig {
   std::vector<std::string> GetProfileNames();
   int GetActiveProfileDisplayCount();
 
+  bool SetActiveProfile(std::string profileName);
   void SetDisplayMappingParameter(int displayNumber, int parameterType,
                                   int parameterSide, double parameter);
 
