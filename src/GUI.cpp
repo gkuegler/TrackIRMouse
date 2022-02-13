@@ -33,6 +33,7 @@
 #include <string>
 
 #include "config.hpp"
+#include "contants.hpp"
 #include "exceptions.hpp"
 #include "gui-dialogs.hpp"
 #include "log.hpp"

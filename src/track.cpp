@@ -13,6 +13,7 @@
 #include "track.hpp"
 
 #include "config.hpp"
+#include "constants.hpp"
 #include "display.hpp"
 #include "exceptions.hpp"
 #include "log.hpp"

@@ -2,6 +2,7 @@
 
 #include <wx/thread.h>
 
+#include "constants.hpp"
 #include "gui.hpp"
 #include "watchdog.hpp"
 
@@ -56,7 +57,7 @@ WatchdogThread::~WatchdogThread() {
   wxCriticalSectionLocker enter(m_pHandler->m_pThreadCS);
   m_pHandler->m_pWatchdogThread = NULL;
 
-  // TODO: close named pipe
+  // close named pipe
   if (0 == CloseHandle(m_hPipe)) {
     spdlog::error(
         "Could not close named pipe on destruction of watchdog. GLE={}",

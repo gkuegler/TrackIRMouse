@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 
+#include "constants.hpp"
 #include "exceptions.hpp"
 #include "log.hpp"
 
@@ -293,12 +294,12 @@ void CConfig::SaveSettings() {
   const std::string FileName = "settings.toml";
 
   toml::value general{
-        {"track_on_start", data.trackOnStart},
-        {"quit_on_loss_of_track_ir", data.quitOnLossOfTrackIr},
-        {"watchdog_enabled", data.watchdogEnabled},
-        {"trackir_dll_directory", data.trackIrDllFolder},
-        {"active_profile", data.activeProfileName},
-    };
+    {"track_on_start", data.trackOnStart},
+    {"quit_on_loss_of_track_ir", data.quitOnLossOfTrackIr},
+    {"watchdog_enabled", data.watchdogEnabled},
+    {"trackir_dll_directory", data.trackIrDllFolder},
+    {"active_profile", data.activeProfileName},
+  };
 
   toml::value padding{
     {"left", data.defaultPaddings[0]},
@@ -309,7 +310,6 @@ void CConfig::SaveSettings() {
 
   std::vector<toml::value> profiles;
   // write out profile data
-  // TODO: use emplace_back
   for(auto& profile : data.profiles){
     std::vector<toml::value> displays;
     for(auto& display : profile.bounds){
@@ -378,7 +378,6 @@ void CConfig::AddProfile(std::string newProfileName) {
     }
   }
 
-  // TODO: optimize to emplace back as rvalue
   // Default profile
   SProfile p;
   p.name = newProfileName;
@@ -388,9 +387,6 @@ void CConfig::AddProfile(std::string newProfileName) {
 void CConfig::RemoveProfile(std::string profileName) {
   for (std::size_t i = 0; i < data.profiles.size(); i++) {
     if (profileName == data.profiles[i].name) {
-      // TODO: urgent for release
-      // update dropdown to remove profile and
-      // select dropdown
       data.profiles.erase(data.profiles.begin() + i);
       spdlog::info("Deleted profile: {}", profileName);
     }
@@ -436,10 +432,6 @@ int CConfig::GetActiveProfileDisplayCount() {
 void CConfig::SetDisplayMappingParameter(int displayNumber, int parameterType,
                                          int parameterSide, double parameter) {}
 
-// TODO: make more thourough validation
-// rotation bound space should not overlap between monitors
-// padding should not take up the whole display
-// maybe warn on some other ideas? suggestions?
 bool ValidateUserInput(const UserInput &displays) {
   // compare bounds not more than abs|180|
   for (int i = 0; i < displays.size(); i++) {
