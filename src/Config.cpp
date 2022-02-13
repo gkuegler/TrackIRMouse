@@ -437,12 +437,12 @@ bool ValidateUserInput(const UserInput &displays) {
   // see if any rectangles overlap
   // visualization: https://silentmatt.com/rectangle-intersection/
   for (int i = 0; i < displays.size(); i++) {
-    int j = 1;
-    while (j < displays.size()) {
+    int j = i;
+    while (++j < displays.size()) {
       double A_left = displays[i].rotationBounds[0];
-      double A_right = displays[j].rotationBounds[1];
-      double A_top = displays[j].rotationBounds[2];
-      double A_bottom = displays[j].rotationBounds[3];
+      double A_right = displays[i].rotationBounds[1];
+      double A_top = displays[i].rotationBounds[2];
+      double A_bottom = displays[i].rotationBounds[3];
       double B_left = displays[j].rotationBounds[0];
       double B_right = displays[j].rotationBounds[1];
       double B_top = displays[j].rotationBounds[2];

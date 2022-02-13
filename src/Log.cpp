@@ -84,6 +84,7 @@ void SetUpLogging() {
 
   // NOTE: setting as default also registers it in the logger registry by name
   spdlog::set_default_logger(std::move(combined_logger));
+  spdlog::flush_every(std::chrono::seconds(2));
 
   return;
 }

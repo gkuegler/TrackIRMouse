@@ -123,6 +123,8 @@ int DisplaySetup(CConfig config) {
     return FAILURE;
   }
 
+  spdlog::trace("user input validated");
+
   for (int i = 0; i < activeProfile.bounds.size(); i++) {
     // transfer config data to internal strucuture
     for (int j = 0; j < 4; j++) {
@@ -180,12 +182,12 @@ int TR_Initialize(HWND hWnd, CConfig config) {
   SProfile activeProfile = config.GetActiveProfile();
 
   if (FAILURE == WinSetup(config)) {
-    return -1;
+    return FAILURE;
   }
   spdlog::trace("win setup a success");
 
   if (FAILURE == DisplaySetup(config)) {
-    return -1;
+    return FAILURE;
   }
 
   spdlog::trace("display setup a success");
@@ -308,13 +310,13 @@ inline void SendMyInput(double x, double y) {
 
   return;
 }
-void MouseMove(int monitorCount, double yaw, double pitch) {
+void MouseMove(double yaw, double pitch) {
   static int lastScreen = 0;
 
   // Check if the head is pointing to a screen
   // The return statement is never reached if the head is pointing outside the
   // bounds of any of the screens
-  for (int i = 0; i <= monitorCount - 1; i++) {
+  for (int i = 0; i < g_displays.size(); i++) {
     double rl = g_displays[i].rotation16bit[0];
     double rr = g_displays[i].rotation16bit[1];
     double rt = g_displays[i].rotation16bit[2];
@@ -326,7 +328,7 @@ void MouseMove(int monitorCount, double yaw, double pitch) {
       double x = mx * (yaw - rl) + al;
 
       // interpolate vertical position from top edge of display
-      double at = g_displays[i].absCached[0];
+      double at = g_displays[i].absCached[2];
       double my = g_displays[i].ySlope;
       double y = my * (rt - pitch) + at;
 
@@ -349,10 +351,10 @@ void MouseMove(int monitorCount, double yaw, double pitch) {
   double rt = g_displays[lastScreen].rotation16bit[2];
   double rb = g_displays[lastScreen].rotation16bit[3];
 
-  if (yaw < rl) {  // horizontal rotaion is below last used display
+  if (yaw < rl) {  // horizontal rotaion is left of last used display
     x = g_displays[lastScreen].absCached[0] +
         g_displays[lastScreen].padding[0] * g_xPixelAbsoluteSlope;
-  } else if (yaw > rr) {  // horizontal rotation is above last used display
+  } else if (yaw > rr) {  // horizontal rotation is right of last used display
     x = g_displays[lastScreen].absCached[1] -
         g_displays[lastScreen].padding[1] * g_xPixelAbsoluteSlope;
   } else {  // horizontal roation within last display bounds as normal
@@ -362,10 +364,10 @@ void MouseMove(int monitorCount, double yaw, double pitch) {
                                // edge of display
   }
 
-  if (pitch > rt) {
+  if (pitch > rt) {  // vertical rotaion is above last used display
     y = g_displays[lastScreen].absCached[2] +
         g_displays[lastScreen].padding[2] * g_yPixelAbsoluteSlope;
-  } else if (pitch < rb) {
+  } else if (pitch < rb) {  // vertical rotaion is below last used display
     y = g_displays[lastScreen].absCached[3] -
         g_displays[lastScreen].padding[3] * g_yPixelAbsoluteSlope;
   } else {
@@ -428,8 +430,9 @@ int TR_TrackStart(CConfig config) {
       // active tracking data without re-registering a window handle. A disbale
       // msg is sent before my test instance launches, then my normal instance
       // is enables after as part of my build script.
-      if (WatchDog::g_bPauseTracking == false)
-        MouseMove(config.m_monitorCount, yaw, pitch);
+      if (WatchDog::g_bPauseTracking == false) {
+        MouseMove(yaw, pitch);
+      }
 
       lastFrame = framesig;
     }
