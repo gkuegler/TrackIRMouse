@@ -1,0 +1,3 @@
+WxWidgets 3.1.5
+spdlog 1.9.2
+toml11 (included in src)

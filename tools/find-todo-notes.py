@@ -21,7 +21,9 @@ TodoNote = namedtuple("TodoNote", ["filename", "line", "title", "body"])
 
 reLineComment = re.compile(r"\s*//.*\n")
 reTodoStart = re.compile(r"\s*//.*\n")
-reTodoNote = re.compile(r"\s*//\s?TODO:\s?((?:.*\n)(?:\s*//.*\n)*)")
+reTodoNote = re.compile(
+    r"\s*//\s?TODO:\s?((?:.*\n)(?:\s*//.*\n)*)", flags=re.IGNORECASE
+)
 
 # script is intended to be accessed from top project directory
 project_dir = os.getcwd()

@@ -82,8 +82,8 @@ wxIMPLEMENT_APP(CGUIApp);
 // clang-format on
 
 bool CGUIApp::OnInit() {
-  // Initialize global default logger
-  MyLogging::SetUpLogging();
+  // Initialize global default loggers
+  mylogging::SetUpLogging();
 
   // Center app on main display
   constexpr int appWidth = 1200;
@@ -101,14 +101,12 @@ bool CGUIApp::OnInit() {
   Bind(wxEVT_THREAD, [this](wxThreadEvent &event) {
     cTextCtrl *textrich = m_frame->m_panel->m_textrich;
 
-    // TODO: non urgent
-    // find out if this works and is used to close the application
-    if (1 == event.GetInt()) {
+    if (event.GetExtraLong() == static_cast<long>(msgcode::close_app)) {
       m_frame->Close(true);
     }
 
     // Output message in red lettering as an error
-    if (1 == event.GetExtraLong()) {
+    if (event.GetExtraLong() == static_cast<long>(msgcode::red_text)) {
       wxTextAttr attrExisting = textrich->GetDefaultStyle();
       textrich->SetDefaultStyle(wxTextAttr(*wxRED));
       textrich->AppendText(event.GetString());
@@ -230,25 +228,22 @@ void cFrame::OnOpen(wxCommandEvent &event) {
 void cFrame::OnSave(wxCommandEvent &event) { config::WriteSettingsToFile(); }
 
 void cFrame::LoadSettingsFromFile() {
+  constexpr auto filename = "settings-.toml";
   try {
-    config::LoadSettingsFromFile("settings.toml");
+    config::LoadSettingsFromFile(filename);
   } catch (const toml::syntax_error &ex) {
-    spdlog::critical("Failed To Parse toml Settings File:\n%s", ex.what());
-    // type_error inherits from toml::exception, needs to be caught first
-  } catch (const toml::type_error &ex) {
-    spdlog::critical("Incorrect type when loading settings.\n\n%s", ex.what());
-  } catch (std::runtime_error &ex) {
-    spdlog::error(
-        "Failed To Parse Settings File -> \"settings.toml\" File Likely Not "
-        "Found.\n%s",
+    wxLogFatalError(
+        "Failed To Parse toml Settings File:\n\n%s\n\nPlease fix error or save "
+        "new file.",
         ex.what());
-    // toml::exception is base exception class
-  } catch (const toml::exception &ex) {
-    spdlog::critical("std::exception:\n%s", ex.what());
-  } catch (const Exception &ex) {
-    spdlog::critical("My Custom Exception:\n%s", ex.what());
+  } catch (const toml::type_error &ex) {
+    wxLogFatalError("Incorrect type when loading settings.\n\n%s", ex.what());
+  } catch (const std::out_of_range &ex) {
+    wxLogFatalError("Missing data.\n\n%s", ex.what());
+  } catch (std::runtime_error &ex) {
+    wxLogFatalError("%s\n\nWas expecting to open \"%s\"", ex.what(), filename);
   } catch (...) {
-    spdlog::critical(
+    wxLogFatalError(
         "exception has gone unhandled loading and verifying settings");
   }
 }

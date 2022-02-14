@@ -4,9 +4,9 @@ track_on_start = true
 quit_on_loss_of_track_ir = true
 trackir_dll_directory = "default"
 watchdog_enabled = true
-active_profile = "Laptop"
+active_profile = "Desktop Dual Monitor"
 
-[[Profiles]]
+[[Profiles]
 name = "Desktop Dual Monitor"
 profile_id = 13302
 use_default_padding = true

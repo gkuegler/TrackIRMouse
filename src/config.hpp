@@ -7,15 +7,9 @@
 #include "constants.hpp"
 #include "log.hpp"
 
-// todo: export toml value only
-// have load settings return a toml value?
-// get toml out of the header??
-#define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
-#include "toml.hpp"
-
 // i may need static keyword here
-constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right", "top",
-                                                         "bottom"};
+const constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right",
+                                                               "top", "bottom"};
 
 namespace config {
 

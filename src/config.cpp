@@ -17,6 +17,9 @@
 #include "exceptions.hpp"
 #include "log.hpp"
 
+#define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
+#include "toml.hpp"
+
 namespace config {
 
 static UserData userData;
@@ -219,11 +222,6 @@ void LoadSettingsFromFile(const std::string fileName) {
   // Find the profiles table that contains all mapping profiles.
   auto vProfilesArray = toml::find(tvData, "Profiles");
 
-  // Find the table with a matching profile name.
-  // .as_table() returns a std::unordered_map<toml::key, toml::table>
-  // Conversion is necessary to loop by element.
-  // TODO: improve tonl error messages. check with toml website
-  // to try and get better error messages when
   int i = 0;
   for (auto profile : vProfilesArray.as_array()) {
     Profile newProfile;
@@ -288,16 +286,12 @@ void LoadSettingsFromFile(const std::string fileName) {
           userData.defaultPaddings[3],
           (paddingBottom == 5555) ? "(default)" : "");
 
-      // TODO: make a contructor for a struct
-      config::Display d = {
-          {rotLeft, rotRight, rotTop, rotBottom},
-          {paddingLeft, paddingRight, paddingTop, paddingBottom}};
-
-      newProfile.displays.push_back(d);
+      newProfile.displays.push_back(
+          {{rotLeft, rotRight, rotTop, rotBottom},
+           {paddingLeft, paddingRight, paddingTop, paddingBottom}});
     }
 
     userData.profiles.push_back(newProfile);
-    // extra line
   }
   return;
 }
