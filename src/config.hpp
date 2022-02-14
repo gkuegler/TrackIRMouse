@@ -13,46 +13,41 @@
 static constexpr std::array<std::string_view, 4> kBoundNames = {
     "left", "right", "top", "bottom"};
 
-class CBounds {
- public:
-  // Left, Right, Top, Bottom
-  std::array<double, 4> rotationBounds{0.0, 0.0, 0.0, 0.0};
-  std::array<int, 4> paddingBounds{0, 0, 0, 0};
 
-  CBounds(){};
-  CBounds(std::array<double, 4> &&rotations, std::array<int, 4> &&padding) {
-    rotationBounds = rotations;
-    paddingBounds = padding;
-  }
+namespace config {
+
+struct Display {
+  std::array<double, 4> rotation{0.0, 0.0, 0.0, 0.0};  // Left, Right, Top, Bottom
+  std::array<int, 4> padding{0, 0, 0, 0};  // Left, Right, Top, Bottom
 };
 
-using UserInput = std::vector<CBounds>;
-
-struct SProfile {
+struct Profile {
   std::string name = "profile";
-  int profile_ID = 0;
+  int profileId = 0;
   bool useDefaultPadding = true;
-  // TODO: change this to displays
-  std::vector<CBounds> bounds;
+  std::vector<Display> displays;
 };
 
-struct SData {
+struct UserData {
   bool trackOnStart = true;
   bool quitOnLossOfTrackIr = true;
   bool watchdogEnabled = true;
   std::string trackIrDllFolder = "default";
   std::string activeProfileName = "Lorem Ipsum";
 
-  std::vector<int> defaultPaddings = {0, 0, 0, 0};
+  std::array<int> defaultPaddings = {0, 0, 0, 0};
   std::vector<SProfile> profiles;
 };
 
-class CConfig {
- public:
+struct EnvData {
   int m_monitorCount = 0;
   std::string m_trackIrDllPath;
+}
 
-  SData data;
+class CConfig {
+ public:
+  UserData userData;
+  EnvData environmentData;
 
   CConfig(){};
 
@@ -62,9 +57,14 @@ class CConfig {
   void SaveSettings();
 
   // Getter functions
-  SProfile &GetActiveProfile();
+  Profile &GetActiveProfile();
+  const Profile &GetActiveProfile();
+
   std::vector<std::string> GetProfileNames();
   int GetActiveProfileDisplayCount();
+
+  UserData GetUserData():
+  UserData& GetUserData():
 
   bool SetActiveProfile(std::string profileName);
   void SetDisplayMappingParameter(int displayNumber, int parameterType,
@@ -89,7 +89,9 @@ CConfig GetGlobalConfigCopy();
 void ClearGlobalData();
 
 extern CConfig g_config;
+} // namespace config
 
+using UserInput = std::vector<Display>;
 bool ValidateUserInput(const UserInput &displays);
 
 #endif /* TRACKIRMOUSE_CONFIG_H */
