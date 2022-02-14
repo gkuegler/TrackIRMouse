@@ -29,14 +29,15 @@ void CloseApplication() {
 }
 
 wxThread::ExitCode TrackThread::Entry() {
-  CConfig config = GetGlobalConfigCopy();
-  if (0 != TR_Initialize(m_hWnd, config)) {
+  auto profile = config::GetActiveProfile();
+  auto path = config::GetEnvironmentData().trackIrDllPath;
+  auto usr = config::GetUserData();
+  if (track::Initialize(m_hWnd, profile, path) == retcode::fail) {
     return NULL;
   }
 
   // This is the loop function
-  int result = TR_TrackStart(config);
-  if (1 == result && config.data.quitOnLossOfTrackIr) {
+  if (track::TrackStart() == retcode::fail && usr.quitOnLossOfTrackIr) {
     CloseApplication();
   }
 

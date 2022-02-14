@@ -24,6 +24,8 @@
 // from attaching to NPTrackIR and supersede control
 //#define TEST_NO_TRACK
 
+namespace track {
+
 // SendInput with absolute mouse movement flag takes a short int
 constexpr auto USHORT_MAX_VAL = 65535;
 
@@ -80,18 +82,16 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
   count++;
   return true;
 }
-int WinSetup(CConfig config) {
+retcode WinSetup(config::Profile profile) {
   spdlog::trace("entering WinSetup");
 
   const int monitorCount = GetSystemMetrics(SM_CMONITORS);
-
-  int count = config.GetActiveProfileDisplayCount();
-
-  if (monitorCount != count) {
+  const int size = profile.displays.size();
+  if (monitorCount != size) {
     spdlog::error(
         "Incompatible config: {} monitors specified but {} monitors found",
-        count, monitorCount);
-    return -1;
+        size, monitorCount);
+    return retcode::fail;
   }
 
   int virtualDesktopWidth = GetSystemMetrics(
@@ -114,23 +114,21 @@ int WinSetup(CConfig config) {
   spdlog::debug("Virtual Origin Offset Horizontal: {:>5d}", g_virtualOriginX);
   spdlog::debug("Virtual Origin Offset Vertical:   {:>5d}", g_virtualOriginY);
 
-  return SUCCESS;
+  return retcode::success;
 }
 
-int DisplaySetup(CConfig config) {
-  SProfile activeProfile = config.GetActiveProfile();
-
-  if (false == ValidateUserInput(activeProfile.bounds)) {
-    return FAILURE;
+retcode DisplaySetup(config::Profile profile) {
+  if (false == config::ValidateUserInput(profile.displays)) {
+    return retcode::fail;
   }
 
   spdlog::trace("user input validated");
 
-  for (int i = 0; i < activeProfile.bounds.size(); i++) {
+  for (int i = 0; i < profile.displays.size(); i++) {
     // transfer config data to internal strucuture
     for (int j = 0; j < 4; j++) {
-      g_displays[i].rotation[j] = activeProfile.bounds[i].rotationBounds[j];
-      g_displays[i].padding[j] = activeProfile.bounds[i].paddingBounds[j];
+      g_displays[i].rotation[j] = profile.displays[i].rotation[j];
+      g_displays[i].padding[j] = profile.displays[i].padding[j];
     }
 
     g_displays[i].setAbsBounds(g_virtualOriginX, g_virtualOriginY,
@@ -138,28 +136,28 @@ int DisplaySetup(CConfig config) {
   }
 
   // debug messages only
-  for (int i = 0; i < config.m_monitorCount; i++) {
+  for (int i = 0; i < profile.displays.size(); i++) {
     spdlog::info(
         "Display {} user rotations: {:>.2f}, {:>.2f}, {:>.2f}, {:>.2f}", i,
         g_displays[i].rotation[0], g_displays[i].rotation[1],
         g_displays[i].rotation[2], g_displays[i].rotation[3]);
   }
-  for (int i = 0; i < config.m_monitorCount; i++) {
+  for (int i = 0; i < profile.displays.size(); i++) {
     spdlog::debug("Display {} pixel bounds: {}, {}, {}, {}", i,
                   g_displays[i].absPixel[0], g_displays[i].absPixel[1],
                   g_displays[i].absPixel[2], g_displays[i].absPixel[3]);
   }
-  for (int i = 0; i < config.m_monitorCount; i++) {
+  for (int i = 0; i < profile.displays.size(); i++) {
     spdlog::info(
         "Display {} absolute bounds: {:>.1f}, {:>.1f}, {:>.1f}, {:>.1f}", i,
         g_displays[i].absCached[0], g_displays[i].absCached[1],
         g_displays[i].absCached[2], g_displays[i].absCached[3]);
   }
 
-  return SUCCESS;
+  return retcode::success;
 }
 
-int TR_Initialize(HWND hWnd, CConfig config) {
+retcode Initialize(HWND hWnd, config::Profile profile, std::string dllpath) {
   // ## Program flow ##
   //
   // first thing is ping windows for info
@@ -180,30 +178,16 @@ int TR_Initialize(HWND hWnd, CConfig config) {
 
   spdlog::trace("Starting Initialization Of TrackIR");
 
-  SProfile activeProfile = config.GetActiveProfile();
-
-  if (FAILURE == WinSetup(config)) {
-    return FAILURE;
+  if (retcode::fail == WinSetup(profile)) {
+    return retcode::fail;
   }
   spdlog::trace("win setup a success");
 
-  if (FAILURE == DisplaySetup(config)) {
-    return FAILURE;
+  if (retcode::fail == DisplaySetup(profile)) {
+    return retcode::fail;
   }
 
   spdlog::trace("display setup a success");
-
-  // After settings are loaded, start accepting connections & msgs
-  // on a named pipe to externally controll the track IR process
-  // Start the watchdog thread
-  // if (config.m_bWatchdog)
-  if (config.data.watchdogEnabled) {
-    // Watchdog thread may return NULL
-    g_hWatchdogThread = WatchDog::StartWatchdog();
-
-    if (NULL == g_hWatchdogThread)
-      spdlog::warn("Watchdog thread failed to initialize.");
-  }
 
   // Find and load TrackIR DLL
 #ifdef UNICODE
@@ -212,64 +196,59 @@ int TR_Initialize(HWND hWnd, CConfig config) {
   int resultConvert = MultiByteToWideChar(
       CP_UTF8,
       // MB_ERR_INVALID_CHARS, // I feel like this should be
-      // the smart choice, but this is an error.
-      MB_COMPOSITE, config.m_trackIrDllPath.c_str(), MAX_PATH, sDll, MAX_PATH);
+      // the smart choice, but this causes an error.
+      MB_COMPOSITE, dllpath.c_str(), MAX_PATH, sDll, MAX_PATH);
 
   if (0 == resultConvert) {
     spdlog::error(
         "failed to convert track dll location to wchart* with error code: {}",
         GetLastError());
-    return FAILURE;
+    return retcode::fail;
   }
-
 #else
-  TCHAR sDLL = config.m_trackIrDllPath.c_str()
+  TCHAR sDLL = dllpath.c_str()
 #endif
 
   // Load trackir dll and resolve function addresses
-  NPRESULT rsltInit = NPClient_Init(sDll);
-
-  if (NP_OK == rsltInit) {
-    spdlog::info("NP Initialization: Success");
+  if (NPClient_Init(sDll) == NP_OK) {
+    spdlog::info("NP Initialization successfull.");
   } else {
     // logging handled within the function implementation
-    return FAILURE;
+    return retcode::fail;
   }
 
   // NP software needs a window handle to know when it should
   // stop sending data frames if window is closed.
-  HWND hConsole = hWnd;
-
-  // So that this program doesn't boot control of NP software
-  // from my local MouseTrackIR instance.
+  // TEST_NO_TRACK defined so that this program doesn't boot control of NP
+  // software from my local MouseTrackIR instance while developing.
 #ifndef TEST_NO_TRACK
-  // NP_RegisterWindowHandle
-  NPRESULT rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
 
-  if (NP_OK == rsltRegWinHandle) {
+  NPRESULT result = NP_RegisterWindowHandle(hWnd);
+
+  if (NP_OK == result) {
     spdlog::info("Registered window handle.");
   }
 
   // 7 is a magic number I found through experimentation.
-  // It means another program has its window handle registered
+  // It means another program/instance has its window handle registered
   // already.
-  else if (rsltRegWinHandle == 7) {
+  else if (result == 7) {
     NP_UnregisterWindowHandle();
     spdlog::warn("Booting control of previous mousetracker instance.");
     Sleep(2);
-    rsltRegWinHandle = NP_RegisterWindowHandle(hConsole);
-    if (!NP_OK == rsltRegWinHandle) {
+    result = NP_RegisterWindowHandle(hWnd);
+    if (NP_OK == result) {
       spdlog::error("Failed to re-register window handle with NP code: {}",
-                    rsltRegWinHandle);
-      return FAILURE;
+                    result);
+      return retcode::fail;
     }
   } else {
-    spdlog::error("Failed to register window handle with NP code: {}",
-                  rsltRegWinHandle);
-    return FAILURE;
+    spdlog::error("Failed to register window handle with NP code: {}", result);
+    return retcode::fail;
   }
 
   // I'm skipping query the software version, I don't think its necessary
+  // theres no info in the sdk on how to handle different software versions
 
   // Request roll, pitch. See NPClient.h
   NPRESULT rsltReqData = NP_RequestData(NPPitch | NPYaw);
@@ -277,21 +256,20 @@ int TR_Initialize(HWND hWnd, CConfig config) {
     spdlog::info("NP Request Data Success");
   else {
     spdlog::error("NP Request Data failed with NP code: {}", rsltReqData);
-    return FAILURE;
+    return retcode::fail;
   }
 
-  NPRESULT rsltProfileId =
-      NP_RegisterProgramProfileID(activeProfile.profile_ID);
+  NPRESULT rsltProfileId = NP_RegisterProgramProfileID(profile.profileId);
   if (NP_OK == rsltProfileId)
     spdlog::info("NP Registered Profile ID.");
   else {
     spdlog::error("NP Register Profile ID failed with NP code: {}",
                   rsltProfileId);
-    return FAILURE;
+    return retcode::fail;
   }
 
 #endif
-  return 0;
+  return retcode::success;
 }
 
 inline void SendMyInput(double x, double y) {
@@ -381,7 +359,8 @@ void MouseMove(double yaw, double pitch) {
   SendMyInput(x, y);
   return;
 }
-int TR_TrackStart(CConfig config) {
+
+retcode TrackStart() {
   g_bTrackingAllowedToRun = true;
 
 #ifndef TEST_NO_TRACK
@@ -393,7 +372,7 @@ int TR_TrackStart(CConfig config) {
     spdlog::info("NP Started data transmission.");
   else {
     spdlog::error("NP Start Data Transmission failed with code: {}\n", rslt);
-    return 1;
+    return retcode::fail;
   }
 
 #endif
@@ -439,17 +418,18 @@ int TR_TrackStart(CConfig config) {
 
     else if (NP_ERR_DEVICE_NOT_PRESENT == gdf) {
       spdlog::warn("device not present, tracking stopped");
-      return 1;
+      return retcode::fail;
     }
 
     Sleep(8);
   }
 
-  return 0;
+  return retcode::success;
 }
 
-void TR_TrackStop() {
+void TrackStop() {
   g_bTrackingAllowedToRun = false;
   NP_StopDataTransmission();
   NP_UnregisterWindowHandle();
 }
+}  // namespace track

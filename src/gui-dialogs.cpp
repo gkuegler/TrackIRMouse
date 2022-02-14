@@ -24,7 +24,7 @@ BEGIN_EVENT_TABLE(cSettingsAdvancedlPanel, wxPanel)
 END_EVENT_TABLE()
 // clang-format on
 
-cSettingsPopup::cSettingsPopup(wxWindow* parent, SData* pUserData)
+cSettingsPopup::cSettingsPopup(wxWindow* parent, config::UserData* pUserData)
     : wxPropertySheetDialog(parent, wxID_ANY, "Settings", wxPoint(200, 200),
                             wxSize(300, 300), wxDEFAULT_DIALOG_STYLE, "") {
   CreateButtons(wxOK | wxCANCEL);
@@ -38,7 +38,8 @@ cSettingsPopup::cSettingsPopup(wxWindow* parent, SData* pUserData)
   LayoutDialog();
 }
 
-cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent, SData* pUserData)
+cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent,
+                                             config::UserData* pUserData)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
               wxTAB_TRAVERSAL, "") {
   m_pUserData = pUserData;
@@ -80,7 +81,7 @@ void cSettingsGeneralPanel::OnQuitOnLossOfTrackIr(wxCommandEvent& event) {
 }
 
 cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow* parent,
-                                                 SData* pUserData)
+                                                 config::UserData* pUserData)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
               wxTAB_TRAVERSAL, "") {
   m_pUserData = pUserData;

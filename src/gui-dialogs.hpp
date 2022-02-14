@@ -12,10 +12,10 @@ class cSettingsGeneralPanel : public wxPanel {
   wxCheckBox* m_cbxEnableWatchdog;
   wxCheckBox* m_cbxTrackOnStart;
   wxCheckBox* m_cbxQuitOnLossOfTrackIR;
-  cSettingsGeneralPanel(wxWindow* parent, SData* pUserData);
+  cSettingsGeneralPanel(wxWindow* parent, config::UserData* pUserData);
 
  private:
-  SData* m_pUserData = nullptr;
+  config::UserData* m_pUserData = nullptr;
   void OnEnabledWatchdog(wxCommandEvent& event);
   void OnTrackOnStart(wxCommandEvent& event);
   void OnQuitOnLossOfTrackIr(wxCommandEvent& event);
@@ -25,18 +25,18 @@ class cSettingsGeneralPanel : public wxPanel {
 class cSettingsAdvancedlPanel : public wxPanel {
  public:
   wxTextCtrl* m_txtTrackIrDllPath;
-  cSettingsAdvancedlPanel(wxWindow* parent, SData* pUserData);
+  cSettingsAdvancedlPanel(wxWindow* parent, config::UserData* pUserData);
 
  private:
-  SData* m_pUserData = nullptr;
+  config::UserData* m_pUserData = nullptr;
   void OnTrackIrDllPath(wxCommandEvent& event);
   wxDECLARE_EVENT_TABLE();
 };
 
 class cSettingsPopup : public wxPropertySheetDialog {
  public:
-  SData* m_userData = nullptr;
-  cSettingsPopup(wxWindow* parent, SData* pUserData);
+  config::UserData* m_userData = nullptr;
+  cSettingsPopup(wxWindow* parent, config::UserData* pUserData);
 
  private:
   cSettingsGeneralPanel* m_pnlGen;

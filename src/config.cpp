@@ -1,5 +1,5 @@
 /**
- * Singleton holding user & environment data.
+ * Singleton holding user & environment userData.
  * Loads user data from json file and environment data from registry and other
  * system calls.
  *
@@ -17,13 +17,10 @@
 #include "exceptions.hpp"
 #include "log.hpp"
 
-CConfig g_config = CConfig();
+namespace config {
 
-CConfig *GetGlobalConfig() { return &g_config; }
-
-CConfig GetGlobalConfigCopy() { return g_config; }
-
-void ClearGlobalData() { g_config = CConfig(); }
+static UserData userData;
+static EnvData environmentData;
 
 typedef struct _RegistryQuery {
   int result;
@@ -113,44 +110,56 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
   }
 }
 
-void CConfig::ParseFile(const std::string fileName) {
-  m_vData = toml::parse<toml::preserve_comments>(fileName);
-}
+UserData GetUserData() { return userData; }
+
+UserData &GetUserDataMutable() { return userData; }
+
+EnvData GetEnvironmentData() { return environmentData; }
+// EnvData &GetEnvironmentDataMutable();
+
+// Getter functions
+// Profile GetActiveProfile();
+// Profile &GetActiveProfile();
 
 /**
  * Loads json user data into config class.
  * @return error_code
  */
-void CConfig::LoadSettings() {
-  m_monitorCount = GetSystemMetrics(SM_CMONITORS);
+void LoadSettingsFromFile(const std::string fileName) {
+  // hungarian prefix tv___ = toml::value
+  auto tvData = toml::parse<toml::preserve_comments>(fileName);
+
+  environmentData.monitorCount = GetSystemMetrics(SM_CMONITORS);
 
   // Find the general settings table
-  auto &vGeneralSettings = toml::find(m_vData, "General");
+  auto &vGeneralSettings = toml::find(tvData, "General");
 
   // Verify values exist and parse to correct type
-  data.trackOnStart = toml::find<bool>(vGeneralSettings, "track_on_start");
-  data.quitOnLossOfTrackIr =
+  userData.trackOnStart = toml::find<bool>(vGeneralSettings, "track_on_start");
+  userData.quitOnLossOfTrackIr =
       toml::find<bool>(vGeneralSettings, "quit_on_loss_of_track_ir");
-  data.watchdogEnabled = toml::find<bool>(vGeneralSettings, "watchdog_enabled");
+  userData.watchdogEnabled =
+      toml::find<bool>(vGeneralSettings, "watchdog_enabled");
 
   // Optionally the user can specify the location to the trackIR dll
-  data.trackIrDllFolder =
+  userData.trackIrDllFolder =
       toml::find<std::string>(vGeneralSettings, "trackir_dll_directory");
 
-  data.activeProfileName =
+  userData.activeProfileName =
       toml::find<std::string>(vGeneralSettings, "active_profile");
 
   //////////////////////////////////////////////////////////////////////
   //                  Finding NPTrackIR DLL Location                  //
   //////////////////////////////////////////////////////////////////////
+  std::string dllpath;
 
-  if ("default" == data.trackIrDllFolder) {
+  if ("default" == userData.trackIrDllFolder) {
     RegistryQuery path = GetStringFromRegistry(
         HKEY_CURRENT_USER,
         "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
 
     if (0 == path.result) {
-      m_trackIrDllPath = path.value;
+      dllpath = path.value;
       spdlog::info("Acquired DLL location from registry.");
     } else {
       spdlog::error(
@@ -159,22 +168,23 @@ void CConfig::LoadSettings() {
           path.result, path.resultString);
     }
   } else {
-    m_trackIrDllPath = data.trackIrDllFolder;
+    dllpath = userData.trackIrDllFolder;
   }
 
   // Check if DLL folder path is postfixed with slashes
-  if (m_trackIrDllPath.back() != '\\') {
-    m_trackIrDllPath.push_back('\\');
+  if (dllpath.back() != '\\') {
+    dllpath.push_back('\\');
   }
 
 // Match to the correct bitness of this application
 #if defined(_WIN64) || defined(__amd64__)
-  m_trackIrDllPath.append("NPClient64.dll");
+  dllpath.append("NPClient64.dll");
 #else
   m_sTrackIrDllLocation.append("NPClient.dll");
 #endif
 
-  spdlog::debug("NPTrackIR DLL Path: {}", m_trackIrDllPath);
+  spdlog::debug("NPTrackIR DLL Path: {}", dllpath);
+  environmentData.trackIrDllPath = dllpath;
 
   //////////////////////////////////////////////////////////////////////
   //                     Finding Default Padding                      //
@@ -185,29 +195,29 @@ void CConfig::LoadSettings() {
   toml::value vDefaultPaddingTable;
 
   try {
-    vDefaultPaddingTable = toml::find(m_vData, "DefaultPadding");
+    vDefaultPaddingTable = toml::find(tvData, "DefaultPadding");
   } catch (std::out_of_range e) {
     spdlog::warn("Default Padding Table Not Found");
     spdlog::warn(
         "Please add the following to the settings.toml file:\n"
-        "[DefaultPadding]"
-        "left   = 0"
-        "right  = 0"
-        "top    = 0"
+        "[DefaultPadding]\n"
+        "left   = 0\n"
+        "right  = 0\n"
+        "top    = 0\n"
         "bottom = 0");
   }
 
-  data.defaultPaddings[0] = toml::find<int>(vDefaultPaddingTable, "left");
-  data.defaultPaddings[1] = toml::find<int>(vDefaultPaddingTable, "right");
-  data.defaultPaddings[2] = toml::find<int>(vDefaultPaddingTable, "top");
-  data.defaultPaddings[3] = toml::find<int>(vDefaultPaddingTable, "bottom");
+  userData.defaultPaddings[0] = toml::find<int>(vDefaultPaddingTable, "left");
+  userData.defaultPaddings[1] = toml::find<int>(vDefaultPaddingTable, "right");
+  userData.defaultPaddings[2] = toml::find<int>(vDefaultPaddingTable, "top");
+  userData.defaultPaddings[3] = toml::find<int>(vDefaultPaddingTable, "bottom");
 
   //////////////////////////////////////////////////////////////////////
   //                      Find Profiles Mapping                       //
   //////////////////////////////////////////////////////////////////////
 
   // Find the profiles table that contains all mapping profiles.
-  auto vProfilesArray = toml::find(m_vData, "Profiles");
+  auto vProfilesArray = toml::find(tvData, "Profiles");
 
   // Find the table with a matching profile name.
   // .as_table() returns a std::unordered_map<toml::key, toml::table>
@@ -216,17 +226,16 @@ void CConfig::LoadSettings() {
   // to try and get better error messages when
   int i = 0;
   for (auto profile : vProfilesArray.as_array()) {
-    SProfile newProfile;
-
+    Profile newProfile;
     newProfile.name = toml::find<std::string>(profile, "name");
-    newProfile.profile_ID = toml::find<int>(profile, "profile_id");
+    newProfile.profileId = toml::find<int>(profile, "profile_id");
     newProfile.useDefaultPadding =
         toml::find<bool>(profile, "use_default_padding");
 
     // Find the display mapping table for the given profile
-    auto &vDisplayMapping = toml::find(profile, "DisplayMappings");
+    auto &tvDisplayMapping = toml::find(profile, "DisplayMappings");
 
-    for (auto &display : vDisplayMapping.as_array()) {
+    for (auto &display : tvDisplayMapping.as_array()) {
       /** bring in the rotational bounds
        * further information
        */
@@ -264,25 +273,30 @@ void CConfig::LoadSettings() {
       int paddingTop = toml::find_or<int>(display, "paddingTop", 5555);
       int paddingBottom = toml::find_or<int>(display, "paddingBottom", 5555);
 
-      if (paddingLeft == 5555) paddingLeft = data.defaultPaddings[0];
-      if (paddingRight == 5555) paddingRight = data.defaultPaddings[1];
-      if (paddingTop == 5555) paddingTop = data.defaultPaddings[2];
-      if (paddingBottom == 5555) paddingBottom = data.defaultPaddings[3];
+      if (paddingLeft == 5555) paddingLeft = userData.defaultPaddings[0];
+      if (paddingRight == 5555) paddingRight = userData.defaultPaddings[1];
+      if (paddingTop == 5555) paddingTop = userData.defaultPaddings[2];
+      if (paddingBottom == 5555) paddingBottom = userData.defaultPaddings[3];
 
       // Report padding values
       spdlog::debug(
           "Display {} Padding -> {}{}, {}{}, {}{}, {}{}", i++,
-          data.defaultPaddings[0], (paddingLeft == 5555) ? "(default)" : "",
-          data.defaultPaddings[1], (paddingRight == 5555) ? "(default)" : "",
-          data.defaultPaddings[2], (paddingTop == 5555) ? "(default)" : "",
-          data.defaultPaddings[3], (paddingBottom == 5555) ? "(default)" : "");
+          userData.defaultPaddings[0], (paddingLeft == 5555) ? "(default)" : "",
+          userData.defaultPaddings[1],
+          (paddingRight == 5555) ? "(default)" : "",
+          userData.defaultPaddings[2], (paddingTop == 5555) ? "(default)" : "",
+          userData.defaultPaddings[3],
+          (paddingBottom == 5555) ? "(default)" : "");
 
-      newProfile.bounds.push_back(
-          CBounds({rotLeft, rotRight, rotTop, rotBottom},
-                  {paddingLeft, paddingRight, paddingTop, paddingBottom}));
+      // TODO: make a contructor for a struct
+      config::Display d = {
+          {rotLeft, rotRight, rotTop, rotBottom},
+          {paddingLeft, paddingRight, paddingTop, paddingBottom}};
+
+      newProfile.displays.push_back(d);
     }
 
-    data.profiles.push_back(newProfile);
+    userData.profiles.push_back(newProfile);
     // extra line
   }
   return;
@@ -290,40 +304,40 @@ void CConfig::LoadSettings() {
 
 // clang-format off
 
-void CConfig::SaveSettings() {
-  const std::string FileName = "settings.toml";
+void WriteSettingsToFile() {
+  const std::string fileName = "settings.toml";
 
   toml::value general{
-    {"track_on_start", data.trackOnStart},
-    {"quit_on_loss_of_track_ir", data.quitOnLossOfTrackIr},
-    {"watchdog_enabled", data.watchdogEnabled},
-    {"trackir_dll_directory", data.trackIrDllFolder},
-    {"active_profile", data.activeProfileName},
+    {"track_on_start", userData.trackOnStart},
+    {"quit_on_loss_of_track_ir", userData.quitOnLossOfTrackIr},
+    {"watchdog_enabled", userData.watchdogEnabled},
+    {"trackir_dll_directory", userData.trackIrDllFolder},
+    {"active_profile", userData.activeProfileName},
   };
 
   toml::value padding{
-    {"left", data.defaultPaddings[0]},
-    {"right", data.defaultPaddings[1]},
-    {"top", data.defaultPaddings[2]},
-    {"bottom", data.defaultPaddings[3]}
+    {"left", userData.defaultPaddings[0]},
+    {"right", userData.defaultPaddings[1]},
+    {"top", userData.defaultPaddings[2]},
+    {"bottom", userData.defaultPaddings[3]}
   };
 
   std::vector<toml::value> profiles;
   // write out profile data
-  for(auto& profile : data.profiles){
+  for(auto& profile : userData.profiles){
     std::vector<toml::value> displays;
-    for(auto& display : profile.bounds){
+    for(auto& display : profile.displays){
         toml::value d{
-          {"left", display.rotationBounds[0]},
-          {"right", display.rotationBounds[1]},
-          {"top", display.rotationBounds[2]},
-          {"bottom", display.rotationBounds[3]}
+          {"left", display.rotation[0]},
+          {"right", display.rotation[1]},
+          {"top", display.rotation[2]},
+          {"bottom", display.rotation[3]}
         };
       displays.push_back(d);
     }
     toml::value top{
       {"name", profile.name},
-      {"profile_id", profile.profile_ID},
+      {"profile_id", profile.profileId},
       {"use_default_padding", profile.useDefaultPadding},
       {"DisplayMappings", displays}
     };
@@ -338,36 +352,33 @@ void CConfig::SaveSettings() {
 
   // An example of how to access the underlying std::unordered_map<>
   // of a toml table. New or existing keyvalue pairs can be modified this way.
-  // data.as_table()["a"] = a;
+  // userData.as_table()["a"] = a;
 
-  std::fstream file(FileName, std::ios_base::out);
+  std::fstream file(fileName, std::ios_base::out);
   file << topTable << std::endl;
   file.close();
 }
 // clang-format on
 
-bool CConfig::SetActiveProfile(std::string profileName) {
+bool SetActiveProfile(std::string profileName) {
   // check if a valid name
-  // set the name
   auto profileNames = GetProfileNames();
-
   bool found = false;
   for (auto name : profileNames) {
     if (name == profileName) {
       found = true;
     }
   }
-
   if (!found) {
     spdlog::error("Profile could not be found.");
     return false;
   }
 
-  data.activeProfileName = profileName;
+  userData.activeProfileName = profileName;
   return true;
 }
 
-void CConfig::AddProfile(std::string newProfileName) {
+void AddProfile(std::string newProfileName) {
   auto profileNames = GetProfileNames();
 
   // Prohibit conflicting names
@@ -378,66 +389,75 @@ void CConfig::AddProfile(std::string newProfileName) {
     }
   }
 
-  // Default profile
-  SProfile p;
+  Profile p;  // Creat default profile
   p.name = newProfileName;
-  data.profiles.push_back(p);
+  userData.profiles.push_back(p);
 }
 
-void CConfig::RemoveProfile(std::string profileName) {
-  for (std::size_t i = 0; i < data.profiles.size(); i++) {
-    if (profileName == data.profiles[i].name) {
-      data.profiles.erase(data.profiles.begin() + i);
+void RemoveProfile(std::string profileName) {
+  for (std::size_t i = 0; i < userData.profiles.size(); i++) {
+    if (profileName == userData.profiles[i].name) {
+      userData.profiles.erase(userData.profiles.begin() + i);
       spdlog::info("Deleted profile: {}", profileName);
     }
   }
   // change the active profile if deleted
-  if (data.activeProfileName == profileName) {
-    auto name = data.profiles[0].name;
+  if (userData.activeProfileName == profileName) {
+    auto name = userData.profiles[0].name;
     SetActiveProfile(name);
   }
 }
 
-void CConfig::DuplicateActiveProfile() {
+void DuplicateActiveProfile() {
   auto profile = GetActiveProfile();
   profile.name.append("2");  // incremental profile name
-  data.profiles.push_back(profile);
-  data.activeProfileName = profile.name;
+  userData.profiles.push_back(profile);
+  userData.activeProfileName = profile.name;
 }
 
-std::vector<std::string> CConfig::GetProfileNames() {
+std::vector<std::string> GetProfileNames() {
   std::vector<std::string> profileNames;
-  for (auto &profile : data.profiles) {
+  for (auto &profile : userData.profiles) {
     profileNames.push_back(profile.name);
   }
   return profileNames;
 }
 
-SProfile &CConfig::GetActiveProfile() {
-  spdlog::trace("Active Profile Name: {}", data.activeProfileName);
-  for (auto &profile : data.profiles) {
-    if (profile.name == data.activeProfileName) {
+Profile &GetActiveProfileMutable() {
+  for (auto &profile : userData.profiles) {
+    if (profile.name == userData.activeProfileName) {
       return profile;
     }
   }
   // a profile should exist, codes shouldn't be reachable
-  spdlog::critical("Couldn't find active profile by name.");
+  spdlog::critical(
+      "An internal error has occured. Couldn't find active profile by name.");
+}
+// TODO change this to const
+Profile GetActiveProfile() {
+  for (auto &profile : userData.profiles) {
+    if (profile.name == userData.activeProfileName) {
+      return profile;
+    }
+  }
+  // a profile should exist, codes shouldn't be reachable
+  spdlog::critical(
+      "An internal error has occured. Couldn't find active profile by name.");
 }
 
-int CConfig::GetActiveProfileDisplayCount() {
-  SProfile profile = GetActiveProfile();
-  return profile.bounds.size();
+int GetActiveProfileDisplayCount() {
+  return GetActiveProfile().displays.size();
 }
 
-void CConfig::SetDisplayMappingParameter(int displayNumber, int parameterType,
-                                         int parameterSide, double parameter) {}
+void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
+                                   int parameterSide, double parameter) {}
 
 bool ValidateUserInput(const UserInput &displays) {
   // compare bounds not more than abs|180|
   for (int i = 0; i < displays.size(); i++) {
     for (int j = 0; j < 4; j++) {
-      double degrees = displays[i].rotationBounds[j];
-      int padding = displays[i].paddingBounds[j];
+      double degrees = displays[i].rotation[j];
+      int padding = displays[i].padding[j];
       if (degrees > 180.0 || degrees < -180.0) {
         spdlog::error(
             "rotation bound param \"{}\" on display #{} is outside "
@@ -452,14 +472,14 @@ bool ValidateUserInput(const UserInput &displays) {
   for (int i = 0; i < displays.size(); i++) {
     int j = i;
     while (++j < displays.size()) {
-      double A_left = displays[i].rotationBounds[0];
-      double A_right = displays[i].rotationBounds[1];
-      double A_top = displays[i].rotationBounds[2];
-      double A_bottom = displays[i].rotationBounds[3];
-      double B_left = displays[j].rotationBounds[0];
-      double B_right = displays[j].rotationBounds[1];
-      double B_top = displays[j].rotationBounds[2];
-      double B_bottom = displays[j].rotationBounds[3];
+      double A_left = displays[i].rotation[0];
+      double A_right = displays[i].rotation[1];
+      double A_top = displays[i].rotation[2];
+      double A_bottom = displays[i].rotation[3];
+      double B_left = displays[j].rotation[0];
+      double B_right = displays[j].rotation[1];
+      double B_top = displays[j].rotation[2];
+      double B_bottom = displays[j].rotation[3];
       if (A_left < B_right && A_right > B_left && A_top > B_bottom &&
           A_bottom < B_top) {
         spdlog::error(
@@ -470,3 +490,4 @@ bool ValidateUserInput(const UserInput &displays) {
   }
   return true;
 }
+}  // namespace config

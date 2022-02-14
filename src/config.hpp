@@ -1,24 +1,31 @@
-#ifndef TRACKIRMOUSE_CONFIG_H
-#define TRACKIRMOUSE_CONFIG_H
+#ifndef TRACKIRMOUSE_CONFIG_HPP
+#define TRACKIRMOUSE_CONFIG_HPP
+
+#include <array>
+#include <string>
 
 #include "constants.hpp"
 #include "log.hpp"
 
+// todo: export toml value only
+// have load settings return a toml value?
+// get toml out of the header??
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
-#include <string>
-
 #include "toml.hpp"
 
-// TODO: make a config namespace
-static constexpr std::array<std::string_view, 4> kBoundNames = {
-    "left", "right", "top", "bottom"};
-
+// i may need static keyword here
+constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right", "top",
+                                                         "bottom"};
 
 namespace config {
 
+using t_bounds = std::array<double, 4>;
+using t_pad = std::array<int, 4>;
+
 struct Display {
-  std::array<double, 4> rotation{0.0, 0.0, 0.0, 0.0};  // Left, Right, Top, Bottom
-  std::array<int, 4> padding{0, 0, 0, 0};  // Left, Right, Top, Bottom
+  Display(t_bounds r, t_pad p) : rotation(r), padding(p) {}
+  t_bounds rotation{0.0, 0.0, 0.0, 0.0};  // Left, Right, Top, Bottom
+  t_pad padding{0, 0, 0, 0};              // Left, Right, Top, Bottom
 };
 
 struct Profile {
@@ -34,64 +41,47 @@ struct UserData {
   bool watchdogEnabled = true;
   std::string trackIrDllFolder = "default";
   std::string activeProfileName = "Lorem Ipsum";
-
-  std::array<int> defaultPaddings = {0, 0, 0, 0};
-  std::vector<SProfile> profiles;
+  std::array<int, 4> defaultPaddings = {0, 0, 0, 0};
+  std::vector<Profile> profiles;
 };
 
 struct EnvData {
-  int m_monitorCount = 0;
-  std::string m_trackIrDllPath;
-}
-
-class CConfig {
- public:
-  UserData userData;
-  EnvData environmentData;
-
-  CConfig(){};
-
-  // Initializations Functions
-  void ParseFile(const std::string);
-  void LoadSettings();
-  void SaveSettings();
-
-  // Getter functions
-  Profile &GetActiveProfile();
-  const Profile &GetActiveProfile();
-
-  std::vector<std::string> GetProfileNames();
-  int GetActiveProfileDisplayCount();
-
-  UserData GetUserData():
-  UserData& GetUserData():
-
-  bool SetActiveProfile(std::string profileName);
-  void SetDisplayMappingParameter(int displayNumber, int parameterType,
-                                  int parameterSide, double parameter);
-
-  void AddProfile(std::string newProfileName);
-  void RemoveProfile(std::string profileName);
-  void DuplicateActiveProfile();
-
-  void ClearData() {
-    m_vData = toml::value();
-    data = SData();
-  }
-
- private:
-  // toml data is not used after it's loaded
-  toml::value m_vData;  // holds main toml object
+  int monitorCount = 0;
+  std::string trackIrDllPath = "";
 };
 
-CConfig *GetGlobalConfig();
-CConfig GetGlobalConfigCopy();
-void ClearGlobalData();
+// set env data
+// get info from windows?
+// set user data
 
-extern CConfig g_config;
-} // namespace config
+// Initializations Functions
+void LoadSettingsFromFile(const std::string);
+void WriteSettingsToFile();
+
+UserData GetUserData();
+UserData &GetUserDataMutable();
+
+EnvData GetEnvironmentData();
+EnvData &GetEnvironmentDataMutable();
+
+// Getter functions
+Profile GetActiveProfile();
+Profile &GetActiveProfileMutable();
+int GetActiveProfileDisplayCount();
+
+std::vector<std::string> GetProfileNames();
+
+bool SetActiveProfile(std::string profileName);
+void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
+                                   int parameterSide, double parameter);
+
+void AddProfile(std::string newProfileName);
+void RemoveProfile(std::string profileName);
+void DuplicateActiveProfile();
 
 using UserInput = std::vector<Display>;
 bool ValidateUserInput(const UserInput &displays);
 
-#endif /* TRACKIRMOUSE_CONFIG_H */
+}  // namespace config
+
+#endif /* TRACKIRMOUSE_CONFIG_HPP */

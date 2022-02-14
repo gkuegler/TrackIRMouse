@@ -3,7 +3,7 @@
 int main()
 {
     // Load Settings
-    CConfig config = CConfig();
+    auto config = config::Config();
 
     try
     {

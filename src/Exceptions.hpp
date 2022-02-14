@@ -12,6 +12,8 @@ class Exception : public std::exception {
    *                 Hence, responsibility for deleting the char* lies
    *                 with the caller.
    */
+  explicit Exception() : msg_("") {}
+  
   explicit Exception(const char *message) : msg_(message) {}
 
   /** Constructor (C++ STL strings).

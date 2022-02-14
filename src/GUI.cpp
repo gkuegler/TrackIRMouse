@@ -33,7 +33,7 @@
 #include <string>
 
 #include "config.hpp"
-#include "contants.hpp"
+#include "constants.hpp"
 #include "exceptions.hpp"
 #include "gui-dialogs.hpp"
 #include "log.hpp"
@@ -125,14 +125,14 @@ bool CGUIApp::OnInit() {
   m_frame->Show();
 
   // Start the track IR thread if enabled
-  auto config = GetGlobalConfig();
-  if (config->data.trackOnStart) {
+  auto usr = config::GetUserData();
+  if (usr.trackOnStart) {
     wxCommandEvent event = {};  // blank event to reuse start handler code
     m_frame->m_panel->OnTrackStart(event);
   }
 
   // Start the watchdog thread
-  if (config->data.watchdogEnabled) {
+  if (usr.watchdogEnabled) {
     m_frame->m_pWatchdogThread = new WatchdogThread(m_frame);
     if (m_frame->m_pWatchdogThread->Run() != wxTHREAD_NO_ERROR) {
       spdlog::error("Can't run watchdog thread.");
@@ -227,38 +227,23 @@ void cFrame::OnOpen(wxCommandEvent &event) {
   wxLogError("Method not implemented yet!");
 }
 
-void cFrame::OnSave(wxCommandEvent &event) {
-  CConfig config = GetGlobalConfigCopy();
-  config.SaveSettings();
-}
+void cFrame::OnSave(wxCommandEvent &event) { config::WriteSettingsToFile(); }
 
 void cFrame::LoadSettingsFromFile() {
-  CConfig *config = GetGlobalConfig();
-
-  // Parse Settings File
   try {
-    config->ParseFile("settings.toml");
+    config::LoadSettingsFromFile("settings.toml");
   } catch (const toml::syntax_error &ex) {
     spdlog::critical("Failed To Parse toml Settings File:\n%s", ex.what());
+    // type_error inherits from toml::exception, needs to be caught first
+  } catch (const toml::type_error &ex) {
+    spdlog::critical("Incorrect type when loading settings.\n\n%s", ex.what());
   } catch (std::runtime_error &ex) {
     spdlog::error(
         "Failed To Parse Settings File -> \"settings.toml\" File Likely Not "
         "Found.\n%s",
         ex.what());
-  } catch (...) {
-    spdlog::critical(
-        "An unhandled exception occurred when loading/parsing toml file.");
-  }
-
-  try {
-    config->LoadSettings();
-  }
-  // type_error inherits from toml::exception, needs to be caught first
-  catch (const toml::type_error &ex) {
-    spdlog::critical("Incorrect type when loading settings.\n\n%s", ex.what());
-  }
-  // toml::exception is base exception class
-  catch (const toml::exception &ex) {
+    // toml::exception is base exception class
+  } catch (const toml::exception &ex) {
     spdlog::critical("std::exception:\n%s", ex.what());
   } catch (const Exception &ex) {
     spdlog::critical("My Custom Exception:\n%s", ex.what());
@@ -267,35 +252,30 @@ void cFrame::LoadSettingsFromFile() {
         "exception has gone unhandled loading and verifying settings");
   }
 }
+
 void cFrame::UpdateGuiFromSettings() {
   // Populate GUI With Settings
   m_panel->PopulateComboBoxWithProfiles();
 }
 
 void cFrame::OnReload(wxCommandEvent &event) {
-  ClearGlobalData();
   LoadSettingsFromFile();
   UpdateGuiFromSettings();
 }
 
 void cFrame::OnSettings(wxCommandEvent &event) {
-  CConfig configd = GetGlobalConfigCopy();
-  SData userData = configd.data;
-
-  // Frame inherits from window
-  cSettingsPopup dlg(this, &userData);
+  auto userData = config::GetUserData();
 
   // Show the settings pop up while disabling input on main window
+  cSettingsPopup dlg(this, &userData);
   int results = dlg.ShowModal();
-  spdlog::info("results of Modal settings: {}", results);
 
   if (wxID_OK == results) {
-    spdlog::info("user clicked okay on settings");
-    // values should be saved
-    CConfig *config = GetGlobalConfig();
-    config->data = userData;
+    spdlog::debug("settings applied.");
+    auto &usr = config::GetUserDataMutable();
+    usr = userData;
   } else if (wxID_CANCEL == results) {
-    spdlog::info("user clicked the cancel button on settings");
+    spdlog::debug("settings rejected");
   }
 }
 
@@ -386,13 +366,12 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
 
 void cPanel::PopulateComboBoxWithProfiles() {
   spdlog::trace("repopulating profiles combobox");
-  CConfig config = GetGlobalConfigCopy();
   m_cmbProfiles->Clear();
-  for (auto &item : config.GetProfileNames()) {
+  for (auto &item : config::GetProfileNames()) {
     m_cmbProfiles->Append(item);
   }
 
-  int index = m_cmbProfiles->FindString(config.data.activeProfileName);
+  int index = m_cmbProfiles->FindString(config::GetActiveProfile().name);
   if (wxNOT_FOUND != index) {
     m_cmbProfiles->SetSelection(index);
     m_pnlDisplayConfig->LoadDisplaySettings();
@@ -434,7 +413,7 @@ void cPanel::OnTrackStop(wxCommandEvent &event) {
   if (m_parent->m_pTrackThread) {
     // This will gracefully exit the tracking loop and return control to the
     // thread. This will cause the thread to die off and delete itself.
-    TR_TrackStop();
+    track::TrackStop();
     spdlog::info("Stopped mouse.");
   } else {
     spdlog::warn("Track thread not running!");
@@ -443,23 +422,20 @@ void cPanel::OnTrackStop(wxCommandEvent &event) {
 
 void cPanel::OnActiveProfile(wxCommandEvent &event) {
   int index = m_cmbProfiles->GetSelection();
-  spdlog::trace("Profiles get selection index: {}", index);
-  std::string activeProfile((m_cmbProfiles->GetString(index)).mb_str());
-  spdlog::debug("Active Profile name selected: {}", activeProfile);
-  CConfig *config = GetGlobalConfig();
-  config->data.activeProfileName = activeProfile;
-
+  // TODO: make all strings utf-8
+  // auto name = std::string((m_cmbProfiles->GetString(index)).mb_str());
+  auto name = std::string((m_cmbProfiles->GetString(index)).utf8_str());
+  config::SetActiveProfile(name);
   m_pnlDisplayConfig->LoadDisplaySettings();
 }
 
 void cPanel::OnAddProfile(wxCommandEvent &event) {
-  CConfig *config = GetGlobalConfig();
   wxTextEntryDialog dlg(this, "Add Profile",
                         "Specify a Name for the New Profile");
   dlg.SetTextValidator(wxFILTER_ALPHANUMERIC);
   if (dlg.ShowModal() == wxID_OK) {
     wxString value = dlg.GetValue();
-    config->AddProfile(std::string(value.mb_str()));
+    config::AddProfile(std::string(value.mb_str()));
     PopulateComboBoxWithProfiles();
   } else {
     spdlog::debug("Add profile action canceled.");
@@ -467,21 +443,20 @@ void cPanel::OnAddProfile(wxCommandEvent &event) {
 }
 
 void cPanel::OnRemoveProfile(wxCommandEvent &event) {
-  CConfig *config = GetGlobalConfig();
   wxArrayString choices;
-  for (auto &name : config->GetProfileNames()) {
+  for (auto &name : config::GetProfileNames()) {
     choices.Add(name);
   }
 
-  wxString msg = "Delete a Profile";
-  wxString msg2 = "Press OK";
+  const wxString msg = "Delete a Profile";
+  const wxString msg2 = "Press OK";
   wxMultiChoiceDialog dlg(this, msg, msg2, choices, wxOK | wxCANCEL,
                           wxDefaultPosition);
 
   if (wxID_OK == dlg.ShowModal()) {
     auto selections = dlg.GetSelections();
     for (auto &index : selections) {
-      config->RemoveProfile(choices[index].ToStdString());
+      config::RemoveProfile(choices[index].ToStdString());
     }
 
     m_pnlDisplayConfig->LoadDisplaySettings();
@@ -490,8 +465,7 @@ void cPanel::OnRemoveProfile(wxCommandEvent &event) {
 }
 
 void cPanel::OnDuplicateProfile(wxCommandEvent &event) {
-  CConfig *config = GetGlobalConfig();
-  config->DuplicateActiveProfile();
+  config::DuplicateActiveProfile();
   m_pnlDisplayConfig->LoadDisplaySettings();
   PopulateComboBoxWithProfiles();
 }
@@ -595,31 +569,34 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
 }
 
 void cPanelConfiguration::LoadDisplaySettings() {
-  CConfig config = GetGlobalConfigCopy();
-  auto &profile = config.GetActiveProfile();
+  auto profile = config::GetActiveProfile();
 
   // SetValue causes an event to be sent for text control.
+  // SetValue does not cause an event to be sent for checkboxes.
   // Use ChangeEvent instead.
+  // We don't want to register event when we're just loading values.
   m_name->ChangeValue(profile.name);
-  m_profileID->ChangeValue(wxString::Format("%d", profile.profile_ID));
-  // SetValue does not cause an event to be sent for checkboxes
+  m_profileID->ChangeValue(wxString::Format("%d", profile.profileId));
   m_useDefaultPadding->SetValue(profile.useDefaultPadding);
 
   m_tlcMappingData->DeleteAllItems();
+
   int displayNum = 0;
-  for (auto &display : profile.bounds) {
+
+  for (int i = 0; i < profile.displays.size(); i++) {
     wxVector<wxVariant> row;
-    row.push_back(wxVariant(wxString::Format("%d", displayNum++)));
-    for (int i = 0; i < 4; i++) {
-      row.push_back(
-          wxVariant(wxString::Format("%7.2f", display.rotationBounds[i])));
+    row.push_back(wxVariant(wxString::Format("%d", i)));
+
+    for (int j = 0; j < 4; j++) {  // left, right, top, bottom
+      row.push_back(wxVariant(
+          wxString::Format("%7.2f", profile.displays[i].rotation[j])));
     }
-    for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {  // left, right, top, bottom
       if (m_useDefaultPadding->IsChecked()) {
         row.push_back(wxVariant(wxString::Format("%s", "(default)")));
       } else {
         row.push_back(
-            wxVariant(wxString::Format("%d", display.paddingBounds[i])));
+            wxVariant(wxString::Format("%d", profile.displays[i].padding[j])));
       }
     }
     m_tlcMappingData->AppendItem(row);
@@ -627,44 +604,44 @@ void cPanelConfiguration::LoadDisplaySettings() {
 }
 
 void cPanelConfiguration::OnName(wxCommandEvent &event) {
-  CConfig *config = GetGlobalConfig();
-  auto &profile = config->GetActiveProfile();
   wxString text = m_name->GetLineText(0);
+  // TODO: change all instances of .mb_str()
+  // TODO: start using const?????
+  auto &profile = config::GetActiveProfileMutable();
   profile.name = text.mb_str();
-  config->data.activeProfileName = profile.name;
+  auto &usr = config::GetUserDataMutable();
+  usr.activeProfileName = text.mb_str();
   m_parent->PopulateComboBoxWithProfiles();
 }
 
 void cPanelConfiguration::OnProfileID(wxCommandEvent &event) {
-  CConfig *config = GetGlobalConfig();
-  auto &profile = config->GetActiveProfile();
   wxString number = m_profileID->GetLineText(0);
   long value;
-  if (!number.ToLong(&value)) {
-    // Text control should only allow numbers.
+  if (!number.ToLong(&value)) {  // wxWidgets has odd conversions
     // TODO: verify only numbers allowed in profile id text control
-    wxLogError("Couldn't convert profile_ID string to integer.");
+    // Text control should only allow numbers.
+    spdlog::error("Couldn't convert value to integer.");
     return;
   };
-  profile.profile_ID = static_cast<int>(value);
+  auto &profile = config::GetActiveProfileMutable();
+  profile.profileId = static_cast<int>(value);
   LoadDisplaySettings();
 }
 
 void cPanelConfiguration::OnUseDefaultPadding(wxCommandEvent &event) {
-  CConfig *config = GetGlobalConfig();
-  auto &profile = config->GetActiveProfile();
+  auto &profile = config::GetActiveProfileMutable();
   profile.useDefaultPadding = m_useDefaultPadding->IsChecked();
   LoadDisplaySettings();
 }
 
 void cPanelConfiguration::OnMappingData(wxDataViewEvent &event) {
-  auto &profile = GetGlobalConfig()->GetActiveProfile();
+  auto &profile = config::GetActiveProfileMutable();
 
-  // finding value and column
+  // finding column
   wxVariant value = event.GetValue();
   int column = event.GetColumn();
 
-  // finding associated row; there is no event->GetRow()
+  // finding associated row; there is no event->GetRow()!?
   wxDataViewItem item = event.GetItem();
   wxDataViewIndexListModel *model =
       (wxDataViewIndexListModel *)(event.GetModel());
@@ -676,6 +653,10 @@ void cPanelConfiguration::OnMappingData(wxDataViewEvent &event) {
       spdlog::error("Value could not be converted to a number.");
       return;
     }
+    // TODO: use a wxValidator
+    // this will prevent the value from sticking in the box on non valid input
+    // make numbers only allowed too.
+    // validate input
     if (number > 180) {
       spdlog::error(
           "Value can't be greater than 180. This is a limitation of the "
@@ -684,12 +665,12 @@ void cPanelConfiguration::OnMappingData(wxDataViewEvent &event) {
     }
     if (number < -180) {
       spdlog::error(
-          "Value can't be less than -180. This is a limitation of the TrackIR "
+          "Value can't be less than -180. This is a limitation of "
+          "the TrackIR "
           "software.");
       return;
     }
-    profile.bounds[row].rotationBounds[column - 1] =
-        static_cast<double>(number);
+    profile.displays[row].rotation[column - 1] = static_cast<double>(number);
   }
   if (column > 5) {
     long number;  // wxWidgets has odd string conversion procedures
@@ -701,22 +682,23 @@ void cPanelConfiguration::OnMappingData(wxDataViewEvent &event) {
       spdlog::error("Padding value can't be negative.");
       return;
     }
-    profile.bounds[row].paddingBounds[column - 5] = static_cast<int>(number);
+    profile.displays[row].padding[column - 5] = static_cast<int>(number);
   }
 
   LoadDisplaySettings();
 }
 
 void cPanelConfiguration::OnAddDisplay(wxCommandEvent &event) {
-  auto &profile = GetGlobalConfig()->GetActiveProfile();
-  profile.bounds.push_back(CBounds());
+  auto &profile = config::GetActiveProfileMutable();
+  // TODO: can this be emplace back?
+  profile.displays.push_back(config::Display({0, 0, 0, 0}, {0, 0, 0, 0}));
   LoadDisplaySettings();
 }
 void cPanelConfiguration::OnRemoveDisplay(wxCommandEvent &event) {
-  auto &profile = GetGlobalConfig()->GetActiveProfile();
+  auto &profile = config::GetActiveProfileMutable();
   auto index = m_tlcMappingData->GetSelectedRow();
   if (wxNOT_FOUND != index) {
-    profile.bounds.erase(profile.bounds.begin() + index);
+    profile.displays.erase(profile.displays.begin() + index);
     LoadDisplaySettings();
   } else {
     wxLogError("Display row not selected.");
@@ -724,14 +706,14 @@ void cPanelConfiguration::OnRemoveDisplay(wxCommandEvent &event) {
 }
 
 void cPanelConfiguration::OnMoveUp(wxCommandEvent &event) {
-  auto &profile = GetGlobalConfig()->GetActiveProfile();
+  auto &profile = config::GetActiveProfileMutable();
   auto index = m_tlcMappingData->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     wxLogError("Display row not selected.");
   } else if (0 == index) {
     return;  // selection is at the top. do nothing
   } else {
-    std::swap(profile.bounds[index], profile.bounds[index - 1]);
+    std::swap(profile.displays[index], profile.displays[index - 1]);
     LoadDisplaySettings();
 
     // This is a terrible hack to find the row of the item we just moved
@@ -743,14 +725,14 @@ void cPanelConfiguration::OnMoveUp(wxCommandEvent &event) {
   }
 }
 void cPanelConfiguration::OnMoveDown(wxCommandEvent &event) {
-  auto &profile = GetGlobalConfig()->GetActiveProfile();
+  auto &profile = config::GetActiveProfileMutable();
   auto index = m_tlcMappingData->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     wxLogError("Display row not selected.");
   } else if ((m_tlcMappingData->GetItemCount() - 1) == index) {
     return;  // selection is at the bottom. do nothing
   } else {
-    std::swap(profile.bounds[index], profile.bounds[index + 1]);
+    std::swap(profile.displays[index], profile.displays[index + 1]);
     LoadDisplaySettings();
 
     // This is a terrible hack to find the row of the item we just moved
