@@ -34,10 +34,10 @@
 
 #include "config.hpp"
 #include "constants.hpp"
-#include "exceptions.hpp"
 #include "gui-dialogs.hpp"
 #include "log.hpp"
 #include "threads.hpp"
+#include "toml/exception.hpp"
 #include "track.hpp"
 #include "watchdog.hpp"
 
@@ -228,7 +228,7 @@ void cFrame::OnOpen(wxCommandEvent &event) {
 void cFrame::OnSave(wxCommandEvent &event) { config::WriteSettingsToFile(); }
 
 void cFrame::LoadSettingsFromFile() {
-  constexpr auto filename = "settings-.toml";
+  constexpr auto filename = "settings.toml";
   try {
     config::LoadSettingsFromFile(filename);
   } catch (const toml::syntax_error &ex) {
@@ -603,9 +603,9 @@ void cPanelConfiguration::OnName(wxCommandEvent &event) {
   // TODO: change all instances of .mb_str()
   // TODO: start using const?????
   auto &profile = config::GetActiveProfileMutable();
-  profile.name = text.mb_str();
+  profile.name = text.ToStdString();
   auto &usr = config::GetUserDataMutable();
-  usr.activeProfileName = text.mb_str();
+  usr.activeProfileName = text.ToStdString();
   m_parent->PopulateComboBoxWithProfiles();
 }
 

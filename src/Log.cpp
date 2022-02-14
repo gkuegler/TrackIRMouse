@@ -12,14 +12,11 @@
 #include <spdlog/sinks/stdout_sinks.h>
 #include <spdlog/spdlog.h>
 #include <wx/log.h>
+#include <wx/wx.h>
 
 #include <mutex>
 
 #include "constants.hpp"
-
-// GrepWin strings used to change to spdlog
-// regex match string: LogToWix\(fmt::format\(([^ \)] *)\)\);
-// replacement format string: spdlog::info\(\1);
 
 namespace mylogging {
 
@@ -46,7 +43,7 @@ class WxSink : public spdlog::sinks::base_sink<Mutex> {
       if (msg.level > spdlog::level::info) {
         // used by txt control event handler to turn
         // warning messages and above red.
-        event->SetExtraLong(static_cast<long>(msgcode::red_text);
+        event->SetExtraLong(static_cast<long>(msgcode::red_text));
       }
       wxTheApp->QueueEvent(event);
     }

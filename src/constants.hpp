@@ -2,6 +2,6 @@
 #define TRACKIRMOUSE_CONSTANTS_H
 
 enum class retcode { success, fail };
-enum class msgcode { red_text, close_app };
+enum class msgcode { normal, red_text, close_app };
 
 #endif /* TRACKIRMOUSE_CONSTANTS_H */
