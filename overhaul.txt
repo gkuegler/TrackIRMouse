@@ -8,21 +8,9 @@ Convert To Graphical Utility:
         robust checking of setting parameters
         robust error handling of incorrect parameters
         robust handling of incorrect user input
-        // standard output log to large text control
-        // remove press any key to exit
-
-        // wxWidget logging (stdout but MessageBox on critical error?)
-        //     or spd logging?
-        // create separate hidden frame for track thread to register with trackIR? no
-        // wxFileInputStream to open file first, then hand off to toml library? no
 
     User Interface Needs:
-        // Program in a switch to not register window handle for debug and launch
-            // use function directives to deactivate register window handle function call
-            // use watchdog pipe server to discard tracking information
-            // use custom-built event to turn on and off tracking of existing instance
-        // button to add profiles
-        // button to delete profiles
+        
         
     Optional Features:
         // profile selection (drop down?)

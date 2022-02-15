@@ -341,10 +341,17 @@
     <ClInclude Include="gui-dialogs.hpp" />
     <ClInclude Include="log.hpp" />
     <ClInclude Include="np-client.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="threads.hpp" />
     <ClInclude Include="toml.hpp" />
     <ClInclude Include="track.hpp" />
     <ClInclude Include="watchdog.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -6,7 +6,16 @@
  * TODO section:
  * transform mapping values for head distance
  * use default padding overwrites user padding values
- *
+ * allow user to select custom settings file
+ * upon not finding settings on load; in blank profile add number of displays
+ * that are the same number of monitors detected
+ * tracking should stop when application exits
+ * remove the: from version number in about text
+ * implement crtl-s save feature
+ * remove generate example settings file action
+ * generator an icon
+ * 
+ * 
  * profile box:
  *   set size limitations for text for inputs
  *   pick number of displays
@@ -23,6 +32,7 @@
 
 #include "GUI.hpp"
 
+// TODO: there is a bug with include fmt
 #include <wx/bookctrl.h>
 #include <wx/colour.h>
 #include <wx/dataview.h>
@@ -41,7 +51,7 @@
 #include "track.hpp"
 #include "watchdog.hpp"
 
-constexpr std::string_view kVersionNo = "0.6.1";
+constexpr std::string_view kVersionNo = "0.7.0";
 const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
@@ -185,7 +195,7 @@ void cFrame::OnExit(wxCommandEvent &event) { Close(true); }
 
 void cFrame::OnAbout(wxCommandEvent &event) {
   std::string msg = fmt::format(
-      "Version No.:  {}\nThis is a mouse control application using head "
+      "Version No.  {}\nThis is a mouse control application using head "
       "tracking.\n"
       "Author: George Kuegler\n"
       "E-mail: georgekuegler@gmail.com",
