@@ -44,10 +44,6 @@ struct EnvData {
   std::string trackIrDllPath = "";
 };
 
-// set env data
-// get info from windows?
-// set user data
-
 // Initializations Functions
 void LoadSettingsFromFile(const std::string);
 void WriteSettingsToFile();

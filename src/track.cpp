@@ -226,7 +226,7 @@ retcode Initialize(HWND hWnd, config::Profile profile, std::string dllpath) {
   NPRESULT result = NP_RegisterWindowHandle(hWnd);
 
   if (NP_OK == result) {
-    spdlog::info("Registered window handle.");
+    spdlog::info("NP Registered window handle.");
   }
 
   // 7 is a magic number I found through experimentation.
@@ -234,10 +234,13 @@ retcode Initialize(HWND hWnd, config::Profile profile, std::string dllpath) {
   // already.
   else if (result == 7) {
     NP_UnregisterWindowHandle();
-    spdlog::warn("Booting control of previous mousetracker instance.");
+    spdlog::warn("NP Booting control of previous mousetracker instance.");
     Sleep(2);
     result = NP_RegisterWindowHandle(hWnd);
     if (NP_OK == result) {
+      spdlog::info("NP Re-registered window handle.");
+    }
+    else {
       spdlog::error("Failed to re-register window handle with NP code: {}",
                     result);
       return retcode::fail;
@@ -428,6 +431,7 @@ retcode TrackStart() {
 }
 
 void TrackStop() {
+  spdlog::trace("TrackStop called into.");
   g_bTrackingAllowedToRun = false;
   NP_StopDataTransmission();
   NP_UnregisterWindowHandle();

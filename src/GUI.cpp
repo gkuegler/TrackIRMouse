@@ -9,13 +9,11 @@
  * allow user to select custom settings file
  * upon not finding settings on load; in blank profile add number of displays
  * that are the same number of monitors detected
- * tracking should stop when application exits
- * remove the: from version number in about text
  * implement crtl-s save feature
  * remove generate example settings file action
  * generator an icon
- * 
- * 
+ *
+ *
  * profile box:
  *   set size limitations for text for inputs
  *   pick number of displays
@@ -51,7 +49,7 @@
 #include "track.hpp"
 #include "watchdog.hpp"
 
-constexpr std::string_view kVersionNo = "0.7.0";
+constexpr std::string_view kVersionNo = "0.7.1";
 const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
@@ -64,7 +62,6 @@ wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
   EVT_MENU(wxID_SAVE, cFrame::OnSave)
   EVT_MENU(wxID_RELOAD, cFrame::OnReload)
   EVT_MENU(myID_SETTINGS, cFrame::OnSettings)
-  EVT_BUTTON(myID_GEN_EXMPL, cFrame::OnGenerateExample)
 wxEND_EVENT_TABLE()
 
 wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
@@ -152,6 +149,14 @@ bool CGUIApp::OnInit() {
   return true;
 }
 
+int CGUIApp::OnExit() {
+  // Stop tracking so window handle can be unregistered.
+  if (m_frame->m_pTrackThread) {
+    track::TrackStop();
+  }
+  return 0;
+}
+
 //////////////////////////////////////////////////////////////////////
 //                            Main Frame                            //
 //////////////////////////////////////////////////////////////////////
@@ -159,21 +164,22 @@ bool CGUIApp::OnInit() {
 cFrame::cFrame(wxPoint origin, wxSize dimensions)
     : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", origin, dimensions) {
   wxMenu *menuFile = new wxMenu;
+  // TODO: implement open file? this will require use of the registry
   // menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
   // "Open a new settings file from disk.");
-  menuFile->Append(wxID_SAVE, "&Save\tCtrl-s", "Save the configuration file.");
-  menuFile->Append(wxID_RELOAD, "&Reload", "Reload the configuration file.");
+  // menuFile->Append(wxID_SAVE, "&Save\tCtrl-s", "Save the configuration
+  // file.");
+  // TODO: implement ctrl-s keyboard shortcut.
+  menuFile->Append(wxID_SAVE, "&Save", "Save to the settings file.");
+  menuFile->Append(wxID_RELOAD, "&Reload", "Reload the settings file.");
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
 
   wxMenu *menuEdit = new wxMenu;
-  menuEdit->Append(myID_SETTINGS, "&Settings", "Edit settings.");
+  menuEdit->Append(myID_SETTINGS, "&Settings", "Edit app settings.");
 
   wxMenu *menuHelp = new wxMenu;
-  menuHelp->Append(
-      myID_GEN_EXMPL, "Generate Example Settings File",
-      "Use this option if the existing settings file has become corrupted");
-  menuHelp->AppendSeparator();
+  // menuHelp->AppendSeparator();
   menuHelp->Append(wxID_ABOUT);
 
   wxMenuBar *menuBar = new wxMenuBar;
@@ -386,10 +392,26 @@ void cPanel::PopulateComboBoxWithProfiles() {
 }
 
 void cPanel::OnTrackStart(wxCommandEvent &event) {
+  // TODO: remove race condition
+  // use std::unique_ptr<> or std::week_ptr<> & std::shared_ptr<> to create a
+  // custom class signaler when the class gets deleted; so does the pointer and
+  // its value use a randomly generated number. generate a new number on track
+  // start. kind of like a key phob. use rotating codes or rand genkeys. in the
+  // thread check validity of key, and exit if not valid.
+
   if (m_parent->m_pTrackThread) {
     spdlog::warn("Please stop mouse before restarting.");
     wxCommandEvent event = {};
     OnTrackStop(event);
+    // wait for destruction of thread
+    // thread will set its pointer to NULL upon destruction
+    while (true) {
+      Sleep(8);
+      wxCriticalSectionLocker enter(m_parent->m_pThreadCS);
+      if (m_parent->m_pTrackThread == NULL) {
+        break;
+      }
+    }
   }
 
   // Threads run in detached mode by default.
@@ -652,6 +674,8 @@ void cPanelConfiguration::OnMappingData(wxDataViewEvent &event) {
       (wxDataViewIndexListModel *)(event.GetModel());
   int row = model->GetRow(item);
 
+  // if rotation value was selected
+  // note 0th column made non-editable
   if (column < 5) {
     double number;  // wxWidgets has odd string conversion procedures
     if (!value.GetString().ToDouble(&number)) {
@@ -676,8 +700,7 @@ void cPanelConfiguration::OnMappingData(wxDataViewEvent &event) {
       return;
     }
     profile.displays[row].rotation[column - 1] = static_cast<double>(number);
-  }
-  if (column > 5) {
+  } else {        // padding value selected
     long number;  // wxWidgets has odd string conversion procedures
     if (!value.GetString().ToLong(&number)) {
       wxLogError("Value could not be converted to a number.");

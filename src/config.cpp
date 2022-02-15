@@ -266,10 +266,10 @@ void LoadSettingsFromFile(const std::string fileName) {
       // so that I can tell if one was found in the toml config file
       // without producing an exception if a value was not found.
       // Padding values are not critical the program operation.
-      int paddingLeft = toml::find_or<int>(display, "paddingLeft", 5555);
-      int paddingRight = toml::find_or<int>(display, "paddingRight", 5555);
-      int paddingTop = toml::find_or<int>(display, "paddingTop", 5555);
-      int paddingBottom = toml::find_or<int>(display, "paddingBottom", 5555);
+      int paddingLeft = toml::find_or<int>(display, "pad_left", 5555);
+      int paddingRight = toml::find_or<int>(display, "pad_right", 5555);
+      int paddingTop = toml::find_or<int>(display, "pad_top", 5555);
+      int paddingBottom = toml::find_or<int>(display, "pad_bottom", 5555);
 
       if (paddingLeft == 5555) paddingLeft = userData.defaultPaddings[0];
       if (paddingRight == 5555) paddingRight = userData.defaultPaddings[1];
@@ -325,8 +325,13 @@ void WriteSettingsToFile() {
           {"left", display.rotation[0]},
           {"right", display.rotation[1]},
           {"top", display.rotation[2]},
-          {"bottom", display.rotation[3]}
+          {"bottom", display.rotation[3]},
+          {"pad_left", display.padding[0]},
+          {"pad_right", display.padding[1]},
+          {"pad_top", display.padding[2]},
+          {"pad_bottom", display.padding[3]},
         };
+      // TODO: urgent, add padding data
       displays.push_back(d);
     }
     toml::value top{
