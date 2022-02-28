@@ -270,6 +270,9 @@ void cFrame::UpdateGuiFromSettings() {
 }
 
 void cFrame::OnReload(wxCommandEvent &event) {
+  // TODO: delete existing settings
+  // a smarter idea would be to make a settings builder function would make sure
+  // that the settings can be loaded first before replacing existing settings
   LoadSettingsFromFile();
   UpdateGuiFromSettings();
 }
@@ -508,6 +511,9 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
   m_name =
       new wxTextCtrl(this, myID_PROFILE_NAME, "Lorem Ipsum", wxDefaultPosition,
                      wxSize(200, 20), wxTE_LEFT, wxDefaultValidator, "");
+  // TODO: convert this into a drop down list to select valid ID numbers; also
+  // display their titles? probably not necessary couldn't guarantee that a
+  // title is correct
   m_profileID =
       new wxTextCtrl(this, myID_PROFILE_ID, "2201576", wxDefaultPosition,
                      wxSize(60, 20), wxTE_LEFT, wxDefaultValidator, "");

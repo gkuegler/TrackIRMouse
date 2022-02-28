@@ -133,8 +133,9 @@ class CGUIApp : public wxApp {
   virtual bool OnInit();
   virtual int OnExit();
   virtual void OnUnhandledException() {
-    wxLogFatalError("An unhandled exception has occurred. "
-      "Application will now terminate.");
+    wxLogFatalError(
+        "An unhandled exception has occurred. "
+        "Application will now terminate.");
     std::terminate();
   }
 
