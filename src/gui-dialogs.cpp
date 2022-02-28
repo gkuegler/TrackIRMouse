@@ -7,10 +7,17 @@
 
 #include "gui-dialogs.hpp"
 
+#include <assert.h>
+#include <spdlog/common.h>
 #include <wx/bookctrl.h>
 
 #include "config.hpp"
 #include "gui-control-id.hpp"
+#include "util.hpp"
+
+const static std::array<std::string, 7> LogLevels = {
+    "trace", "debug", "info", "warning", "error", "critical", "off"};
+const static auto asLogLevels = BuildArrayString(LogLevels);
 
 // clang-format off
 BEGIN_EVENT_TABLE(cSettingsGeneralPanel, wxPanel)
@@ -52,15 +59,20 @@ cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent,
   m_cbxQuitOnLossOfTrackIR = new wxCheckBox(
       this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR",
       wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  m_cmbLogLevel =
+      new wxChoice(this, myID_LOG_LEVEL, wxDefaultPosition, wxSize(100, 25),
+                   asLogLevels, 0, wxDefaultValidator, "");
 
   m_cbxEnableWatchdog->SetValue(pUserData->watchdogEnabled);
   m_cbxTrackOnStart->SetValue(pUserData->trackOnStart);
   m_cbxQuitOnLossOfTrackIR->SetValue(pUserData->quitOnLossOfTrackIr);
+  m_cmbLogLevel->SetSelection(pUserData->logLevel);
 
   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
   topSizer->Add(m_cbxEnableWatchdog, 0, wxALL, 0);
   topSizer->Add(m_cbxTrackOnStart, 0, wxALL, 0);
   topSizer->Add(m_cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
+  topSizer->Add(m_cmbLogLevel, 0, wxALL, 0);
 
   wxBoxSizer* border = new wxBoxSizer(wxVERTICAL);
   border->Add(topSizer, 0, wxALL, 10);
@@ -78,6 +90,12 @@ void cSettingsGeneralPanel::OnTrackOnStart(wxCommandEvent& event) {
 
 void cSettingsGeneralPanel::OnQuitOnLossOfTrackIr(wxCommandEvent& event) {
   m_pUserData->quitOnLossOfTrackIr = m_cbxQuitOnLossOfTrackIR->IsChecked();
+}
+
+void cSettingsGeneralPanel::OnLogLevel(wxCommandEvent& event) {
+  // TODO: make accept log level changes only on okay
+  auto selection = m_cmbLogLevel->GetSelection();
+  spdlog::set_level(static_cast<spdlog::level::level_enum>(selection));
 }
 
 cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow* parent,

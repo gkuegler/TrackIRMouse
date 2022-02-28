@@ -377,6 +377,16 @@ bool SetActiveProfile(std::string profileName) {
   return true;
 }
 
+void SetLogLevel(spdlog::level::level_enum level) {
+  if (level <= 6 || level >= 0) {
+    spdlog::set_level(level);
+    return;
+  }
+  spdlog::error("log level not set. attempted to set outside of bounds: {}",
+                level);
+  return;
+}
+
 void AddProfile(std::string newProfileName) {
   auto profileNames = GetProfileNames();
 

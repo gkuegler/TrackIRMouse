@@ -33,6 +33,9 @@ struct UserData {
   bool trackOnStart = true;
   bool quitOnLossOfTrackIr = true;
   bool watchdogEnabled = true;
+  int logLevel = spdlog::level::trace;
+  int logLevelFile = spdlog::level::trace;
+  int logLevelTextControl = spdlog::level::info;
   std::string trackIrDllFolder = "default";
   std::string activeProfileName = "Lorem Ipsum";
   std::array<int, 4> defaultPaddings = {0, 0, 0, 0};
@@ -61,10 +64,11 @@ int GetActiveProfileDisplayCount();
 
 std::vector<std::string> GetProfileNames();
 
+// Setter Functions
 bool SetActiveProfile(std::string profileName);
 void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
                                    int parameterSide, double parameter);
-
+void SetLogLevel(spdlog::level::level_enum level);
 void AddProfile(std::string newProfileName);
 void RemoveProfile(std::string profileName);
 void DuplicateActiveProfile();

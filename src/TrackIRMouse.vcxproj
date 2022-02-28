@@ -331,6 +331,16 @@
     <ClCompile Include="np-client.cpp" />
     <ClCompile Include="threads.cpp" />
     <ClCompile Include="track.cpp" />
+    <ClCompile Include="util.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="watchdog.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -349,6 +359,7 @@
     <ClInclude Include="threads.hpp" />
     <ClInclude Include="toml.hpp" />
     <ClInclude Include="track.hpp" />
+    <ClInclude Include="util.hpp" />
     <ClInclude Include="watchdog.hpp" />
   </ItemGroup>
   <ItemGroup>

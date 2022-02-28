@@ -12,6 +12,7 @@ class cSettingsGeneralPanel : public wxPanel {
   wxCheckBox* m_cbxEnableWatchdog;
   wxCheckBox* m_cbxTrackOnStart;
   wxCheckBox* m_cbxQuitOnLossOfTrackIR;
+  wxChoice* m_cmbLogLevel;
   cSettingsGeneralPanel(wxWindow* parent, config::UserData* pUserData);
 
  private:
@@ -19,6 +20,7 @@ class cSettingsGeneralPanel : public wxPanel {
   void OnEnabledWatchdog(wxCommandEvent& event);
   void OnTrackOnStart(wxCommandEvent& event);
   void OnQuitOnLossOfTrackIr(wxCommandEvent& event);
+  void OnLogLevel(wxCommandEvent& event);
   wxDECLARE_EVENT_TABLE();
 };
 
