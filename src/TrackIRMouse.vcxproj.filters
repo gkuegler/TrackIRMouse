@@ -39,6 +39,12 @@
     <ClCompile Include="threads.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="gui-graphic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="environment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="constants.hpp">
@@ -81,6 +87,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gui-graphic.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="environment.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

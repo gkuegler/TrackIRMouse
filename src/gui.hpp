@@ -7,6 +7,7 @@
 #include "config.hpp"
 #include "exceptions.hpp"
 #include "gui-control-id.hpp"
+#include "gui-graphic.hpp"
 #include "log.hpp"
 #include "track.hpp"
 
@@ -73,6 +74,7 @@ class cPanel : public wxPanel {
   wxButton *m_btnDuplicateProfile;
   cTextCtrl *m_textrich;
   cPanelConfiguration *m_pnlDisplayConfig;
+  cDisplayGraphic *m_displayGraphic;
 
   cPanel(cFrame *parent);
 

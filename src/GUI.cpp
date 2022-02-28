@@ -315,6 +315,8 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
       new wxButton(this, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition,
                    kDefaultButtonSize, 0, wxDefaultValidator, "");
 
+  m_displayGraphic = new cDisplayGraphic(this, wxSize(650, 200));
+
   wxStaticText *txtProfiles =
       new wxStaticText(this, wxID_ANY, " Active Profile:        ");
 
@@ -348,8 +350,6 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
   zrTrackCmds->Add(m_btnStartMouse, 0, wxALL, 0);
   zrTrackCmds->Add(m_btnStopMouse, 0, wxALL, 0);
 
-  auto *zrDisplayCanvas = new wxBoxSizer(wxHORIZONTAL);
-
   auto *zrProfCmds = new wxBoxSizer(wxHORIZONTAL);
   zrProfCmds->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
   zrProfCmds->Add(m_cmbProfiles, 1, wxEXPAND | wxTOP | wxRIGHT, 1);
@@ -359,6 +359,7 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
 
   auto *zrBlockLeft = new wxBoxSizer(wxVERTICAL);
   zrBlockLeft->Add(zrTrackCmds, 0, wxBOTTOM, 10);
+  zrBlockLeft->Add(m_displayGraphic, 0, wxALL, 20);
   zrBlockLeft->Add(zrProfCmds, 0, wxEXPAND | wxBOTTOM, 10);
   zrBlockLeft->Add(m_pnlDisplayConfig, 0, wxALL, 0);
 
