@@ -137,8 +137,8 @@ bool CGUIApp::OnInit() {
   }
 
   // Start the watchdog thread
+  m_frame->m_pWatchdogThread = new WatchdogThread(m_frame);
   if (usr.watchdogEnabled) {
-    m_frame->m_pWatchdogThread = new WatchdogThread(m_frame);
     if (m_frame->m_pWatchdogThread->Run() != wxTHREAD_NO_ERROR) {
       spdlog::error("Can't run watchdog thread.");
       delete m_frame->m_pWatchdogThread;

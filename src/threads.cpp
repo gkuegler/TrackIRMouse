@@ -38,8 +38,10 @@ wxThread::ExitCode TrackThread::Entry() {
 
   // This is the loop function
   if (track::TrackStart() == retcode::fail && usr.quitOnLossOfTrackIr) {
+    spdlog::trace("quitting on loss of track ir");
     CloseApplication();
   }
+  spdlog::trace("track thread is closing");
 
   return NULL;
 }
@@ -49,7 +51,7 @@ wxThread::ExitCode TrackThread::Entry() {
 
 WatchdogThread::WatchdogThread(cFrame* pHandler) : wxThread() {
   m_pHandler = pHandler;
-  m_hPipe = WatchDog::StartWatchdog();
+  m_hPipe = WatchDog::InitializeWatchdog();
 }
 
 WatchdogThread::~WatchdogThread() {

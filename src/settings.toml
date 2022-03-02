@@ -1,6 +1,6 @@
 
 [General]
-track_on_start = true
+track_on_start = false
 quit_on_loss_of_track_ir = true
 trackir_dll_directory = "default"
 watchdog_enabled = true

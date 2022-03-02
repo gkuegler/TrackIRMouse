@@ -268,7 +268,7 @@
     <PostBuildEvent>
       <Command>"C:\Python38-32\python.exe" "$(SolutionDir)Build Steps\pause-current-trackir.py"
 "$(TargetDir)TrackIRMouse.exe"
-"C:\Python38-32\python.exe" "$(SolutionDir)Build Steps\pause-current-trackir.py"</Command>
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

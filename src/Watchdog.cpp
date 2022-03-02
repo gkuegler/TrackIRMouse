@@ -30,7 +30,7 @@ constexpr auto BUFSIZE = 512;
 namespace WatchDog {
 std::atomic<bool> g_bPauseTracking = false;
 
-HANDLE StartWatchdog() {
+HANDLE InitializeWatchdog() {
   spdlog::trace("StartWatchdog");
   HANDLE hPipe = INVALID_HANDLE_VALUE;
   LPCSTR lpszPipename = "\\\\.\\pipe\\watchdog";
@@ -83,11 +83,12 @@ HANDLE StartWatchdog() {
                            PIPE_TYPE_MESSAGE |          // message type pipe
                                PIPE_READMODE_MESSAGE |  // message-read mode
                                PIPE_WAIT,               // blocking mode
-                           PIPE_UNLIMITED_INSTANCES,    // max. instances
-                           BUFSIZE,                     // output buffer size
-                           BUFSIZE,                     // input buffer size
-                           0,                           // client time-out
-                           &sa);  // default security attribute
+                           // PIPE_UNLIMITED_INSTANCES,    // max. instances
+                           0,        // max. instances
+                           BUFSIZE,  // output buffer size
+                           BUFSIZE,  // input buffer size
+                           0,        // client time-out
+                           &sa);     // default security attribute
 
   if (hPipe == INVALID_HANDLE_VALUE) {
     spdlog::warn("CreateNamedPipe failed, GLE={}.", GetLastError());
@@ -98,7 +99,7 @@ HANDLE StartWatchdog() {
 }
 
 void Serve(HANDLE hPipe) {
-  spdlog::trace("starting watchdog serve");
+  spdlog::trace("starting watchdog server");
 
   // Initialize send and returN buffers
   HANDLE hHeap = GetProcessHeap();
@@ -176,10 +177,10 @@ void Serve(HANDLE hPipe) {
       );
 
       if (!bSuccess || cbReplyBytes != cbWritten) {
-        spdlog::error("InstanceThread WriteFile failed, GLE={}.\n",
+        spdlog::error("InstanceThread WriteFile failed, GLE={}.",
                       GetLastError());
       } else {
-        spdlog::info("Number of Bytes Written: {}\n", cbReplyBytes);
+        spdlog::info("Number of Bytes Written: {}", cbReplyBytes);
       }
 
       // Flush the pipe to allow the client to read the pipe's contents
@@ -209,16 +210,14 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
 {
   errno_t rslt = 1;
 
-  spdlog::debug("Client Request:{}", pchRequest);
-
   if (strcmp(pchRequest, "KILL") == 0) {
     rslt = strcpy_s(pchReply, BUFSIZE, "KL");
     if (system("taskkill /T /IM TrackIR5.exe") == -1)
       spdlog::error("Failed to kill TrackIR5 program with error code");
   } else if (strcmp(pchRequest, "HEARTBEAT") == 0) {
-    rslt = strcpy_s(pchReply, BUFSIZE, "HB");
+    rslt = strcpy_s(pchReply, BUFSIZE, "HEARTBEAT\0");
   } else if (strcmp(pchRequest, "PAUSE") == 0) {
-    rslt = strcpy_s(pchReply, BUFSIZE, "PAUSE");
+    rslt = strcpy_s(pchReply, BUFSIZE, "PAUSE\0");
     g_bPauseTracking = !g_bPauseTracking;
   } else {
     rslt = strcpy_s(pchReply, BUFSIZE, "NONE");
