@@ -19,18 +19,6 @@ const static std::array<std::string, 7> LogLevels = {
     "trace", "debug", "info", "warning", "error", "critical", "off"};
 const static auto asLogLevels = BuildArrayString(LogLevels);
 
-// clang-format off
-BEGIN_EVENT_TABLE(cSettingsGeneralPanel, wxPanel)
-    EVT_CHECKBOX(myID_WATCHDOG_ENABLED, cSettingsGeneralPanel::OnEnabledWatchdog)
-    EVT_CHECKBOX(myID_TRACK_ON_START, cSettingsGeneralPanel::OnTrackOnStart)
-    EVT_CHECKBOX(myID_QUIT_ON_LOSS_OF_TRACK_IR, cSettingsGeneralPanel::OnQuitOnLossOfTrackIr)
-END_EVENT_TABLE()
-
-BEGIN_EVENT_TABLE(cSettingsAdvancedlPanel, wxPanel)
-    EVT_TEXT(myID_TRACK_IR_DLL_PATH, cSettingsAdvancedlPanel::OnTrackIrDllPath)
-END_EVENT_TABLE()
-// clang-format on
-
 cSettingsPopup::cSettingsPopup(wxWindow* parent, config::UserData* pUserData)
     : wxPropertySheetDialog(parent, wxID_ANY, "Settings", wxPoint(200, 200),
                             wxSize(300, 300), wxDEFAULT_DIALOG_STYLE, "") {
@@ -78,6 +66,10 @@ cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent,
   border->Add(topSizer, 0, wxALL, 10);
 
   SetSizer(border);
+
+  m_cbxEnableWatchdog->Bind(wxEVT_CHECKBOX, &cSettingsGeneralPanel::OnEnabledWatchdog, this);
+  m_cbxTrackOnStart->Bind(wxEVT_CHECKBOX, &cSettingsGeneralPanel::OnTrackOnStart, this);
+  m_cbxQuitOnLossOfTrackIR->Bind(wxEVT_CHECKBOX, &cSettingsGeneralPanel::OnQuitOnLossOfTrackIr, this);
 }
 
 void cSettingsGeneralPanel::OnEnabledWatchdog(wxCommandEvent& event) {
@@ -124,6 +116,8 @@ cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow* parent,
   border->Add(topSizer, 0, wxALL, 10);
 
   SetSizer(border);
+
+  m_txtTrackIrDllPath->Bind(wxEVT_TEXT, &cSettingsAdvancedlPanel::OnTrackIrDllPath, this);
 }
 
 void cSettingsAdvancedlPanel::OnTrackIrDllPath(wxCommandEvent& event) {

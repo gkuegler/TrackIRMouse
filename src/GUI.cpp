@@ -54,39 +54,8 @@ const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
 
-// clang-format off
-wxBEGIN_EVENT_TABLE(cFrame, wxFrame)
-  EVT_MENU(wxID_EXIT, cFrame::OnExit)
-  EVT_MENU(wxID_ABOUT, cFrame::OnAbout)
-  EVT_MENU(wxID_OPEN, cFrame::OnOpen)
-  EVT_MENU(wxID_SAVE, cFrame::OnSave)
-  EVT_MENU(wxID_RELOAD, cFrame::OnReload)
-  EVT_MENU(myID_SETTINGS, cFrame::OnSettings)
-wxEND_EVENT_TABLE()
-
-wxBEGIN_EVENT_TABLE(cPanel, wxPanel)
-  EVT_BUTTON(myID_START_TRACK, cPanel::OnTrackStart)
-  EVT_BUTTON(myID_STOP_TRACK, cPanel::OnTrackStop)
-  EVT_CHOICE(myID_PROFILE_SELECTION, cPanel::OnActiveProfile)
-  EVT_BUTTON(myID_ADD_PROFILE, cPanel::OnAddProfile)
-  EVT_BUTTON(myID_REMOVE_PROFILE, cPanel::OnRemoveProfile)
-  EVT_BUTTON(myID_DUPLICATE_PROFILE, cPanel::OnDuplicateProfile)
-wxEND_EVENT_TABLE()
-
-wxBEGIN_EVENT_TABLE(cPanelConfiguration, wxPanel)
-  EVT_TEXT(myID_PROFILE_NAME, cPanelConfiguration::OnName)
-  EVT_TEXT(myID_PROFILE_ID, cPanelConfiguration::OnProfileID)
-  EVT_CHECKBOX(myID_USE_DEFAULT_PADDING, cPanelConfiguration::OnUseDefaultPadding)
-  // EVT_BUTTON(myID_MANAGE_DISPLAYS, cPanelConfiguration::OnManageDisplays)
-  EVT_DATAVIEW_ITEM_EDITING_DONE(myID_MAPPING_DATA, cPanelConfiguration::OnMappingData)
-  EVT_BUTTON(myID_ADD_DISPLAY, cPanelConfiguration::OnAddDisplay)
-  EVT_BUTTON(myID_REMOVE_DISPLAY, cPanelConfiguration::OnRemoveDisplay)
-  EVT_BUTTON(myID_MOVE_UP, cPanelConfiguration::OnMoveUp)
-  EVT_BUTTON(myID_MOVE_DOWN, cPanelConfiguration::OnMoveDown)
-wxEND_EVENT_TABLE()
 
 wxIMPLEMENT_APP(CGUIApp);
-// clang-format on
 
 bool CGUIApp::OnInit() {
   // Initialize global default loggers
@@ -170,13 +139,13 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   // menuFile->Append(wxID_SAVE, "&Save\tCtrl-s", "Save the configuration
   // file.");
   // TODO: implement ctrl-s keyboard shortcut.
-  menuFile->Append(wxID_SAVE, "&Save", "Save to the settings file.");
-  menuFile->Append(wxID_RELOAD, "&Reload", "Reload the settings file.");
+  menuFile->Append(wxID_SAVE);
+  menuFile->Append(myID_MENU_RELOAD, "&Reload", "Reload the settings file.");
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
 
   wxMenu *menuEdit = new wxMenu;
-  menuEdit->Append(myID_SETTINGS, "&Settings", "Edit app settings.");
+  menuEdit->Append(myID_MENU_SETTINGS, "&Settings", "Edit app settings.");
 
   wxMenu *menuHelp = new wxMenu;
   // menuHelp->AppendSeparator();
@@ -195,6 +164,14 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   m_panel = new cPanel(this);
   m_panel->GetSizer()->Fit(this);
   m_panel->Fit();
+
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnAbout, this, wxID_ABOUT);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnExit, this, wxID_EXIT);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnOpen, this, wxID_OPEN);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnSave, this, wxID_SAVE);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnReload, this, myID_MENU_RELOAD);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnSettings, this,
+       myID_MENU_SETTINGS);
 }
 
 void cFrame::OnExit(wxCommandEvent &event) { Close(true); }
@@ -377,6 +354,13 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
   m_btnStartMouse->SetToolTip(
       wxT("Start controlling mouse with head tracking."));
   m_btnStopMouse->SetToolTip(wxT("Stop control of the mouse."));
+
+  m_btnStartMouse->Bind(wxEVT_BUTTON, &cPanel::OnTrackStart, this);
+  m_btnStopMouse->Bind(wxEVT_BUTTON, &cPanel::OnTrackStop, this);
+  m_cmbProfiles->Bind(wxEVT_CHOICE, &cPanel::OnActiveProfile, this);
+  m_btnAddProfile->Bind(wxEVT_BUTTON, &cPanel::OnAddProfile, this);
+  m_btnRemoveProfile->Bind(wxEVT_BUTTON, &cPanel::OnRemoveProfile, this);
+  m_btnDuplicateProfile->Bind(wxEVT_BUTTON, &cPanel::OnDuplicateProfile, this);
 }
 
 void cPanel::PopulateComboBoxWithProfiles() {
@@ -600,6 +584,14 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
   // Set Tool Tip
   // myButton->SetToolTip(wxT("Some helpful tip for this button")); // button
   // is a wxButton*
+  m_name->Bind(wxEVT_TEXT, &cPanelConfiguration::OnName, this);
+  m_profileID->Bind(wxEVT_TEXT, &cPanelConfiguration::OnProfileID, this);
+  m_useDefaultPadding->Bind(wxEVT_CHECKBOX, &cPanelConfiguration::OnUseDefaultPadding, this);
+  m_btnAddDisplay->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnAddDisplay, this);
+  m_btnRemoveDisplay->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnRemoveDisplay, this);
+  m_btnMoveUp->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnMoveUp, this);
+  m_btnMoveDown->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnMoveDown, this);
+  m_tlcMappingData->Bind(wxEVT_DATAVIEW_ITEM_EDITING_DONE, &cPanelConfiguration::OnMappingData, this);
 }
 
 void cPanelConfiguration::LoadDisplaySettings() {

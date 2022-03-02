@@ -46,8 +46,6 @@ class cPanelConfiguration : public wxPanel {
   void OnRemoveDisplay(wxCommandEvent &event);
   void OnMoveUp(wxCommandEvent &event);
   void OnMoveDown(wxCommandEvent &event);
-
-  wxDECLARE_EVENT_TABLE();
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -91,8 +89,6 @@ class cPanel : public wxPanel {
   void OnAddProfile(wxCommandEvent &event);
   void OnRemoveProfile(wxCommandEvent &event);
   void OnDuplicateProfile(wxCommandEvent &event);
-
-  wxDECLARE_EVENT_TABLE();
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -119,8 +115,6 @@ class cFrame : public wxFrame {
   void OnReload(wxCommandEvent &event);
   void OnSettings(wxCommandEvent &event);
   void OnGenerateExample(wxCommandEvent &event);
-
-  wxDECLARE_EVENT_TABLE();
 };
 
 //////////////////////////////////////////////////////////////////////

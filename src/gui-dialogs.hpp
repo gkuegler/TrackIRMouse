@@ -21,7 +21,6 @@ class cSettingsGeneralPanel : public wxPanel {
   void OnTrackOnStart(wxCommandEvent& event);
   void OnQuitOnLossOfTrackIr(wxCommandEvent& event);
   void OnLogLevel(wxCommandEvent& event);
-  wxDECLARE_EVENT_TABLE();
 };
 
 class cSettingsAdvancedlPanel : public wxPanel {
@@ -32,7 +31,6 @@ class cSettingsAdvancedlPanel : public wxPanel {
  private:
   config::UserData* m_pUserData = nullptr;
   void OnTrackIrDllPath(wxCommandEvent& event);
-  wxDECLARE_EVENT_TABLE();
 };
 
 class cSettingsPopup : public wxPropertySheetDialog {
