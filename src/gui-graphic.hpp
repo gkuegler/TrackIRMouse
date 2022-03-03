@@ -18,8 +18,6 @@ class cDisplayGraphic : public wxPanel {
   int width = 200;
   int height = 100;
   int gap = 20;
-
-  DECLARE_EVENT_TABLE()
 };
 
 #endif /* TRACKIRMOUSE_DISPLAYGRAPHIC_H */

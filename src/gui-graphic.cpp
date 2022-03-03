@@ -10,10 +10,6 @@
 #include "config.hpp"
 #include "environment.hpp"
 
-BEGIN_EVENT_TABLE(cDisplayGraphic, wxPanel)
-EVT_PAINT(cDisplayGraphic::PaintEvent)
-END_EVENT_TABLE()
-
 // not used anywhere, may ba cleaned up later
 // using RectInt = std::vector<std::vector<int>>;
 // using RectDouble = std::vector<std::vector<double>>;
@@ -39,6 +35,7 @@ cDisplayGraphic::cDisplayGraphic(wxWindow* parent, wxSize size)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, size,
               wxFULL_REPAINT_ON_RESIZE, "") {
   m_parent = parent;
+  Bind(wxEVT_PAINT, &cDisplayGraphic::PaintEvent, this);
 }
 
 // Called by the system of by wxWidgets when the panel needs
@@ -94,16 +91,13 @@ void cDisplayGraphic::Render(wxDC& dc) {
 
   dc.DestroyClippingRegion();
 
-  constexpr int pad = 5;
-  const auto darkBlue = wxColor(71, 127, 255);
-  const auto lightBlue = wxColor(173, 198, 255);
+  static constexpr int pad = 5;
+  static const auto darkBlue = wxColor(71, 127, 255);
+  static const auto lightBlue = wxColor(173, 198, 255);
+  static const auto darkGray = wxColor(80, 80, 80);
+  static const auto lightGray = wxColor(200, 200, 200);
   const auto textHeight = dc.GetTextExtent("example").GetHeight();
   const auto halfTextHeight = textHeight / 2;
-
-  // brush = fill
-  // pen = outline
-  dc.SetBrush(lightBlue);         // fill color
-  dc.SetPen(wxPen(darkBlue, 5));  // 5-pixels-thick blue outline
 
   // test data
   std::vector<int> padding = {3, 3, 0, 0};
@@ -119,7 +113,7 @@ void cDisplayGraphic::Render(wxDC& dc) {
 
   // get array of monitor bounds
   auto hdi = env::GetHardwareDisplayInfo();
-  auto usr = config::GetActiveProfile().displays;
+  auto usrDisplays = config::GetActiveProfile().displays;
 
   // normalize virtual desktop rect for each monitor where 1 = total width in
   // pixels values can be negative
@@ -220,31 +214,72 @@ void cDisplayGraphic::Render(wxDC& dc) {
   // dc.DrawRectangle(wxRect(0, 0, area_x, area_y));
 
   for (int i = 0; i < bounds_norm.size(); i++) {
-    // auto r = wxRect(xoffset, 10, width, height);
+    // Draw the rectangle
 
     auto r = wxRect();
     r.SetLeft(bounds_norm[i][0]);
     r.SetRight(bounds_norm[i][1]);
     r.SetTop(bounds_norm[i][2]);
     r.SetBottom(bounds_norm[i][3]);
+    dc.SetBrush(lightGray);         // fill color
+    dc.SetPen(wxPen(darkGray, 3));  // outline
+    dc.DrawRectangle(r);
+
+    bool userSpecifiedRotationAvailable = (usrDisplays.size() > i);
+
+    // Draw the padding boundary
+    // This actually looks terrible
+    // if (userSpecifiedRotationAvailable) {
+    //   auto p = wxRect();
+    //   if (config::GetActiveProfile().useDefaultPadding) {
+    //     auto padding = config::GetUserData().defaultPaddings;
+    //     p.SetLeft(r.GetLeft() + padding[0]);
+    //     p.SetRight(r.GetRight() - padding[1]);
+    //     p.SetTop(r.GetTop() + padding[2]);
+    //     p.SetBottom(r.GetBottom() - padding[3]);
+    //   } else {
+    //     p.SetLeft(r.GetLeft() + usrDisplays[i].padding[0]);
+    //     p.SetRight(r.GetRight() - usrDisplays[i].padding[1]);
+    //     p.SetTop(r.GetTop() + usrDisplays[i].padding[2]);
+    //     p.SetBottom(r.GetBottom() - usrDisplays[i].padding[3]);
+    //   }
+    //   dc.SetPen(wxPen(wxColor(0, 0, 0), 3,
+    //                   wxPENSTYLE_SHORT_DASH));  // black line, 3 pixels thick
+    //   dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    //   dc.DrawRectangle(p);
+    // }
+
+    // Draw text labels
+    auto text_left =
+        userSpecifiedRotationAvailable
+            ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[0])
+            : wxString("?");
+    auto text_right =
+        userSpecifiedRotationAvailable
+            ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[1])
+            : wxString("?");
+    auto text_top =
+        userSpecifiedRotationAvailable
+            ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[2])
+            : wxString("?");
+    auto text_bottom =
+        userSpecifiedRotationAvailable
+            ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[3])
+            : wxString("?");
 
     auto middleX = r.x + (r.GetWidth() / 2);
     auto middleY = r.y + (r.height / 2);
 
-    wxString text_left = wxString::Format(wxT("%0.2f"), usr[i].rotation[0]);
     int text_left_x = r.x + pad;
     int text_left_y = middleY - halfTextHeight;
 
-    wxString text_right = wxString::Format(wxT("%0.2f"), usr[i].rotation[1]);
     int text_right_x =
         r.GetRight() - pad - dc.GetTextExtent(text_right).GetWidth();
     int text_right_y = middleY - halfTextHeight;
 
-    wxString text_top = wxString::Format(wxT("%0.2f"), usr[i].rotation[2]);
     int text_top_x = middleX - (dc.GetTextExtent(text_top).GetWidth() / 2);
     int text_top_y = r.y + pad;
 
-    wxString text_bottom = wxString::Format(wxT("%0.2f"), usr[i].rotation[3]);
     int text_bottom_x =
         middleX - (dc.GetTextExtent(text_bottom).GetWidth() / 2);
     int text_bottom_y = r.GetBottom() - pad - textHeight;
@@ -252,17 +287,18 @@ void cDisplayGraphic::Render(wxDC& dc) {
     wxString text_center = wxString::Format(wxT("%d"), i);
     int text_center_x =
         middleX - (dc.GetTextExtent(text_center).GetWidth() / 2);
-    int text_center_y = middleY - halfTextHeight;
+    int text_center_y = middleY - textHeight - 1;
 
-    int xoffset = i * (width + pad);
+    auto resolution = wxString::Format(wxT("%dx%d"), 1920, 1080);
+    int resolution_x = middleX - (dc.GetTextExtent(resolution).GetWidth() / 2);
+    int resolution_y = middleY + 1;
 
-    // Draw Objects
-    dc.DrawRectangle(r);
     dc.DrawText(text_left, text_left_x, text_left_y);
     dc.DrawText(text_right, text_right_x, text_right_y);
     dc.DrawText(text_top, text_top_x, text_top_y);
     dc.DrawText(text_bottom, text_bottom_x, text_bottom_y);
     dc.DrawText(text_center, text_center_x, text_center_y);
+    dc.DrawText(resolution, resolution_x, resolution_y);
   }
 
   // draw a line
