@@ -22,7 +22,7 @@
 
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
-//#define TEST_NO_TRACK
+#define TEST_NO_TRACK
 
 namespace track {
 
@@ -239,8 +239,7 @@ retcode Initialize(HWND hWnd, config::Profile profile, std::string dllpath) {
     result = NP_RegisterWindowHandle(hWnd);
     if (NP_OK == result) {
       spdlog::info("NP Re-registered window handle.");
-    }
-    else {
+    } else {
       spdlog::error("Failed to re-register window handle with NP code: {}",
                     result);
       return retcode::fail;

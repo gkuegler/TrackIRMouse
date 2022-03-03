@@ -24,7 +24,7 @@ class cFrame;
 class cPanelConfiguration : public wxPanel {
  public:
   wxTextCtrl *m_name;
-  wxTextCtrl *m_profileID;
+  wxComboBox *m_profileID;
   wxCheckBox *m_useDefaultPadding;
   wxButton *m_btnAddDisplay;
   wxButton *m_btnRemoveDisplay;
@@ -38,6 +38,7 @@ class cPanelConfiguration : public wxPanel {
 
  private:
   cPanel *m_parent;
+  int m_ival = 0;
   void OnName(wxCommandEvent &event);
   void OnProfileID(wxCommandEvent &event);
   void OnUseDefaultPadding(wxCommandEvent &event);

@@ -10,7 +10,6 @@ template <typename T>
 wxArrayString BuildArrayString(const T container) {
   wxArrayString array;
   for (const auto& text : container) {
-    spdlog::info("text -> {}", text);
     array.Add(wxString(text), 1);
   }
   return array;

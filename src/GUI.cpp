@@ -36,6 +36,7 @@
 #include <wx/dataview.h>
 #include <wx/filedlg.h>
 #include <wx/popupwin.h>
+#include <wx/valnum.h>
 #include <wx/wfstream.h>
 
 #include <string>
@@ -47,6 +48,7 @@
 #include "threads.hpp"
 #include "toml/exception.hpp"
 #include "track.hpp"
+#include "util.hpp"
 #include "watchdog.hpp"
 
 constexpr std::string_view kVersionNo = "0.7.1";
@@ -54,26 +56,30 @@ const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
 
-
 wxIMPLEMENT_APP(CGUIApp);
+
+// Center app on main display
+wxPoint GetOrigin(const int w, const int h) {
+  int desktopWidth = GetSystemMetrics(SM_CXMAXIMIZED);
+  int desktopHeight = GetSystemMetrics(SM_CYMAXIMIZED);
+  return wxPoint((desktopWidth / 2) - (w / 2), (desktopHeight / 2) - (h / 2));
+}
 
 bool CGUIApp::OnInit() {
   // Initialize global default loggers
   mylogging::SetUpLogging();
 
-  // Center app on main display
+  // App initialization constants
   constexpr int appWidth = 1200;
   constexpr int appHeight = 800;
-  int w = GetSystemMetrics(SM_CXMAXIMIZED);
-  int h = GetSystemMetrics(SM_CYMAXIMIZED);
-  auto origin = wxPoint((w / 2) - (appWidth / 2), (h / 2) - (appHeight / 2));
-  auto dimensions = wxSize(appWidth, appHeight);
 
   // Construct child elements first. The main panel contains a text control that
   // is a log target.
-  m_frame = new cFrame(origin, dimensions);
+  m_frame =
+      new cFrame(GetOrigin(appWidth, appHeight), wxSize(appWidth, appHeight));
 
-  // Handle and display messages to log widget sent from outside GUI thread
+  // Handle and display messages to text control widget sent from outside GUI
+  // thread
   Bind(wxEVT_THREAD, [this](wxThreadEvent &event) {
     cTextCtrl *textrich = m_frame->m_panel->m_textrich;
 
@@ -498,10 +504,14 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
                      wxSize(200, 20), wxTE_LEFT, wxDefaultValidator, "");
   // TODO: convert this into a drop down list to select valid ID numbers; also
   // display their titles? probably not necessary couldn't guarantee that a
-  // title is correct
-  m_profileID =
-      new wxTextCtrl(this, myID_PROFILE_ID, "2201576", wxDefaultPosition,
-                     wxSize(60, 20), wxTE_LEFT, wxDefaultValidator, "");
+  // title is correc
+
+  std::vector<std::string> idlist = {"13302", "2025"};
+  auto idChoices = BuildArrayString(idlist);
+
+  m_profileID = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition,
+                               wxSize(80, 20), idChoices, wxCB_DROPDOWN,
+                               wxMakeIntegerValidator(&m_ival), "");
   m_useDefaultPadding = new wxCheckBox(
       this, myID_USE_DEFAULT_PADDING, "Use Default Padding", wxDefaultPosition,
       wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
@@ -586,12 +596,15 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
   // is a wxButton*
   m_name->Bind(wxEVT_TEXT, &cPanelConfiguration::OnName, this);
   m_profileID->Bind(wxEVT_TEXT, &cPanelConfiguration::OnProfileID, this);
-  m_useDefaultPadding->Bind(wxEVT_CHECKBOX, &cPanelConfiguration::OnUseDefaultPadding, this);
+  m_useDefaultPadding->Bind(wxEVT_CHECKBOX,
+                            &cPanelConfiguration::OnUseDefaultPadding, this);
   m_btnAddDisplay->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnAddDisplay, this);
-  m_btnRemoveDisplay->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnRemoveDisplay, this);
+  m_btnRemoveDisplay->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnRemoveDisplay,
+                           this);
   m_btnMoveUp->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnMoveUp, this);
   m_btnMoveDown->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnMoveDown, this);
-  m_tlcMappingData->Bind(wxEVT_DATAVIEW_ITEM_EDITING_DONE, &cPanelConfiguration::OnMappingData, this);
+  m_tlcMappingData->Bind(wxEVT_DATAVIEW_ITEM_EDITING_DONE,
+                         &cPanelConfiguration::OnMappingData, this);
 }
 
 void cPanelConfiguration::LoadDisplaySettings() {
@@ -641,7 +654,7 @@ void cPanelConfiguration::OnName(wxCommandEvent &event) {
 }
 
 void cPanelConfiguration::OnProfileID(wxCommandEvent &event) {
-  wxString number = m_profileID->GetLineText(0);
+  auto number = m_profileID->GetValue();  // from txt entry inheritted
   long value;
   if (!number.ToLong(&value)) {  // wxWidgets has odd conversions
     // TODO: verify only numbers allowed in profile id text control
@@ -713,6 +726,7 @@ void cPanelConfiguration::OnMappingData(wxDataViewEvent &event) {
   }
 
   LoadDisplaySettings();
+  m_parent->m_displayGraphic->PaintNow();
 }
 
 void cPanelConfiguration::OnAddDisplay(wxCommandEvent &event) {
@@ -720,6 +734,7 @@ void cPanelConfiguration::OnAddDisplay(wxCommandEvent &event) {
   // TODO: can this be emplace back?
   profile.displays.push_back(config::Display({0, 0, 0, 0}, {0, 0, 0, 0}));
   LoadDisplaySettings();
+  m_parent->m_displayGraphic->PaintNow();
 }
 void cPanelConfiguration::OnRemoveDisplay(wxCommandEvent &event) {
   auto &profile = config::GetActiveProfileMutable();
@@ -727,6 +742,7 @@ void cPanelConfiguration::OnRemoveDisplay(wxCommandEvent &event) {
   if (wxNOT_FOUND != index) {
     profile.displays.erase(profile.displays.begin() + index);
     LoadDisplaySettings();
+    m_parent->m_displayGraphic->PaintNow();
   } else {
     wxLogError("Display row not selected.");
   }
@@ -749,6 +765,7 @@ void cPanelConfiguration::OnMoveUp(wxCommandEvent &event) {
     wxDataViewItemArray items(size_t(1));  // no braced init constructor :(
     items[0] = item;                       // assumed single selection mode
     m_tlcMappingData->SetSelections(items);
+    m_parent->m_displayGraphic->PaintNow();
   }
 }
 void cPanelConfiguration::OnMoveDown(wxCommandEvent &event) {
@@ -768,5 +785,6 @@ void cPanelConfiguration::OnMoveDown(wxCommandEvent &event) {
     wxDataViewItemArray items(size_t(1));  // no braced init constructor :(
     items[0] = item;                       // assumed single selection mode
     m_tlcMappingData->SetSelections(items);
+    m_parent->m_displayGraphic->PaintNow();
   }
 }
