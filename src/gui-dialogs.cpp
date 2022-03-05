@@ -17,7 +17,7 @@
 
 const static std::array<std::string, 7> LogLevels = {
     "trace", "debug", "info", "warning", "error", "critical", "off"};
-const static auto asLogLevels = BuildArrayString(LogLevels);
+const static auto asLogLevels = BuildWxArrayString(LogLevels);
 
 cSettingsPopup::cSettingsPopup(wxWindow* parent, config::UserData* pUserData)
     : wxPropertySheetDialog(parent, wxID_ANY, "Settings", wxPoint(200, 200),

@@ -179,10 +179,6 @@ void cDisplayGraphic::Render(wxDC& dc) {
   double x_offset = (area_x / 2) - (swidth / 2);
   double y_offset = (area_y / 2) - (sheight / 2);
 
-  // get coefficient to fot overall drawing to space
-  // float fittingCoefficient = GetFittingCoefficient(normalized);
-  // TODO: need to find single scale factor to keep aspect ratio
-
   {
     for (auto& d : bounds_norm) {
       d[0] += x_offset;
@@ -228,7 +224,7 @@ void cDisplayGraphic::Render(wxDC& dc) {
     bool userSpecifiedRotationAvailable = (usrDisplays.size() > i);
 
     // Draw the padding boundary
-    // This actually looks terrible
+    // This actually looks terrible. Don't do this.
     // if (userSpecifiedRotationAvailable) {
     //   auto p = wxRect();
     //   if (config::GetActiveProfile().useDefaultPadding) {

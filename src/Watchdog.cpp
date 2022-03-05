@@ -22,13 +22,11 @@
 
 #include "watchdog.hpp"
 
-#include "constants.hpp"
 #include "log.hpp"
 
 constexpr auto BUFSIZE = 512;
 
 namespace WatchDog {
-std::atomic<bool> g_bPauseTracking = false;
 
 HANDLE InitializeWatchdog() {
   spdlog::trace("StartWatchdog");
@@ -218,7 +216,7 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
     rslt = strcpy_s(pchReply, BUFSIZE, "HEARTBEAT\0");
   } else if (strcmp(pchRequest, "PAUSE") == 0) {
     rslt = strcpy_s(pchReply, BUFSIZE, "PAUSE\0");
-    g_bPauseTracking = !g_bPauseTracking;
+    track::TrackToggle();
   } else {
     rslt = strcpy_s(pchReply, BUFSIZE, "NONE");
   }

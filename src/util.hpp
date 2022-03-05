@@ -7,7 +7,7 @@
 #include <vector>
 
 template <typename T>
-wxArrayString BuildArrayString(const T container) {
+wxArrayString BuildWxArrayString(const T container) {
   wxArrayString array;
   for (const auto& text : container) {
     array.Add(wxString(text), 1);

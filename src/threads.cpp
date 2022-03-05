@@ -2,9 +2,9 @@
 
 #include <wx/thread.h>
 
-#include "constants.hpp"
 #include "gui.hpp"
 #include "watchdog.hpp"
+#include "types.hpp"
 
 //////////////////////////////////////////////////////////////////////
 //                           TrackThread                            //

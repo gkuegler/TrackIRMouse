@@ -13,11 +13,11 @@
 #include "track.hpp"
 
 #include "config.hpp"
-#include "constants.hpp"
 #include "display.hpp"
 #include "exceptions.hpp"
 #include "log.hpp"
 #include "np-client.h"
+#include "types.hpp"
 #include "watchdog.hpp"
 
 // Uncomment this line for testing to prevent program
@@ -31,17 +31,17 @@ constexpr auto USHORT_MAX_VAL = 65535;
 
 // Tracking loop uses this to check if it should break, return to thread, then
 // have thread auto clean up
-std::atomic<bool> g_bTrackingAllowedToRun = false;
+static std::atomic<bool> g_bTrackingAllowedToRun = false;
+static std::atomic<bool> g_bPauseTracking = false;
 
 std::vector<CDisplay> g_displays;
 
-signed int g_virtualOriginX = 0;
-signed int g_virtualOriginY = 0;
+pixels g_virtualOriginX = 0;
+pixels g_virtualOriginY = 0;
 double g_xPixelAbsoluteSlope = 0;
 double g_yPixelAbsoluteSlope = 0;
 
-HANDLE g_hWatchdogThread = NULL;
-
+// windows api callback
 BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
                                LPRECT lprcMonitor, LPARAM lParam) {
   static int count{0};
@@ -54,10 +54,10 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
 
   // Monitor Pixel Bounds in the Virtual Desktop
   // static_cast: long -> signed int
-  auto left = static_cast<signed int>(Monitor.rcMonitor.left);
-  auto right = static_cast<signed int>(Monitor.rcMonitor.right);
-  auto top = static_cast<signed int>(Monitor.rcMonitor.top);
-  auto bottom = static_cast<signed int>(Monitor.rcMonitor.bottom);
+  auto left = static_cast<pixels>(Monitor.rcMonitor.left);
+  auto right = static_cast<pixels>(Monitor.rcMonitor.right);
+  auto top = static_cast<pixels>(Monitor.rcMonitor.top);
+  auto bottom = static_cast<pixels>(Monitor.rcMonitor.bottom);
 
   // CDisplay may create an extra copy constructor, but I want to guarantee
   // overload resolution uses my initializer list to instantiate a single item.
@@ -86,6 +86,7 @@ retcode WinSetup(config::Profile profile) {
   spdlog::trace("entering WinSetup");
 
   const int monitorCount = GetSystemMetrics(SM_CMONITORS);
+  // TODO: convert to size_t
   const int size = profile.displays.size();
   if (monitorCount != size) {
     spdlog::error(
@@ -94,10 +95,10 @@ retcode WinSetup(config::Profile profile) {
     return retcode::fail;
   }
 
-  int virtualDesktopWidth = GetSystemMetrics(
-      SM_CXVIRTUALSCREEN);  // width of total bounds of all screens
-  int virtualDesktopHeight = GetSystemMetrics(
-      SM_CYVIRTUALSCREEN);  // height of total bounds of all screens
+  auto virtualDesktopWidth = static_cast<pixels>(GetSystemMetrics(
+      SM_CXVIRTUALSCREEN)); // width of total bounds of all screens
+  auto virtualDesktopHeight = static_cast<pixels>(GetSystemMetrics(
+      SM_CYVIRTUALSCREEN)); // height of total bounds of all screens
 
   spdlog::debug("{} Monitors Found", monitorCount);
   spdlog::debug("Width of Virtual Desktop:  {:>5}", virtualDesktopWidth);
@@ -291,7 +292,7 @@ inline void SendMyInput(double x, double y) {
 
   return;
 }
-void MouseMove(double yaw, double pitch) {
+void MouseMove(deg yaw, deg pitch) {
   static int lastScreen = 0;
 
   // Check if the head is pointing to a screen
@@ -332,30 +333,30 @@ void MouseMove(double yaw, double pitch) {
   double rt = g_displays[lastScreen].rotation16bit[2];
   double rb = g_displays[lastScreen].rotation16bit[3];
 
-  if (yaw < rl) {  // horizontal rotaion is left of last used display
+  if (yaw < rl) { // horizontal rotaion is left of last used display
     x = g_displays[lastScreen].absCached[0] +
         g_displays[lastScreen].padding[0] * g_xPixelAbsoluteSlope;
-  } else if (yaw > rr) {  // horizontal rotation is right of last used display
+  } else if (yaw > rr) { // horizontal rotation is right of last used display
     x = g_displays[lastScreen].absCached[1] -
         g_displays[lastScreen].padding[1] * g_xPixelAbsoluteSlope;
-  } else {  // horizontal roation within last display bounds as normal
+  } else { // horizontal roation within last display bounds as normal
     double al = g_displays[lastScreen].absCached[0];
     double mx = g_displays[lastScreen].xSlope;
-    x = mx * (yaw - rl) + al;  // interpolate horizontal position from left
-                               // edge of display
+    x = mx * (yaw - rl) + al; // interpolate horizontal position from left
+                              // edge of display
   }
 
-  if (pitch > rt) {  // vertical rotaion is above last used display
+  if (pitch > rt) { // vertical rotaion is above last used display
     y = g_displays[lastScreen].absCached[2] +
         g_displays[lastScreen].padding[2] * g_yPixelAbsoluteSlope;
-  } else if (pitch < rb) {  // vertical rotaion is last used display
+  } else if (pitch < rb) { // vertical rotaion is last used display
     y = g_displays[lastScreen].absCached[3] -
         g_displays[lastScreen].padding[3] * g_yPixelAbsoluteSlope;
   } else {
     double at = g_displays[lastScreen].absCached[2];
     double my = g_displays[lastScreen].ySlope;
-    y = my * (rt - pitch) + at;  // interpolate vertical position from top edge
-                                 // of display
+    y = my * (rt - pitch) + at; // interpolate vertical position from top edge
+                                // of display
   }
 
   SendMyInput(x, y);
@@ -395,8 +396,8 @@ retcode TrackStart() {
       // TODO: apply negative sign on startup to avoid extra operation here
       // yaw and pitch come reversed relative to GUI profgram for some reason
       // from trackIR
-      double yaw = (-(*pTIRData).fNPYaw);      // implicit float to double
-      double pitch = (-(*pTIRData).fNPPitch);  // implicit float to double
+      deg yaw = (-(*pTIRData).fNPYaw);     // implicit float to double
+      deg pitch = (-(*pTIRData).fNPPitch); // implicit float to double
 
       // Don't move the mouse when TrackIR is paused
       if (framesig == lastFrame) {
@@ -429,10 +430,14 @@ retcode TrackStart() {
   return retcode::success;
 }
 
-void TrackStop() {
-  spdlog::trace("TrackStop called into.");
-  g_bTrackingAllowedToRun = false;
-  NP_StopDataTransmission();
-  NP_UnregisterWindowHandle();
-}
-}  // namespace track
+void TrackToggle() {
+  spdlog::trace("Track pause called into.");
+  g_bPauseTracking = !g_bPauseTracking;
+
+  void TrackStop() {
+    spdlog::trace("TrackStop called into.");
+    g_bTrackingAllowedToRun = false;
+    NP_StopDataTransmission();
+    NP_UnregisterWindowHandle();
+  }
+} // namespace track

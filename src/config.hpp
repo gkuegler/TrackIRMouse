@@ -4,8 +4,9 @@
 #include <array>
 #include <string>
 
-#include "constants.hpp"
 #include "log.hpp"
+#include "toml/exception.hpp"
+#include "types.hpp"
 
 // i may need static keyword here
 const constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right",
@@ -13,13 +14,13 @@ const constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right",
 
 namespace config {
 
-using t_bounds = std::array<double, 4>;
-using t_pad = std::array<int, 4>;
+using bounds_t = std::array<deg, 4>;
+using pad_t = std::array<pixles, 4>;
 
 struct Display {
-  Display(t_bounds r, t_pad p) : rotation(r), padding(p) {}
-  t_bounds rotation{0.0, 0.0, 0.0, 0.0};  // Left, Right, Top, Bottom
-  t_pad padding{0, 0, 0, 0};              // Left, Right, Top, Bottom
+  Display(bounds_t r, pad_t p) : rotation(r), padding(p) {}
+  bounds_t rotation{0.0, 0.0, 0.0, 0.0};  // Left, Right, Top, Bottom
+  pad_t padding{0, 0, 0, 0};              // Left, Right, Top, Bottom
 };
 
 struct Profile {
@@ -38,7 +39,7 @@ struct UserData {
   int logLevelTextControl = spdlog::level::info;
   std::string trackIrDllFolder = "default";
   std::string activeProfileName = "Lorem Ipsum";
-  std::array<int, 4> defaultPaddings = {0, 0, 0, 0};
+  std::array<pixels, 4> defaultPaddings = {0, 0, 0, 0};
   std::vector<Profile> profiles;
 };
 

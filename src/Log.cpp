@@ -16,7 +16,7 @@
 
 #include <mutex>
 
-#include "constants.hpp"
+#include "types.hpp"
 
 namespace mylogging {
 

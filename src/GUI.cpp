@@ -30,7 +30,6 @@
 
 #include "GUI.hpp"
 
-// TODO: there is a bug with include fmt
 #include <wx/bookctrl.h>
 #include <wx/colour.h>
 #include <wx/dataview.h>
@@ -42,14 +41,13 @@
 #include <string>
 
 #include "config.hpp"
-#include "constants.hpp"
 #include "gui-dialogs.hpp"
 #include "log.hpp"
 #include "threads.hpp"
-#include "toml/exception.hpp"
 #include "track.hpp"
 #include "util.hpp"
 #include "watchdog.hpp"
+#include "types.hpp"
 
 constexpr std::string_view kVersionNo = "0.7.1";
 const std::string kRotationTitle = "bound (degrees)";
@@ -507,7 +505,7 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
   // title is correc
 
   std::vector<std::string> idlist = {"13302", "2025"};
-  auto idChoices = BuildArrayString(idlist);
+  auto idChoices = BuildWxArrayString(idlist);
 
   m_profileID = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition,
                                wxSize(80, 20), idChoices, wxCB_DROPDOWN,

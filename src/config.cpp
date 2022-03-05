@@ -13,8 +13,8 @@
 #include <iostream>
 #include <string>
 
-#include "constants.hpp"
 #include "exceptions.hpp"
+#include "types.hpp"
 #include "log.hpp"
 
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
@@ -22,6 +22,7 @@
 
 namespace config {
 
+// settings singletons
 static UserData userData;
 static EnvData environmentData;
 
@@ -113,20 +114,17 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
   }
 }
 
+// TODO: add mutex to non mutable settings calls?
 UserData GetUserData() { return userData; }
 
+// TODO: add mutex to mutable seetings call
 UserData &GetUserDataMutable() { return userData; }
 
 EnvData GetEnvironmentData() { return environmentData; }
-// EnvData &GetEnvironmentDataMutable();
-
-// Getter functions
-// Profile GetActiveProfile();
-// Profile &GetActiveProfile();
 
 /**
  * Loads json user data into config class.
- * @return error_code
+ * Will throw an errir
  */
 void LoadSettingsFromFile(const std::string fileName) {
   // hungarian prefix tv___ = toml::value
@@ -246,30 +244,30 @@ void LoadSettingsFromFile(const std::string fileName) {
       // convert integers to doubles from a toml value
       toml::value_t integer = toml::value_t::integer;
 
-      double rotLeft = (left.type() == integer)
-                           ? static_cast<double>(left.as_integer())
-                           : left.as_floating();
+      deg rotLeft = (left.type() == integer)
+                           ? static_cast<deg>(left.as_integer())
+                           : static_cast<deg>(left.as_floating());
 
-      double rotRight = (right.type() == integer)
-                            ? static_cast<double>(right.as_integer())
-                            : right.as_floating();
+      deg rotRight = (right.type() == integer)
+                            ? static_cast<deg>(right.as_integer())
+                            : static_cast<deg>(right.as_floating());
 
-      double rotTop = (top.type() == integer)
-                          ? static_cast<double>(top.as_integer())
-                          : top.as_floating();
+      deg rotTop = (top.type() == integer)
+                          ? static_cast<deg>(top.as_integer())
+                          : static_cast<deg>(top.as_floating());
 
-      double rotBottom = (bottom.type() == integer)
-                             ? static_cast<double>(bottom.as_integer())
-                             : bottom.as_floating();
+      deg rotBottom = (bottom.type() == integer)
+                             ? static_cast<deg>(bottom.as_integer())
+                             : static_cast<deg>(bottom.as_floating());
 
       // I return an ungodly fake high padding numbelong ,
       // so that I can tell if one was found in the toml config file
       // without producing an exception if a value was not found.
       // Padding values are not critical the program operation.
-      int paddingLeft = toml::find_or<int>(display, "pad_left", 5555);
-      int paddingRight = toml::find_or<int>(display, "pad_right", 5555);
-      int paddingTop = toml::find_or<int>(display, "pad_top", 5555);
-      int paddingBottom = toml::find_or<int>(display, "pad_bottom", 5555);
+      pixels paddingLeft = toml::find_or<pixels>(display, "pad_left", 5555);
+      pixels paddingRight = toml::find_or<pixels>(display, "pad_right", 5555);
+      pixels paddingTop = toml::find_or<pixels>(display, "pad_top", 5555);
+      pixels paddingBottom = toml::find_or<pixels>(display, "pad_bottom", 5555);
 
       if (paddingLeft == 5555) paddingLeft = userData.defaultPaddings[0];
       if (paddingRight == 5555) paddingRight = userData.defaultPaddings[1];
@@ -481,14 +479,14 @@ bool ValidateUserInput(const UserInput &displays) {
   for (int i = 0; i < displays.size(); i++) {
     int j = i;
     while (++j < displays.size()) {
-      double A_left = displays[i].rotation[0];
-      double A_right = displays[i].rotation[1];
-      double A_top = displays[i].rotation[2];
-      double A_bottom = displays[i].rotation[3];
-      double B_left = displays[j].rotation[0];
-      double B_right = displays[j].rotation[1];
-      double B_top = displays[j].rotation[2];
-      double B_bottom = displays[j].rotation[3];
+      deg A_left = displays[i].rotation[0];
+      deg A_right = displays[i].rotation[1];
+      deg A_top = displays[i].rotation[2];
+      deg A_bottom = displays[i].rotation[3];
+      deg B_left = displays[j].rotation[0];
+      deg B_right = displays[j].rotation[1];
+      deg B_top = displays[j].rotation[2];
+      deg B_bottom = displays[j].rotation[3];
       if (A_left < B_right && A_right > B_left && A_top > B_bottom &&
           A_bottom < B_top) {
         spdlog::error(
