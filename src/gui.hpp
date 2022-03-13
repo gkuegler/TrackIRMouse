@@ -23,8 +23,11 @@ class cFrame;
 
 class cPanelConfiguration : public wxPanel {
  public:
+  std::unique_ptr<config::game_title_map_t> m_titlesMap;
   wxTextCtrl *m_name;
-  wxComboBox *m_profileID;
+  wxTextCtrl *m_profileID;
+  wxTextCtrl *m_profileGameTitle;
+  wxButton *m_btnPickTitle;
   wxCheckBox *m_useDefaultPadding;
   wxButton *m_btnAddDisplay;
   wxButton *m_btnRemoveDisplay;
@@ -41,6 +44,7 @@ class cPanelConfiguration : public wxPanel {
   int m_ival = 0;
   void OnName(wxCommandEvent &event);
   void OnProfileID(wxCommandEvent &event);
+  void OnPickTitle(wxCommandEvent &event);
   void OnUseDefaultPadding(wxCommandEvent &event);
   void OnMappingData(wxDataViewEvent &event);
   void OnAddDisplay(wxCommandEvent &event);

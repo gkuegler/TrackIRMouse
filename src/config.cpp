@@ -14,8 +14,8 @@
 #include <string>
 
 #include "exceptions.hpp"
-#include "types.hpp"
 #include "log.hpp"
+#include "types.hpp"
 
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
 #include "toml.hpp"
@@ -124,7 +124,7 @@ EnvData GetEnvironmentData() { return environmentData; }
 
 /**
  * Loads json user data into config class.
- * Will throw an errir
+ * Will throw an error
  */
 void LoadSettingsFromFile(const std::string fileName) {
   // hungarian prefix tv___ = toml::value
@@ -245,20 +245,20 @@ void LoadSettingsFromFile(const std::string fileName) {
       toml::value_t integer = toml::value_t::integer;
 
       deg rotLeft = (left.type() == integer)
-                           ? static_cast<deg>(left.as_integer())
-                           : static_cast<deg>(left.as_floating());
+                        ? static_cast<deg>(left.as_integer())
+                        : static_cast<deg>(left.as_floating());
 
       deg rotRight = (right.type() == integer)
-                            ? static_cast<deg>(right.as_integer())
-                            : static_cast<deg>(right.as_floating());
+                         ? static_cast<deg>(right.as_integer())
+                         : static_cast<deg>(right.as_floating());
 
       deg rotTop = (top.type() == integer)
-                          ? static_cast<deg>(top.as_integer())
-                          : static_cast<deg>(top.as_floating());
+                       ? static_cast<deg>(top.as_integer())
+                       : static_cast<deg>(top.as_floating());
 
       deg rotBottom = (bottom.type() == integer)
-                             ? static_cast<deg>(bottom.as_integer())
-                             : static_cast<deg>(bottom.as_floating());
+                          ? static_cast<deg>(bottom.as_integer())
+                          : static_cast<deg>(bottom.as_floating());
 
       // I return an ungodly fake high padding numbelong ,
       // so that I can tell if one was found in the toml config file
@@ -458,6 +458,32 @@ int GetActiveProfileDisplayCount() {
 
 void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
                                    int parameterSide, double parameter) {}
+
+game_title_map_t GetTitleIds() {
+  const std::string fileName = "track-ir-numbers.toml";
+  try {
+    auto tvData = toml::parse(fileName);
+    return toml::find<game_title_map_t>(tvData, "data");
+  } catch (const toml::syntax_error &ex) {
+    spdlog::critical("Failed to Parse Settings File {}", ex.what());
+  } catch (const toml::type_error &ex) {
+    spdlog::critical("Incorrect type when loading settings.\n\n{}", ex.what());
+  } catch (const std::out_of_range &ex) {
+    spdlog::critical("Missing data.\n\n%s", ex.what());
+  } catch (std::runtime_error &ex) {
+    spdlog::critical("{}\n\nWas expecting to open \"{}\"", ex.what(), fileName);
+  } catch (...) {
+    spdlog::critical(
+        "exception has gone unhandled loading and verifying settings");
+  }
+  game_title_map_t tlist;
+  tlist["0"] = "empty list";
+  tlist["1"] = "lorem ipsum";
+  tlist["2"] = "aag";
+  tlist["3"] = "";
+  tlist["4"] = "";
+  return tlist;
+}
 
 bool ValidateUserInput(const UserInput &displays) {
   // compare bounds not more than abs|180|

@@ -23,6 +23,7 @@
 #include "watchdog.hpp"
 
 #include "log.hpp"
+#include "track.hpp"
 
 constexpr auto BUFSIZE = 512;
 

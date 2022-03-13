@@ -96,9 +96,9 @@ retcode WinSetup(config::Profile profile) {
   }
 
   auto virtualDesktopWidth = static_cast<pixels>(GetSystemMetrics(
-      SM_CXVIRTUALSCREEN)); // width of total bounds of all screens
+      SM_CXVIRTUALSCREEN));  // width of total bounds of all screens
   auto virtualDesktopHeight = static_cast<pixels>(GetSystemMetrics(
-      SM_CYVIRTUALSCREEN)); // height of total bounds of all screens
+      SM_CYVIRTUALSCREEN));  // height of total bounds of all screens
 
   spdlog::debug("{} Monitors Found", monitorCount);
   spdlog::debug("Width of Virtual Desktop:  {:>5}", virtualDesktopWidth);
@@ -333,30 +333,30 @@ void MouseMove(deg yaw, deg pitch) {
   double rt = g_displays[lastScreen].rotation16bit[2];
   double rb = g_displays[lastScreen].rotation16bit[3];
 
-  if (yaw < rl) { // horizontal rotaion is left of last used display
+  if (yaw < rl) {  // horizontal rotaion is left of last used display
     x = g_displays[lastScreen].absCached[0] +
         g_displays[lastScreen].padding[0] * g_xPixelAbsoluteSlope;
-  } else if (yaw > rr) { // horizontal rotation is right of last used display
+  } else if (yaw > rr) {  // horizontal rotation is right of last used display
     x = g_displays[lastScreen].absCached[1] -
         g_displays[lastScreen].padding[1] * g_xPixelAbsoluteSlope;
-  } else { // horizontal roation within last display bounds as normal
+  } else {  // horizontal roation within last display bounds as normal
     double al = g_displays[lastScreen].absCached[0];
     double mx = g_displays[lastScreen].xSlope;
-    x = mx * (yaw - rl) + al; // interpolate horizontal position from left
-                              // edge of display
+    x = mx * (yaw - rl) + al;  // interpolate horizontal position from left
+                               // edge of display
   }
 
-  if (pitch > rt) { // vertical rotaion is above last used display
+  if (pitch > rt) {  // vertical rotaion is above last used display
     y = g_displays[lastScreen].absCached[2] +
         g_displays[lastScreen].padding[2] * g_yPixelAbsoluteSlope;
-  } else if (pitch < rb) { // vertical rotaion is last used display
+  } else if (pitch < rb) {  // vertical rotaion is last used display
     y = g_displays[lastScreen].absCached[3] -
         g_displays[lastScreen].padding[3] * g_yPixelAbsoluteSlope;
   } else {
     double at = g_displays[lastScreen].absCached[2];
     double my = g_displays[lastScreen].ySlope;
-    y = my * (rt - pitch) + at; // interpolate vertical position from top edge
-                                // of display
+    y = my * (rt - pitch) + at;  // interpolate vertical position from top edge
+                                 // of display
   }
 
   SendMyInput(x, y);
@@ -396,8 +396,8 @@ retcode TrackStart() {
       // TODO: apply negative sign on startup to avoid extra operation here
       // yaw and pitch come reversed relative to GUI profgram for some reason
       // from trackIR
-      deg yaw = (-(*pTIRData).fNPYaw);     // implicit float to double
-      deg pitch = (-(*pTIRData).fNPPitch); // implicit float to double
+      deg yaw = (-(*pTIRData).fNPYaw);      // implicit float to double
+      deg pitch = (-(*pTIRData).fNPPitch);  // implicit float to double
 
       // Don't move the mouse when TrackIR is paused
       if (framesig == lastFrame) {
@@ -412,7 +412,7 @@ retcode TrackStart() {
       // active tracking data without re-registering a window handle. A disbale
       // msg is sent before my test instance launches, then my normal instance
       // is enables after as part of my build script.
-      if (WatchDog::g_bPauseTracking == false) {
+      if (g_bPauseTracking == false) {
         MouseMove(yaw, pitch);
       }
 
@@ -433,11 +433,12 @@ retcode TrackStart() {
 void TrackToggle() {
   spdlog::trace("Track pause called into.");
   g_bPauseTracking = !g_bPauseTracking;
+}
 
-  void TrackStop() {
-    spdlog::trace("TrackStop called into.");
-    g_bTrackingAllowedToRun = false;
-    NP_StopDataTransmission();
-    NP_UnregisterWindowHandle();
-  }
-} // namespace track
+void TrackStop() {
+  spdlog::trace("TrackStop called into.");
+  g_bTrackingAllowedToRun = false;
+  NP_StopDataTransmission();
+  NP_UnregisterWindowHandle();
+}
+}  // namespace track

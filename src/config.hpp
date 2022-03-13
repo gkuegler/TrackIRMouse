@@ -2,20 +2,20 @@
 #define TRACKIRMOUSE_CONFIG_HPP
 
 #include <array>
+#include <map>
 #include <string>
 
 #include "log.hpp"
 #include "toml/exception.hpp"
 #include "types.hpp"
 
-// i may need static keyword here
 const constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right",
                                                                "top", "bottom"};
 
 namespace config {
 
 using bounds_t = std::array<deg, 4>;
-using pad_t = std::array<pixles, 4>;
+using pad_t = std::array<pixels, 4>;
 
 struct Display {
   Display(bounds_t r, pad_t p) : rotation(r), padding(p) {}
@@ -66,10 +66,10 @@ int GetActiveProfileDisplayCount();
 std::vector<std::string> GetProfileNames();
 
 // Setter Functions
+void SetLogLevel(spdlog::level::level_enum level);
 bool SetActiveProfile(std::string profileName);
 void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
                                    int parameterSide, double parameter);
-void SetLogLevel(spdlog::level::level_enum level);
 void AddProfile(std::string newProfileName);
 void RemoveProfile(std::string profileName);
 void DuplicateActiveProfile();
@@ -77,6 +77,11 @@ void DuplicateActiveProfile();
 using UserInput = std::vector<Display>;
 bool ValidateUserInput(const UserInput &displays);
 
+// toml::get only supports map type of which key_type is convertible from
+// std::string this is inherent to toml file; example: 11220 = "Game Title"
+// that is why I have to get my profile id as a string instead of native int
+using game_title_map_t = std::map<const std::string, std::string>;
+game_title_map_t GetTitleIds();
 }  // namespace config
 
 #endif /* TRACKIRMOUSE_CONFIG_HPP */

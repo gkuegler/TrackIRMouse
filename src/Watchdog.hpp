@@ -6,8 +6,6 @@
 #include <atomic>
 
 namespace WatchDog {
-extern std::atomic<bool> g_bPauseTracking;
-
 HANDLE InitializeWatchdog();
 DWORD WINAPI InstanceThread(LPVOID);
 void Serve(HANDLE);

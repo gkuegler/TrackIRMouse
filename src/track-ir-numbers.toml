@@ -1,3 +1,4 @@
+[data]
 1001 = "IL-2 Forgotten Battles"
 1002 = "Lock-On Modern Air"
 1003 = "Black Shark"
@@ -61,7 +62,7 @@
 1975 = "Sail Simulator 5"
 2001 = "Combat Helo"
 2025 = "Aerofly"
-2050 =
+2050 = ""
 2075 = "SEGA Demo"
 2101 = "Enemy Engaged:"
 2102 = "Enemy Engaged: 2"
@@ -73,7 +74,7 @@
 2203 = "TIRF4"
 2225 = "Bus Simulator"
 2250 = "MeVEA"
-2275 =
+2275 = ""
 2302 = ""
 2303 = ""
 2304 = ""

@@ -1,9 +1,12 @@
 #ifndef TRACKIRMOUSE_GUIDIALOGS_H
 #define TRACKIRMOUSE_GUIDIALOGS_H
 
+#include <wx/listctrl.h>
 #include <wx/propdlg.h>
 #include <wx/textctrl.h>
 #include <wx/wx.h>
+
+#include <string>
 
 #include "config.hpp"
 
@@ -41,6 +44,121 @@ class cSettingsPopup : public wxPropertySheetDialog {
  private:
   cSettingsGeneralPanel* m_pnlGen;
   cSettingsAdvancedlPanel* m_pnlAdv;
+};
+
+class cProfileIdSelectorPanel : public wxPanel {
+ public:
+  wxListView* m_lctProfileIds;
+  int* id = nullptr;
+  std::vector<std::pair<std::string, std::string>> profileIdList;
+
+  cProfileIdSelectorPanel(
+      wxWindow* parent, int* profileId,
+      const std::vector<std::pair<std::string, std::string>>& idList)
+      : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0) {
+    /**
+     * Expects idList to be sorted alphabetically
+     *
+     */
+
+    id = profileId;
+    profileIdList = idList;
+
+    m_lctProfileIds =
+        new wxListView(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                       wxLC_REPORT | wxLC_SINGLE_SEL, wxDefaultValidator, "");
+
+    // create list control columns
+    m_lctProfileIds->InsertColumn(0, "Tile", wxLIST_FORMAT_LEFT, 200);
+    m_lctProfileIds->InsertColumn(1, "ID", wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+
+    auto activeId = config::GetActiveProfile().profileId;
+    int selection = -1;
+
+    // populate list
+    for (int i = 0; i < profileIdList.size(); i++) {
+      auto pair = profileIdList[i];
+      auto title = std::get<0>(pair);
+      auto ids = std::get<1>(pair);
+      auto idx = m_lctProfileIds->InsertItem(i, title);
+      m_lctProfileIds->SetItem(idx, 1, ids);
+      try {
+        if (std::stoi(ids) == activeId) {
+          selection = i;
+        }
+      } catch (std::invalid_argument) {
+        spdlog::error("could not convert id: {}, to an integer.", ids);
+      }
+    }
+
+    // set selection of current profile id
+    if (selection > -1) {
+      m_lctProfileIds->Select(selection);
+    }
+
+    wxBoxSizer* top = new wxBoxSizer(wxVERTICAL);
+    top->Add(m_lctProfileIds, 1, wxEXPAND, 0);
+    SetSizer(top);
+
+    m_lctProfileIds->Bind(wxEVT_LIST_ITEM_SELECTED,
+                          &cProfileIdSelectorPanel::OnSelection, this);
+  }
+
+  void OnSelection(wxListEvent& event) {
+    auto idx = m_lctProfileIds->GetNextItem(-1, wxLIST_NEXT_ALL,
+                                            wxLIST_STATE_SELECTED);
+    // get info from underlying data
+    auto pair = profileIdList[idx];
+    *id = std::stoi(std::get<1>(pair));
+    return;
+  }
+};
+
+class cOkayCancelDlgButtons : public wxPanel {
+ public:
+  wxButton* okay;
+  wxButton* cancel;
+  wxDialog* dialog;
+
+  cOkayCancelDlgButtons(wxDialog* parent) : wxPanel(parent) {
+    dialog = parent;
+    okay = new wxButton(this, wxID_ANY, "Okay", wxDefaultPosition,
+                        wxSize(110, 25));
+    cancel = new wxButton(this, wxID_ANY, "Cancel", wxDefaultPosition,
+                          wxSize(110, 25));
+
+    auto top = new wxBoxSizer(wxHORIZONTAL);
+    top->Add(okay, 0, wxALL, 0);
+    top->Add(cancel, 0, wxALL, 0);
+    SetSizer(top);
+
+    okay->Bind(wxEVT_BUTTON, &cOkayCancelDlgButtons::OnOkay, this);
+    cancel->Bind(wxEVT_BUTTON, &cOkayCancelDlgButtons::OnCancel, this);
+  }
+
+  void OnOkay(wxCommandEvent& event) { dialog->EndModal(wxID_OK); }
+  void OnCancel(wxCommandEvent& event) { dialog->EndModal(wxID_CANCEL); }
+};
+
+class cProfileIdSelector : public wxDialog {
+ public:
+  cProfileIdSelectorPanel* panel;
+  cOkayCancelDlgButtons* buttons;
+  cProfileIdSelector(
+      wxWindow* parent, int* id,
+      const std::vector<std::pair<std::string, std::string>>& gameTitleList)
+      : wxDialog(parent, wxID_ANY, "Pick an associated game tile.",
+                 wxDefaultPosition, wxSize(500, 800),
+                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
+    this->CenterOnParent();
+
+    panel = new cProfileIdSelectorPanel(this, id, gameTitleList);
+    buttons = new cOkayCancelDlgButtons(this);
+    auto top = new wxBoxSizer(wxVERTICAL);
+    top->Add(panel, 1, wxEXPAND, 0);
+    top->Add(buttons, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 10);
+    SetSizer(top);
+  }
 };
 
 #endif /* TRACKIRMOUSE_GUIDIALOGS_H */

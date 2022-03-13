@@ -38,6 +38,7 @@
 #include <wx/valnum.h>
 #include <wx/wfstream.h>
 
+#include <algorithm>
 #include <string>
 
 #include "config.hpp"
@@ -45,9 +46,9 @@
 #include "log.hpp"
 #include "threads.hpp"
 #include "track.hpp"
+#include "types.hpp"
 #include "util.hpp"
 #include "watchdog.hpp"
-#include "types.hpp"
 
 constexpr std::string_view kVersionNo = "0.7.1";
 const std::string kRotationTitle = "bound (degrees)";
@@ -497,30 +498,41 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
               wxSIMPLE_BORDER | wxTAB_TRAVERSAL) {
   m_parent = parent;
-  m_name =
-      new wxTextCtrl(this, myID_PROFILE_NAME, "Lorem Ipsum", wxDefaultPosition,
-                     wxSize(200, 20), wxTE_LEFT, wxDefaultValidator, "");
-  // TODO: convert this into a drop down list to select valid ID numbers; also
-  // display their titles? probably not necessary couldn't guarantee that a
-  // title is correc
+  m_titlesMap =
+      std::make_unique<config::game_title_map_t>(config::GetTitleIds());
+  m_name = new wxTextCtrl(this, myID_PROFILE_NAME, "Lorem Ipsum",
+                          wxDefaultPosition, wxSize(200, 20),
+                          wxTE_LEFT | wxTE_READONLY, wxDefaultValidator, "");
+  // TODO: convert this into a drop down titleMap to select valid ID numbers;
+  // also display their titles? probably not necessary couldn't guarantee that a
+  // title is correct
 
-  std::vector<std::string> idlist = {"13302", "2025"};
-  auto idChoices = BuildWxArrayString(idlist);
+  m_profileGameTitle =
+      new wxTextCtrl(this, wxID_ANY, "lorem", wxDefaultPosition,
+                     wxSize(150, 20), wxTE_READONLY | wxTE_LEFT);
 
-  m_profileID = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition,
-                               wxSize(80, 20), idChoices, wxCB_DROPDOWN,
-                               wxMakeIntegerValidator(&m_ival), "");
-  m_useDefaultPadding = new wxCheckBox(
-      this, myID_USE_DEFAULT_PADDING, "Use Default Padding", wxDefaultPosition,
-      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-  m_btnAddDisplay = new wxButton(this, myID_ADD_DISPLAY, "+", wxDefaultPosition,
+  m_profileID =
+      new wxTextCtrl(this, wxID_ANY, "2201576", wxDefaultPosition,
+                     wxSize(60, 20), wxTE_LEFT, wxDefaultValidator, "");
+  m_btnPickTitle = new wxButton(this, wxID_ANY, "Pick Title", wxDefaultPosition,
+                                kDefaultButtonSize, 0, wxDefaultValidator, "");
+
+  // std::vector<std::string> idlist = {"13302", "2025"};
+  // auto idChoices = BuildWxArrayString(idlist);
+
+  // m_profileID = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition,
+  //                              wxSize(80, 20), idChoices, wxCB_DROPDOWN,
+  //                              wxMakeIntegerValidator(&m_ival), "");
+  m_useDefaultPadding =
+      new wxCheckBox(this, wxID_ANY, "Use Default Padding", wxDefaultPosition,
+                     wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  m_btnAddDisplay = new wxButton(this, wxID_ANY, "+", wxDefaultPosition,
                                  wxSize(30, 30), 0, wxDefaultValidator, "");
-  m_btnRemoveDisplay =
-      new wxButton(this, myID_REMOVE_DISPLAY, "-", wxDefaultPosition,
-                   wxSize(30, 30), 0, wxDefaultValidator, "");
-  m_btnMoveUp = new wxButton(this, myID_MOVE_UP, "Up", wxDefaultPosition,
+  m_btnRemoveDisplay = new wxButton(this, wxID_ANY, "-", wxDefaultPosition,
+                                    wxSize(30, 30), 0, wxDefaultValidator, "");
+  m_btnMoveUp = new wxButton(this, wxID_ANY, "Up", wxDefaultPosition,
                              wxSize(50, 30), 0, wxDefaultValidator, "");
-  m_btnMoveDown = new wxButton(this, myID_MOVE_DOWN, "Down", wxDefaultPosition,
+  m_btnMoveDown = new wxButton(this, wxID_ANY, "Down", wxDefaultPosition,
                                wxSize(50, 30), 0, wxDefaultValidator, "");
 
   constexpr int kColumnWidth = 70;
@@ -558,9 +570,11 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
 
   wxStaticText *txtPanelTitle =
       new wxStaticText(this, wxID_ANY, "Active Profile");
-  wxStaticText *txtProfileName = new wxStaticText(this, wxID_ANY, "Name:   ");
+  wxStaticText *txtProfileName = new wxStaticText(this, wxID_ANY, "Name:  ");
   wxStaticText *txtProfileId =
-      new wxStaticText(this, wxID_ANY, "TrackIR Profile ID:   ");
+      new wxStaticText(this, wxID_ANY, "TrackIR Profile ID:  ");
+  wxStaticText *txtGameTitle =
+      new wxStaticText(this, wxID_ANY, "Game Title:  ");
   wxStaticText *txtHeaders =
       new wxStaticText(this, wxID_ANY,
                        "                           |------------- Rotational "
@@ -570,8 +584,11 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
   wxBoxSizer *row1 = new wxBoxSizer(wxHORIZONTAL);
   row1->Add(txtProfileName, 0, wxALIGN_CENTER_VERTICAL, 0);
   row1->Add(m_name, 0, wxALIGN_CENTER_VERTICAL, 0);
+  row1->Add(txtGameTitle, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);
+  row1->Add(m_profileGameTitle, 0, wxALIGN_CENTER_VERTICAL, 0);
   row1->Add(txtProfileId, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);
   row1->Add(m_profileID, 0, wxALIGN_CENTER_VERTICAL, 0);
+  row1->Add(m_btnPickTitle, 0, wxALIGN_CENTER_VERTICAL, 0);
 
   wxBoxSizer *displayControls = new wxBoxSizer(wxHORIZONTAL);
   displayControls->Add(m_btnMoveUp, 0, wxALL, 0);
@@ -594,6 +611,7 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
   // is a wxButton*
   m_name->Bind(wxEVT_TEXT, &cPanelConfiguration::OnName, this);
   m_profileID->Bind(wxEVT_TEXT, &cPanelConfiguration::OnProfileID, this);
+  m_btnPickTitle->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnPickTitle, this);
   m_useDefaultPadding->Bind(wxEVT_CHECKBOX,
                             &cPanelConfiguration::OnUseDefaultPadding, this);
   m_btnAddDisplay->Bind(wxEVT_BUTTON, &cPanelConfiguration::OnAddDisplay, this);
@@ -607,12 +625,15 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
 
 void cPanelConfiguration::LoadDisplaySettings() {
   auto profile = config::GetActiveProfile();
+  // auto map = config::GetTitleIds();
 
   // SetValue causes an event to be sent for text control.
   // SetValue does not cause an event to be sent for checkboxes.
   // Use ChangeEvent instead.
   // We don't want to register event when we're just loading values.
   m_name->ChangeValue(profile.name);
+  auto *titles = m_titlesMap.get();
+  m_profileGameTitle->ChangeValue((*titles)[std::to_string(profile.profileId)]);
   m_profileID->ChangeValue(wxString::Format("%d", profile.profileId));
   m_useDefaultPadding->SetValue(profile.useDefaultPadding);
 
@@ -663,6 +684,51 @@ void cPanelConfiguration::OnProfileID(wxCommandEvent &event) {
   auto &profile = config::GetActiveProfileMutable();
   profile.profileId = static_cast<int>(value);
   LoadDisplaySettings();
+}
+
+void cPanelConfiguration::OnPickTitle(wxCommandEvent &event) {
+  // auto map = config::GetTitleIds();
+  auto *map = m_titlesMap.get();
+  game_titles_t titlesNamed;
+  game_titles_t titlesEmptyName;
+  titlesNamed.reserve(map->size());
+  titlesEmptyName.reserve(map->size());
+  // titlesRaw.push_back({"Aerofly", "2025"});
+  // titlesRaw.push_back({"FreeSpace2", "13302"});
+  for (auto &[key, item] : *map) {
+    if (item.empty()) {
+      titlesEmptyName.push_back({item, key});
+    } else {
+      titlesNamed.push_back({item, key});
+    }
+  }
+
+  std::sort(titlesNamed.begin(), titlesNamed.end(),
+            [](const std::pair<std::string, std::string> &left,
+               const std::pair<std::string, std::string> &right) {
+              return left.first < right.first;
+            });
+
+  std::sort(titlesEmptyName.begin(), titlesEmptyName.end(),
+            [](const std::pair<std::string, std::string> &left,
+               const std::pair<std::string, std::string> &right) {
+              return std::stoi(left.second) < std::stoi(right.second);
+            });
+  game_titles_t titles;
+  // preallocate memory
+  titles.reserve(titlesNamed.size() + titlesEmptyName.size());
+  titles.insert(titles.end(), titlesNamed.begin(), titlesNamed.end());
+  titles.insert(titles.end(), titlesEmptyName.begin(), titlesEmptyName.end());
+
+  int id = 0;
+  cProfileIdSelector dlg(this, &id, titles);
+  if (dlg.ShowModal() == wxID_OK) {
+    auto &config = config::GetActiveProfileMutable();
+    config.profileId = id;
+
+    LoadDisplaySettings();
+  }
+  return;
 }
 
 void cPanelConfiguration::OnUseDefaultPadding(wxCommandEvent &event) {

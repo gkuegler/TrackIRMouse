@@ -345,8 +345,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.hpp" />
-    <ClInclude Include="constants.hpp" />
     <ClInclude Include="environment.hpp" />
+    <ClInclude Include="game-title-list.hpp" />
     <ClInclude Include="gui-control-id.hpp" />
     <ClInclude Include="display.hpp" />
     <ClInclude Include="exceptions.hpp" />
@@ -359,6 +359,7 @@
     <ClInclude Include="threads.hpp" />
     <ClInclude Include="toml.hpp" />
     <ClInclude Include="track.hpp" />
+    <ClInclude Include="types.hpp" />
     <ClInclude Include="util.hpp" />
     <ClInclude Include="watchdog.hpp" />
   </ItemGroup>
