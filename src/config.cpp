@@ -329,7 +329,6 @@ void WriteSettingsToFile() {
           {"pad_top", display.padding[2]},
           {"pad_bottom", display.padding[3]},
         };
-      // TODO: urgent, add padding data
       displays.push_back(d);
     }
     toml::value top{

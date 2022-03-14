@@ -106,7 +106,7 @@ void cDisplayGraphic::Render(wxDC& dc) {
   int cheight = 0;
 
   this->GetClientSize(&cwidth, &cheight);
-  spdlog::info("height, width -> {}, {}", cheight, cwidth);
+  // spdlog::info("height, width -> {}, {}", cheight, cwidth);
 
   double area_x = cwidth - 50;  // drawing area width
   double area_y = cheight - 50;
@@ -120,8 +120,8 @@ void cDisplayGraphic::Render(wxDC& dc) {
   // auto normalized = NormalizeRect(bounds);
   int dwidth = hdi.width;
   int dheight = hdi.height;
-  spdlog::info("dwidth -> {}", dwidth);
-  spdlog::info("dheight -> {}", dheight);
+  // spdlog::info("dwidth -> {}", dwidth);
+  // spdlog::info("dheight -> {}", dheight);
 
   // offset all rectangles so that 0,0 as top left most value
   env::HardwareDisplays bounds_offset;
@@ -138,9 +138,9 @@ void cDisplayGraphic::Render(wxDC& dc) {
     }
   }
 
-  for (auto& d : bounds_offset) {
-    spdlog::info("offset -> {}, {}, {}, {}", d[0], d[1], d[2], d[3]);
-  }
+  // for (auto& d : bounds_offset) {
+  //   spdlog::info("offset -> {}, {}, {}, {}", d[0], d[1], d[2], d[3]);
+  // }
 
   // scale rectangle so they fit in the drawing area, taking up all space
   // available
@@ -157,10 +157,10 @@ void cDisplayGraphic::Render(wxDC& dc) {
     }
   }
 
-  for (auto& d : bounds_norm) {
-    spdlog::info("scaled to dwg area -> {}, {}, {}, {}", d[0], d[1], d[2],
-                 d[3]);
-  }
+  // for (auto& d : bounds_norm) {
+  //   spdlog::info("scaled to dwg area -> {}, {}, {}, {}", d[0], d[1], d[2],
+  //                d[3]);
+  // }
 
   // reget max height and width
   double swidth = 0;
@@ -188,10 +188,10 @@ void cDisplayGraphic::Render(wxDC& dc) {
     }
   }
 
-  for (auto& d : bounds_norm) {
-    spdlog::info("centered to dwg area -> {}, {}, {}, {}", d[0], d[1], d[2],
-                 d[3]);
-  }
+  // for (auto& d : bounds_norm) {
+  //   spdlog::info("centered to dwg area -> {}, {}, {}, {}", d[0], d[1], d[2],
+  //                d[3]);
+  // }
 
   // map from 0,0 to virtual top left
   // auto offsetRect = OffsetNormalizedRect(normalized);
@@ -211,7 +211,6 @@ void cDisplayGraphic::Render(wxDC& dc) {
 
   for (int i = 0; i < bounds_norm.size(); i++) {
     // Draw the rectangle
-
     auto r = wxRect();
     r.SetLeft(bounds_norm[i][0]);
     r.SetRight(bounds_norm[i][1]);
@@ -222,28 +221,6 @@ void cDisplayGraphic::Render(wxDC& dc) {
     dc.DrawRectangle(r);
 
     bool userSpecifiedRotationAvailable = (usrDisplays.size() > i);
-
-    // Draw the padding boundary
-    // This actually looks terrible. Don't do this.
-    // if (userSpecifiedRotationAvailable) {
-    //   auto p = wxRect();
-    //   if (config::GetActiveProfile().useDefaultPadding) {
-    //     auto padding = config::GetUserData().defaultPaddings;
-    //     p.SetLeft(r.GetLeft() + padding[0]);
-    //     p.SetRight(r.GetRight() - padding[1]);
-    //     p.SetTop(r.GetTop() + padding[2]);
-    //     p.SetBottom(r.GetBottom() - padding[3]);
-    //   } else {
-    //     p.SetLeft(r.GetLeft() + usrDisplays[i].padding[0]);
-    //     p.SetRight(r.GetRight() - usrDisplays[i].padding[1]);
-    //     p.SetTop(r.GetTop() + usrDisplays[i].padding[2]);
-    //     p.SetBottom(r.GetBottom() - usrDisplays[i].padding[3]);
-    //   }
-    //   dc.SetPen(wxPen(wxColor(0, 0, 0), 3,
-    //                   wxPENSTYLE_SHORT_DASH));  // black line, 3 pixels thick
-    //   dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    //   dc.DrawRectangle(p);
-    // }
 
     // Draw text labels
     auto text_left =
@@ -296,10 +273,4 @@ void cDisplayGraphic::Render(wxDC& dc) {
     dc.DrawText(text_center, text_center_x, text_center_y);
     dc.DrawText(resolution, resolution_x, resolution_y);
   }
-
-  // draw a line
-  // dc.SetPen(wxPen(wxColor(0, 0, 0), 3)); // black line, 3 pixels thick
-  // dc.DrawLine(300, 100, 700, 300); // draw line across the rectangle
-
-  // Look at the wxDC docs to learn how to draw other stuff
 }

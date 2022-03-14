@@ -3,8 +3,8 @@
 #include <wx/thread.h>
 
 #include "gui.hpp"
-#include "watchdog.hpp"
 #include "types.hpp"
+#include "watchdog.hpp"
 
 //////////////////////////////////////////////////////////////////////
 //                           TrackThread                            //
@@ -55,8 +55,8 @@ WatchdogThread::WatchdogThread(cFrame* pHandler) : wxThread() {
 }
 
 WatchdogThread::~WatchdogThread() {
-  // Will need to provide locks in the future with critical sections
-  // https://docs.wxwidgets.org/3.0/classwx_thread.html
+  // TODO: Will need to provide different locks in the future with critical
+  // sections https://docs.wxwidgets.org/3.0/classwx_thread.html
   wxCriticalSectionLocker enter(m_pHandler->m_pThreadCS);
   m_pHandler->m_pWatchdogThread = NULL;
 

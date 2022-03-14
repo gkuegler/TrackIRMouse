@@ -83,14 +83,23 @@ HANDLE InitializeWatchdog() {
                                PIPE_READMODE_MESSAGE |  // message-read mode
                                PIPE_WAIT,               // blocking mode
                            // PIPE_UNLIMITED_INSTANCES,    // max. instances
-                           0,        // max. instances
+                           5,        // max. instances
                            BUFSIZE,  // output buffer size
                            BUFSIZE,  // input buffer size
                            0,        // client time-out
                            &sa);     // default security attribute
 
   if (hPipe == INVALID_HANDLE_VALUE) {
-    spdlog::warn("CreateNamedPipe failed, GLE={}.", GetLastError());
+    DWORD gle = GetLastError();
+    if (gle == ERROR_PIPE_BUSY) {
+      spdlog::warn("CreateNamedPipe failed, all instances are busy.");
+    } else if (gle == ERROR_INVALID_PARAMETER) {
+      spdlog::warn(
+          "CreateNamedPipe failed, function called with incorrect parameters.");
+
+    } else {
+      spdlog::warn("CreateNamedPipe failed, GLE={}.", GetLastError());
+    }
     return NULL;
   }
 

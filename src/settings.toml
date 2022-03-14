@@ -1,14 +1,44 @@
 
 [General]
-track_on_start = false
+track_on_start = true
 quit_on_loss_of_track_ir = false
 trackir_dll_directory = "default"
-watchdog_enabled = false
+watchdog_enabled = true
 active_profile = "Desktop Dual Monitor"
 
 [[Profiles]]
+name = "Desktop Single Monitor"
+profile_id = 2025
+use_default_padding = true
+
+[[Profiles.DisplayMappings]]
+pad_bottom = 0
+left = -55.0
+right = 55.0
+top = 32.0
+bottom = -32.0
+pad_top = 0
+pad_left = 3
+pad_right = 3
+
+[[Profiles]]
+profile_id = 2025
+name = "Laptop"
+use_default_padding = true
+
+[[Profiles.DisplayMappings]]
+left = -21.0
+pad_bottom = 0
+right = 21.0
+top = 15.0
+bottom = -15.0
+pad_left = 3
+pad_top = 0
+pad_right = 3
+
+[[Profiles]]
 name = "Desktop Dual Monitor"
-profile_id = 13302
+profile_id = 1775
 use_default_padding = true
 
 [[Profiles.DisplayMappings]]
@@ -26,36 +56,6 @@ left = 62.0
 right = 180.0
 top = 19.0
 bottom = -19.0
-pad_top = 0
-pad_left = 3
-pad_right = 3
-
-[[Profiles]]
-profile_id = 2025
-name = "Desktop Single Monitor"
-use_default_padding = true
-
-[[Profiles.DisplayMappings]]
-left = -50.0
-pad_bottom = 0
-right = 50.0
-top = 32.0
-bottom = -32.0
-pad_left = 3
-pad_top = 0
-pad_right = 3
-
-[[Profiles]]
-name = "Laptop"
-profile_id = 2025
-use_default_padding = true
-
-[[Profiles.DisplayMappings]]
-pad_bottom = 0
-left = -21.0
-right = 21.0
-top = 15.0
-bottom = -15.0
 pad_top = 0
 pad_left = 3
 pad_right = 3

@@ -50,7 +50,7 @@
 #include "util.hpp"
 #include "watchdog.hpp"
 
-constexpr std::string_view kVersionNo = "0.7.1";
+constexpr std::string_view kVersionNo = "0.8.0";
 const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
@@ -252,7 +252,7 @@ void cFrame::UpdateGuiFromSettings() {
 }
 
 void cFrame::OnReload(wxCommandEvent &event) {
-  // TODO: delete existing settings
+  // TODO: urgent, delete existing settings
   // a smarter idea would be to make a settings builder function would make sure
   // that the settings can be loaded first before replacing existing settings
   LoadSettingsFromFile();
