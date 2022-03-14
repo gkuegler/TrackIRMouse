@@ -113,23 +113,21 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
     return RegistryQuery{statusGetValue, "Could not get registry key.", ""};
   }
 }
-
-// TODO: add mutex to non mutable settings calls?
 UserData GetUserData() { return userData; }
-
-// TODO: add mutex to mutable seetings call
 UserData &GetUserDataMutable() { return userData; }
-
 EnvData GetEnvironmentData() { return environmentData; }
 
 /**
- * Loads json user data into config class.
- * Will throw an error
+ * Loads toml user data into config class.
+ * Will throw detailed errors from toml library if any of the following occur
+ *   - std::runtime_error - failed to open file
+ *   - toml::syntax_error - failed to parse file into toml object
+ *   - toml::type_error - failed conversion from 'toml::find'
+ *   - std::out_of_range - a table or value is not found
  */
-void LoadSettingsFromFile(const std::string fileName) {
-  // hungarian prefix tv___ = toml::value
+void InitializeSettingsSingletonsFromFile(const std::string fileName) {
+  // note: hungarian notation prefix tv___ = toml::value
   auto tvData = toml::parse<toml::preserve_comments>(fileName);
-
   environmentData.monitorCount = GetSystemMetrics(SM_CMONITORS);
 
   // Find the general settings table
@@ -296,6 +294,11 @@ void LoadSettingsFromFile(const std::string fileName) {
 
 // clang-format off
 
+/**
+ * Save current user data to disk.
+ * Builds a toml object.
+ * Uses toml supplied serializer via ostream operators to write to file.
+ */
 void WriteSettingsToFile() {
   const std::string fileName = "settings.toml";
 
@@ -314,6 +317,7 @@ void WriteSettingsToFile() {
     {"bottom", userData.defaultPaddings[3]}
   };
 
+  // toml library has overloads for creating arrays from std::vector
   std::vector<toml::value> profiles;
   // write out profile data
   for(auto& profile : userData.profiles){
@@ -345,10 +349,6 @@ void WriteSettingsToFile() {
     {"DefaultPadding", padding},
     {"Profiles", profiles},
   };
-
-  // An example of how to access the underlying std::unordered_map<>
-  // of a toml table. New or existing keyvalue pairs can be modified this way.
-  // userData.as_table()["a"] = a;
 
   std::fstream file(fileName, std::ios_base::out);
   file << topTable << std::endl;
@@ -461,16 +461,18 @@ void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
 game_title_map_t GetTitleIds() {
   const std::string fileName = "track-ir-numbers.toml";
   try {
+
     auto tvData = toml::parse(fileName);
     return toml::find<game_title_map_t>(tvData, "data");
+
   } catch (const toml::syntax_error &ex) {
     spdlog::critical("Failed to Parse Settings File {}", ex.what());
   } catch (const toml::type_error &ex) {
     spdlog::critical("Incorrect type when loading settings.\n\n{}", ex.what());
   } catch (const std::out_of_range &ex) {
-    spdlog::critical("Missing data.\n\n%s", ex.what());
-  } catch (std::runtime_error &ex) {
-    spdlog::critical("{}\n\nWas expecting to open \"{}\"", ex.what(), fileName);
+    spdlog::critical("Missing data from file.\n\n%s", ex.what());
+  } catch (const std::runtime_error &ex) {
+    spdlog::critical("{}\nWas expecting to open \"{}\"", ex.what(), fileName);
   } catch (...) {
     spdlog::critical(
         "exception has gone unhandled loading and verifying settings");

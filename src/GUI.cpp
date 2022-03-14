@@ -55,7 +55,7 @@ const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
 
-wxIMPLEMENT_APP(CGUIApp);
+wxIMPLEMENT_APP(cApp);
 
 // Center app on main display
 wxPoint GetOrigin(const int w, const int h) {
@@ -64,7 +64,7 @@ wxPoint GetOrigin(const int w, const int h) {
   return wxPoint((desktopWidth / 2) - (w / 2), (desktopHeight / 2) - (h / 2));
 }
 
-bool CGUIApp::OnInit() {
+bool cApp::OnInit() {
   // Initialize global default loggers
   mylogging::SetUpLogging();
 
@@ -99,8 +99,8 @@ bool CGUIApp::OnInit() {
     }
   });
 
-  m_frame->LoadSettingsFromFile();
-  m_frame->UpdateGuiFromSettings();
+  m_frame->InitializeSettings();
+  m_frame->UpdateGuiUsingSettings();
   m_frame->Show();
 
   // Start the track IR thread if enabled
@@ -123,7 +123,7 @@ bool CGUIApp::OnInit() {
   return true;
 }
 
-int CGUIApp::OnExit() {
+int cApp::OnExit() {
   // Stop tracking so window handle can be unregistered.
   if (m_frame->m_pTrackThread) {
     track::TrackStop();
@@ -192,43 +192,45 @@ void cFrame::OnAbout(wxCommandEvent &event) {
   wxMessageBox(msg, "About TrackIRMouse", wxOK | wxICON_NONE);
 }
 
-void cFrame::OnOpen(wxCommandEvent &event) {
-  const char lpFilename[MAX_PATH] = {0};
-  DWORD result = GetModuleFileNameA(0, (LPSTR)lpFilename, MAX_PATH);
-  wxString defaultFilePath;
-  if (result) {
-    wxString executablePath(lpFilename, static_cast<size_t>(result));
-    defaultFilePath =
-        executablePath.substr(0, executablePath.find_last_of("\\/"));
-    // defaultFilePath = wxString(lpFilename, static_cast<size_t>(result));
-    spdlog::debug("default file path for dialog: {}", defaultFilePath);
-  } else {
-    defaultFilePath = wxEmptyString;
-  }
-  wxFileDialog openFileDialog(this, "Open Settings File", defaultFilePath,
-                              wxEmptyString, "Toml (*.toml)|*.toml",
-                              wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+// Not implementing till future. Having the user pick their own settings
+// filename would require the use of saved data outside this program void
+// cFrame::OnOpen(wxCommandEvent &event) {
+//   const char lpFilename[MAX_PATH] = {0};
+//   DWORD result = GetModuleFileNameA(0, (LPSTR)lpFilename, MAX_PATH);
+//   wxString defaultFilePath;
+//   if (result) {
+//     wxString executablePath(lpFilename, static_cast<size_t>(result));
+//     defaultFilePath =
+//         executablePath.substr(0, executablePath.find_last_of("\\/"));
+//     // defaultFilePath = wxString(lpFilename, static_cast<size_t>(result));
+//     spdlog::debug("default file path for dialog: {}", defaultFilePath);
+//   } else {
+//     defaultFilePath = wxEmptyString;
+//   }
+//   wxFileDialog openFileDialog(this, "Open Settings File", defaultFilePath,
+//                               wxEmptyString, "Toml (*.toml)|*.toml",
+//                               wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
-  if (openFileDialog.ShowModal() == wxID_CANCEL) {
-    return;  // the user changed their mind...
-  }
+//   if (openFileDialog.ShowModal() == wxID_CANCEL) {
+//     return;  // the user changed their mind...
+//   }
 
-  // proceed loading the file chosen by the user;
-  // this can be done with e.g. wxWidgets input streams:
-  wxFileInputStream input_stream(openFileDialog.GetPath());
-  if (!input_stream.IsOk()) {
-    wxLogError("Cannot open file '%s'.", openFileDialog.GetPath());
-    return;
-  }
-  wxLogError("Method not implemented yet!");
-}
+//   // proceed loading the file chosen by the user;
+//   // this can be done with e.g. wxWidgets input streams:
+//   wxFileInputStream input_stream(openFileDialog.GetPath());
+//   if (!input_stream.IsOk()) {
+//     wxLogError("Cannot open file '%s'.", openFileDialog.GetPath());
+//     return;
+//   }
+//   wxLogError("Method not implemented yet!");
+// }
 
 void cFrame::OnSave(wxCommandEvent &event) { config::WriteSettingsToFile(); }
 
-void cFrame::LoadSettingsFromFile() {
+void cFrame::InitializeSettings() {
   constexpr auto filename = "settings.toml";
   try {
-    config::LoadSettingsFromFile(filename);
+    config::InitializeSettingsSingletonsFromFile(filename);
   } catch (const toml::syntax_error &ex) {
     wxLogFatalError(
         "Failed To Parse toml Settings File:\n\n%s\n\nPlease fix error or save "
@@ -246,7 +248,7 @@ void cFrame::LoadSettingsFromFile() {
   }
 }
 
-void cFrame::UpdateGuiFromSettings() {
+void cFrame::UpdateGuiUsingSettings() {
   // Populate GUI With Settings
   m_panel->PopulateComboBoxWithProfiles();
 }
@@ -255,8 +257,8 @@ void cFrame::OnReload(wxCommandEvent &event) {
   // TODO: urgent, delete existing settings
   // a smarter idea would be to make a settings builder function would make sure
   // that the settings can be loaded first before replacing existing settings
-  LoadSettingsFromFile();
-  UpdateGuiFromSettings();
+  InitializeSettings();
+  UpdateGuiUsingSettings();
 }
 
 void cFrame::OnSettings(wxCommandEvent &event) {

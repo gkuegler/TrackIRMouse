@@ -109,8 +109,8 @@ class cFrame : public wxFrame {
   wxCriticalSection m_pThreadCS;  // protects all thread pointers
 
   cFrame(wxPoint, wxSize);
-  void LoadSettingsFromFile();
-  void UpdateGuiFromSettings();
+  void InitializeSettings();
+  void UpdateGuiUsingSettings();
 
  private:
   void OnExit(wxCommandEvent &event);
@@ -126,10 +126,10 @@ class cFrame : public wxFrame {
 //                         Main Application                         //
 //////////////////////////////////////////////////////////////////////
 
-class CGUIApp : public wxApp {
+class cApp : public wxApp {
  public:
-  CGUIApp(){};
-  ~CGUIApp(){};
+  cApp(){};
+  ~cApp(){};
 
   virtual bool OnInit();
   virtual int OnExit();
@@ -144,6 +144,6 @@ class CGUIApp : public wxApp {
   cFrame *m_frame = nullptr;
 };
 
-wxDECLARE_APP(CGUIApp);
+wxDECLARE_APP(cApp);
 
 #endif /* TRACKIRMOUSE_GUI_H */

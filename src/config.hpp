@@ -49,23 +49,20 @@ struct EnvData {
 };
 
 // Initializations Functions
-void LoadSettingsFromFile(const std::string);
+void InitializeSettingsSingletonsFromFile(const std::string);
 void WriteSettingsToFile();
 
+// Getter interfaces
 UserData GetUserData();
 UserData &GetUserDataMutable();
-
 EnvData GetEnvironmentData();
 EnvData &GetEnvironmentDataMutable();
-
-// Getter functions
 Profile GetActiveProfile();
 Profile &GetActiveProfileMutable();
 int GetActiveProfileDisplayCount();
-
 std::vector<std::string> GetProfileNames();
 
-// Setter Functions
+// Setter interfaces
 void SetLogLevel(spdlog::level::level_enum level);
 bool SetActiveProfile(std::string profileName);
 void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
