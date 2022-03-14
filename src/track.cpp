@@ -22,7 +22,7 @@
 
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
-#define TEST_NO_TRACK
+//#define TEST_NO_TRACK
 
 namespace track {
 
@@ -438,7 +438,9 @@ void TrackToggle() {
 void TrackStop() {
   spdlog::trace("TrackStop called into.");
   g_bTrackingAllowedToRun = false;
+#ifndef TEST_NO_TRACK
   NP_StopDataTransmission();
   NP_UnregisterWindowHandle();
+#endif
 }
 }  // namespace track
