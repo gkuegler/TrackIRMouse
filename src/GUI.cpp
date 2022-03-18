@@ -193,8 +193,8 @@ void cFrame::OnAbout(wxCommandEvent &event) {
 }
 
 // Not implementing till future. Having the user pick their own settings
-// filename would require the use of saved data outside this program void
-// cFrame::OnOpen(wxCommandEvent &event) {
+// filename would require the use of saved data outside this program
+// void cFrame::OnOpen(wxCommandEvent &event) {
 //   const char lpFilename[MAX_PATH] = {0};
 //   DWORD result = GetModuleFileNameA(0, (LPSTR)lpFilename, MAX_PATH);
 //   wxString defaultFilePath;
@@ -210,11 +210,9 @@ void cFrame::OnAbout(wxCommandEvent &event) {
 //   wxFileDialog openFileDialog(this, "Open Settings File", defaultFilePath,
 //                               wxEmptyString, "Toml (*.toml)|*.toml",
 //                               wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-
 //   if (openFileDialog.ShowModal() == wxID_CANCEL) {
 //     return;  // the user changed their mind...
 //   }
-
 //   // proceed loading the file chosen by the user;
 //   // this can be done with e.g. wxWidgets input streams:
 //   wxFileInputStream input_stream(openFileDialog.GetPath());

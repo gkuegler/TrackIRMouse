@@ -28,12 +28,14 @@ class cSettingsGeneralPanel : public wxPanel {
 
 class cSettingsAdvancedlPanel : public wxPanel {
  public:
+  wxCheckBox *m_cbxAutoFindDll;
   wxTextCtrl *m_txtTrackIrDllPath;
   cSettingsAdvancedlPanel(wxWindow *parent, config::UserData *pUserData);
 
  private:
   config::UserData *m_pUserData = nullptr;
-  void OnTrackIrDllPath(wxCommandEvent &event);
+  void OnAutoFindDll(wxCommandEvent &event);
+  void OnTrackIrDllPath(wxCommandEvent& event);
 };
 
 class cSettingsPopup : public wxPropertySheetDialog {
@@ -52,15 +54,13 @@ class cProfileIdSelectorPanel : public wxPanel {
   int *id = nullptr;
   std::vector<std::pair<std::string, std::string>> profileIdList;
 
+  /**
+   * Expects idList to be sorted alphabetically
+   */
   cProfileIdSelectorPanel(
       wxWindow *parent, int *profileId,
       const std::vector<std::pair<std::string, std::string>> &idList)
       : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0) {
-    /**
-     * Expects idList to be sorted alphabetically
-     *
-     */
-
     id = profileId;
     profileIdList = idList;
 

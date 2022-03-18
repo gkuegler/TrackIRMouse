@@ -67,9 +67,12 @@ cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent,
 
   SetSizer(border);
 
-  m_cbxEnableWatchdog->Bind(wxEVT_CHECKBOX, &cSettingsGeneralPanel::OnEnabledWatchdog, this);
-  m_cbxTrackOnStart->Bind(wxEVT_CHECKBOX, &cSettingsGeneralPanel::OnTrackOnStart, this);
-  m_cbxQuitOnLossOfTrackIR->Bind(wxEVT_CHECKBOX, &cSettingsGeneralPanel::OnQuitOnLossOfTrackIr, this);
+  m_cbxEnableWatchdog->Bind(wxEVT_CHECKBOX,
+                            &cSettingsGeneralPanel::OnEnabledWatchdog, this);
+  m_cbxTrackOnStart->Bind(wxEVT_CHECKBOX,
+                          &cSettingsGeneralPanel::OnTrackOnStart, this);
+  m_cbxQuitOnLossOfTrackIR->Bind(
+      wxEVT_CHECKBOX, &cSettingsGeneralPanel::OnQuitOnLossOfTrackIr, this);
 }
 
 void cSettingsGeneralPanel::OnEnabledWatchdog(wxCommandEvent& event) {
@@ -95,6 +98,13 @@ cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow* parent,
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
               wxTAB_TRAVERSAL, "") {
   m_pUserData = pUserData;
+
+  m_cbxAutoFindDll = new wxCheckBox(
+      this, wxID_ANY,
+      "Auto find trackir dll from registry.\n(This is normal operation if "
+      "TrackIR is installed.\nUse of this feature is primarily aimed at users\n"
+      "who wish to spoof the dll to provide\ntheir own head tracking info)");
+
   wxStaticText* txtTrackLocation1 =
       new wxStaticText(this, wxID_ANY, "Path of 'NPClient64.dll':   ");
   m_txtTrackIrDllPath =
@@ -104,11 +114,14 @@ cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow* parent,
       this, wxID_ANY,
       "Note: a value of 'default' will get from install location.");
 
+  m_cbxAutoFindDll->SetValue(pUserData->autoFindTrackIrDll);
+
   wxBoxSizer* zrDllLocation = new wxBoxSizer(wxHORIZONTAL);
   zrDllLocation->Add(txtTrackLocation1, 0, wxTOP, 5);
   zrDllLocation->Add(m_txtTrackIrDllPath, 1, wxALL | wxEXPAND, 0);
 
   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+  topSizer->Add(m_cbxAutoFindDll, 0, wxTOP | wxBOTTOM, 10);
   topSizer->Add(zrDllLocation, 0, wxTOP | wxEXPAND, 10);
   topSizer->Add(txtTrackLocation2, 0, wxALL, 0);
 
@@ -117,11 +130,18 @@ cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow* parent,
 
   SetSizer(border);
 
-  m_txtTrackIrDllPath->Bind(wxEVT_TEXT, &cSettingsAdvancedlPanel::OnTrackIrDllPath, this);
+  m_txtTrackIrDllPath->Bind(wxEVT_TEXT,
+                            &cSettingsAdvancedlPanel::OnTrackIrDllPath, this);
+  m_txtTrackIrDllPath->Bind(wxEVT_BUTTON,
+                            &cSettingsAdvancedlPanel::OnAutoFindDll, this);
 }
 
 void cSettingsAdvancedlPanel::OnTrackIrDllPath(wxCommandEvent& event) {
   wxString wxsPath = m_txtTrackIrDllPath->GetLineText(0);
   std::string path(wxsPath.mb_str());
   m_pUserData->trackIrDllFolder = path;
+}
+
+void cSettingsAdvancedlPanel::OnAutoFindDll(wxCommandEvent& event) {
+  m_pUserData->autoFindTrackIrDll = m_cbxAutoFindDll->IsChecked();
 }
