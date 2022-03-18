@@ -38,7 +38,7 @@ pad_right = 3
 
 [[Profiles]]
 name = "Desktop Dual Monitor"
-profile_id = 1775
+profile_id = 13302
 use_default_padding = true
 
 [[Profiles.DisplayMappings]]

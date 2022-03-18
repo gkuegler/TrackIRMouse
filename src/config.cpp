@@ -23,9 +23,12 @@
 namespace config {
 
 // settings singletons
-// TODO: turn this back into a class
-static UserData userData;
-static EnvData environmentData;
+static std::shared_ptr<Config> config_;
+
+std::shared_ptr<Config> Get() { return config_; }
+
+// attemp at some thread safety
+void Set(const Config c) { config_ = std::make_shared<Config>(c); }
 
 typedef struct _RegistryQuery {
   int result;
@@ -33,6 +36,13 @@ typedef struct _RegistryQuery {
   std::string value;
 } RegistryQuery;
 
+/**
+ * [GetStringFromRegistry description]
+ * @param  hParentKey [description]
+ * @param  subKey     [description]
+ * @param  subValue   [description]
+ * @return            [description]
+ */
 RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
                                     const char *subValue) {
   //////////////////////////////////////////////////////////////////////
@@ -114,9 +124,6 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
     return RegistryQuery{statusGetValue, "Could not get registry key.", ""};
   }
 }
-UserData GetUserData() { return userData; }
-UserData &GetUserDataMutable() { return userData; }
-EnvData GetEnvironmentData() { return environmentData; }
 
 /**
  * Loads toml user data into config class.
@@ -126,10 +133,11 @@ EnvData GetEnvironmentData() { return environmentData; }
  *   - toml::type_error - failed conversion from 'toml::find'
  *   - std::out_of_range - a table or value is not found
  */
-void InitializeSettingsSingletonsFromFile(const std::string fileName) {
+Config::Config(const std::string filename) {
   // note: hungarian notation prefix tv___ = toml::value
-  auto tvData = toml::parse<toml::preserve_comments>(fileName);
-  environmentData.monitorCount = GetSystemMetrics(SM_CMONITORS);
+  filename_ = filename;
+  auto tvData = toml::parse<toml::preserve_comments>(filename);
+  envData.monitorCount = GetSystemMetrics(SM_CMONITORS);
 
   // Find the general settings table
   auto &vGeneralSettings = toml::find(tvData, "General");
@@ -148,12 +156,15 @@ void InitializeSettingsSingletonsFromFile(const std::string fileName) {
   userData.activeProfileName =
       toml::find<std::string>(vGeneralSettings, "active_profile");
 
+  // TODO: implement this in settings file
+  userData.autoFindTrackIrDll = true;
+
   //////////////////////////////////////////////////////////////////////
   //                  Finding NPTrackIR DLL Location                  //
   //////////////////////////////////////////////////////////////////////
   std::string dllpath;
 
-  if ("default" == userData.trackIrDllFolder) {
+  if (userData.autoFindTrackIrDll) {
     RegistryQuery path = GetStringFromRegistry(
         HKEY_CURRENT_USER,
         "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
@@ -163,8 +174,12 @@ void InitializeSettingsSingletonsFromFile(const std::string fileName) {
       spdlog::info("Acquired DLL location from registry.");
     } else {
       spdlog::error(
-          "Could not find registry path\n  path.result: {}"
-          "  path.resultString: {}",
+          "Could not find registry path. NP TrackIR may not be installed. To "
+          "fix error, try specifying the folder of the \"NPClient64.dll\" in "
+          "edit->settings.");
+      spdlog::info(
+          "path.result: {}\n"
+          "path.resultString: {}",
           path.result, path.resultString);
     }
   } else {
@@ -184,7 +199,7 @@ void InitializeSettingsSingletonsFromFile(const std::string fileName) {
 #endif
 
   spdlog::debug("NPTrackIR DLL Path: {}", dllpath);
-  environmentData.trackIrDllPath = dllpath;
+  envData.trackIrDllPath = dllpath;
 
   //////////////////////////////////////////////////////////////////////
   //                     Finding Default Padding                      //
@@ -300,9 +315,7 @@ void InitializeSettingsSingletonsFromFile(const std::string fileName) {
  * Builds a toml object.
  * Uses toml supplied serializer via ostream operators to write to file.
  */
-void WriteSettingsToFile() {
-  const std::string fileName = "settings.toml";
-
+void Config::SaveToFile(std::string filename) {
   toml::value general{
     {"track_on_start", userData.trackOnStart},
     {"quit_on_loss_of_track_ir", userData.quitOnLossOfTrackIr},
@@ -351,13 +364,13 @@ void WriteSettingsToFile() {
     {"Profiles", profiles},
   };
 
-  std::fstream file(fileName, std::ios_base::out);
+  std::fstream file(filename, std::ios_base::out);
   file << topTable << std::endl;
   file.close();
 }
 // clang-format on
 
-bool SetActiveProfile(std::string profileName) {
+bool Config::SetActiveProfile(std::string profileName) {
   // check if a valid name
   auto profileNames = GetProfileNames();
   bool found = false;
@@ -375,7 +388,7 @@ bool SetActiveProfile(std::string profileName) {
   return true;
 }
 
-void SetLogLevel(spdlog::level::level_enum level) {
+void Config::SetLogLevel(spdlog::level::level_enum level) {
   if (level <= 6 || level >= 0) {
     spdlog::set_level(level);
     return;
@@ -385,7 +398,7 @@ void SetLogLevel(spdlog::level::level_enum level) {
   return;
 }
 
-void AddProfile(std::string newProfileName) {
+void Config::AddProfile(std::string newProfileName) {
   auto profileNames = GetProfileNames();
 
   // Prohibit conflicting names
@@ -401,7 +414,7 @@ void AddProfile(std::string newProfileName) {
   userData.profiles.push_back(p);
 }
 
-void RemoveProfile(std::string profileName) {
+void Config::RemoveProfile(std::string profileName) {
   for (std::size_t i = 0; i < userData.profiles.size(); i++) {
     if (profileName == userData.profiles[i].name) {
       userData.profiles.erase(userData.profiles.begin() + i);
@@ -415,14 +428,14 @@ void RemoveProfile(std::string profileName) {
   }
 }
 
-void DuplicateActiveProfile() {
+void Config::DuplicateActiveProfile() {
   auto profile = GetActiveProfile();
   profile.name.append("2");  // incremental profile name
   userData.profiles.push_back(profile);
   userData.activeProfileName = profile.name;
 }
 
-std::vector<std::string> GetProfileNames() {
+std::vector<std::string> Config::GetProfileNames() {
   std::vector<std::string> profileNames;
   for (auto &profile : userData.profiles) {
     profileNames.push_back(profile.name);
@@ -430,18 +443,7 @@ std::vector<std::string> GetProfileNames() {
   return profileNames;
 }
 
-Profile &GetActiveProfileMutable() {
-  for (auto &profile : userData.profiles) {
-    if (profile.name == userData.activeProfileName) {
-      return profile;
-    }
-  }
-  // a profile should exist, codes shouldn't be reachable
-  spdlog::critical(
-      "An internal error has occured. Couldn't find active profile by name.");
-}
-// TODO change this to const
-Profile GetActiveProfile() {
+Profile &Config::GetActiveProfile() {
   for (auto &profile : userData.profiles) {
     if (profile.name == userData.activeProfileName) {
       return profile;
@@ -452,12 +454,13 @@ Profile GetActiveProfile() {
       "An internal error has occured. Couldn't find active profile by name.");
 }
 
-int GetActiveProfileDisplayCount() {
-  return GetActiveProfile().displays.size();
+int Config::GetActiveProfileDisplayCount() {
+  return static_cast<int>(GetActiveProfile().displays.size());
 }
 
-void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
-                                   int parameterSide, double parameter) {}
+void Config::SetActProfDisplayMappingParam(int displayNumber, int parameterType,
+                                           int parameterSide,
+                                           double parameter) {}
 
 game_title_map_t GetTitleIds() {
   const std::string fileName = "track-ir-numbers.toml";

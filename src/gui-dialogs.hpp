@@ -72,7 +72,8 @@ class cProfileIdSelectorPanel : public wxPanel {
     m_lctProfileIds->InsertColumn(0, "Tile", wxLIST_FORMAT_LEFT, 200);
     m_lctProfileIds->InsertColumn(1, "ID", wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 
-    auto activeId = config::GetActiveProfile().profileId;
+    // don't do thism move to constructor and dep inject
+    auto activeId = config::Get()->GetActiveProfile().profileId;
     int selection = -1;
 
     // populate list

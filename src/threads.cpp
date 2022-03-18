@@ -28,10 +28,11 @@ void CloseApplication() {
   wxTheApp->QueueEvent(evt);
 }
 
+// TODO: move to polymophic track object created by dependency injection
 wxThread::ExitCode TrackThread::Entry() {
-  auto profile = config::GetActiveProfile();
-  auto path = config::GetEnvironmentData().trackIrDllPath;
-  auto usr = config::GetUserData();
+  auto profile = config::Get()->GetActiveProfile();
+  auto path = config::Get()->envData.trackIrDllPath;
+  auto usr = config::Get()->userData;
   if (track::Initialize(m_hWnd, profile, path) == retcode::fail) {
     return NULL;
   }

@@ -13,7 +13,6 @@ const constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right",
                                                                "top", "bottom"};
 
 namespace config {
-
 using bounds_t = std::array<deg, 4>;
 using pad_t = std::array<pixels, 4>;
 
@@ -24,7 +23,7 @@ struct Display {
 };
 
 struct Profile {
-  std::string name = "profile";
+  std::string name = "profile_name";
   int profileId = 0;
   bool useDefaultPadding = true;
   std::vector<Display> displays;
@@ -37,6 +36,7 @@ struct UserData {
   int logLevel = spdlog::level::trace;
   int logLevelFile = spdlog::level::trace;
   int logLevelTextControl = spdlog::level::info;
+  bool autoFindTrackIrDll = true;
   std::string trackIrDllFolder = "default";
   std::string activeProfileName = "Lorem Ipsum";
   std::array<pixels, 4> defaultPaddings = {0, 0, 0, 0};
@@ -48,28 +48,38 @@ struct EnvData {
   std::string trackIrDllPath = "";
 };
 
-// Initializations Functions
-void InitializeSettingsSingletonsFromFile(const std::string);
-void WriteSettingsToFile();
+class Config {
+ public:
+  UserData userData;
+  EnvData envData;
 
-// Getter interfaces
-UserData GetUserData();
-UserData &GetUserDataMutable();
-EnvData GetEnvironmentData();
-EnvData &GetEnvironmentDataMutable();
-Profile GetActiveProfile();
-Profile &GetActiveProfileMutable();
-int GetActiveProfileDisplayCount();
-std::vector<std::string> GetProfileNames();
+  Config();                            // load with default values
+  Config(const std::string filename);  // load from file
 
-// Setter interfaces
-void SetLogLevel(spdlog::level::level_enum level);
-bool SetActiveProfile(std::string profileName);
-void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
-                                   int parameterSide, double parameter);
-void AddProfile(std::string newProfileName);
-void RemoveProfile(std::string profileName);
-void DuplicateActiveProfile();
+  void SaveToFile(std::string filename);
+  // void SaveToFile();
+
+  // getter interface
+  Profile &GetActiveProfile();
+  int GetActiveProfileDisplayCount();
+  std::vector<std::string> GetProfileNames();
+
+  // setter interface
+  bool SetActiveProfile(std::string profileName);
+  void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
+                                     int parameterSide, double parameter);
+  void SetLogLevel(spdlog::level::level_enum level);
+  void AddProfile(std::string newProfileName);
+  void RemoveProfile(std::string profileName);
+  void DuplicateActiveProfile();
+
+ private:
+  std::string filename_ = "";
+};
+
+std::shared_ptr<Config> Get();
+Config GetCopy();
+void Set(const Config c);
 
 using UserInput = std::vector<Display>;
 bool ValidateUserInput(const UserInput &displays);

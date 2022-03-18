@@ -113,7 +113,7 @@ void cDisplayGraphic::Render(wxDC& dc) {
 
   // get array of monitor bounds
   auto hdi = env::GetHardwareDisplayInfo();
-  auto usrDisplays = config::GetActiveProfile().displays;
+  auto usrDisplays = config::Get()->GetActiveProfile().displays;
 
   // normalize virtual desktop rect for each monitor where 1 = total width in
   // pixels values can be negative
