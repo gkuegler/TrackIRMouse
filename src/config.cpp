@@ -18,7 +18,7 @@
 #include "types.hpp"
 
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
-#include "toml.hpp"
+#include "toml11/toml.hpp"
 
 namespace config {
 
@@ -461,7 +461,6 @@ void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
 game_title_map_t GetTitleIds() {
   const std::string fileName = "track-ir-numbers.toml";
   try {
-
     auto tvData = toml::parse(fileName);
     return toml::find<game_title_map_t>(tvData, "data");
 

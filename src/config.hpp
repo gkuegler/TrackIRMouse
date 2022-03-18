@@ -6,7 +6,7 @@
 #include <string>
 
 #include "log.hpp"
-#include "toml/exception.hpp"
+#include "toml11/toml/exception.hpp"
 #include "types.hpp"
 
 const constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right",
