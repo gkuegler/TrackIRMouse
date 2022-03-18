@@ -59,7 +59,7 @@ using WxSink_mt = WxSink<std::mutex>;
 using WxSink_st = WxSink<spdlog::details::null_mutex>;
 
 // clang-format off
-void SetUpLogging() {
+void SetUpLogging(std::string filename) {
   // Creating multithreaded loggers with multiple sinks
   std::vector<spdlog::sink_ptr> sinks;
 
@@ -70,10 +70,10 @@ void SetUpLogging() {
 
   // create sinks (3) in total
   sinks.push_back(std::make_shared<spdlog::sinks::stdout_sink_mt>());
-  sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("log-trackir.txt", true));
+  sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(filename, true));
   sinks.push_back(wx_txtctrl_sink);
 
-  auto combined_logger =std::make_shared<spdlog::logger>("main", begin(sinks), end(sinks));
+  auto combined_logger = std::make_shared<spdlog::logger>("main", begin(sinks), end(sinks));
   combined_logger->set_level(spdlog::level::trace);
   combined_logger->set_pattern("[%T][%n][%l] %v"); // "[HH:MM:SS][logger_name][level] msg"
 

@@ -8,9 +8,9 @@
 
 namespace track {
 retcode Initialize(HWND hWnd, config::Profile, std::string dllpath);
-retcode TrackStart();
-void TrackToggle();
-void TrackStop();
+retcode Start();
+void Toggle();
+void Stop();
 }  // namespace track
 
 #endif /* TRACKIRMOUSE_TRACK_HPP */

@@ -84,8 +84,8 @@ class cPanel : public wxPanel {
   void PopulateComboBoxWithProfiles();
   void PopulateSettings();
 
-  void OnTrackStart(wxCommandEvent &event);
-  void OnTrackStop(wxCommandEvent &event);
+  void OnStart(wxCommandEvent &event);
+  void OnStop(wxCommandEvent &event);
 
  private:
   cFrame *m_parent;
@@ -115,7 +115,7 @@ class cFrame : public wxFrame {
  private:
   void OnExit(wxCommandEvent &event);
   void OnAbout(wxCommandEvent &event);
-  void OnOpen(wxCommandEvent &event);
+  // void OnOpen(wxCommandEvent &event);
   void OnSave(wxCommandEvent &event);
   void OnReload(wxCommandEvent &event);
   void OnSettings(wxCommandEvent &event);

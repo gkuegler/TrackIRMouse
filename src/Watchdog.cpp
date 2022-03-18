@@ -226,7 +226,7 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
     rslt = strcpy_s(pchReply, BUFSIZE, "HEARTBEAT\0");
   } else if (strcmp(pchRequest, "PAUSE") == 0) {
     rslt = strcpy_s(pchReply, BUFSIZE, "PAUSE\0");
-    track::TrackToggle();
+    track::Toggle();
   } else {
     rslt = strcpy_s(pchReply, BUFSIZE, "NONE");
   }

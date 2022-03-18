@@ -363,7 +363,7 @@ void MouseMove(deg yaw, deg pitch) {
   return;
 }
 
-retcode TrackStart() {
+retcode Start() {
   g_bTrackingAllowedToRun = true;
 
 #ifndef TEST_NO_TRACK
@@ -430,13 +430,13 @@ retcode TrackStart() {
   return retcode::success;
 }
 
-void TrackToggle() {
+void Toggle() {
   spdlog::trace("Track pause called into.");
   g_bPauseTracking = !g_bPauseTracking;
 }
 
-void TrackStop() {
-  spdlog::trace("TrackStop called into.");
+void Stop() {
+  spdlog::trace("Stop called into.");
   g_bTrackingAllowedToRun = false;
 #ifndef TEST_NO_TRACK
   NP_StopDataTransmission();

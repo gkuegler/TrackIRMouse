@@ -66,7 +66,7 @@ wxPoint GetOrigin(const int w, const int h) {
 
 bool cApp::OnInit() {
   // Initialize global default loggers
-  mylogging::SetUpLogging();
+  mylogging::SetUpLogging("log-trackir.txt");
 
   // App initialization constants
   constexpr int appWidth = 1200;
@@ -107,7 +107,7 @@ bool cApp::OnInit() {
   auto usr = config::GetUserData();
   if (usr.trackOnStart) {
     wxCommandEvent event = {};  // blank event to reuse start handler code
-    m_frame->m_panel->OnTrackStart(event);
+    m_frame->m_panel->OnStart(event);
   }
 
   // Start the watchdog thread
@@ -126,7 +126,7 @@ bool cApp::OnInit() {
 int cApp::OnExit() {
   // Stop tracking so window handle can be unregistered.
   if (m_frame->m_pTrackThread) {
-    track::TrackStop();
+    track::Stop();
   }
   return 0;
 }
@@ -172,7 +172,7 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
 
   Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnAbout, this, wxID_ABOUT);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnExit, this, wxID_EXIT);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnOpen, this, wxID_OPEN);
+  // Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnOpen, this, wxID_OPEN);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnSave, this, wxID_SAVE);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnReload, this, myID_MENU_RELOAD);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnSettings, this,
@@ -362,8 +362,8 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
       wxT("Start controlling mouse with head tracking."));
   m_btnStopMouse->SetToolTip(wxT("Stop control of the mouse."));
 
-  m_btnStartMouse->Bind(wxEVT_BUTTON, &cPanel::OnTrackStart, this);
-  m_btnStopMouse->Bind(wxEVT_BUTTON, &cPanel::OnTrackStop, this);
+  m_btnStartMouse->Bind(wxEVT_BUTTON, &cPanel::OnStart, this);
+  m_btnStopMouse->Bind(wxEVT_BUTTON, &cPanel::OnStop, this);
   m_cmbProfiles->Bind(wxEVT_CHOICE, &cPanel::OnActiveProfile, this);
   m_btnAddProfile->Bind(wxEVT_BUTTON, &cPanel::OnAddProfile, this);
   m_btnRemoveProfile->Bind(wxEVT_BUTTON, &cPanel::OnRemoveProfile, this);
@@ -386,7 +386,7 @@ void cPanel::PopulateComboBoxWithProfiles() {
   }
 }
 
-void cPanel::OnTrackStart(wxCommandEvent &event) {
+void cPanel::OnStart(wxCommandEvent &event) {
   // TODO: remove race condition
   // use std::unique_ptr<> or std::week_ptr<> & std::shared_ptr<> to create a
   // custom class signaler when the class gets deleted; so does the pointer and
@@ -397,7 +397,7 @@ void cPanel::OnTrackStart(wxCommandEvent &event) {
   if (m_parent->m_pTrackThread) {
     spdlog::warn("Please stop mouse before restarting.");
     wxCommandEvent event = {};
-    OnTrackStop(event);
+    OnStop(event);
     // wait for destruction of thread
     // thread will set its pointer to NULL upon destruction
     while (true) {
@@ -428,14 +428,14 @@ void cPanel::OnTrackStart(wxCommandEvent &event) {
   // nullptr when the thread dies.
 }
 
-void cPanel::OnTrackStop(wxCommandEvent &event) {
+void cPanel::OnStop(wxCommandEvent &event) {
   // Threads run in detached mode by default.
   // Right is responsible for setting m_pTrackThread to nullptr when it
   // finishes and destroys itself.
   if (m_parent->m_pTrackThread) {
     // This will gracefully exit the tracking loop and return control to the
     // thread. This will cause the thread to die off and delete itself.
-    track::TrackStop();
+    track::Stop();
     spdlog::info("Stopped mouse.");
   } else {
     spdlog::warn("Track thread not running!");

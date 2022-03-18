@@ -37,7 +37,7 @@ wxThread::ExitCode TrackThread::Entry() {
   }
 
   // This is the loop function
-  if (track::TrackStart() == retcode::fail && usr.quitOnLossOfTrackIr) {
+  if (track::Start() == retcode::fail && usr.quitOnLossOfTrackIr) {
     spdlog::trace("quitting on loss of track ir");
     CloseApplication();
   }
