@@ -23,6 +23,7 @@
 namespace config {
 
 // settings singletons
+// TODO: turn this back into a class
 static UserData userData;
 static EnvData environmentData;
 

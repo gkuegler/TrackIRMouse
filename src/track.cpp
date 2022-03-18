@@ -23,6 +23,9 @@
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
 //#define TEST_NO_TRACK
+//
+// TODO: make track client polymorphic class
+// TODO: check out opentrack for other interfaces
 
 namespace track {
 

@@ -5,15 +5,9 @@
  *
  * --License Boilerplate Placeholder--
  *
- * TODO section:
- *     update and include natural point license boilerplate
  */
 
-// The trackIR DLL requires
-//#define _AFXDLL
-//#include <afxwin.h>         // MFC core and standard components
-//#include <afxext.h>         // MFC extensions
-//#include <afxcmn.h>	      // MFC support for Windows Common Controls
+// TODO: update and include natural point license boilerplate
 
 #include "np-client.h"
 
@@ -66,7 +60,7 @@ NPRESULT __stdcall NP_RegisterProgramProfileID(unsigned short wPPID) {
     result = (*gpfNP_RegisterProgramProfileID)(wPPID);
 
   return result;
-}
+}  // NP_RegisterProgramProfileID
 
 NPRESULT __stdcall NP_QueryVersion(unsigned short *pwVersion) {
   NPRESULT result = NP_ERR_DLL_NOT_FOUND;
@@ -74,7 +68,7 @@ NPRESULT __stdcall NP_QueryVersion(unsigned short *pwVersion) {
   if (NULL != gpfNP_QueryVersion) result = (*gpfNP_QueryVersion)(pwVersion);
 
   return result;
-}
+}  // NP_QueryVersion
 
 NPRESULT __stdcall NP_RequestData(unsigned short wDataReq) {
   NPRESULT result = NP_ERR_DLL_NOT_FOUND;
@@ -90,7 +84,7 @@ NPRESULT __stdcall NP_GetSignature(LPTRACKIRSIGNATURE pSignature) {
   if (NULL != gpfNP_GetSignature) result = (*gpfNP_GetSignature)(pSignature);
 
   return result;
-}
+}  // NP_GetSignature
 
 NPRESULT __stdcall NP_GetData(LPTRACKIRDATA pTID) {
   NPRESULT result = NP_ERR_DLL_NOT_FOUND;
@@ -98,7 +92,7 @@ NPRESULT __stdcall NP_GetData(LPTRACKIRDATA pTID) {
   if (NULL != gpfNP_GetData) result = (*gpfNP_GetData)(pTID);
 
   return result;
-}
+}  // NP_GetData
 
 NPRESULT __stdcall NP_StartCursor() {
   NPRESULT result = NP_ERR_DLL_NOT_FOUND;
@@ -106,7 +100,7 @@ NPRESULT __stdcall NP_StartCursor() {
   if (NULL != gpfNP_StartCursor) result = (*gpfNP_StartCursor)();
 
   return result;
-}
+}  // NP_StartCursor
 
 NPRESULT __stdcall NP_StopCursor() {
   NPRESULT result = NP_ERR_DLL_NOT_FOUND;
@@ -122,7 +116,7 @@ NPRESULT __stdcall NP_ReCenter() {
   if (NULL != gpfNP_ReCenter) result = (*gpfNP_ReCenter)();
 
   return result;
-}
+}  // NP_ReCenter
 
 NPRESULT __stdcall NP_StartDataTransmission() {
   NPRESULT result = NP_ERR_DLL_NOT_FOUND;
@@ -131,7 +125,7 @@ NPRESULT __stdcall NP_StartDataTransmission() {
     result = (*gpfNP_StartDataTransmission)();
 
   return result;
-}
+}  // NP_StartDataTransmission
 
 NPRESULT __stdcall NP_StopDataTransmission() {
   NPRESULT result = NP_ERR_DLL_NOT_FOUND;
@@ -140,9 +134,9 @@ NPRESULT __stdcall NP_StopDataTransmission() {
     result = (*gpfNP_StopDataTransmission)();
 
   return result;
-}
+}  // NP_StopDataTransmission
 
-// NPClientInit() -- Loads the DLL and retrieves pointers to all exports
+// Load the DLL and retrieve pointers to all exports
 NPRESULT NPClient_Init(LPTSTR pszDLLPath) {
   ghNPClientDLL = LoadLibrary(pszDLLPath);
 
