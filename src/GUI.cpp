@@ -273,6 +273,9 @@ void cFrame::OnSettings(wxCommandEvent &event) {
   if (wxID_OK == results) {
     spdlog::debug("settings applied.");
     config->userData = usr;
+
+    auto logger = spdlog::get("main");
+    logger->set_level(usr.logLevel);
   } else if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
   }
@@ -299,6 +302,8 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
   m_btnStopMouse =
       new wxButton(this, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition,
                    kDefaultButtonSize, 0, wxDefaultValidator, "");
+  auto btnHide = new wxButton(this, wxID_ANY, "Show/Hide Log",
+                              wxDefaultPosition, kDefaultButtonSize);
 
   m_displayGraphic = new cDisplayGraphic(this, wxSize(650, 200));
 
@@ -321,8 +326,7 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
 
   m_pnlDisplayConfig = new cPanelConfiguration(this);
 
-  wxStaticText *txtLogOutputTitle =
-      new wxStaticText(this, wxID_ANY, "Log Output:");
+  m_lbtextrich = new wxStaticText(this, wxID_ANY, "Log Output:");
 
   m_textrich = new cTextCtrl(this, wxID_ANY, "", wxDefaultPosition,
                              wxSize(300, 10), wxTE_RICH | wxTE_MULTILINE);
@@ -334,6 +338,7 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
   auto *zrTrackCmds = new wxBoxSizer(wxHORIZONTAL);
   zrTrackCmds->Add(m_btnStartMouse, 0, wxALL, 0);
   zrTrackCmds->Add(m_btnStopMouse, 0, wxALL, 0);
+  zrTrackCmds->Add(btnHide, 0, wxALL, 0);
 
   auto *zrProfCmds = new wxBoxSizer(wxHORIZONTAL);
   zrProfCmds->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -349,7 +354,7 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
   zrBlockLeft->Add(m_pnlDisplayConfig, 0, wxALL, 0);
 
   auto *zrLogWindow = new wxBoxSizer(wxVERTICAL);
-  zrLogWindow->Add(txtLogOutputTitle, 0, wxBOTTOM, 5);
+  zrLogWindow->Add(m_lbtextrich, 0, wxBOTTOM, 5);
   zrLogWindow->Add(m_textrich, 1, wxEXPAND, 0);
 
   auto *topSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -365,6 +370,7 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
 
   m_btnStartMouse->Bind(wxEVT_BUTTON, &cPanel::OnStart, this);
   m_btnStopMouse->Bind(wxEVT_BUTTON, &cPanel::OnStop, this);
+  btnHide->Bind(wxEVT_BUTTON, &cPanel::OnShowLog, this);
   m_cmbProfiles->Bind(wxEVT_CHOICE, &cPanel::OnActiveProfile, this);
   m_btnAddProfile->Bind(wxEVT_BUTTON, &cPanel::OnAddProfile, this);
   m_btnRemoveProfile->Bind(wxEVT_BUTTON, &cPanel::OnRemoveProfile, this);
@@ -441,6 +447,16 @@ void cPanel::OnStop(wxCommandEvent &event) {
     spdlog::info("Stopped mouse.");
   } else {
     spdlog::warn("Track thread not running!");
+  }
+}
+
+void cPanel::OnShowLog(wxCommandEvent &event) {
+  if (m_textrich->IsShown()) {
+    m_textrich->Hide();
+    m_lbtextrich->Hide();
+  } else {
+    m_textrich->Show();
+    m_lbtextrich->Show();
   }
 }
 

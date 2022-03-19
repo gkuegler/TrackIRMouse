@@ -1,7 +1,6 @@
 #ifndef TRACKIRMOUSE_TYPES_HPP
 #define TRACKIRMOUSE_TYPES_HPP
 
-#include <utility>
 #include <vector>
 
 using deg = double;

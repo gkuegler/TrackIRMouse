@@ -6,6 +6,7 @@
 
 #include <vector>
 
+namespace util {
 template <typename T>
 wxArrayString BuildWxArrayString(const T container) {
   wxArrayString array;
@@ -14,4 +15,5 @@ wxArrayString BuildWxArrayString(const T container) {
   }
   return array;
 }
+}  // namespace util
 #endif /* TRACKIRMOUSE_UTIL_H */

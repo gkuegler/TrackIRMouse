@@ -6,6 +6,7 @@
 #include <string>
 
 #include "log.hpp"
+// TODO: remove toml exception dependency
 #include "toml11/toml/exception.hpp"
 #include "types.hpp"
 
@@ -33,9 +34,7 @@ struct UserData {
   bool trackOnStart = true;
   bool quitOnLossOfTrackIr = true;
   bool watchdogEnabled = true;
-  int logLevel = spdlog::level::trace;
-  int logLevelFile = spdlog::level::trace;
-  int logLevelTextControl = spdlog::level::info;
+  spdlog::level::level_enum logLevel = spdlog::level::info;
   bool autoFindTrackIrDll = true;
   std::string trackIrDllFolder = "default";
   std::string activeProfileName = "Lorem Ipsum";
@@ -68,7 +67,6 @@ class Config {
   bool SetActiveProfile(std::string profileName);
   void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
                                      int parameterSide, double parameter);
-  void SetLogLevel(spdlog::level::level_enum level);
   void AddProfile(std::string newProfileName);
   void RemoveProfile(std::string profileName);
   void DuplicateActiveProfile();

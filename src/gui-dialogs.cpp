@@ -13,11 +13,12 @@
 
 #include "config.hpp"
 #include "gui-control-id.hpp"
+#include "log.hpp"
 #include "util.hpp"
 
 const static std::array<std::string, 7> LogLevels = {
     "trace", "debug", "info", "warning", "error", "critical", "off"};
-const static auto asLogLevels = BuildWxArrayString(LogLevels);
+const static auto asLogLevels = util::BuildWxArrayString(LogLevels);
 
 cSettingsPopup::cSettingsPopup(wxWindow* parent, config::UserData* pUserData)
     : wxPropertySheetDialog(parent, wxID_ANY, "Settings", wxPoint(200, 200),
@@ -38,17 +39,18 @@ cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent,
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
               wxTAB_TRAVERSAL, "") {
   m_pUserData = pUserData;
-  m_cbxEnableWatchdog = new wxCheckBox(
-      this, myID_WATCHDOG_ENABLED, "Watchdog Enabled", wxDefaultPosition,
-      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-  m_cbxTrackOnStart = new wxCheckBox(
-      this, myID_TRACK_ON_START, "Track On Start", wxDefaultPosition,
-      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  m_cbxEnableWatchdog =
+      new wxCheckBox(this, wxID_ANY, "Watchdog Enabled", wxDefaultPosition,
+                     wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  m_cbxTrackOnStart =
+      new wxCheckBox(this, wxID_ANY, "Track On Start", wxDefaultPosition,
+                     wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
   m_cbxQuitOnLossOfTrackIR = new wxCheckBox(
-      this, myID_QUIT_ON_LOSS_OF_TRACK_IR, "Quit On Loss Of Track IR",
-      wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+      this, wxID_ANY, "Quit On Loss Of Track IR", wxDefaultPosition,
+      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  wxStaticText* txtLogLabel = new wxStaticText(this, wxID_ANY, "Log Level: ");
   m_cmbLogLevel =
-      new wxChoice(this, myID_LOG_LEVEL, wxDefaultPosition, wxSize(100, 25),
+      new wxChoice(this, wxID_ANY, wxDefaultPosition, wxSize(100, 25),
                    asLogLevels, 0, wxDefaultValidator, "");
 
   m_cbxEnableWatchdog->SetValue(pUserData->watchdogEnabled);
@@ -56,11 +58,15 @@ cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent,
   m_cbxQuitOnLossOfTrackIR->SetValue(pUserData->quitOnLossOfTrackIr);
   m_cmbLogLevel->SetSelection(pUserData->logLevel);
 
+  wxBoxSizer* zrLogFile = new wxBoxSizer(wxHORIZONTAL);
+  zrLogFile->Add(txtLogLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+  zrLogFile->Add(m_cmbLogLevel, 0, wxALL, 0);
+
   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
   topSizer->Add(m_cbxEnableWatchdog, 0, wxALL, 0);
   topSizer->Add(m_cbxTrackOnStart, 0, wxALL, 0);
   topSizer->Add(m_cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
-  topSizer->Add(m_cmbLogLevel, 0, wxALL, 0);
+  topSizer->Add(zrLogFile, 0, wxALL, 0);
 
   wxBoxSizer* border = new wxBoxSizer(wxVERTICAL);
   border->Add(topSizer, 0, wxALL, 10);
@@ -73,6 +79,7 @@ cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent,
                           &cSettingsGeneralPanel::OnTrackOnStart, this);
   m_cbxQuitOnLossOfTrackIR->Bind(
       wxEVT_CHECKBOX, &cSettingsGeneralPanel::OnQuitOnLossOfTrackIr, this);
+  m_cmbLogLevel->Bind(wxEVT_CHOICE, &cSettingsGeneralPanel::OnLogLevel, this);
 }
 
 void cSettingsGeneralPanel::OnEnabledWatchdog(wxCommandEvent& event) {
@@ -88,9 +95,8 @@ void cSettingsGeneralPanel::OnQuitOnLossOfTrackIr(wxCommandEvent& event) {
 }
 
 void cSettingsGeneralPanel::OnLogLevel(wxCommandEvent& event) {
-  // TODO: make accept log level changes only on okay
   auto selection = m_cmbLogLevel->GetSelection();
-  spdlog::set_level(static_cast<spdlog::level::level_enum>(selection));
+  m_pUserData->logLevel = static_cast<spdlog::level::level_enum>(selection);
 }
 
 cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow* parent,

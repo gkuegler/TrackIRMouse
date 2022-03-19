@@ -75,6 +75,7 @@ class cPanel : public wxPanel {
   wxButton *m_btnAddProfile;
   wxButton *m_btnRemoveProfile;
   wxButton *m_btnDuplicateProfile;
+  wxStaticText *m_lbtextrich;
   cTextCtrl *m_textrich;
   cPanelConfiguration *m_pnlDisplayConfig;
   cDisplayGraphic *m_displayGraphic;
@@ -86,6 +87,7 @@ class cPanel : public wxPanel {
 
   void OnStart(wxCommandEvent &event);
   void OnStop(wxCommandEvent &event);
+  void OnShowLog(wxCommandEvent &event);
 
  private:
   cFrame *m_parent;
