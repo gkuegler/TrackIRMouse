@@ -17,6 +17,7 @@
 #include <mutex>
 
 #include "types.hpp"
+// TODO: high dpi support
 
 namespace mylogging {
 
@@ -59,33 +60,51 @@ using WxSink_mt = WxSink<std::mutex>;
 using WxSink_st = WxSink<spdlog::details::null_mutex>;
 
 // clang-format off
-void SetUpLogging(std::string filename) {
-  // Creating multithreaded loggers with multiple sinks
-  std::vector<spdlog::sink_ptr> sinks;
+
+/**
+ * Get new logger with standard sinks, named name.
+ *
+ * @param[in]  {string} name - Name of logger.
+ *
+ * @return shared pointer to logger
+ */
+std::shared_ptr<spdlog::logger> MakeLoggerFromStd(std::string name){
 
   // cutom logger with sink specific logging level
   // to wx txt control on app main panel
-  auto wx_txtctrl_sink = std::make_shared<WxSink_mt>();
+  static std::shared_ptr<WxSink_mt> wx_txtctrl_sink = std::make_shared<WxSink_mt>();
   wx_txtctrl_sink->set_level(spdlog::level::info);
 
   // create sinks (3) in total
-  sinks.push_back(std::make_shared<spdlog::sinks::stdout_sink_mt>());
-  sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(filename, true));
-  sinks.push_back(wx_txtctrl_sink);
+  // Loggers accessing the same files need to use the same sinks or "weird things
+  // happen". Create static sinks to be reuses
+  static std::vector<spdlog::sink_ptr> sinks = {
+    std::make_shared<spdlog::sinks::stdout_sink_mt>(),
+    std::make_shared<spdlog::sinks::basic_file_sink_mt>("log-trackir.txt", true),
+    wx_txtctrl_sink
+  };
 
-  auto combined_logger = std::make_shared<spdlog::logger>("main", begin(sinks), end(sinks));
-  combined_logger->set_level(spdlog::level::trace);
-  combined_logger->set_pattern("[%T][%n][%l] %v"); // "[HH:MM:SS][logger_name][level] msg"
+  auto logger = std::make_shared<spdlog::logger>(name, begin(sinks), end(sinks));
+  logger->set_level(spdlog::level::trace);
+  logger->set_pattern("[%T][%n][%l] %v"); // "[HH:MM:SS][logger_name][level] msg"
 
   // set sink specific format pattern after becuase setting pattern on logger
   // overrides the sink specific format pattern
   wx_txtctrl_sink->set_pattern("%v"); // "msg"
-
-  // NOTE: setting as default also registers it in the logger registry by name
-  spdlog::set_default_logger(std::move(combined_logger));
   spdlog::flush_every(std::chrono::seconds(2));
 
-  return;
+  return logger;
+}
+
+/**
+ * @brief      Sets the global logger.
+ *
+ * @param[in]  l     The logger to be set as global and consumed.
+ */
+void SetGlobalLogger(std::shared_ptr<spdlog::logger> l) {
+  // NOTE: setting as default also registers it in the logger registry by name
+  spdlog::set_default_logger(std::move(l));
+  spdlog::flush_every(std::chrono::seconds(2));
 }
 // clang-format on
 }  // namespace mylogging

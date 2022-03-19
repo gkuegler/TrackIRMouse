@@ -66,7 +66,8 @@ wxPoint GetOrigin(const int w, const int h) {
 
 bool cApp::OnInit() {
   // Initialize global default loggers
-  mylogging::SetUpLogging("log-trackir.txt");
+  auto logger = mylogging::MakeLoggerFromStd("main");
+  mylogging::SetGlobalLogger(logger);
 
   // App initialization constants
   constexpr int appWidth = 1200;

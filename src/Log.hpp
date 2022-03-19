@@ -7,9 +7,12 @@
 
 #include <spdlog/spdlog.h>  // used to export default logger
 
+#include <string>
+
 namespace mylogging {
+std::shared_ptr<spdlog::logger> MakeLoggerFromStd(std::string name);
+void SetGlobalLogger(std::shared_ptr<spdlog::logger> l);
 void SetUpLogging(std::string);
-void SetLogLevel();
 }  // namespace mylogging
 
 #endif /* TRACKIRMOUSE_LOG_H */

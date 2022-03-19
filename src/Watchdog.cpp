@@ -30,7 +30,8 @@ constexpr auto BUFSIZE = 512;
 namespace WatchDog {
 
 HANDLE InitializeWatchdog() {
-  spdlog::trace("StartWatchdog");
+  auto log = mylogging::MakeLoggerFromStd("watchdog");
+  log->trace("Starting Watchdog");
   HANDLE hPipe = INVALID_HANDLE_VALUE;
   LPCSTR lpszPipename = "\\\\.\\pipe\\watchdog";
 
@@ -67,7 +68,7 @@ HANDLE InitializeWatchdog() {
                        // all access is allowed
           FALSE))      // not a default DACL
   {
-    spdlog::warn("SetSecurityDescriptorDacl Error {}", GetLastError());
+    log->warn("SetSecurityDescriptorDacl Error {}", GetLastError());
     return NULL;
   }
 #pragma warning(default : 4700)
@@ -92,13 +93,13 @@ HANDLE InitializeWatchdog() {
   if (hPipe == INVALID_HANDLE_VALUE) {
     DWORD gle = GetLastError();
     if (gle == ERROR_PIPE_BUSY) {
-      spdlog::warn("CreateNamedPipe failed, all instances are busy.");
+      log->warn("CreateNamedPipe failed, all instances are busy.");
     } else if (gle == ERROR_INVALID_PARAMETER) {
-      spdlog::warn(
+      log->warn(
           "CreateNamedPipe failed, function called with incorrect parameters.");
 
     } else {
-      spdlog::warn("CreateNamedPipe failed, GLE={}.", GetLastError());
+      log->warn("CreateNamedPipe failed, GLE={}.", GetLastError());
     }
     return NULL;
   }
@@ -107,7 +108,8 @@ HANDLE InitializeWatchdog() {
 }
 
 void Serve(HANDLE hPipe) {
-  spdlog::trace("starting watchdog server");
+  auto log = mylogging::MakeLoggerFromStd("watchdog");
+  log->trace("starting watchdog server");
 
   // Initialize send and returN buffers
   HANDLE hHeap = GetProcessHeap();
@@ -117,7 +119,7 @@ void Serve(HANDLE hPipe) {
       (char *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, BUFSIZE * sizeof(char));
 
   if (pchRequest == NULL) {
-    spdlog::warn(
+    log->warn(
         "Pipe Server Failure. Failed to allocate request buffer"
         "Server exitting.");
     if (pchReply != NULL) {
@@ -127,7 +129,7 @@ void Serve(HANDLE hPipe) {
   }
 
   if (pchReply == NULL) {
-    spdlog::warn(
+    log->warn(
         "Pipe Server Failure. Failed to allocate reply buffer"
         "Server exitting.");
     if (pchRequest != NULL) {
@@ -141,7 +143,7 @@ void Serve(HANDLE hPipe) {
     spdlog::info("waiting on client connection...");
 
     if (ConnectNamedPipe(hPipe, NULL) == 0) {
-      spdlog::warn("ConnectNamedPipe failed, GLE={}.", GetLastError());
+      log->warn("ConnectNamedPipe failed, GLE={}.", GetLastError());
       break;
     }
     spdlog::info("client connected");
@@ -212,10 +214,10 @@ void Serve(HANDLE hPipe) {
   return;
 }
 
-VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
 // Reads message and performs actions based on the content.
 // Writes a reply into the reply char* buffer.
-{
+VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes) {
+  auto log = mylogging::MakeLoggerFromStd("watchdog");
   errno_t rslt = 1;
 
   if (strcmp(pchRequest, "KILL") == 0) {
@@ -240,7 +242,7 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes)
   else {
     *pchBytes = 0;
     pchReply[0] = 0;
-    spdlog::warn("strcpy_s failed, no outgoing message.");
+    log->warn("strcpy_s failed, no outgoing message.");
     return;
   }
 }
