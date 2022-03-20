@@ -22,6 +22,8 @@
 
 namespace config {
 
+// const static Profile DefaultProfile = ;
+
 // settings singletons
 static std::shared_ptr<Config> config_;
 
@@ -234,6 +236,8 @@ Config::Config(const std::string filename) {
   // Find the profiles table that contains all mapping profiles.
   auto vProfilesArray = toml::find(tvData, "Profiles");
 
+  userData.profiles = {};  // clear default profile
+  // TODO: replace i with begin and end
   int i = 0;
   for (auto profile : vProfilesArray.as_array()) {
     Profile newProfile;
@@ -305,6 +309,24 @@ Config::Config(const std::string filename) {
 
     userData.profiles.push_back(newProfile);
   }
+
+  // validate that active profile exists in profiles list
+  if (userData.profiles.size() > 0) {
+    bool found = false;
+    for (auto &profile : userData.profiles) {
+      if (profile.name == userData.activeProfileName) {
+        found = true;
+      }
+    }
+    if (!found) {
+      // arbitrarily pick the first profile in the list
+      userData.activeProfileName = userData.profiles[0].name;
+    }
+  } else {  // append default profile to list if empty
+    userData.profiles = {{"empty", 0, true, {}}};
+    userData.activeProfileName = "empty";
+  }
+
   return;
 }
 
@@ -402,6 +424,8 @@ void Config::AddProfile(std::string newProfileName) {
   Profile p;  // Creat default profile
   p.name = newProfileName;
   userData.profiles.push_back(p);
+
+  SetActiveProfile(newProfileName);
 }
 
 void Config::RemoveProfile(std::string profileName) {
@@ -410,6 +434,9 @@ void Config::RemoveProfile(std::string profileName) {
       userData.profiles.erase(userData.profiles.begin() + i);
       spdlog::info("Deleted profile: {}", profileName);
     }
+  }
+  if (userData.profiles.size() < 1) {
+    userData.profiles.emplace_back();
   }
   // change the active profile if deleted
   if (userData.activeProfileName == profileName) {
@@ -433,13 +460,14 @@ std::vector<std::string> Config::GetProfileNames() {
   return profileNames;
 }
 
+// TODO: handle empty profiles set or always ensure empty is available
 Profile &Config::GetActiveProfile() {
   for (auto &profile : userData.profiles) {
     if (profile.name == userData.activeProfileName) {
       return profile;
     }
   }
-  // a profile should exist, codes shouldn't be reachable
+  // a profile should exist, code shouldn't be reachable
   spdlog::critical(
       "An internal error has occured. Couldn't find active profile by name.");
 }

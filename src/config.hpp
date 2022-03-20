@@ -12,7 +12,6 @@
 
 const constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right",
                                                                "top", "bottom"};
-
 namespace config {
 using bounds_t = std::array<deg, 4>;
 using pad_t = std::array<pixels, 4>;
@@ -24,11 +23,12 @@ struct Display {
 };
 
 struct Profile {
-  std::string name = "profile_name";
+  std::string name = "empty";
   int profileId = 0;
   bool useDefaultPadding = true;
-  std::vector<Display> displays;
+  std::vector<Display> displays = {};
 };
+// const Profile kDefaultProfile = {"empty", 0, true, {}};
 
 struct UserData {
   bool trackOnStart = true;
@@ -37,9 +37,10 @@ struct UserData {
   spdlog::level::level_enum logLevel = spdlog::level::info;
   bool autoFindTrackIrDll = true;
   std::string trackIrDllFolder = "default";
-  std::string activeProfileName = "Lorem Ipsum";
+  std::string activeProfileName = Profile().name;
   std::array<pixels, 4> defaultPaddings = {0, 0, 0, 0};
-  std::vector<Profile> profiles;
+  // std::vector<Profile> profiles = {{"empty", 0, true, {}}};
+  std::vector<Profile> profiles = {Profile()};
 };
 
 struct EnvData {
@@ -52,7 +53,7 @@ class Config {
   UserData userData;
   EnvData envData;
 
-  Config();                            // load with default values
+  Config() {}                          // load with default values
   Config(const std::string filename);  // load from file
 
   void SaveToFile(std::string filename);

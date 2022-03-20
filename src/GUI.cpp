@@ -50,10 +50,11 @@
 #include "util.hpp"
 #include "watchdog.hpp"
 
-constexpr std::string_view kVersionNo = "0.8.0";
+const constexpr std::string_view kVersionNo = "0.8.0";
 const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
+const constexpr int kMaxProfileLength = 30;
 
 wxIMPLEMENT_APP(cApp);
 
@@ -230,23 +231,58 @@ void cFrame::OnSave(wxCommandEvent &event) {
 
 void cFrame::InitializeSettings() {
   constexpr auto filename = "settings.toml";
+  const wxString ok = "Load Empty User Settings";
+  const wxString cancel = "Quit";
+  const wxString instructions = wxString::Format(
+      "\n\nPress \"%s\" to load a default user settings template.\nWarning: "
+      "data may be overwritten if you "
+      "continue with this option and then later save.\n"
+      "Press \"%s\" to exit the program.",
+      ok, cancel);
+  wxString err_msg = "lorem ipsum";
+
   try {
-    auto config = config::Config("settings.toml");
+    auto config = config::Config(filename);
     config::Set(config);
+    return;
+    // load config
+    // if fails
+    //    record an error
+    //    send dialog to confirm action: ("load blank template", "exit app")
+    //    if okay load and set default config
+    //    if not okay exit app to prevent data corruption
+    //
   } catch (const toml::syntax_error &ex) {
-    wxLogFatalError(
-        "Failed To Parse toml Settings File:\n\n%s\n\nPlease fix error or save "
-        "new file.",
-        ex.what());
+    err_msg = wxString::Format(
+        "Syntax error in toml file: \"%s\"\nSee error message below for hints "
+        "on how to fix.\n%s",
+        filename, ex.what());
   } catch (const toml::type_error &ex) {
-    wxLogFatalError("Incorrect type when loading settings.\n\n%s", ex.what());
+    err_msg =
+        wxString::Format("Incorrect type when parsing toml file \"%s\".\n\n%s",
+                         filename, ex.what());
   } catch (const std::out_of_range &ex) {
-    wxLogFatalError("Missing data.\n\n%s", ex.what());
+    err_msg = wxString::Format("Missing data in toml file \"%s\".\n\n%s",
+                               filename, ex.what());
   } catch (std::runtime_error &ex) {
-    wxLogFatalError("%s\n\nWas expecting to open \"%s\"", ex.what(), filename);
+    err_msg = wxString::Format("Failed to open \"%s\"", filename);
   } catch (...) {
-    wxLogFatalError(
-        "exception has gone unhandled loading and verifying settings");
+    err_msg = wxString::Format(
+        "exception has gone unhandled loading \"%s\" and verifying values.",
+        filename);
+  }
+
+  err_msg += instructions;
+  auto dlg =
+      wxMessageDialog(this, err_msg, "Error", wxICON_ERROR | wxOK | wxCANCEL);
+  dlg.SetOKCancelLabels(ok, cancel);
+
+  if (dlg.ShowModal() == wxID_OK) {
+    auto config = config::Config();
+    config::Set(config);
+  } else {
+    spdlog::warn("user closed app do to invalid settings load.");
+    Close(true);
   }
 }
 
@@ -297,12 +333,10 @@ cTextCtrl::cTextCtrl(wxWindow *parent, wxWindowID id, const wxString &value,
 cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
   m_parent = parent;
 
-  m_btnStartMouse =
-      new wxButton(this, myID_START_TRACK, "Start Mouse", wxDefaultPosition,
-                   kDefaultButtonSize, 0, wxDefaultValidator, "");
-  m_btnStopMouse =
-      new wxButton(this, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition,
-                   kDefaultButtonSize, 0, wxDefaultValidator, "");
+  m_btnStartMouse = new wxButton(this, myID_START_TRACK, "Start Mouse",
+                                 wxDefaultPosition, kDefaultButtonSize);
+  m_btnStopMouse = new wxButton(this, myID_STOP_TRACK, "Stop Mouse",
+                                wxDefaultPosition, kDefaultButtonSize);
   auto btnHide = new wxButton(this, wxID_ANY, "Show/Hide Log",
                               wxDefaultPosition, kDefaultButtonSize);
 
@@ -315,15 +349,13 @@ cPanel::cPanel(cFrame *parent) : wxPanel(parent) {
       new wxChoice(this, myID_PROFILE_SELECTION, wxDefaultPosition,
                    wxSize(100, 25), 0, 0, wxCB_SORT, wxDefaultValidator, "");
 
-  m_btnAddProfile =
-      new wxButton(this, myID_ADD_PROFILE, "Add a Profile", wxDefaultPosition,
-                   kDefaultButtonSize, 0, wxDefaultValidator, "");
+  m_btnAddProfile = new wxButton(this, myID_ADD_PROFILE, "Add a Profile",
+                                 wxDefaultPosition, kDefaultButtonSize);
   m_btnRemoveProfile = new wxButton(this, myID_REMOVE_PROFILE, "Remove Profile",
-                                    wxDefaultPosition, kDefaultButtonSize, 0,
-                                    wxDefaultValidator, "");
-  m_btnDuplicateProfile = new wxButton(
-      this, myID_DUPLICATE_PROFILE, "Duplicate Profile", wxDefaultPosition,
-      kDefaultButtonSize, 0, wxDefaultValidator, "");
+                                    wxDefaultPosition, kDefaultButtonSize);
+  m_btnDuplicateProfile =
+      new wxButton(this, myID_DUPLICATE_PROFILE, "Duplicate Profile",
+                   wxDefaultPosition, kDefaultButtonSize);
 
   m_pnlDisplayConfig = new cPanelConfiguration(this);
 
@@ -473,7 +505,8 @@ void cPanel::OnActiveProfile(wxCommandEvent &event) {
 void cPanel::OnAddProfile(wxCommandEvent &event) {
   wxTextEntryDialog dlg(this, "Add Profile",
                         "Specify a Name for the New Profile");
-  dlg.SetTextValidator(wxFILTER_ALPHANUMERIC);
+  // dlg.SetTextValidator(wxFILTER_ALPHANUMERIC);
+  dlg.SetMaxLength(kMaxProfileLength);
   if (dlg.ShowModal() == wxID_OK) {
     wxString value = dlg.GetValue();
     config::Get()->AddProfile(std::string(value.mb_str()));
@@ -521,12 +554,10 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
   m_parent = parent;
   m_titlesMap =
       std::make_unique<config::game_title_map_t>(config::GetTitleIds());
-  m_name = new wxTextCtrl(this, myID_PROFILE_NAME, "Lorem Ipsum",
-                          wxDefaultPosition, wxSize(200, 20),
-                          wxTE_LEFT | wxTE_READONLY, wxDefaultValidator, "");
-  // TODO: convert this into a drop down titleMap to select valid ID numbers;
-  // also display their titles? probably not necessary couldn't guarantee that a
-  // title is correct
+  // auto val = wxTextValidator(wxFILTER_ALPHANUMERIC);
+  m_name = new wxTextCtrl(this, wxID_ANY, "Lorem Ipsum", wxDefaultPosition,
+                          wxSize(200, 20), wxTE_LEFT);
+  m_name->SetMaxLength(kMaxProfileLength);
 
   m_profileGameTitle =
       new wxTextCtrl(this, wxID_ANY, "lorem", wxDefaultPosition,
@@ -538,12 +569,6 @@ cPanelConfiguration::cPanelConfiguration(cPanel *parent)
   m_btnPickTitle = new wxButton(this, wxID_ANY, "Pick Title", wxDefaultPosition,
                                 kDefaultButtonSize, 0, wxDefaultValidator, "");
 
-  // std::vector<std::string> idlist = {"13302", "2025"};
-  // auto idChoices = BuildWxArrayString(idlist);
-
-  // m_profileID = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition,
-  //                              wxSize(80, 20), idChoices, wxCB_DROPDOWN,
-  //                              wxMakeIntegerValidator(&m_ival), "");
   m_useDefaultPadding =
       new wxCheckBox(this, wxID_ANY, "Use Default Padding", wxDefaultPosition,
                      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");

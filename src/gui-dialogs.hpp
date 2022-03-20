@@ -35,7 +35,7 @@ class cSettingsAdvancedlPanel : public wxPanel {
  private:
   config::UserData *m_pUserData = nullptr;
   void OnAutoFindDll(wxCommandEvent &event);
-  void OnTrackIrDllPath(wxCommandEvent& event);
+  void OnTrackIrDllPath(wxCommandEvent &event);
 };
 
 class cSettingsPopup : public wxPropertySheetDialog {
