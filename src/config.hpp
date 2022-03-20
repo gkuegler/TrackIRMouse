@@ -23,7 +23,7 @@ struct Display {
 };
 
 struct Profile {
-  std::string name = "empty";
+  std::string name = "(empty)";
   int profileId = 0;
   bool useDefaultPadding = true;
   std::vector<Display> displays = {};

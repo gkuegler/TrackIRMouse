@@ -50,7 +50,7 @@
 #include "util.hpp"
 #include "watchdog.hpp"
 
-const constexpr std::string_view kVersionNo = "0.8.0";
+const constexpr std::string_view kVersionNo = "0.8.1";
 const std::string kRotationTitle = "bound (degrees)";
 const std::string kPaddingTitle = "padding (pixels)";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
