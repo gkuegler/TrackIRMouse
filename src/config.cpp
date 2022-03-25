@@ -288,7 +288,7 @@ Config::Config(const std::string filename) {
 
       // Report padding values
       spdlog::debug(
-          "Display {} Padding -> {}{}, {}{}, {}{}, {}{}", i++,
+          "Display {} Padding -> {}{}, {}{}, {}{}, {}{}", i,
           userData.defaultPaddings[0], (paddingLeft == 5555) ? "(default)" : "",
           userData.defaultPaddings[1],
           (paddingRight == 5555) ? "(default)" : "",

@@ -322,6 +322,10 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   main->SetSizer(top);
   main->Fit();
 
+  // Bind Keyboard Shortcuts
+  wxAcceleratorEntry k1(wxACCEL_CTRL, WXK_CONTROL_S, wxID_SAVE);
+  SetAcceleratorTable(wxAcceleratorTable(1, &k1));
+
   // Bind Menu Events
   Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnAbout, this, wxID_ABOUT);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnExit, this, wxID_EXIT);
