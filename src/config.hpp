@@ -13,8 +13,8 @@
 const constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right",
                                                                "top", "bottom"};
 namespace config {
-using bounds_t = std::array<deg, 4>;
-using pad_t = std::array<pixels, 4>;
+using bounds_t = std::array<Deg, 4>;
+using pad_t = std::array<Pixels, 4>;
 
 struct Display {
   Display(bounds_t r, pad_t p) : rotation(r), padding(p) {}
@@ -38,7 +38,7 @@ struct UserData {
   bool autoFindTrackIrDll = true;
   std::string trackIrDllFolder = "default";
   std::string activeProfileName = Profile().name;
-  std::array<pixels, 4> defaultPaddings = {0, 0, 0, 0};
+  std::array<Pixels, 4> defaultPaddings = {0, 0, 0, 0};
   // std::vector<Profile> profiles = {{"empty", 0, true, {}}};
   std::vector<Profile> profiles = {Profile()};
 };
@@ -76,6 +76,13 @@ class Config {
   std::string filename_ = "";
 };
 
+struct ConfigReturn {
+  retcode code = retcode::fail;
+  std::string err_msg = "";
+  Config config;
+};
+
+ConfigReturn LoadFromFile(std::string filename);
 std::shared_ptr<Config> Get();
 Config GetCopy();
 void Set(const Config c);

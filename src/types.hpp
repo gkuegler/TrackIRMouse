@@ -3,8 +3,8 @@
 
 #include <vector>
 
-using deg = double;
-using pixels = signed int;
+using Deg = double;
+using Pixels = signed int;
 using game_titles_t = std::vector<std::pair<std::string, std::string>>;
 
 enum class retcode { success, fail };

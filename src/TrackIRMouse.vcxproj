@@ -358,7 +358,6 @@
     <ClInclude Include="game-title-list.hpp" />
     <ClInclude Include="gui-control-id.hpp" />
     <ClInclude Include="display.hpp" />
-    <ClInclude Include="exceptions.hpp" />
     <ClInclude Include="gui-graphic.hpp" />
     <ClInclude Include="gui.hpp" />
     <ClInclude Include="gui-dialogs.hpp" />

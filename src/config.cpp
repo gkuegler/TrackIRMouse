@@ -13,7 +13,6 @@
 #include <iostream>
 #include <string>
 
-#include "exceptions.hpp"
 #include "log.hpp"
 #include "types.hpp"
 
@@ -138,11 +137,11 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
 Config::Config(const std::string filename) {
   // note: hungarian notation prefix tv___ = toml::value
   filename_ = filename;
-  auto tvData = toml::parse<toml::preserve_comments>(filename);
+  const auto tvData = toml::parse<toml::preserve_comments>(filename);
   envData.monitorCount = GetSystemMetrics(SM_CMONITORS);
 
   // Find the general settings table
-  auto &vGeneralSettings = toml::find(tvData, "General");
+  const auto &vGeneralSettings = toml::find(tvData, "General");
 
   // Verify values exist and parse to correct type
   userData.trackOnStart = toml::find<bool>(vGeneralSettings, "track_on_start");
@@ -233,13 +232,12 @@ Config::Config(const std::string filename) {
   //                      Find Profiles Mapping                       //
   //////////////////////////////////////////////////////////////////////
 
-  // Find the profiles table that contains all mapping profiles.
-  auto vProfilesArray = toml::find(tvData, "Profiles");
-
   userData.profiles = {};  // clear default profile
-  // TODO: replace i with begin and end
-  int i = 0;
-  for (auto profile : vProfilesArray.as_array()) {
+
+  // Find the profiles table that contains all mapping profiles.
+  const auto &profiles = toml::find(tvData, "Profiles").as_array();
+  for (int i = 0; i < profiles.size(); i++) {
+    const auto &profile = profiles[i];
     Profile newProfile;
     newProfile.name = toml::find<std::string>(profile, "name");
     newProfile.profileId = toml::find<int>(profile, "profile_id");
@@ -250,9 +248,7 @@ Config::Config(const std::string filename) {
     auto &tvDisplayMapping = toml::find(profile, "DisplayMappings");
 
     for (auto &display : tvDisplayMapping.as_array()) {
-      /** bring in the rotational bounds
-       * further information
-       */
+      // bring in the rotational bounds
       toml::value left = toml::find(display, "left");
       toml::value right = toml::find(display, "right");
       toml::value top = toml::find(display, "top");
@@ -260,32 +256,30 @@ Config::Config(const std::string filename) {
 
       // Each value is checked because this toml library cannot
       // convert integers to doubles from a toml value
-      toml::value_t integer = toml::value_t::integer;
+      const Deg rotLeft = (left.type() == toml::value_t::integer)
+                              ? static_cast<Deg>(left.as_integer())
+                              : static_cast<Deg>(left.as_floating());
 
-      deg rotLeft = (left.type() == integer)
-                        ? static_cast<deg>(left.as_integer())
-                        : static_cast<deg>(left.as_floating());
+      const Deg rotRight = (right.type() == toml::value_t::integer)
+                               ? static_cast<Deg>(right.as_integer())
+                               : static_cast<Deg>(right.as_floating());
 
-      deg rotRight = (right.type() == integer)
-                         ? static_cast<deg>(right.as_integer())
-                         : static_cast<deg>(right.as_floating());
+      const Deg rotTop = (top.type() == toml::value_t::integer)
+                             ? static_cast<Deg>(top.as_integer())
+                             : static_cast<Deg>(top.as_floating());
 
-      deg rotTop = (top.type() == integer)
-                       ? static_cast<deg>(top.as_integer())
-                       : static_cast<deg>(top.as_floating());
+      const Deg rotBottom = (bottom.type() == toml::value_t::integer)
+                                ? static_cast<Deg>(bottom.as_integer())
+                                : static_cast<Deg>(bottom.as_floating());
 
-      deg rotBottom = (bottom.type() == integer)
-                          ? static_cast<deg>(bottom.as_integer())
-                          : static_cast<deg>(bottom.as_floating());
-
-      // I return an ungodly fake high padding numbelong ,
+      // I return an ungodly fake high padding numbelong,
       // so that I can tell if one was found in the toml config file
       // without producing an exception if a value was not found.
       // Padding values are not critical the program operation.
-      pixels paddingLeft = toml::find_or<pixels>(display, "pad_left", 5555);
-      pixels paddingRight = toml::find_or<pixels>(display, "pad_right", 5555);
-      pixels paddingTop = toml::find_or<pixels>(display, "pad_top", 5555);
-      pixels paddingBottom = toml::find_or<pixels>(display, "pad_bottom", 5555);
+      Pixels paddingLeft = toml::find_or<Pixels>(display, "pad_left", 5555);
+      Pixels paddingRight = toml::find_or<Pixels>(display, "pad_right", 5555);
+      Pixels paddingTop = toml::find_or<Pixels>(display, "pad_top", 5555);
+      Pixels paddingBottom = toml::find_or<Pixels>(display, "pad_bottom", 5555);
 
       if (paddingLeft == 5555) paddingLeft = userData.defaultPaddings[0];
       if (paddingRight == 5555) paddingRight = userData.defaultPaddings[1];
@@ -338,7 +332,7 @@ Config::Config(const std::string filename) {
  * Uses toml supplied serializer via ostream operators to write to file.
  */
 void Config::SaveToFile(std::string filename) {
-  toml::value general{
+  const toml::value general{
     {"track_on_start", userData.trackOnStart},
     {"quit_on_loss_of_track_ir", userData.quitOnLossOfTrackIr},
     {"watchdog_enabled", userData.watchdogEnabled},
@@ -346,7 +340,7 @@ void Config::SaveToFile(std::string filename) {
     {"active_profile", userData.activeProfileName},
   };
 
-  toml::value padding{
+  const toml::value padding{
     {"left", userData.defaultPaddings[0]},
     {"right", userData.defaultPaddings[1]},
     {"top", userData.defaultPaddings[2]},
@@ -359,7 +353,7 @@ void Config::SaveToFile(std::string filename) {
   for(auto& profile : userData.profiles){
     std::vector<toml::value> displays;
     for(auto& display : profile.displays){
-        toml::value d{
+        const toml::value d{
           {"left", display.rotation[0]},
           {"right", display.rotation[1]},
           {"top", display.rotation[2]},
@@ -371,7 +365,7 @@ void Config::SaveToFile(std::string filename) {
         };
       displays.push_back(d);
     }
-    toml::value top{
+    const toml::value top{
       {"name", profile.name},
       {"profile_id", profile.profileId},
       {"use_default_padding", profile.useDefaultPadding},
@@ -380,7 +374,7 @@ void Config::SaveToFile(std::string filename) {
     profiles.push_back(top);
   }
 
-  toml::value topTable{
+  const toml::value topTable{
     {"General", general},
     {"DefaultPadding", padding},
     {"Profiles", profiles},
@@ -392,9 +386,11 @@ void Config::SaveToFile(std::string filename) {
 }
 // clang-format on
 
+// set the profile with the given name as active
+// assumes active profile is always present within the vector of profiles
 bool Config::SetActiveProfile(std::string profileName) {
   // check if a valid name
-  auto profileNames = GetProfileNames();
+  const auto profileNames = GetProfileNames();
   bool found = false;
   for (auto name : profileNames) {
     if (name == profileName) {
@@ -410,8 +406,9 @@ bool Config::SetActiveProfile(std::string profileName) {
   return true;
 }
 
-void Config::AddProfile(std::string newProfileName) {
-  auto profileNames = GetProfileNames();
+// created default profile with the given name
+void Config::AddProfile(std::string newProfileName = "") {
+  const auto profileNames = GetProfileNames();
 
   // Prohibit conflicting names
   for (auto name : profileNames) {
@@ -422,14 +419,19 @@ void Config::AddProfile(std::string newProfileName) {
   }
 
   Profile p;  // Creat default profile
-  p.name = newProfileName;
+
+  // otherwise use default name
+  if (newProfileName != "") {
+    p.name = newProfileName;
+  }
   userData.profiles.push_back(p);
 
   SetActiveProfile(newProfileName);
 }
 
+// remove profile with the given name from internal configuration
 void Config::RemoveProfile(std::string profileName) {
-  for (std::size_t i = 0; i < userData.profiles.size(); i++) {
+  for (int i = 0; i < userData.profiles.size(); i++) {
     if (profileName == userData.profiles[i].name) {
       userData.profiles.erase(userData.profiles.begin() + i);
       spdlog::info("Deleted profile: {}", profileName);
@@ -445,6 +447,7 @@ void Config::RemoveProfile(std::string profileName) {
   }
 }
 
+// make a copy of the active profile with an arbitrary temporary name
 void Config::DuplicateActiveProfile() {
   auto profile = GetActiveProfile();
   profile.name.append("2");  // incremental profile name
@@ -454,24 +457,27 @@ void Config::DuplicateActiveProfile() {
 
 std::vector<std::string> Config::GetProfileNames() {
   std::vector<std::string> profileNames;
-  for (auto &profile : userData.profiles) {
+  for (const auto &profile : userData.profiles) {
     profileNames.push_back(profile.name);
   }
   return profileNames;
 }
 
-// TODO: handle empty profiles set or always ensure empty is available
+// return reference the underlying active profile
+// assumes active profile is always present within the vector of profiles
 Profile &Config::GetActiveProfile() {
   for (auto &profile : userData.profiles) {
     if (profile.name == userData.activeProfileName) {
       return profile;
     }
   }
-  // a profile should exist, code shouldn't be reachable
+  // an active profile should exist, code shouldn't be reachable
+  // design interface accordingly
   spdlog::critical(
       "An internal error has occured. Couldn't find active profile by name.");
 }
 
+// get the number of displays specified in the active profile
 int Config::GetActiveProfileDisplayCount() {
   return static_cast<int>(GetActiveProfile().displays.size());
 }
@@ -480,43 +486,96 @@ void Config::SetActProfDisplayMappingParam(int displayNumber, int parameterType,
                                            int parameterSide,
                                            double parameter) {}
 
-game_title_map_t GetTitleIds() {
-  const std::string fileName = "track-ir-numbers.toml";
+ConfigReturn LoadFromFile(std::string filename) {
+  std::string err_msg = "lorem ipsum";
   try {
-    auto tvData = toml::parse(fileName);
-    return toml::find<game_title_map_t>(tvData, "data");
-
+    auto config = Config(filename);
+    // return a successfully parsed and validated config file
+    return ConfigReturn{retcode::success, "", config};
   } catch (const toml::syntax_error &ex) {
-    spdlog::critical("Failed to Parse Settings File {}", ex.what());
+    err_msg = fmt::format(
+        "Syntax error in toml file: \"%s\"\nSee error message below for hints "
+        "on how to fix.\n%s",
+        filename, ex.what());
   } catch (const toml::type_error &ex) {
-    spdlog::critical("Incorrect type when loading settings.\n\n{}", ex.what());
+    err_msg = fmt::format("Incorrect type when parsing toml file \"%s\".\n\n%s",
+                          filename, ex.what());
   } catch (const std::out_of_range &ex) {
-    spdlog::critical("Missing data from file.\n\n%s", ex.what());
-  } catch (const std::runtime_error &ex) {
-    spdlog::critical("{}\nWas expecting to open \"{}\"", ex.what(), fileName);
+    err_msg = fmt::format("Missing data in toml file \"%s\".\n\n%s", filename,
+                          ex.what());
+  } catch (std::runtime_error &ex) {
+    err_msg = fmt::format("Failed to open \"%s\"", filename);
   } catch (...) {
-    spdlog::critical(
-        "exception has gone unhandled loading and verifying settings");
+    err_msg = fmt::format(
+        "exception has gone unhandled loading \"%s\" and verifying values.",
+        filename);
   }
-  game_title_map_t tlist;
-  tlist["0"] = "empty list";
-  tlist["1"] = "lorem ipsum";
-  tlist["2"] = "aag";
-  tlist["3"] = "";
-  tlist["4"] = "";
-  return tlist;
+
+  // return a default config object with a message explaining failure
+  return ConfigReturn{retcode::fail, err_msg, Config()};
+}
+
+// load game titles by ID number from file
+game_title_map_t GetTitleIds() {
+  // loading from file allows the game titles to be modified for future
+  // natural point continually adds new titles
+  constexpr auto filename = "track-ir-numbers.toml";
+  const std::string instructions =
+      "Couldn't load game titles from file. See above error for how to fix.\nA "
+      "sample of the title list will be loaded by default.\nUse "
+      "\"File->Reload\" to fix the error and reload list.";
+  std::string err_msg = "lorem ipsum";
+
+  try {
+    // load, parse, and return as map
+    auto data = toml::parse(filename);
+    return toml::find<game_title_map_t>(data, "data");
+  } catch (const toml::syntax_error &ex) {
+    err_msg = fmt::format(
+        "Syntax error in toml file: \"%s\"\nSee error message below for hints "
+        "on how to fix.\n%s",
+        filename, ex.what());
+  } catch (const toml::type_error &ex) {
+    err_msg = fmt::format("Incorrect type when parsing toml file \"%s\".\n\n%s",
+                          filename, ex.what());
+  } catch (const std::out_of_range &ex) {
+    err_msg = fmt::format("Missing data in toml file \"%s\".\n\n%s", filename,
+                          ex.what());
+  } catch (std::runtime_error &ex) {
+    err_msg = fmt::format("Failed to open \"%s\"", filename);
+  } catch (...) {
+    err_msg = fmt::format(
+        "exception has gone unhandled loading \"%s\" and verifying values.",
+        filename);
+  }
+
+  spdlog::error("{}\n\n{}", err_msg, instructions);
+
+  // provide sample list since full list couldn't be loaded from file
+  game_title_map_t sample_map;
+  sample_map["1001"] = "IL-2 Forgotten Battles";
+  sample_map["1002"] = "Lock-On Modern Air";
+  sample_map["1003"] = "Black Shark";
+  sample_map["1004"] = "Tom Clancy's H.A.W.X.";
+  sample_map["1005"] = "LockOn: Flaming Cliffs 2";
+  sample_map["1006"] = "DCS: A-10C";
+  sample_map["1007"] = "Tom Clancy's H.A.W.X.";
+  sample_map["1008"] = "IL-2 Struremovik: Battle";
+  sample_map["1009"] = "The Crew";
+  sample_map["1025"] = "Down In Flames";
+  return sample_map;
 }
 
 bool ValidateUserInput(const UserInput &displays) {
   // compare bounds not more than abs|180|
   for (int i = 0; i < displays.size(); i++) {
     for (int j = 0; j < 4; j++) {
-      double degrees = displays[i].rotation[j];
+      double Degrees = displays[i].rotation[j];
       int padding = displays[i].padding[j];
-      if (degrees > 180.0 || degrees < -180.0) {
+      if (Degrees > 180.0 || Degrees < -180.0) {
         spdlog::error(
             "rotation bound param \"{}\" on display #{} is outside "
-            "allowable range of -180deg -> 180deg.",
+            "allowable range of -180Deg -> 180Deg.",
             kBoundNames[j], i);
         return false;
       }
@@ -527,14 +586,14 @@ bool ValidateUserInput(const UserInput &displays) {
   for (int i = 0; i < displays.size(); i++) {
     int j = i;
     while (++j < displays.size()) {
-      deg A_left = displays[i].rotation[0];
-      deg A_right = displays[i].rotation[1];
-      deg A_top = displays[i].rotation[2];
-      deg A_bottom = displays[i].rotation[3];
-      deg B_left = displays[j].rotation[0];
-      deg B_right = displays[j].rotation[1];
-      deg B_top = displays[j].rotation[2];
-      deg B_bottom = displays[j].rotation[3];
+      Deg A_left = displays[i].rotation[0];
+      Deg A_right = displays[i].rotation[1];
+      Deg A_top = displays[i].rotation[2];
+      Deg A_bottom = displays[i].rotation[3];
+      Deg B_left = displays[j].rotation[0];
+      Deg B_right = displays[j].rotation[1];
+      Deg B_top = displays[j].rotation[2];
+      Deg B_bottom = displays[j].rotation[3];
       if (A_left < B_right && A_right > B_left && A_top > B_bottom &&
           A_bottom < B_top) {
         spdlog::error(

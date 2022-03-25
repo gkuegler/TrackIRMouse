@@ -74,9 +74,6 @@
     <ClInclude Include="log.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="exceptions.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="gui-control-id.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

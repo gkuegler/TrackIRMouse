@@ -59,7 +59,7 @@ HANDLE InitializeWatchdog() {
   }
 
   // Add the Access Control List (ACL) to the security descriptor
-  // TODO: make this more robust, maybe limit to just the user process?
+  // TODO: make this more robust, maybe limit to just user processes?
 #pragma warning(disable : 6248)  // Allow all unrestricted access to the pipe
   if (!SetSecurityDescriptorDacl(
           pSD.get(),
@@ -176,8 +176,6 @@ void Serve(HANDLE hPipe) {
       // Process the incoming message.
       HandleMsg(pchRequest, pchReply, &cbReplyBytes);
 
-      Sleep(100);
-
       // Write the reply to the pipe.
       bSuccess = WriteFile(hPipe,         // handle to pipe
                            pchReply,      // buffer to write from
@@ -196,7 +194,6 @@ void Serve(HANDLE hPipe) {
       // Flush the pipe to allow the client to read the pipe's contents
       // before disconnecting. Then disconnect the pipe, and close the
       // handle to this pipe instance.
-
       FlushFileBuffers(hPipe);
 
       // zero out the message receive and reply character arrays
@@ -223,7 +220,7 @@ VOID HandleMsg(const char *pchRequest, char *pchReply, LPDWORD pchBytes) {
   if (strcmp(pchRequest, "KILL") == 0) {
     rslt = strcpy_s(pchReply, BUFSIZE, "KL");
     if (system("taskkill /T /IM TrackIR5.exe") == -1)
-      spdlog::error("Failed to kill TrackIR5 program with error code");
+      log->error("Failed to kill TrackIR5 program");
   } else if (strcmp(pchRequest, "HEARTBEAT") == 0) {
     rslt = strcpy_s(pchReply, BUFSIZE, "HEARTBEAT\0");
   } else if (strcmp(pchRequest, "PAUSE") == 0) {

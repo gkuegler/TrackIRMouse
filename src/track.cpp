@@ -14,7 +14,6 @@
 
 #include "config.hpp"
 #include "display.hpp"
-#include "exceptions.hpp"
 #include "log.hpp"
 #include "np-client.h"
 #include "types.hpp"
@@ -39,8 +38,8 @@ static std::atomic<bool> g_bPauseTracking = false;
 
 std::vector<CDisplay> g_displays;
 
-pixels g_virtualOriginX = 0;
-pixels g_virtualOriginY = 0;
+Pixels g_virtualOriginX = 0;
+Pixels g_virtualOriginY = 0;
 double g_xPixelAbsoluteSlope = 0;
 double g_yPixelAbsoluteSlope = 0;
 
@@ -57,10 +56,10 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
 
   // Monitor Pixel Bounds in the Virtual Desktop
   // static_cast: long -> signed int
-  auto left = static_cast<pixels>(Monitor.rcMonitor.left);
-  auto right = static_cast<pixels>(Monitor.rcMonitor.right);
-  auto top = static_cast<pixels>(Monitor.rcMonitor.top);
-  auto bottom = static_cast<pixels>(Monitor.rcMonitor.bottom);
+  const auto left = static_cast<Pixels>(Monitor.rcMonitor.left);
+  const auto right = static_cast<Pixels>(Monitor.rcMonitor.right);
+  const auto top = static_cast<Pixels>(Monitor.rcMonitor.top);
+  const auto bottom = static_cast<Pixels>(Monitor.rcMonitor.bottom);
 
   // CDisplay may create an extra copy constructor, but I want to guarantee
   // overload resolution uses my initializer list to instantiate a single item.
@@ -70,7 +69,11 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
 
   // Display monitor info to user
   // TODO: michael does not yet support wide character strings
-  // spdlog::info(L"MON Name:{:>15}\n", Monitor.szDevice);
+  //
+  // constexpr int bl = 256;
+  // char buffer[bl];
+  // const std::string name = WideCharToMultiByte(CP_UTF8,0, Monitor.szDevice)
+  // spdlog::debug("MON Name:{:>15}\n", Monitor.szDevice);
 
   spdlog::info("MON {} Pixel Bounds -> {:>6}, {:>6}, {:>6}, {:>6}", count, left,
                right, top, bottom);
@@ -98,9 +101,9 @@ retcode WinSetup(config::Profile profile) {
     return retcode::fail;
   }
 
-  auto virtualDesktopWidth = static_cast<pixels>(GetSystemMetrics(
+  auto virtualDesktopWidth = static_cast<Pixels>(GetSystemMetrics(
       SM_CXVIRTUALSCREEN));  // width of total bounds of all screens
-  auto virtualDesktopHeight = static_cast<pixels>(GetSystemMetrics(
+  auto virtualDesktopHeight = static_cast<Pixels>(GetSystemMetrics(
       SM_CYVIRTUALSCREEN));  // height of total bounds of all screens
 
   spdlog::debug("{} Monitors Found", monitorCount);
@@ -295,7 +298,7 @@ inline void SendMyInput(double x, double y) {
 
   return;
 }
-void MouseMove(deg yaw, deg pitch) {
+void MouseMove(Deg yaw, Deg pitch) {
   static int lastScreen = 0;
 
   // Check if the head is pointing to a screen
@@ -399,8 +402,8 @@ retcode Start() {
       // TODO: apply negative sign on startup to avoid extra operation here
       // yaw and pitch come reversed relative to GUI profgram for some reason
       // from trackIR
-      deg yaw = (-(*pTIRData).fNPYaw);      // implicit float to double
-      deg pitch = (-(*pTIRData).fNPPitch);  // implicit float to double
+      Deg yaw = (-(*pTIRData).fNPYaw);      // implicit float to double
+      Deg pitch = (-(*pTIRData).fNPPitch);  // implicit float to double
 
       // Don't move the mouse when TrackIR is paused
       if (framesig == lastFrame) {

@@ -10,31 +10,11 @@
 #include "config.hpp"
 #include "environment.hpp"
 
-// not used anywhere, may ba cleaned up later
-// using RectInt = std::vector<std::vector<int>>;
-// using RectDouble = std::vector<std::vector<double>>;
-
-// RectFloat NormalizeRect(RectInt bounds) {
-//  find total desktop length and height
-//  convert positions from 0-1; divide positions by lenght and width
-//}
-
-//// find top left normalized point as an origin point to draw from
-// wxPoint GetNormTopLeft(RectFloat normalized);
-//
-//// get coefficient to fot overall drawing to space
-// float fittingCoefficient = GetFittingCoefficient(normalized);
-//
-//// map from 0,0 to virtual top left
-// auto offsetRect = OffsetNormalizedRect(normalized);
-//
-//// multiply by coefficient and truncate to pixel values
-// auto fittedRect = FitRect(offsetRect);
-
 cDisplayGraphic::cDisplayGraphic(wxWindow* parent, wxSize size)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, size,
               wxFULL_REPAINT_ON_RESIZE, "") {
   m_parent = parent;
+   // TODO: initialize logger here
   Bind(wxEVT_PAINT, &cDisplayGraphic::PaintEvent, this);
 }
 
@@ -58,6 +38,7 @@ void cDisplayGraphic::PaintEvent(wxPaintEvent& evt) {
  * paint events and calling Refresh() when a refresh is needed
  * will do the job.
  */
+ // TODO: call paint now on settings change
 void cDisplayGraphic::PaintNow() {
   wxClientDC dc(this);
   Render(dc);
@@ -75,7 +56,7 @@ void cDisplayGraphic::Render(wxDC& dc) {
   // normalize sizes?
   // find center of virt desktop?
   // draw rectangle
-  // find correct bound in draw pixels
+  // find correct bound in draw Pixels
   // multiply by multiplier or normalize to std size?
   // draw text inside each rectangle
 
@@ -104,22 +85,21 @@ void cDisplayGraphic::Render(wxDC& dc) {
 
   int cwidth = 0;
   int cheight = 0;
-
   this->GetClientSize(&cwidth, &cheight);
   // spdlog::info("height, width -> {}, {}", cheight, cwidth);
 
-  double area_x = cwidth - 50;  // drawing area width
-  double area_y = cheight - 50;
+  const double area_x = cwidth - 50;  // drawing area width
+  const double area_y = cheight - 50;
 
   // get array of monitor bounds
-  auto hdi = env::GetHardwareDisplayInfo();
-  auto usrDisplays = config::Get()->GetActiveProfile().displays;
+  const auto hdi = env::GetHardwareDisplayInfo();
+  const auto usrDisplays = config::Get()->GetActiveProfile().displays;
 
   // normalize virtual desktop rect for each monitor where 1 = total width in
-  // pixels values can be negative
+  // Pixels values can be negative
   // auto normalized = NormalizeRect(bounds);
-  int dwidth = hdi.width;
-  int dheight = hdi.height;
+  const int dwidth = hdi.width;
+  const int dheight = hdi.height;
   // spdlog::info("dwidth -> {}", dwidth);
   // spdlog::info("dheight -> {}", dheight);
 
@@ -146,9 +126,9 @@ void cDisplayGraphic::Render(wxDC& dc) {
   // available
   std::vector<std::vector<double>> bounds_norm;
   {
-    double xratio = area_x / dwidth;
-    double yratio = area_y / dheight;
-    double ratio = std::min<double>(xratio, yratio);
+    const double xratio = area_x / dwidth;
+    const double yratio = area_y / dheight;
+    const double ratio = std::min<double>(xratio, yratio);
     for (auto& d : bounds_offset) {
       bounds_norm.push_back({static_cast<double>(d[0]) * ratio,
                              static_cast<double>(d[1]) * ratio,
@@ -176,8 +156,8 @@ void cDisplayGraphic::Render(wxDC& dc) {
     swidth = r - l;
     sheight = b - t;
   }
-  double x_offset = (area_x / 2) - (swidth / 2);
-  double y_offset = (area_y / 2) - (sheight / 2);
+  const double x_offset = (area_x / 2) - (swidth / 2);
+  const double y_offset = (area_y / 2) - (sheight / 2);
 
   {
     for (auto& d : bounds_norm) {
@@ -220,51 +200,51 @@ void cDisplayGraphic::Render(wxDC& dc) {
     dc.SetPen(wxPen(darkGray, 3));  // outline
     dc.DrawRectangle(r);
 
-    bool userSpecifiedRotationAvailable = (usrDisplays.size() > i);
+    const bool userSpecifiedRotationAvailable = (usrDisplays.size() > i);
 
     // Draw text labels
-    auto text_left =
+    const auto text_left =
         userSpecifiedRotationAvailable
             ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[0])
             : wxString("?");
-    auto text_right =
+    const auto text_right =
         userSpecifiedRotationAvailable
             ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[1])
             : wxString("?");
-    auto text_top =
+    const auto text_top =
         userSpecifiedRotationAvailable
             ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[2])
             : wxString("?");
-    auto text_bottom =
+    const auto text_bottom =
         userSpecifiedRotationAvailable
             ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[3])
             : wxString("?");
 
-    auto middleX = r.x + (r.GetWidth() / 2);
-    auto middleY = r.y + (r.height / 2);
+    const auto middleX = r.x + (r.GetWidth() / 2);
+    const auto middleY = r.y + (r.height / 2);
 
-    int text_left_x = r.x + pad;
-    int text_left_y = middleY - halfTextHeight;
+    const int text_left_x = r.x + pad;
+    const int text_left_y = middleY - halfTextHeight;
 
-    int text_right_x =
+    const int text_right_x =
         r.GetRight() - pad - dc.GetTextExtent(text_right).GetWidth();
-    int text_right_y = middleY - halfTextHeight;
+    const int text_right_y = middleY - halfTextHeight;
 
-    int text_top_x = middleX - (dc.GetTextExtent(text_top).GetWidth() / 2);
-    int text_top_y = r.y + pad;
+    const int text_top_x = middleX - (dc.GetTextExtent(text_top).GetWidth() / 2);
+    const int text_top_y = r.y + pad;
 
-    int text_bottom_x =
+    const int text_bottom_x =
         middleX - (dc.GetTextExtent(text_bottom).GetWidth() / 2);
-    int text_bottom_y = r.GetBottom() - pad - textHeight;
+    const int text_bottom_y = r.GetBottom() - pad - textHeight;
 
     wxString text_center = wxString::Format(wxT("%d"), i);
-    int text_center_x =
+    const int text_center_x =
         middleX - (dc.GetTextExtent(text_center).GetWidth() / 2);
-    int text_center_y = middleY - textHeight - 1;
+    const int text_center_y = middleY - textHeight - 1;
 
-    auto resolution = wxString::Format(wxT("%dx%d"), 1920, 1080);
-    int resolution_x = middleX - (dc.GetTextExtent(resolution).GetWidth() / 2);
-    int resolution_y = middleY + 1;
+    const auto resolution = wxString::Format(wxT("%dx%d"), 1920, 1080);
+    const int resolution_x = middleX - (dc.GetTextExtent(resolution).GetWidth() / 2);
+    const int resolution_y = middleY + 1;
 
     dc.DrawText(text_left, text_left_x, text_left_y);
     dc.DrawText(text_right, text_right_x, text_right_y);
