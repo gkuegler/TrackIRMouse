@@ -2,9 +2,11 @@
 [General]
 track_on_start = true
 quit_on_loss_of_track_ir = false
-trackir_dll_directory = "default"
+auto_find_trackir_dll = true
+trackir_dll_directory = ""
 watchdog_enabled = false
-active_profile = "Desktop Single Monitor"
+active_profile = "Desktop Dual Monitor"
+log_level = 5
 
 [[Profiles]]
 name = "Desktop Single Monitor"

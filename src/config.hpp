@@ -36,10 +36,9 @@ struct UserData {
   bool watchdogEnabled = true;
   spdlog::level::level_enum logLevel = spdlog::level::info;
   bool autoFindTrackIrDll = true;
-  std::string trackIrDllFolder = "default";
+  std::string trackIrDllFolder = "";
   std::string activeProfileName = Profile().name;
   std::array<Pixels, 4> defaultPaddings = {0, 0, 0, 0};
-  // std::vector<Profile> profiles = {{"empty", 0, true, {}}};
   std::vector<Profile> profiles = {Profile()};
 };
 

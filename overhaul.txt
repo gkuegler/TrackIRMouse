@@ -10,6 +10,7 @@ Convert To Graphical Utility:
         robust handling of incorrect user input
 
     User Interface Needs:
+        provide indication that track our software is running, example a green circle
         
         
     Optional Features:

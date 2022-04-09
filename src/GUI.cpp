@@ -50,7 +50,7 @@
 #include "util.hpp"
 #include "watchdog.hpp"
 
-const constexpr std::string_view kVersionNo = "0.8.1";
+const constexpr std::string_view kVersionNo = "0.8.2";
 const std::string kRotationTitle = "bound (Degrees)";
 const std::string kPaddingTitle = "padding (Pixels)";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
@@ -80,7 +80,7 @@ bool cApp::OnInit() {
 
   // App initialization constants
   constexpr int appWidth = 1200;
-  constexpr int appHeight = 800;
+  constexpr int appHeight = 900;
 
   // Construct child elements first. The main panel contains a text control that
   // is a log target.
@@ -192,7 +192,7 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   auto main = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
   auto pnlProfile = new wxPanel(main, wxID_ANY, wxDefaultPosition, wxSize(800, 400), wxBORDER_SIMPLE);
   // auto m_pnlDisplayConfig = new wxPanel(profile);???????
-  pnlProfile->SetBackgroundColour(orange);
+  //pnlProfile->SetBackgroundColour(orange);
   
 
   // Logging Window
@@ -207,7 +207,7 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
 
   // Display Graphic
   m_displayGraphic = new cDisplayGraphic(main, wxSize(650, 200));
-  m_displayGraphic->SetBackgroundColour(blue);
+  //m_displayGraphic->SetBackgroundColour(blue);
 
   // Profiles Controls
   auto *txtProfiles = new wxStaticText(pnlProfile, wxID_ANY, " Active Profile: ");
@@ -219,9 +219,9 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
 
   // Profiles Box
   m_titlesMap = std::make_unique<config::game_title_map_t>(config::GetTitleIds());
-  m_name = new wxTextCtrl(pnlProfile, wxID_ANY, "Lorem Ipsum", wxDefaultPosition, wxSize(200, 20), wxTE_LEFT);
+  m_name = new wxTextCtrl(pnlProfile, wxID_ANY, "Lorem Ipsum", wxDefaultPosition, wxSize(250, 20), wxTE_LEFT);
   m_name->SetMaxLength(kMaxProfileLength);
-  m_profileGameTitle = new wxTextCtrl(pnlProfile, wxID_ANY, "lorem", wxDefaultPosition, wxSize(150, 20), wxTE_READONLY | wxTE_LEFT);
+  m_profileGameTitle = new wxTextCtrl(pnlProfile, wxID_ANY, "lorem", wxDefaultPosition, wxSize(200, 20), wxTE_READONLY | wxTE_LEFT);
   m_profileID = new wxTextCtrl(pnlProfile, wxID_ANY, "2201576", wxDefaultPosition, wxSize(60, 20), wxTE_LEFT, validatorAlphanumeric, "");
   auto btnPickTitle = new wxButton(pnlProfile, wxID_ANY, "Pick Title", wxDefaultPosition, kDefaultButtonSize, 0, wxDefaultValidator, "");
   m_useDefaultPadding = new wxCheckBox(pnlProfile, wxID_ANY, "Use Default Padding", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
@@ -242,7 +242,7 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   //auto dvcol = new wxDataViewColumn(*tttl, rend, 1);
 
   //m_tlcMappingData->AppendColumn(dvcol);
-   m_tlcMappingData->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  m_tlcMappingData->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
   m_tlcMappingData->AppendTextColumn("Right", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
   m_tlcMappingData->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
   m_tlcMappingData->AppendTextColumn("Bottom", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
@@ -263,7 +263,7 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
 
 
   // Profile Info Panel
-    auto zrDisplayControls = new wxBoxSizer(wxVERTICAL);
+  auto zrDisplayControls = new wxBoxSizer(wxVERTICAL);
   zrDisplayControls->Add(btnMoveUp);
   zrDisplayControls->Add(btnMoveDown);
   zrDisplayControls->Add(btnAddDisplay);
@@ -659,14 +659,20 @@ void cFrame::OnProfileID(wxCommandEvent &event) {
 }
 
 void cFrame::OnPickTitle(wxCommandEvent &event) {
-  auto *map = m_titlesMap.get();
+  // a defaut map should have been provided at load time
+  // if the map failed to load from file
+  wxASSERT((*m_titlesMap).empty() == false);
+
+  // seperate named and unamed for sorting purposes
+  // in this case I would like title ID #'s with names to be sorted
+  // alphabetically up front, while the ID #'s with no name to be sorted by ID #
+  // after.
   game_titles_t titlesNamed;
   game_titles_t titlesEmptyName;
-  titlesNamed.reserve(map->size());
-  titlesEmptyName.reserve(map->size());
-  // titlesRaw.push_back({"Aerofly", "2025"});
-  // titlesRaw.push_back({"FreeSpace2", "13302"});
-  for (auto &[key, item] : *map) {
+  titlesNamed.reserve(m_titlesMap->size());
+  titlesEmptyName.reserve(m_titlesMap->size());
+
+  for (auto &[key, item] : *m_titlesMap) {
     if (item.empty()) {
       titlesEmptyName.push_back({item, key});
     } else {
@@ -685,9 +691,9 @@ void cFrame::OnPickTitle(wxCommandEvent &event) {
                const std::pair<std::string, std::string> &right) {
               return std::stoi(left.second) < std::stoi(right.second);
             });
-  game_titles_t titles;
-  // preallocate memory
-  titles.reserve(titlesNamed.size() + titlesEmptyName.size());
+
+  // construct array used for displaying game titles to user
+  game_titles_t titles(titlesNamed.size() + titlesEmptyName.size());
   titles.insert(titles.end(), titlesNamed.begin(), titlesNamed.end());
   titles.insert(titles.end(), titlesEmptyName.begin(), titlesEmptyName.end());
 

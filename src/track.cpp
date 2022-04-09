@@ -75,8 +75,8 @@ BOOL PopulateVirtMonitorBounds(HMONITOR hMonitor, HDC hdcMonitor,
   // const std::string name = WideCharToMultiByte(CP_UTF8,0, Monitor.szDevice)
   // spdlog::debug("MON Name:{:>15}\n", Monitor.szDevice);
 
-  spdlog::info("MON {} Pixel Bounds -> {:>6}, {:>6}, {:>6}, {:>6}", count, left,
-               right, top, bottom);
+  spdlog::debug("MON {} Pixel Bounds -> {:>6}, {:>6}, {:>6}, {:>6}", count,
+                left, right, top, bottom);
 
   if (Monitor.rcMonitor.left < g_virtualOriginX) {
     g_virtualOriginX = Monitor.rcMonitor.left;
@@ -144,7 +144,7 @@ retcode DisplaySetup(config::Profile profile) {
 
   // debug messages only
   for (int i = 0; i < profile.displays.size(); i++) {
-    spdlog::info(
+    spdlog::debug(
         "Display {} user rotations: {:>.2f}, {:>.2f}, {:>.2f}, {:>.2f}", i,
         g_displays[i].rotation[0], g_displays[i].rotation[1],
         g_displays[i].rotation[2], g_displays[i].rotation[3]);
@@ -155,7 +155,7 @@ retcode DisplaySetup(config::Profile profile) {
                   g_displays[i].absPixel[2], g_displays[i].absPixel[3]);
   }
   for (int i = 0; i < profile.displays.size(); i++) {
-    spdlog::info(
+    spdlog::debug(
         "Display {} absolute bounds: {:>.1f}, {:>.1f}, {:>.1f}, {:>.1f}", i,
         g_displays[i].absCached[0], g_displays[i].absCached[1],
         g_displays[i].absCached[2], g_displays[i].absCached[3]);
@@ -188,13 +188,13 @@ retcode Initialize(HWND hWnd, config::Profile profile, std::string dllpath) {
   if (retcode::fail == WinSetup(profile)) {
     return retcode::fail;
   }
-  spdlog::trace("win setup a success");
+  spdlog::trace("Windows-setup a success");
 
   if (retcode::fail == DisplaySetup(profile)) {
     return retcode::fail;
   }
 
-  spdlog::trace("display setup a success");
+  spdlog::trace("display-setup a success");
 
   // Find and load TrackIR DLL
 #ifdef UNICODE
@@ -218,7 +218,7 @@ retcode Initialize(HWND hWnd, config::Profile profile, std::string dllpath) {
 
   // Load trackir dll and resolve function addresses
   if (NPClient_Init(sDll) == NP_OK) {
-    spdlog::info("NP Initialization successfull.");
+    spdlog::debug("NP Load DLL successfull.");
   } else {
     // logging handled within the function implementation
     return retcode::fail;
@@ -233,7 +233,7 @@ retcode Initialize(HWND hWnd, config::Profile profile, std::string dllpath) {
   NPRESULT result = NP_RegisterWindowHandle(hWnd);
 
   if (NP_OK == result) {
-    spdlog::info("NP Registered window handle.");
+    spdlog::debug("NP Registered window handle.");
   }
 
   // 7 is a magic number I found through experimentation.
@@ -245,7 +245,7 @@ retcode Initialize(HWND hWnd, config::Profile profile, std::string dllpath) {
     Sleep(2);
     result = NP_RegisterWindowHandle(hWnd);
     if (NP_OK == result) {
-      spdlog::info("NP Re-registered window handle.");
+      spdlog::debug("NP Re-registered window handle.");
     } else {
       spdlog::error("Failed to re-register window handle with NP code: {}",
                     result);
@@ -262,7 +262,7 @@ retcode Initialize(HWND hWnd, config::Profile profile, std::string dllpath) {
   // Request roll, pitch. See NPClient.h
   NPRESULT rsltReqData = NP_RequestData(NPPitch | NPYaw);
   if (NP_OK == rsltReqData)
-    spdlog::info("NP Request Data Success");
+    spdlog::debug("NP Request Data Success");
   else {
     spdlog::error("NP Request Data failed with NP code: {}", rsltReqData);
     return retcode::fail;
@@ -270,13 +270,13 @@ retcode Initialize(HWND hWnd, config::Profile profile, std::string dllpath) {
 
   NPRESULT rsltProfileId = NP_RegisterProgramProfileID(profile.profileId);
   if (NP_OK == rsltProfileId)
-    spdlog::info("NP Registered Profile ID.");
+    spdlog::debug("NP Registered Profile ID.");
   else {
     spdlog::error("NP Register Profile ID failed with NP code: {}",
                   rsltProfileId);
     return retcode::fail;
   }
-
+  spdlog::info("NPTrackIR Initialization Successful");
 #endif
   return retcode::success;
 }
@@ -293,7 +293,7 @@ inline void SendMyInput(double x, double y) {
   ip.mi.dy = static_cast<LONG>(y);
 
   if (0 == SendInput(1, &ip, sizeof(INPUT))) {
-    spdlog::warn("SendInput was already blocked by another thread.");
+    spdlog::debug("SendInput was already blocked by another thread.");
   }
 
   return;
@@ -378,11 +378,13 @@ retcode Start() {
 
   NPRESULT rslt = NP_StartDataTransmission();
   if (NP_OK == rslt)
-    spdlog::info("NP Started data transmission.");
+    spdlog::debug("NP Started data transmission.");
   else {
     spdlog::error("NP Start Data Transmission failed with code: {}\n", rslt);
     return retcode::fail;
   }
+
+  spdlog::info("NPTrackIR Started");
 
 #endif
 

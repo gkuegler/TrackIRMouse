@@ -149,6 +149,10 @@ Config::Config(const std::string filename) {
       toml::find<bool>(vGeneralSettings, "quit_on_loss_of_track_ir");
   userData.watchdogEnabled =
       toml::find<bool>(vGeneralSettings, "watchdog_enabled");
+  userData.logLevel = static_cast<spdlog::level::level_enum>(
+      toml::find<int>(vGeneralSettings, "log_level"));
+  userData.autoFindTrackIrDll =
+      toml::find<bool>(vGeneralSettings, "auto_find_trackir_dll");
 
   // Optionally the user can specify the location to the trackIR dll
   userData.trackIrDllFolder =
@@ -338,6 +342,8 @@ void Config::SaveToFile(std::string filename) {
     {"watchdog_enabled", userData.watchdogEnabled},
     {"trackir_dll_directory", userData.trackIrDllFolder},
     {"active_profile", userData.activeProfileName},
+    {"log_level", static_cast<int>(userData.logLevel)},
+    {"auto_find_trackir_dll", userData.autoFindTrackIrDll},
   };
 
   const toml::value padding{
@@ -494,20 +500,20 @@ ConfigReturn LoadFromFile(std::string filename) {
     return ConfigReturn{retcode::success, "", config};
   } catch (const toml::syntax_error &ex) {
     err_msg = fmt::format(
-        "Syntax error in toml file: \"%s\"\nSee error message below for hints "
-        "on how to fix.\n%s",
+        "Syntax error in toml file: \"{}\"\nSee error message below for hints "
+        "on how to fix.\n{}",
         filename, ex.what());
   } catch (const toml::type_error &ex) {
-    err_msg = fmt::format("Incorrect type when parsing toml file \"%s\".\n\n%s",
+    err_msg = fmt::format("Incorrect type when parsing toml file \"{}\".\n\n{}",
                           filename, ex.what());
   } catch (const std::out_of_range &ex) {
-    err_msg = fmt::format("Missing data in toml file \"%s\".\n\n%s", filename,
+    err_msg = fmt::format("Missing data in toml file \"{}\".\n\n{}", filename,
                           ex.what());
-  } catch (std::runtime_error &ex) {
-    err_msg = fmt::format("Failed to open \"%s\"", filename);
+  } catch (const std::runtime_error &ex) {
+    err_msg = fmt::format("Failed to open \"{}\"", filename);
   } catch (...) {
     err_msg = fmt::format(
-        "exception has gone unhandled loading \"%s\" and verifying values.",
+        "Exception has gone unhandled loading \"{}\" and verifying values.",
         filename);
   }
 

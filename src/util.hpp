@@ -7,7 +7,11 @@
 #include <vector>
 
 namespace util {
-template <typename T>
+// template <typename C<T>> requires ??
+
+// container must be an irritable array of type T,
+// where type T can be implicitly converted to wxString
+template <typename T> 
 wxArrayString BuildWxArrayString(const T container) {
   wxArrayString array;
   for (const auto& text : container) {
