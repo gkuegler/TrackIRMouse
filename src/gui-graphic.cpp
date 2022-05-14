@@ -173,22 +173,6 @@ void cDisplayGraphic::Render(wxDC& dc) {
   //                d[3]);
   // }
 
-  // map from 0,0 to virtual top left
-  // auto offsetRect = OffsetNormalizedRect(normalized);
-
-  // multiply by coefficient and truncate to pixel values
-  // auto fittedRect = FitRect(offsetRect);
-
-  // draw rectangles
-  //
-  // [in] desktop width and height
-  // [in] pixel rect
-  // [in] panel size or draw area with (width, height)
-  // [in] rotational rect
-
-  // draw a refernce rectangle
-  // dc.DrawRectangle(wxRect(0, 0, area_x, area_y));
-
   for (int i = 0; i < bounds_norm.size(); i++) {
     // Draw the rectangle
     auto r = wxRect();
@@ -220,31 +204,30 @@ void cDisplayGraphic::Render(wxDC& dc) {
             ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[3])
             : wxString("?");
 
+    // clang-format off
     const auto middleX = r.x + (r.GetWidth() / 2);
     const auto middleY = r.y + (r.height / 2);
 
     const int text_left_x = r.x + pad;
     const int text_left_y = middleY - halfTextHeight;
 
-    const int text_right_x =
-        r.GetRight() - pad - dc.GetTextExtent(text_right).GetWidth();
+    const int text_right_x = r.GetRight() - pad - dc.GetTextExtent(text_right).GetWidth();
     const int text_right_y = middleY - halfTextHeight;
 
     const int text_top_x = middleX - (dc.GetTextExtent(text_top).GetWidth() / 2);
     const int text_top_y = r.y + pad;
 
-    const int text_bottom_x =
-        middleX - (dc.GetTextExtent(text_bottom).GetWidth() / 2);
+    const int text_bottom_x = middleX - (dc.GetTextExtent(text_bottom).GetWidth() / 2);
     const int text_bottom_y = r.GetBottom() - pad - textHeight;
 
-    wxString text_center = wxString::Format(wxT("%d"), i);
-    const int text_center_x =
-        middleX - (dc.GetTextExtent(text_center).GetWidth() / 2);
+    const auto text_center = wxString::Format(wxT("%d"), i);
+    const int text_center_x = middleX - (dc.GetTextExtent(text_center).GetWidth() / 2);
     const int text_center_y = middleY - textHeight - 1;
 
     const auto resolution = wxString::Format(wxT("%dx%d"), 1920, 1080);
     const int resolution_x = middleX - (dc.GetTextExtent(resolution).GetWidth() / 2);
     const int resolution_y = middleY + 1;
+    
 
     dc.DrawText(text_left, text_left_x, text_left_y);
     dc.DrawText(text_right, text_right_x, text_right_y);
@@ -252,5 +235,6 @@ void cDisplayGraphic::Render(wxDC& dc) {
     dc.DrawText(text_bottom, text_bottom_x, text_bottom_y);
     dc.DrawText(text_center, text_center_x, text_center_y);
     dc.DrawText(resolution, resolution_x, resolution_y);
+    // clang-format on
   }
 }
