@@ -439,8 +439,12 @@ retcode Start() {
 }
 
 void Toggle() {
-  spdlog::trace("Track pause called into.");
   g_bPauseTracking = !g_bPauseTracking;
+  if (g_bPauseTracking) {
+    spdlog::info("tracking paused");
+  } else {
+    spdlog::info("tracking resumed");
+  }
 }
 
 void Stop() {

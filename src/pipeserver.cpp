@@ -9,14 +9,9 @@
  *          LED's burnt out and thought I need a way to shut down the device
  *          with voice commands. I never really use this command and since then
  *          I have ran my TrackI5 60+ hours per week for over a year with still
- *          no signs of burnout.
+ *          no signs of led burnout.
  *
  * --License Boilerplate Placeholder--
- *
- * TODO section:
- * currently no protection against two messages that are sent so fast that the
- * server reads two messages in one go therefore dropping a message or erroring
- * out
  *
  */
 

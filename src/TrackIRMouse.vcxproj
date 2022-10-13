@@ -274,9 +274,9 @@
       <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_x64_lib</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>"C:\Python38-32\python.exe" "$(ProjectDir)Build Steps\pause-current-trackir.py"
+      <Command>"py" "$(ProjectDir)Build Steps\pause-current-trackir.py"
 "$(TargetDir)TrackIRMouse.exe"
-"C:\Python38-32\python.exe" "$(ProjectDir)Build Steps\pause-current-trackir.py"
+"py" "$(ProjectDir)Build Steps\pause-current-trackir.py"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
