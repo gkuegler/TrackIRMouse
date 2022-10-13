@@ -1,0 +1,5 @@
+# ---
+# Clang Format Style
+BasedOnStyle: Google
+Language: Cpp
+# ---
