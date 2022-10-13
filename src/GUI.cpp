@@ -44,13 +44,13 @@
 #include "config.hpp"
 #include "gui-dialogs.hpp"
 #include "log.hpp"
+#include "pipeserver.hpp"
 #include "threads.hpp"
 #include "track.hpp"
 #include "types.hpp"
 #include "util.hpp"
-#include "watchdog.hpp"
 
-const constexpr std::string_view kVersionNo = "0.8.2";
+const constexpr std::string_view kVersionNo = "0.8.3";
 const std::string kRotationTitle = "bound (Degrees)";
 const std::string kPaddingTitle = "padding (Pixels)";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
@@ -120,13 +120,14 @@ bool cApp::OnInit() {
     m_frame->OnStart(event);
   }
 
-  // Start the watchdog thread
-  m_frame->m_pWatchdogThread = new WatchdogThread(m_frame);
+  // Start the pipe server thread.
+  // Pipe server is only started at first application startup.
   if (usr.watchdogEnabled) {
-    if (m_frame->m_pWatchdogThread->Run() != wxTHREAD_NO_ERROR) {
-      spdlog::error("Can't run watchdog thread.");
-      delete m_frame->m_pWatchdogThread;
-      m_frame->m_pTrackThread = nullptr;
+    m_frame->m_pServerThread = new ControlServerThread(m_frame);
+    if (m_frame->m_pServerThread->Run() != wxTHREAD_NO_ERROR) {
+      spdlog::error("Can't run server thread.");
+      delete m_frame->m_pServerThread;
+      m_frame->m_pServerThread = nullptr;
     }
   }
 

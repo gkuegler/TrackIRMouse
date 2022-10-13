@@ -40,7 +40,7 @@ cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent,
               wxTAB_TRAVERSAL, "") {
   m_pUserData = pUserData;
   m_cbxEnableWatchdog =
-      new wxCheckBox(this, wxID_ANY, "Watchdog Enabled", wxDefaultPosition,
+      new wxCheckBox(this, wxID_ANY, "Pipe Server Enabled", wxDefaultPosition,
                      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
   m_cbxTrackOnStart =
       new wxCheckBox(this, wxID_ANY, "Track On Start", wxDefaultPosition,
@@ -150,4 +150,52 @@ void cSettingsAdvancedlPanel::OnTrackIrDllPath(wxCommandEvent& event) {
 
 void cSettingsAdvancedlPanel::OnAutoFindDll(wxCommandEvent& event) {
   m_pUserData->autoFindTrackIrDll = m_cbxAutoFindDll->IsChecked();
+}
+
+cSettingsServerlPanel::cSettingsServerlPanel(wxWindow* parent,
+                                             config::UserData* pUserData)
+    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+              wxTAB_TRAVERSAL, "") {
+  m_pUserData = pUserData;
+
+  m_cbxServerEnabled = new wxCheckBox(
+      this, wxID_ANY,
+      "Control the application by sending commands through a pipe server.");
+
+  wxStaticText* text_label =
+      new wxStaticText(this, wxID_ANY, "Pipe server name: ");
+  m_txtServerName =
+      new wxTextCtrl(this, myID_TRACK_IR_DLL_PATH, pUserData->trackIrDllFolder,
+                     wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
+  // wxStaticText* txtTrackLocation2 = new wxStaticText(
+  //     this, wxID_ANY,
+  //     "Note: a value of 'default' will get from install location.");
+
+  m_cbxServerEnabled->SetValue(pUserData->watchdogEnabled);
+
+  wxBoxSizer* zrTextEntry = new wxBoxSizer(wxHORIZONTAL);
+  zrTextEntry->Add(text_label, 0, wxTOP, 5);
+  zrTextEntry->Add(m_cbxServerEnabled, 1, wxALL | wxEXPAND, 0);
+
+  wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+  topSizer->Add(m_cbxServerEnabled, 0, wxTOP | wxBOTTOM, 10);
+  topSizer->Add(zrTextEntry, 0, wxTOP | wxEXPAND, 10);
+
+  wxBoxSizer* border = new wxBoxSizer(wxVERTICAL);
+  border->Add(topSizer, 0, wxALL, 10);
+
+  SetSizer(border);
+
+  m_cbxServerEnabled->Bind(wxEVT_CHECKBOX,
+                           &cSettingsServerlPanel::OnServerEnabled, this);
+  m_txtServerName->Bind(wxEVT_TEXT, &cSettingsServerlPanel::OnServerName, this);
+}
+
+void cSettingsServerlPanel::OnServerEnabled(wxCommandEvent&) {
+  m_pUserData->watchdogEnabled = m_cbxServerEnabled->IsChecked();
+}
+
+void cSettingsServerlPanel::OnServerName(wxCommandEvent&) {
+  wxString line_text = m_txtServerName->GetLineText(0);
+  m_pUserData->pipeServerName = line_text.mb_str();
 }

@@ -248,7 +248,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -266,7 +266,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;TEST_NO_TRACK</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -288,7 +288,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
@@ -314,7 +314,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
@@ -338,6 +338,7 @@
     <ClCompile Include="gui-dialogs.cpp" />
     <ClCompile Include="log.cpp" />
     <ClCompile Include="np-client.cpp" />
+    <ClCompile Include="pipeserver.cpp" />
     <ClCompile Include="threads.cpp" />
     <ClCompile Include="track.cpp" />
     <ClCompile Include="util.cpp">
@@ -350,7 +351,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="watchdog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.hpp" />
@@ -363,13 +363,13 @@
     <ClInclude Include="gui-dialogs.hpp" />
     <ClInclude Include="log.hpp" />
     <ClInclude Include="np-client.h" />
+    <ClInclude Include="pipeserver.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="threads.hpp" />
     <ClInclude Include="toml.hpp" />
     <ClInclude Include="track.hpp" />
     <ClInclude Include="types.hpp" />
     <ClInclude Include="util.hpp" />
-    <ClInclude Include="watchdog.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

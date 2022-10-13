@@ -12,7 +12,7 @@
 
 // forward decl of thread classes
 class TrackThread;
-class WatchdogThread;
+class ControlServerThread;
 
 //////////////////////////////////////////////////////////////////////
 //                Text Control Status Output Window                 //
@@ -33,7 +33,7 @@ class cTextCtrl : public wxTextCtrl {
 class cFrame : public wxFrame {
  public:
   TrackThread *m_pTrackThread = nullptr;
-  WatchdogThread *m_pWatchdogThread = nullptr;
+  ControlServerThread *m_pServerThread = nullptr;
   wxCriticalSection m_pThreadCS;  // protects all thread pointers
 
   // log window

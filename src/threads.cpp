@@ -3,8 +3,8 @@
 #include <wx/thread.h>
 
 #include "gui.hpp"
+#include "pipeserver.hpp"
 #include "types.hpp"
-#include "watchdog.hpp"
 
 //////////////////////////////////////////////////////////////////////
 //                           TrackThread                            //
@@ -16,6 +16,7 @@ TrackThread::TrackThread(cFrame* pHandler, HWND hWnd) : wxThread() {
 }
 
 TrackThread::~TrackThread() {
+  // Threads are detached anddelete themselves when they are done running.
   // Will need to provide locks in the future with critical sections
   // https://docs.wxwidgets.org/3.0/classwx_thread.html
   wxCriticalSectionLocker enter(m_pHandler->m_pThreadCS);
@@ -28,17 +29,19 @@ void CloseApplication() {
   wxTheApp->QueueEvent(evt);
 }
 
-// TODO: move to polymophic track object created by dependency injection
+// TODO: move to polymorphic track object created by dependency injection
 wxThread::ExitCode TrackThread::Entry() {
-  auto profile = config::Get()->GetActiveProfile();
-  auto path = config::Get()->envData.trackIrDllPath;
-  auto usr = config::Get()->userData;
+  auto config = config::Get();
+  auto profile = config->GetActiveProfile();
+  auto path = config->envData.trackIrDllPath;
+  auto quit_on_no_trackir = config->userData.quitOnLossOfTrackIr;
   if (track::Initialize(m_hWnd, profile, path) == retcode::fail) {
     return NULL;
   }
 
   // This is the loop function
-  if (track::Start() == retcode::fail && usr.quitOnLossOfTrackIr) {
+  // TODO: use exceptions
+  if (track::Start() == retcode::fail && quit_on_no_trackir) {
     spdlog::trace("quitting on loss of track ir");
     CloseApplication();
   }
@@ -50,30 +53,25 @@ wxThread::ExitCode TrackThread::Entry() {
 //                         WatchdogThread                           //
 //////////////////////////////////////////////////////////////////////
 
-WatchdogThread::WatchdogThread(cFrame* pHandler) : wxThread() {
+ControlServerThread::ControlServerThread(cFrame* pHandler) : wxThread() {
   m_pHandler = pHandler;
-  m_hPipe = WatchDog::InitializeWatchdog();
 }
 
-WatchdogThread::~WatchdogThread() {
+ControlServerThread::~ControlServerThread() {
+  // Threads are detached anddelete themselves when they are done running.
   // TODO: Will need to provide different locks in the future with critical
   // sections https://docs.wxwidgets.org/3.0/classwx_thread.html
   wxCriticalSectionLocker enter(m_pHandler->m_pThreadCS);
-  m_pHandler->m_pWatchdogThread = NULL;
-
-  // close named pipe
-  if (0 == CloseHandle(m_hPipe)) {
-    spdlog::error(
-        "Could not close named pipe on destruction of watchdog. GLE={}",
-        GetLastError());
-  }
+  m_pHandler->m_pServerThread = NULL;
+  // end of critical section
 }
 
-wxThread::ExitCode WatchdogThread::Entry() {
-  if (m_hPipe) {
-    WatchDog::Serve(m_hPipe);
-  } else {
-    spdlog::warn("watchdog thread already stopped");
+wxThread::ExitCode ControlServerThread::Entry() {
+  try {
+    PipeServer server;
+    server.Serve("watchdog");
+  } catch (const std::runtime_error& e) {
+    spdlog::warn(e.what());
   }
   return NULL;
 }

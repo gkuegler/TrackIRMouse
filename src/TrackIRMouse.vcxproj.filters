@@ -21,9 +21,6 @@
     <ClCompile Include="track.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="watchdog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="gui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -48,15 +45,15 @@
     <ClCompile Include="util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pipeserver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="toml.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="np-client.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="watchdog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="config.hpp">
@@ -99,6 +96,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="game-title-list.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pipeserver.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

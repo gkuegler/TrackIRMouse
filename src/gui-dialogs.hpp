@@ -38,6 +38,18 @@ class cSettingsAdvancedlPanel : public wxPanel {
   void OnTrackIrDllPath(wxCommandEvent &event);
 };
 
+class cSettingsServerlPanel : public wxPanel {
+ public:
+  wxCheckBox *m_cbxServerEnabled;
+  wxTextCtrl *m_txtServerName;
+  cSettingsServerlPanel(wxWindow *parent, config::UserData *pUserData);
+
+ private:
+  config::UserData *m_pUserData = nullptr;
+  void OnServerEnabled(wxCommandEvent &event);
+  void OnServerName(wxCommandEvent &event);
+};
+
 class cSettingsPopup : public wxPropertySheetDialog {
  public:
   config::UserData *m_userData = nullptr;

@@ -16,12 +16,12 @@
 #include "display.hpp"
 #include "log.hpp"
 #include "np-client.h"
+#include "pipeserver.hpp"
 #include "types.hpp"
-#include "watchdog.hpp"
 
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
-//#define TEST_NO_TRACK
+// #define TEST_NO_TRACK
 //
 // TODO: make track client polymorphic class
 // TODO: check out opentrack for other interfaces

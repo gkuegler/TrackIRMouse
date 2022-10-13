@@ -4,6 +4,8 @@
 #include <Windows.h>
 #include <wx/thread.h>
 
+#include <memory>
+
 class cFrame;
 class cPanel;
 
@@ -14,19 +16,19 @@ class TrackThread : public wxThread {
 
   TrackThread(cFrame* m_pHandler, HWND hWnd);
   ~TrackThread();
-
   ExitCode Entry();
 };
 
-class WatchdogThread : public wxThread {
+class ControlServerThread : public wxThread {
  public:
   cFrame* m_pHandler = nullptr;
-  HANDLE m_hPipe = INVALID_HANDLE_VALUE;
 
-  WatchdogThread(cFrame* pHandler);
-  ~WatchdogThread();
-
+  ControlServerThread(cFrame* pHandler);
+  ~ControlServerThread();
   ExitCode Entry();
+
+  // private:
+  // std::unique_ptr<Watchdog> watchdog = nullptr;
 };
 
 #endif /* TRACKIRMOUSE_THREADS_H */

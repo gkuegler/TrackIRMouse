@@ -34,6 +34,7 @@ struct UserData {
   bool trackOnStart = true;
   bool quitOnLossOfTrackIr = true;
   bool watchdogEnabled = true;
+  std::string pipeServerName = "";
   spdlog::level::level_enum logLevel = spdlog::level::info;
   bool autoFindTrackIrDll = true;
   std::string trackIrDllFolder = "";
