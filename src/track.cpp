@@ -298,29 +298,25 @@ inline void SendMyInput(double x, double y) {
 
   return;
 }
-void MouseMove(Deg yaw, Deg pitch) {
+
+// double GetHorizontalPosition(int display_index) {
+
+//}
+void MouseMove(const Deg yaw, const Deg pitch) {
   static int lastScreen = 0;
+
+  // for loop
+  // get coordinate -> d{true, x, y}
+  // if d.true ->
+  // if x == -1
 
   // Check if the head is pointing to a screen
   // The return statement is never reached if the head is pointing outside the
   // bounds of any of the screens
   for (int i = 0; i < g_displays.size(); i++) {
-    double rl = g_displays[i].rotation16bit[0];
-    double rr = g_displays[i].rotation16bit[1];
-    double rt = g_displays[i].rotation16bit[2];
-    double rb = g_displays[i].rotation16bit[3];
-    if ((yaw > rl) && (yaw < rr) && (pitch < rt) && (pitch > rb)) {
-      // interpolate horizontal position from left edge of display
-      double al = g_displays[i].absCached[0];
-      double mx = g_displays[i].xSlope;
-      double x = mx * (yaw - rl) + al;
-
-      // interpolate vertical position from top edge of display
-      double at = g_displays[i].absCached[2];
-      double my = g_displays[i].ySlope;
-      double y = my * (rt - pitch) + at;
-
-      SendMyInput(x, y);
+    auto pos = g_displays[i].getMousePosition(yaw, pitch);
+    if (pos.contains) {
+      SendMyInput(pos.x, pos.y);
       lastScreen = i;
       return;
     }
@@ -331,38 +327,28 @@ void MouseMove(Deg yaw, Deg pitch) {
   // yaw axis that is too great or too little to do this assume the pointer
   // came from the last screen, just asign the mouse position to the absolute
   // limit from the screen it came from.
-  static double x;
-  static double y;
-
-  double rl = g_displays[lastScreen].rotation16bit[0];
-  double rr = g_displays[lastScreen].rotation16bit[1];
-  double rt = g_displays[lastScreen].rotation16bit[2];
-  double rb = g_displays[lastScreen].rotation16bit[3];
+  double x;
+  double y;
+  CDisplay& dlast = g_displays[lastScreen];
+  double rl = dlast.rotation16bit[0];
+  double rr = dlast.rotation16bit[1];
+  double rt = dlast.rotation16bit[2];
+  double rb = dlast.rotation16bit[3];
 
   if (yaw < rl) {  // horizontal rotaion is left of last used display
-    x = g_displays[lastScreen].absCached[0] +
-        g_displays[lastScreen].padding[0] * g_xPixelAbsoluteSlope;
+    x = dlast.absCached[0] + dlast.padding[0] * g_xPixelAbsoluteSlope;
   } else if (yaw > rr) {  // horizontal rotation is right of last used display
-    x = g_displays[lastScreen].absCached[1] -
-        g_displays[lastScreen].padding[1] * g_xPixelAbsoluteSlope;
-  } else {  // horizontal roation within last display bounds as normal
-    double al = g_displays[lastScreen].absCached[0];
-    double mx = g_displays[lastScreen].xSlope;
-    x = mx * (yaw - rl) + al;  // interpolate horizontal position from left
-                               // edge of display
+    x = dlast.absCached[1] - dlast.padding[1] * g_xPixelAbsoluteSlope;
+  } else {  // horizontal rotation within last display bounds as normal
+    x = dlast.getHorizontalPosition(yaw);
   }
 
   if (pitch > rt) {  // vertical rotaion is above last used display
-    y = g_displays[lastScreen].absCached[2] +
-        g_displays[lastScreen].padding[2] * g_yPixelAbsoluteSlope;
+    y = dlast.absCached[2] + dlast.padding[2] * g_yPixelAbsoluteSlope;
   } else if (pitch < rb) {  // vertical rotaion is last used display
-    y = g_displays[lastScreen].absCached[3] -
-        g_displays[lastScreen].padding[3] * g_yPixelAbsoluteSlope;
-  } else {
-    double at = g_displays[lastScreen].absCached[2];
-    double my = g_displays[lastScreen].ySlope;
-    y = my * (rt - pitch) + at;  // interpolate vertical position from top edge
-                                 // of display
+    y = dlast.absCached[3] - dlast.padding[3] * g_yPixelAbsoluteSlope;
+  } else {  // verticalrotation within last display bounds as normal
+    y = dlast.getVerticalPosition(pitch);
   }
 
   SendMyInput(x, y);
@@ -441,9 +427,9 @@ retcode Start() {
 void Toggle() {
   g_bPauseTracking = !g_bPauseTracking;
   if (g_bPauseTracking) {
-    spdlog::info("tracking paused");
+    spdlog::warn("tracking paused");
   } else {
-    spdlog::info("tracking resumed");
+    spdlog::warn("tracking resumed");
   }
 }
 
