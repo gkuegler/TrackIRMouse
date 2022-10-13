@@ -1,32 +1,44 @@
-# TOP LEVEL
+# Update Plan for TrackIR Mouse
 
-// add profiles to settings files
-// 64-bit support
 
-Convert To Graphical Utility:
+
+## Convert To Graphical Utility: completed
     Core Needs:
-        robust checking of setting parameters
-        robust error handling of incorrect parameters
-        robust handling of incorrect user input
+        * robust checking of setting parameters
+        * robust error handling of incorrect parameters
+        * robust handling of incorrect user input
 
     User Interface Needs:
-        provide indication that track our software is running, example a green circle
-        
+        - provide indication that track our software is running, example a green circle
         
     Optional Features:
-        // profile selection (drop down?)
-        settings reloads
-        find good display size default
-        edit configuration from gui
-        // start button (attach to trackIR)
-        // checkbox to automatically start
-        // wxRegKey for TrackIR DLL location
-        multi-language support with wxTranslations & wxLocal (needs a file menu to change option)
+        * profile selection drop down
+        * settings reloads
+        - find good display size default
+        * edit configuration from gui
+        * start button (attach to trackIR)
+        * checkbox to automatically start
+        * registry key get for TrackIR DLL location
+        - multi-language support with wxTranslations & wxLocal (needs a file menu to change option)
 
-implement installer?
-implement scrolling ability with paused mouse (for AutoCAD), add to pipe server
+## Scrolling Features
+### Lock Mouse to Scrollbar
+### Scroll Anywhere
+### AutoCAD Zoom Mode
 
-## Testing Behaviors for User Interaction
+## Future Features:
+### Automatic Detection Of Display Configuration:
+    "EnumDisplayDevicesA" to get device names and device strings
+    "EnumDisplayMonitors" to get device names of active monitors
+    do some sort of compare
+        if \\.\DISPLAY1 is active in the string is "Intel Graphics P530"
+        then I must be using a single monitor?
+        or if i find any "CalDigit" strings in the active device string
+        then i must be in a dual monitor setup
+    This all seems too complicated and much work to implement correctly
+    in addition I don't think this would scale to multiple other users easily
+
+### Testing Behaviors for User Interaction
 - Config File
     - missing file
     - can't parse toml correctly
@@ -54,17 +66,7 @@ implement scrolling ability with paused mouse (for AutoCAD), add to pipe server
     - display number
 
 
-## Future:
-Automatic Detection Of Display Configuration:
-    "EnumDisplayDevicesA" to get device names and device strings
-    "EnumDisplayMonitors" to get device names of active monitors
-    do some sort of compare
-        if \\.\DISPLAY1 is active in the string is "Intel Graphics P530"
-        then I must be using a single monitor?
-        or if i find any "CalDigit" strings in the active device string
-        then i must be in a dual monitor setup
-    This all seems too complicated and much work to implement correctly
-    in addition I don't think this would scale to multiple other users easily
+
 
 
 

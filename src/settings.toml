@@ -47,7 +47,7 @@ use_default_padding = true
 left = -43.0
 pad_bottom = 0
 right = 50.0
-top = 19.0
+top = 20.0
 bottom = -19.0
 pad_left = 3
 pad_top = 0
@@ -56,11 +56,41 @@ pad_right = 3
 pad_bottom = 0
 left = 62.0
 right = 180.0
-top = 19.0
+top = 20.0
 bottom = -19.0
 pad_top = 0
 pad_left = 3
 pad_right = 3
+
+[[Profiles]]
+profile_id = 13302
+name = "Desktop Left Mon White Desk"
+use_default_padding = true
+
+[[Profiles.DisplayMappings]]
+left = -43.0
+pad_bottom = 0
+right = 50.0
+top = 19.0
+bottom = -19.0
+pad_left = 3
+pad_top = 0
+pad_right = 3
+
+[[Profiles]]
+name = "Laptop2"
+profile_id = 2025
+use_default_padding = true
+
+[[Profiles.DisplayMappings]]
+pad_bottom = 0
+left = -40.0
+right = 40.0
+top = 18.0
+bottom = -18.0
+pad_top = 0
+pad_left = 0
+pad_right = 0
 
 
 [DefaultPadding]
