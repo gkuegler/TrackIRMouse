@@ -3,6 +3,9 @@
 ## Improvement
 * confirm watchdog pipe server works and/or fix
 - convert track to class
+    - 
+    - change watchdog pause option to gui message
+
 
 ## Convert To Graphical Utility: completed
 Core Needs:

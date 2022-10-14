@@ -14,6 +14,7 @@
 // *******************************************************************************
 
 // added by GK
+// clang-format off
 #include <Windows.h>
 
 #ifndef _NPCLIENT_H_DEFINED_
@@ -61,61 +62,50 @@
 #define NPVERSIONMINOR 2
 
 // DATA FIELDS
-#define NPControl \
-  8  // indicates a control data field
-     // the second parameter of a message bearing control data information
-     // contains a packed data format. The High byte indicates what the data is,
-     // and the Low byte contains the actual data
+#define NPControl  8     // indicates a control data field
+                         // the second parameter of a message bearing control data information
+                         // contains a packed data format. The High byte indicates what the data is,
+                         // and the Low byte contains the actual data
 // roll, pitch, yaw
-#define NPRoll 1   // +/- 16383 (representing +/- 180) [data = input - 16383]
-#define NPPitch 2  // +/- 16383 (representing +/- 180) [data = input - 16383]
-#define NPYaw 4    // +/- 16383 (representing +/- 180) [data = input - 16383]
+#define NPRoll 1          // +/- 16383 (representing +/- 180) [data = input - 16383]
+#define NPPitch 2        // +/- 16383 (representing +/- 180) [data = input - 16383]
+#define NPYaw 4          // +/- 16383 (representing +/- 180) [data = input - 16383]
 
 // x, y, z - remaining 6dof coordinates
-#define NPX 16  // +/- 16383 [data = input - 16383]
-#define NPY 32  // +/- 16383 [data = input - 16383]
-#define NPZ 64  // +/- 16383 [data = input - 16383]
+#define NPX 16           // +/- 16383 [data = input - 16383]
+#define NPY 32           // +/- 16383 [data = input - 16383]
+#define NPZ 64           // +/- 16383 [data = input - 16383]
 
 // raw object position from imager
-#define NPRawX \
-  128  // 0..25600 (actual value is multiplied x 100 to pass two decimal places
-       // of precision)  [data = input / 100]
-#define NPRawY \
-  256  // 0..25600 (actual value is multiplied x 100 to pass two decimal places
-       // of precision)  [data = input / 100]
-#define NPRawZ \
-  512  // 0..25600 (actual value is multiplied x 100 to pass two decimal places
-       // of precision)  [data = input / 100]
+#define NPRawX 128       // 0..25600 (actual value is multiplied x 100 to pass two decimal places
+                         // of precision)  [data = input / 100]
+#define NPRawY 256       // 0..25600 (actual value is multiplied x 100 to pass two decimal places
+                         // of precision)  [data = input / 100]
+#define NPRawZ 512       // 0..25600 (actual value is multiplied x 100 to pass two decimal
+                         // places of precision)  [data = input / 100]
 
 // x, y, z deltas from raw imager position
-#define NPDeltaX \
-  1024  // +/- 2560 (actual value is multiplied x 10 to pass two decimal places
-        // of precision)  [data = (input / 10) - 256]
-#define NPDeltaY \
-  2048  // +/- 2560 (actual value is multiplied x 10 to pass two decimal places
-        // of precision)  [data = (input / 10) - 256]
-#define NPDeltaZ \
-  4096  // +/- 2560 (actual value is multiplied x 10 to pass two decimal places
-        // of precision)  [data = (input / 10) - 256]
+#define NPDeltaX  1024   // +/- 2560 (actual value is multiplied x 10 to pass two decimal
+                         // places  of precision)  [data = (input / 10) - 256]
+#define NPDeltaY  2048   // +/- 2560 (actual value is multiplied x 10 to pass two decimal
+                         // places of precision)  [data = (input / 10) - 256]
+#define NPDeltaZ 4096    // +/- 2560 (actual value is multiplied x 10 to pass two decimal // places
+                         // of precision)  [data = (input / 10) - 256]
 
 // raw object position from imager
-#define NPSmoothX \
-  8192  // 0..32766 (actual value is multiplied x 10 to pass one decimal place
-        // of precision) [data = input / 10]
-#define NPSmoothY \
-  16384  // 0..32766 (actual value is multiplied x 10 to pass one decimal place
-         // of precision) [data = input / 10]
-#define NPSmoothZ \
-  32768  // 0..32766 (actual value is multiplied x 10 to pass one decimal place
-         // of precision) [data = input / 10]
+#define NPSmoothX 8192   // 0..32766 (actual value is multiplied x 10 to pass one decimal place
+                         // of precision) [data = input / 10]
+#define NPSmoothY 16384  // 0..32766 (actual value is multiplied x 10 to pass one decimal
+                         // place of precision) [data = input / 10]
+#define NPSmoothZ 32768  // 0..32766 (actual value is multiplied x 10 to pass one decimal
+                         // place of precision) [data = input / 10]
 
-//////////////////
-/// Typedefs
-/// /////////////////////////////////////////////////////////////////////
-/////////////////
+//////////////////////////////////////////////////////////////////////
+//                             Typedefs                             //
+//////////////////////////////////////////////////////////////////////
+
 
 // NPESULT values are returned from the Game Client API functions.
-//
 typedef enum tagNPResult {
   NP_OK = 0,
   NP_ERR_DEVICE_NOT_PRESENT,

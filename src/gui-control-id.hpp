@@ -29,4 +29,8 @@ enum {
   myID_MOVE_DOWN
 };
 
+enum {  // For applications this must be between 0 and 0xBFFF
+  HOTKEY_ID_SCROLL_LAST = 5,
+};
+
 #endif /* TRACKIRMOUSE_CONTROL_IDS_H */

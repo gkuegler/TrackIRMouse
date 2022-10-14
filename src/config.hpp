@@ -13,13 +13,11 @@
 const constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right",
                                                                "top", "bottom"};
 namespace config {
-using bounds_t = std::array<Deg, 4>;
-using pad_t = std::array<Pixels, 4>;
 
 struct Display {
-  Display(bounds_t r, pad_t p) : rotation(r), padding(p) {}
-  bounds_t rotation{0.0, 0.0, 0.0, 0.0};  // Left, Right, Top, Bottom
-  pad_t padding{0, 0, 0, 0};              // Left, Right, Top, Bottom
+  Display(RectDegrees r, RectPixels p) : rotation(r), padding(p) {}
+  RectDegrees rotation{0.0, 0.0, 0.0, 0.0};  // Left, Right, Top, Bottom
+  RectPixels padding{0, 0, 0, 0};            // Left, Right, Top, Bottom
 };
 
 struct Profile {
@@ -84,7 +82,6 @@ struct ConfigReturn {
 
 ConfigReturn LoadFromFile(std::string filename);
 std::shared_ptr<Config> Get();
-Config GetCopy();
 void Set(const Config c);
 
 using UserInput = std::vector<Display>;

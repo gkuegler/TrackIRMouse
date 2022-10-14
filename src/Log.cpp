@@ -17,7 +17,23 @@
 #include <mutex>
 
 #include "types.hpp"
-// TODO: high dpi support
+// TODO: high dpi support, and text size
+// TODO: test dpi support on 4K monito
+
+void SendThreadMessage(msgcode code, wxString msg, long optional_param = 0) {
+  wxThreadEvent *event = new wxThreadEvent(wxEVT_THREAD);
+  event->SetInt(static_cast<int>(code));
+  event->SetString(msg);
+  event->SetExtraLong(static_cast<long>(optional_param));
+  wxTheApp->QueueEvent(event);
+}
+
+void SendThreadMessage(msgcode code, wxString msg) {
+  wxThreadEvent *event = new wxThreadEvent(wxEVT_THREAD);
+  event->SetString(msg);
+  event->SetInt(static_cast<long>(code));
+  wxTheApp->QueueEvent(event);
+}
 
 namespace mylogging {
 
@@ -31,22 +47,20 @@ class WxSink : public spdlog::sinks::base_sink<Mutex> {
     // Format message according to sink specific formatter.
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+    wxString message(fmt::to_string(formatted));
 
     // raise a wxWidgets error box oand/or shut down app if fatal
     if (msg.level == spdlog::level::critical) {
-      wxLogFatalError(wxString(fmt::to_string(formatted)));
+      wxLogFatalError(message);
     } else if (msg.level == spdlog::level::err) {
-      wxLogError(wxString(fmt::to_string(formatted)));
+      wxLogError(message);
     } else {
       // send output to log consol in app
-      wxThreadEvent *event = new wxThreadEvent(wxEVT_THREAD);
-      event->SetString(fmt::to_string(formatted));
       if (msg.level > spdlog::level::info) {
-        // used by txt control event handler to turn
-        // warning messages and above red.
-        event->SetExtraLong(static_cast<long>(msgcode::red_text));
+        SendThreadMessage(msgcode::log_red_text, message, 0);
+      } else {
+        SendThreadMessage(msgcode::log_normal_text, message, 0);
       }
-      wxTheApp->QueueEvent(event);
     }
   }
 

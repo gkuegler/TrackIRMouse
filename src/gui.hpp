@@ -8,7 +8,7 @@
 #include "gui-control-id.hpp"
 #include "gui-graphic.hpp"
 #include "log.hpp"
-#include "track.hpp"
+#include "trackers.hpp"
 
 // forward decl of thread classes
 class TrackThread;
@@ -52,6 +52,7 @@ class cFrame : public wxFrame {
   wxDataViewListCtrl *m_tlcMappingData;
 
   cFrame(wxPoint, wxSize);
+  ~cFrame() { UnregisterHotKey(HOTKEY_ID_SCROLL_LAST); }
   void InitializeSettings();
   void UpdateGuiUsingSettings();
 
@@ -59,6 +60,7 @@ class cFrame : public wxFrame {
   void OnExit(wxCommandEvent &event);
   void OnAbout(wxCommandEvent &event);
   void OnSave(wxCommandEvent &event);
+  void OnGlobalHotkey(wxKeyEvent &event);
   void OnReload(wxCommandEvent &event);
   void OnSettings(wxCommandEvent &event);
   // controls handlers

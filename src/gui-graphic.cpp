@@ -14,7 +14,7 @@ cDisplayGraphic::cDisplayGraphic(wxWindow* parent, wxSize size)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, size,
               wxFULL_REPAINT_ON_RESIZE, "") {
   m_parent = parent;
-   // TODO: initialize logger here
+  // TODO: initialize logger here
   Bind(wxEVT_PAINT, &cDisplayGraphic::PaintEvent, this);
 }
 
@@ -38,7 +38,7 @@ void cDisplayGraphic::PaintEvent(wxPaintEvent& evt) {
  * paint events and calling Refresh() when a refresh is needed
  * will do the job.
  */
- // TODO: call paint now on settings change
+// TODO: call paint now on settings change
 void cDisplayGraphic::PaintNow() {
   wxClientDC dc(this);
   Render(dc);

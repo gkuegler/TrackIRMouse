@@ -18,7 +18,7 @@
     <ClCompile Include="config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="track.cpp">
+    <ClCompile Include="trackers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="gui.cpp">
@@ -39,20 +39,26 @@
     <ClCompile Include="gui-graphic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="environment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pipeserver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="wdi.hpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="wdi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="environment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="handlers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="toml.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="np-client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -65,7 +71,7 @@
     <ClInclude Include="gui.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="track.hpp">
+    <ClInclude Include="trackers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="log.hpp">
@@ -86,19 +92,19 @@
     <ClInclude Include="gui-graphic.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="environment.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="util.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="types.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="game-title-list.hpp">
+    <ClInclude Include="pipeserver.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pipeserver.hpp">
+    <ClInclude Include="handlers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="environment.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

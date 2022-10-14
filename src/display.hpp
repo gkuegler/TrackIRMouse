@@ -7,108 +7,109 @@ typedef struct mouse_values_ {
   bool contains = false;
   double x = -1;
   double y = -1;
-} MousePosition;
+} CursorPosition;
 
 class CDisplay {
  public:
-  // How to use:
-  //   1. Set pixel bounds by windows call
-  //   2. Set rotational bounds from config active profile
-  //   3. Call setAbsBounds()
-
-  std::array<double, 4> rotation;       // User-specified
-  std::array<double, 4> rotation16bit;  // Virtual desktop bounds of
-                                        // display relative to main monitor
-  std::array<int, 4> padding;           // padding
-  std::array<signed int, 4> relPixel;   // Virtual desktop bounds of
-                                        // display relative to main monitor
-  std::array<signed int, 4> absPixel;   // Resulting Virtualized virtual
-                                        // desktop bounds
-  std::array<double, 4> absCached;      // Resulting Mapped bounds of display
-                                        // in absolute from top left most
-                                        // display
+  RectDegrees rotation_boundaries;  // User-specified
+  RectPixels padding;               // padding
+  RectPixels rel_edge_pixel;        // virtual desktop bounds
+  RectPixels abs_edge_pixel;        // virtual desktop bounds
+  RectShort coordinates;            // virtual desktop bounds
 
   // Ratio of input rotation to abolutized integer
   // used for linear interpolation
-  double ySlope{0.0};
-  double xSlope{0.0};
+  double m_slope_coord_over_degrees_x{0.0};
+  double m_slope_coord_over_degrees_y{0.0};
+  double m_short_to_pixels_ratio_x{0.0};
+  double m_short_to_pixels_ratio_y{0.0};
 
-  // interface used by WindowsSetup
-  CDisplay(signed int left, signed int right, signed int top,
-           signed int bottom) {
-    relPixel[0] = left;
-    relPixel[1] = right;
-    relPixel[2] = top;
-    relPixel[3] = bottom;
+  CDisplay(const RectPixels pixel_edges, const RectDegrees rotation_values,
+           const RectPixels padding_values) {
+    rel_edge_pixel = pixel_edges;
+    rotation_boundaries = rotation_values;
+    padding = padding_values;
   }
-
-  void setAbsBounds(signed int virtualOriginLeft, signed int virtualOriginTop,
-                    double x_PxToABS, double y_PxToABS) {
+  // clang-format off
+  void setAbsBounds(signed int virtual_origin_left,
+                    signed int virtual_origin_top,
+                    double short_to_pixels_ratio_x,
+                    double short_to_pixels_ratio_y) {
+		double m_short_to_pixels_ratio_x = short_to_pixels_ratio_x;
+		double m_short_to_pixels_ratio_y = short_to_pixels_ratio_y;
     // Maps user defined roational bounds (representing the direction of head
     // pointing) to the boundaries of a display. Uses linear interpolation.
     // SendInput for mouse accepts an unsigned 16bit input representing the
     // virtual desktop area with (0, 0) starting at the top left most monitor.
-    // Th windows api querries to obtain the RECT struct or each monitor return
-    // values relative to the main display.
-    // Transformation is as follows:
-    // virtual pixel bounds (with origin at main display) -> absolute
+    // Th windows api querries to obtain the RECT struct or each monitor
+    // return values relative to the main display. Transformation is as
+    // follows: virtual pixel bounds (with origin at main display) -> absolute
     // left right top bottom
-    absPixel[0] = relPixel[0] - virtualOriginLeft;  // left
-    absPixel[1] = relPixel[1] - virtualOriginLeft;  // right
-    absPixel[2] = relPixel[2] - virtualOriginTop;   // top
-    absPixel[3] = relPixel[3] - virtualOriginTop;   // bottom
-
-    absCached[0] = static_cast<double>(absPixel[0]) * x_PxToABS;
-    absCached[1] = static_cast<double>(absPixel[1]) * x_PxToABS;
-    absCached[2] = static_cast<double>(absPixel[2]) * y_PxToABS;
-    absCached[3] = static_cast<double>(absPixel[3]) * y_PxToABS;
-
-    // convert to 16bit values because natural point software
-    // gives head tracking data in 16bit values.
-    // mapping the values to 16bit now saves and extra conversion
-    // step later
-    rotation16bit[0] = rotation[0] * (16383 / 180);
-    rotation16bit[1] = rotation[1] * (16383 / 180);
-    rotation16bit[2] = rotation[2] * (16383 / 180);
-    rotation16bit[3] = rotation[3] * (16383 / 180);
+		// 
+    // find the absolute short_int value of a display edge
+    coordinates[0] = static_cast<double>(rel_edge_pixel[0] - virtual_origin_left) * short_to_pixels_ratio_x;
+    coordinates[1] = static_cast<double>(rel_edge_pixel[1] - virtual_origin_left) * short_to_pixels_ratio_x;
+    coordinates[2] = static_cast<double>( rel_edge_pixel[2] - virtual_origin_top) * short_to_pixels_ratio_y;
+    coordinates[3] = static_cast<double>(rel_edge_pixel[3] - virtual_origin_top) * short_to_pixels_ratio_y;
 
     // setup linear interpolation parameters
-    double rl = rotation16bit[0];  // left
-    double rr = rotation16bit[1];  // right
-    double al = absCached[0];
-    double ar = absCached[1];
-    xSlope = (ar - al) / (rr - rl);
+    const auto rl = rotation_boundaries[LEFT_EDGE];  // left
+    const auto rr = rotation_boundaries[RIGHT_EDGE];  // right
+    const auto al = coordinates[LEFT_EDGE];
+    const auto ar = coordinates[RIGHT_EDGE];
+    m_slope_coord_over_degrees_x = std::abs(ar - al) / std::abs(rl - rr);
 
-    double rt = rotation16bit[2];
-    double rb = rotation16bit[3];
-    double at = absCached[2];
-    double ab = absCached[3];
-    ySlope = -(at - ab) / (rt - rb);
+    const double rt = rotation_boundaries[TOP_EDGE];
+    const double rb = rotation_boundaries[BOTTOM_EDGE];
+    const double at = coordinates[TOP_EDGE];
+    const double ab = coordinates[BOTTOM_EDGE];
+    m_slope_coord_over_degrees_y = std::abs(at - ab) / std::abs(rb - rt);
 
     return;
   }
-
-  const double getHorizontalPosition(const Deg yaw) {
-    // interpolate horizontal position from left edge of display
-    return xSlope * (yaw - rotation16bit[0]) + absCached[0];  // x
+  // clang-format on
+  const double get_horizontal_value(const Degrees yaw) {
+    // linearly interpolate horizontal distance from left edge of display
+    return coordinates[LEFT_EDGE] +
+           m_slope_coord_over_degrees_x *
+               std::abs(rotation_boundaries[LEFT_EDGE] - yaw);
+    ;
   }
 
-  const double getVerticalPosition(const Deg pitch) {
-    // interpolate vertical position from top edge of display
-    return ySlope * (rotation16bit[2] - pitch) + absCached[2];  // y
+  const double get_vertical_value(const Degrees pitch) {
+    // linearly interpolate vertical distance from top edge of display
+    return coordinates[TOP_EDGE] +
+           m_slope_coord_over_degrees_y *
+               std::abs(pitch - rotation_boundaries[TOP_EDGE]);
   }
 
-  const MousePosition getMousePosition(const Deg yaw, const Deg pitch) {
-    const double rl = rotation16bit[0];
-    const double rr = rotation16bit[1];
-    const double rt = rotation16bit[2];
-    const double rb = rotation16bit[3];
-    if ((yaw > rl) && (yaw < rr) && (pitch < rt) && (pitch > rb)) {
-      return {true, getHorizontalPosition(yaw), getVerticalPosition(pitch)};
+  const CursorPosition get_cursor_coordinates(const Degrees yaw,
+                                              const Degrees pitch) {
+    const double left = rotation_boundaries[LEFT_EDGE];
+    const double right = rotation_boundaries[RIGHT_EDGE];
+    const double top = rotation_boundaries[TOP_EDGE];
+    const double bottom = rotation_boundaries[BOTTOM_EDGE];
+
+    // test if degrees are within the displays mapping boundaries
+    if ((yaw < left) && (yaw > right) && (pitch > top) && (pitch < bottom)) {
+      return {true, get_horizontal_value(yaw), get_vertical_value(pitch)};
     } else {
       return {false, -1, -1};
     }
   }
+
+  const double get_padding_coordinate_value(int edge) {
+    switch (edge) {
+      case LEFT_EDGE:
+        return coordinates[edge] + padding[edge] * m_slope_coord_over_degrees_x;
+      case RIGHT_EDGE:
+        return coordinates[edge] - padding[edge] * m_slope_coord_over_degrees_x;
+      case TOP_EDGE:
+        return coordinates[edge] + padding[edge] * m_slope_coord_over_degrees_y;
+      case BOTTOM_EDGE:
+        return coordinates[edge] - padding[edge] * m_slope_coord_over_degrees_y;
+    }
+  }
 };
 
-#endif /* TRACKIRMOUSE_DISPLAY_H */
+#endif  // TRACKIRMOUSE_DISPLAY_H

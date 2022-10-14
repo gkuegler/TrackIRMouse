@@ -26,6 +26,7 @@ namespace config {
 // settings singletons
 static std::shared_ptr<Config> config_;
 
+// TODO: a shared pointer will not work for thread safety
 std::shared_ptr<Config> Get() { return config_; }
 
 // attemp at some thread safety
@@ -260,21 +261,22 @@ Config::Config(const std::string filename) {
 
       // Each value is checked because this toml library cannot
       // convert integers to doubles from a toml value
-      const Deg rotLeft = (left.type() == toml::value_t::integer)
-                              ? static_cast<Deg>(left.as_integer())
-                              : static_cast<Deg>(left.as_floating());
+      const Degrees rotLeft = (left.type() == toml::value_t::integer)
+                                  ? static_cast<Degrees>(left.as_integer())
+                                  : static_cast<Degrees>(left.as_floating());
 
-      const Deg rotRight = (right.type() == toml::value_t::integer)
-                               ? static_cast<Deg>(right.as_integer())
-                               : static_cast<Deg>(right.as_floating());
+      const Degrees rotRight = (right.type() == toml::value_t::integer)
+                                   ? static_cast<Degrees>(right.as_integer())
+                                   : static_cast<Degrees>(right.as_floating());
 
-      const Deg rotTop = (top.type() == toml::value_t::integer)
-                             ? static_cast<Deg>(top.as_integer())
-                             : static_cast<Deg>(top.as_floating());
+      const Degrees rotTop = (top.type() == toml::value_t::integer)
+                                 ? static_cast<Degrees>(top.as_integer())
+                                 : static_cast<Degrees>(top.as_floating());
 
-      const Deg rotBottom = (bottom.type() == toml::value_t::integer)
-                                ? static_cast<Deg>(bottom.as_integer())
-                                : static_cast<Deg>(bottom.as_floating());
+      const Degrees rotBottom =
+          (bottom.type() == toml::value_t::integer)
+              ? static_cast<Degrees>(bottom.as_integer())
+              : static_cast<Degrees>(bottom.as_floating());
 
       // I return an ungodly fake high padding numbelong,
       // so that I can tell if one was found in the toml config file
@@ -592,14 +594,14 @@ bool ValidateUserInput(const UserInput &displays) {
   for (int i = 0; i < displays.size(); i++) {
     int j = i;
     while (++j < displays.size()) {
-      Deg A_left = displays[i].rotation[0];
-      Deg A_right = displays[i].rotation[1];
-      Deg A_top = displays[i].rotation[2];
-      Deg A_bottom = displays[i].rotation[3];
-      Deg B_left = displays[j].rotation[0];
-      Deg B_right = displays[j].rotation[1];
-      Deg B_top = displays[j].rotation[2];
-      Deg B_bottom = displays[j].rotation[3];
+      Degrees A_left = displays[i].rotation[0];
+      Degrees A_right = displays[i].rotation[1];
+      Degrees A_top = displays[i].rotation[2];
+      Degrees A_bottom = displays[i].rotation[3];
+      Degrees B_left = displays[j].rotation[0];
+      Degrees B_right = displays[j].rotation[1];
+      Degrees B_top = displays[j].rotation[2];
+      Degrees B_bottom = displays[j].rotation[3];
       if (A_left < B_right && A_right > B_left && A_top > B_bottom &&
           A_bottom < B_top) {
         spdlog::error(
@@ -608,6 +610,7 @@ bool ValidateUserInput(const UserInput &displays) {
       }
     }
   }
+  spdlog::trace("user input validated");
   return true;
 }
 }  // namespace config

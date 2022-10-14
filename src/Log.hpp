@@ -6,8 +6,13 @@
                                  // concurrently by different threads.
 
 #include <spdlog/spdlog.h>  // used to export default logger
+#include <wx/wx.h>
 
 #include <string>
+
+#include "types.hpp"
+
+void SendThreadMessage(msgcode code, wxString msg);
 
 namespace mylogging {
 std::shared_ptr<spdlog::logger> MakeLoggerFromStd(std::string name);

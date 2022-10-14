@@ -336,11 +336,12 @@
     <ClCompile Include="gui-graphic.cpp" />
     <ClCompile Include="gui.cpp" />
     <ClCompile Include="gui-dialogs.cpp" />
+    <ClCompile Include="handlers.cpp" />
     <ClCompile Include="log.cpp" />
     <ClCompile Include="np-client.cpp" />
     <ClCompile Include="pipeserver.cpp" />
     <ClCompile Include="threads.cpp" />
-    <ClCompile Include="track.cpp" />
+    <ClCompile Include="trackers.cpp" />
     <ClCompile Include="util.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|Win32'">true</ExcludedFromBuild>
@@ -351,23 +352,24 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="wdi.cpp" />
+    <ClCompile Include="wdi.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.hpp" />
     <ClInclude Include="environment.hpp" />
-    <ClInclude Include="game-title-list.hpp" />
     <ClInclude Include="gui-control-id.hpp" />
     <ClInclude Include="display.hpp" />
     <ClInclude Include="gui-graphic.hpp" />
     <ClInclude Include="gui.hpp" />
     <ClInclude Include="gui-dialogs.hpp" />
+    <ClInclude Include="handlers.hpp" />
     <ClInclude Include="log.hpp" />
     <ClInclude Include="np-client.h" />
     <ClInclude Include="pipeserver.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="threads.hpp" />
-    <ClInclude Include="toml.hpp" />
-    <ClInclude Include="track.hpp" />
+    <ClInclude Include="trackers.hpp" />
     <ClInclude Include="types.hpp" />
     <ClInclude Include="util.hpp" />
   </ItemGroup>

@@ -17,7 +17,7 @@
 
 #include "pipeserver.hpp"
 
-#include "track.hpp"
+#include "trackers.hpp"
 
 constexpr size_t BUFSIZE = 512 * sizeof(unsigned char);
 
@@ -28,15 +28,7 @@ PipeServer::PipeServer() { logger = mylogging::MakeLoggerFromStd("watchdog"); }
 //}
 
 void PipeServer::Serve(std::string name) {
-  HANDLE hPipe = INVALID_HANDLE_VALUE;
   std::string full_path = "\\\\.\\pipe\\" + name;
-  // LPCSTR lpszPipename = "\\\\.\\pipe\\watchdog";
-
-  // The main loop creates an instance of the named pipe and
-  // then waits for a client to connect to it. When the client
-  // connects, a thread is created to handle communications
-  // with that client, and this loop is free to wait for the
-  // next client connect request. It is an infinite loop.
 
   // Initialize Security Descriptor For Named Pipe
   // May throw std::bad_alloc
@@ -54,7 +46,7 @@ void PipeServer::Serve(std::string name) {
   }
 
   // Add the Access Control List (ACL) to the security descriptor
-  // TODO: make this more robust, maybe limit to just user processes?
+  // TODO: make this safer, maybe limit to just user processes?
 #pragma warning(disable : 6248)  // Allow all unrestricted access to the pipe
   if (!SetSecurityDescriptorDacl(
           pSD.get(),
@@ -74,11 +66,11 @@ void PipeServer::Serve(std::string name) {
   sa.lpSecurityDescriptor = pSD.get();
   sa.bInheritHandle = FALSE;
 
+  // Create a new named pipe instance for a new client to handle.
+  // Setting the max number of instances to a reasonable level
+  // will prevent rogue clients from freezing my computer.
+  // If I was feeling brave I could use PIPE_UNLIMITED_INSTANCES.
   while (1) {
-    // Create a new named pipe instance for a new client to handle.
-    // Setting the max number of instances to a reasonable level
-    // will prevent rogue clients from freezing my computer.
-    // If I was feeling brave I could use PIPE_UNLIMITED_INSTANCES.
     HANDLE hPipe =
         CreateNamedPipeA(full_path.c_str(),           // pipe name
                          PIPE_ACCESS_DUPLEX,          // read/write access
@@ -192,7 +184,7 @@ void PipeServer::HandleConnection(Handle pipe) {
     logger->error("WriteFile failed, GLE={}.", GetLastError());
   }
 
-  // Flush the pipe to allow the client to read the pipe's contents
+  // Flush the pipe to allowe the client to read the pipe's contents
   // before disconnecting. Then disconnect the pipe, and close the
   // handle to this pipe instance.
   // Client should poll until pipe becomes available.
@@ -210,12 +202,12 @@ std::string PipeServer::HandleMsg(std::string request) {
     if (system("taskkill /T /IM TrackIR5.exe") == -1) {
       logger->error("Failed to kill TrackIR5 program");
     }
-    return "KL";
+    return request;
   } else if (request == "HEARTBEAT") {
-    return "HEARTBEAT";
+    return request;
   } else if (request == "PAUSE") {
-    track::Toggle();
-    return "PAUSE";
+    SendThreadMessage(msgcode::toggle_tracking, "");
+    return request;
   } else {
     return "NONE";
   }

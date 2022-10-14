@@ -46,7 +46,7 @@
 #include "log.hpp"
 #include "pipeserver.hpp"
 #include "threads.hpp"
-#include "track.hpp"
+#include "trackers.hpp"
 #include "types.hpp"
 #include "util.hpp"
 
@@ -87,25 +87,39 @@ bool cApp::OnInit() {
   m_frame =
       new cFrame(GetOrigin(appWidth, appHeight), wxSize(appWidth, appHeight));
 
-  // Handle and display messages to text control widget sent from outside GUI
-  // thread
+  //////////////////////////////////////////////////////////////////////
+  //               Messages From Threads Outside Of GUI               //
+  //////////////////////////////////////////////////////////////////////
+
   Bind(wxEVT_THREAD, [this](wxThreadEvent &event) {
     cTextCtrl *textrich = m_frame->m_textrich;
 
-    if (event.GetExtraLong() == static_cast<long>(msgcode::close_app)) {
-      m_frame->Close(true);
-    }
-
-    // Output message in red lettering as an error
-    if (event.GetExtraLong() == static_cast<long>(msgcode::red_text)) {
-      const auto existingStyle = textrich->GetDefaultStyle();
-      textrich->SetDefaultStyle(wxTextAttr(*wxRED));
-      textrich->AppendText(event.GetString());
-      textrich->SetDefaultStyle(existingStyle);
-    }
-    // Output text normally; no error
-    else {
-      textrich->AppendText(event.GetString());
+    switch (static_cast<msgcode>(event.GetInt())) {
+      case msgcode::log_normal_text: {
+        textrich->AppendText(event.GetString());
+      } break;
+      case msgcode::log_red_text: {
+        const auto existing_style = textrich->GetDefaultStyle();
+        textrich->SetDefaultStyle(wxTextAttr(*wxRED));
+        textrich->AppendText(event.GetString());
+        textrich->SetDefaultStyle(existing_style);
+      } break;
+      case msgcode::toggle_tracking: {
+        if (m_frame->m_pTrackThread) {
+          m_frame->m_pTrackThread->m_tracker->toggle();
+        }
+      } break;
+      case msgcode::set_mode: {
+        auto mode = static_cast<mouse_mode>(event.GetExtraLong());
+        if (m_frame->m_pTrackThread) {
+          // m_frame->m_pTrackThread->m_tracker->set_mode(mode);
+        }
+      } break;
+      case msgcode::close_app:
+        m_frame->Close(true);
+        break;
+      default:
+        break;
     }
   });
 
@@ -135,10 +149,11 @@ bool cApp::OnInit() {
 }
 
 int cApp::OnExit() {
-  // Stop tracking so window handle can be unregistered.
-  if (m_frame->m_pTrackThread) {
-    track::Stop();
-  }
+  // delete this if unregister handle works on app close
+  //// Stop tracking so window handle can be unregistered.
+  // if (m_frame->m_pTrackThread) {
+  //   m_frame->m_pTrackThread->m_tracker->stop();
+  // }
   return 0;
 }
 
@@ -327,6 +342,16 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   wxAcceleratorEntry k1(wxACCEL_CTRL, WXK_CONTROL_S, wxID_SAVE);
   SetAcceleratorTable(wxAcceleratorTable(1, &k1));
 
+	// Bind Systemwide Keyboard Hooks
+	// Use EVT_HOTKEY(hotkeyId, fnc) in the event table to capture the event.
+	//This function is currently only implemented under Windows.
+	//It is used in the Windows CE port for detecting hardware button presses.
+	// TODO: wrap hotkeys in their own class to ensure destructor is called, or make a table
+	this->RegisterHotKey(HOTKEY_ID_SCROLL_LAST, wxMOD_NONE, WXK_CONTROL_O);
+	Bind(wxEVT_HOTKEY, &cFrame::OnGlobalHotkey, this, HOTKEY_ID_SCROLL_LAST);
+
+
+
   // Bind Menu Events
   Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnAbout, this, wxID_ABOUT);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnExit, this, wxID_EXIT);
@@ -410,6 +435,10 @@ void cFrame::OnSave(wxCommandEvent &event) {
   config::Get()->SaveToFile("settings.toml");
 }
 
+void cFrame::OnGlobalHotkey(wxKeyEvent &event) {
+  spdlog::debug("hot key event");
+}
+
 void cFrame::InitializeSettings() {
   const std::string filename = "settings.toml";
   config::ConfigReturn result = config::LoadFromFile(filename);
@@ -419,7 +448,8 @@ void cFrame::InitializeSettings() {
     const wxString ok = "Load Empty User Settings";
     const wxString cancel = "Quit";
     const wxString instructions = wxString::Format(
-        "\n\nPress \"%s\" to load a default user settings template.\nWarning: "
+        "\n\nPress \"%s\" to load a default user settings "
+        "template.\nWarning: "
         "data may be overwritten if you "
         "continue with this option and then later save.\n"
         "Press \"%s\" to exit the program.",
@@ -429,8 +459,8 @@ void cFrame::InitializeSettings() {
     dlg.SetOKCancelLabels(ok, cancel);
 
     // display reason for error to user
-    // give user the chance to quit application (preventing possible data loss
-    // and manually fixing the error) or load default/empty config
+    // give user the chance to quit application (preventing possible data
+    // loss and manually fixing the error) or load default/empty config
     if (dlg.ShowModal() == wxID_OK) {
       auto config = config::Config();
       config::Set(config);
@@ -449,8 +479,9 @@ void cFrame::UpdateGuiUsingSettings() {
 
 void cFrame::OnReload(wxCommandEvent &event) {
   // TODO: urgent, delete existing settings
-  // a smarter idea would be to make a settings builder function would make sure
-  // that the settings can be loaded first before replacing existing settings
+  // a smarter idea would be to make a settings builder function would
+  // make sure that the settings can be loaded first before replacing
+  // existing settings
   InitializeSettings();
   UpdateGuiUsingSettings();
 }
@@ -492,10 +523,9 @@ void cFrame::PopulateComboBoxWithProfiles() {
 
 void cFrame::OnStart(wxCommandEvent &event) {
   if (m_pTrackThread) {
-    spdlog::warn("Please stop mouse before restarting.");
-    wxCommandEvent event = {};
-    OnStop(event);
-    // wait for destruction of thread
+    spdlog::warn("Tracking thread was already running. Stopped.");
+    m_pTrackThread->m_tracker->stop();
+    // loop to wait for destruction of thread
     // thread will set its pointer to NULL upon destruction
     while (true) {
       Sleep(8);
@@ -507,11 +537,10 @@ void cFrame::OnStart(wxCommandEvent &event) {
   }
 
   // Threads run in detached mode by default.
-  // TODO: pass in config object
-  m_pTrackThread = new TrackThread(this, GetHandle());
+  m_pTrackThread = new TrackThread(this, GetHandle(), config::Get());
 
-  if (m_pTrackThread->Run() != wxTHREAD_NO_ERROR) {
-    wxLogError("Can't run the thread!");
+  if (m_pTrackThread->Run() != wxTHREAD_NO_ERROR) {  // returns immediately
+    wxLogError("Can't run the tracking thread!");
     delete m_pTrackThread;
     m_pTrackThread = nullptr;
     return;
@@ -521,19 +550,19 @@ void cFrame::OnStart(wxCommandEvent &event) {
 
   // after the call to wxThread::Run(), the m_pThread pointer is "unsafe":
   // at any moment the thread may cease to exist (because it completes its
-  // work). To avoid dangling pointers ~MyThread() will set m_pThread to
+  // work). To avoid dangling pointers, ~MyThread() will set m_pThread to
   // nullptr when the thread dies.
 }
 
 void cFrame::OnStop(wxCommandEvent &event) {
   // Threads run in detached mode by default.
-  // Right is responsible for setting m_pTrackThread to nullptr when it
-  // finishes and destroys itself.
+  // The thread is responsible for setting m_pTrackThread to nullptr when
+  // it finishes and destroys itself.
   if (m_pTrackThread) {
-    // This will gracefully exit the tracking loop and return control to the
-    // thread. This will cause the thread to die off and delete itself.
-    track::Stop();
-    spdlog::info("Stopped mouse.");
+    // This will gracefully exit the tracking loop and return control to
+    // the wxThread class. The thread will then finish and and delete
+    // itself.
+    m_pTrackThread->m_tracker->stop();
   } else {
     spdlog::warn("Track thread not running!");
   }
@@ -666,8 +695,8 @@ void cFrame::OnPickTitle(wxCommandEvent &event) {
 
   // seperate named and unamed for sorting purposes
   // in this case I would like title ID #'s with names to be sorted
-  // alphabetically up front, while the ID #'s with no name to be sorted by ID #
-  // after.
+  // alphabetically up front, while the ID #'s with no name to be sorted
+  // by ID # after.
   game_titles_t titlesNamed;
   game_titles_t titlesEmptyName;
   titlesNamed.reserve(m_titlesMap->size());
@@ -737,9 +766,8 @@ void cFrame::OnMappingData(wxDataViewEvent &event) {
       return;
     }
     // TODO: use a wxValidator
-    // this will prevent the value from sticking in the box on non valid input
-    // make numbers only allowed too.
-    // validate input
+    // this will prevent the value from sticking in the box on non valid
+    // input make numbers only allowed too. validate input
     if (number > 180) {
       spdlog::error(
           "Value can't be greater than 180. This is a limitation of the "

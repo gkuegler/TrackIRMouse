@@ -23,14 +23,15 @@ class Handle {
 
 // Single threaded pipe server
 class PipeServer {
+ private:
+  std::shared_ptr<spdlog::logger> logger;
+
  public:
   PipeServer();
   //~PipeServer();
   void Serve(std::string);
 
  private:
-  std::shared_ptr<spdlog::logger> logger;
-
   void HandleConnection(Handle hPipe);
   std::string HandleMsg(std::string);
 };
