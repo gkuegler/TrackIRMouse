@@ -358,6 +358,7 @@
   <ItemGroup>
     <ClInclude Include="config.hpp" />
     <ClInclude Include="environment.hpp" />
+    <ClInclude Include="hotkey.hpp" />
     <ClInclude Include="gui-control-id.hpp" />
     <ClInclude Include="display.hpp" />
     <ClInclude Include="gui-graphic.hpp" />

@@ -20,7 +20,7 @@
 // TODO: high dpi support, and text size
 // TODO: test dpi support on 4K monito
 
-void SendThreadMessage(msgcode code, wxString msg, long optional_param = 0) {
+void SendThreadMessage(msgcode code, wxString msg, long optional_param) {
   wxThreadEvent *event = new wxThreadEvent(wxEVT_THREAD);
   event->SetInt(static_cast<int>(code));
   event->SetString(msg);

@@ -64,10 +64,10 @@ inline void MouseHandler::send_my_input(double x, double y) {
 void MouseHandler::handle_input(const Degrees yaw, const Degrees pitch) {
   static int last_screen = 0;
   static double last_x = 0;
-  constexpr static const double small_scrollbar_padding = 5;     // pixels
-  constexpr static const double minimap_scrollbar_padding = 60;  // pixels
+  constexpr static const double small_pix_offset = 5;     // pixels
+  constexpr static const double minimap_pix_offset = 60;  // pixels
 
-  if (mouse_mode::move_mouse == m_mode) {
+  if (m_normal_mode) {
     // Check if the head is pointing to a screen
     // The return statement is never reached if the head is pointing outside
     // the bounds of any of the screense
@@ -97,46 +97,44 @@ void MouseHandler::handle_input(const Degrees yaw, const Degrees pitch) {
   const double top = dlast.rotation_boundaries[TOP_EDGE];
   const double bottom = dlast.rotation_boundaries[BOTTOM_EDGE];
 
-  if (yaw < left) {  // yaw is left of last used display
-    x = dlast.get_padding_coordinate_value(LEFT_EDGE);
-  } else if (yaw > right) {  // yaw is right of last used display
-    x = dlast.get_padding_coordinate_value(RIGHT_EDGE);
+  if (yaw >= left) {  // yaw is left of last used display
+    x = dlast.get_padding_offset_from_edge(LEFT_EDGE);
+  } else if (yaw <= right) {  // yaw is right of last used display
+    x = dlast.get_padding_offset_from_edge(RIGHT_EDGE);
   } else {  // yaw within last display boundaries as normal
     x = dlast.get_horizontal_value(yaw);
   }
 
-  if (pitch > top) {  // pitch is above last used display
-    y = dlast.get_padding_coordinate_value(TOP_EDGE);
-  } else if (pitch < bottom) {  // pitch is below last used display
-    y = dlast.get_padding_coordinate_value(BOTTOM_EDGE);
+  if (pitch <= top) {  // pitch is above last used display
+    y = dlast.get_padding_offset_from_edge(TOP_EDGE);
+  } else if (pitch >= bottom) {  // pitch is below last used display
+    y = dlast.get_padding_offset_from_edge(BOTTOM_EDGE);
   } else {  // pitch within last display boundaries as normal
     y = dlast.get_vertical_value(pitch);
   }
 
-  switch (m_mode) {
-    case mouse_mode::scrollbar_left_small:
-      x = dlast.coordinates[LEFT_EDGE] +
-          dlast.m_short_to_pixels_ratio_x * small_scrollbar_padding;
-      break;
-    case mouse_mode::scrollbar_left_mini_map:
-      x = dlast.coordinates[LEFT_EDGE] +
-          dlast.m_short_to_pixels_ratio_x * minimap_scrollbar_padding;
-      break;
-    case mouse_mode::scrollbar_right_small:
-      x = dlast.coordinates[RIGHT_EDGE] -
-          dlast.m_short_to_pixels_ratio_x * small_scrollbar_padding;
-      break;
-    case mouse_mode::scrollbar_right_mini_map:
-      x = dlast.coordinates[RIGHT_EDGE] -
-          dlast.m_short_to_pixels_ratio_x * minimap_scrollbar_padding;
-      break;
-    case mouse_mode::scrollbar_hold_x:
-      x = last_x;
-      break;
-    case mouse_mode::autocad_zoom:
-      return;
-    default:
-      break;
+  if (false == m_normal_mode) {
+    switch (m_mode) {
+      case mouse_mode::scrollbar_left_small:
+        x = dlast.get_inside_offset_from_edge(LEFT_EDGE, small_pix_offset);
+        break;
+      case mouse_mode::scrollbar_left_mini_map:
+        x = dlast.get_inside_offset_from_edge(LEFT_EDGE, minimap_pix_offset);
+        break;
+      case mouse_mode::scrollbar_right_small:
+        x = dlast.get_inside_offset_from_edge(RIGHT_EDGE, small_pix_offset);
+        break;
+      case mouse_mode::scrollbar_right_mini_map:
+        x = dlast.get_inside_offset_from_edge(RIGHT_EDGE, minimap_pix_offset);
+        break;
+      case mouse_mode::scrollbar_hold_x:
+        x = last_x;
+        break;
+      case mouse_mode::autocad_zoom:
+        return;
+      default:
+        break;
+    }
   }
 
   send_my_input(x, y);

@@ -26,11 +26,11 @@ class cSettingsGeneralPanel : public wxPanel {
   void OnLogLevel(wxCommandEvent &event);
 };
 
-class cSettingsAdvancedlPanel : public wxPanel {
+class cSettingsAdvancedPanel : public wxPanel {
  public:
   wxCheckBox *m_cbxAutoFindDll;
   wxTextCtrl *m_txtTrackIrDllPath;
-  cSettingsAdvancedlPanel(wxWindow *parent, config::UserData *pUserData);
+  cSettingsAdvancedPanel(wxWindow *parent, config::UserData *pUserData);
 
  private:
   config::UserData *m_pUserData = nullptr;
@@ -38,11 +38,11 @@ class cSettingsAdvancedlPanel : public wxPanel {
   void OnTrackIrDllPath(wxCommandEvent &event);
 };
 
-class cSettingsServerlPanel : public wxPanel {
+class cSettingsServerPanel : public wxPanel {
  public:
   wxCheckBox *m_cbxServerEnabled;
   wxTextCtrl *m_txtServerName;
-  cSettingsServerlPanel(wxWindow *parent, config::UserData *pUserData);
+  cSettingsServerPanel(wxWindow *parent, config::UserData *pUserData);
 
  private:
   config::UserData *m_pUserData = nullptr;
@@ -50,14 +50,20 @@ class cSettingsServerlPanel : public wxPanel {
   void OnServerName(wxCommandEvent &event);
 };
 
+class cSettingsHotkeyPanel : public wxPanel {
+ public:
+  wxCheckBox *m_cbxHotkeyEnabled;
+  cSettingsHotkeyPanel(wxWindow *parent, config::UserData *pUserData);
+
+ private:
+  config::UserData *m_pUserData = nullptr;
+  void OnHotkeyEnable(wxCommandEvent &event);
+};
+
 class cSettingsPopup : public wxPropertySheetDialog {
  public:
   config::UserData *m_userData = nullptr;
   cSettingsPopup(wxWindow *parent, config::UserData *pUserData);
-
- private:
-  cSettingsGeneralPanel *m_pnlGen;
-  cSettingsAdvancedlPanel *m_pnlAdv;
 };
 
 class cProfileIdSelectorPanel : public wxPanel {

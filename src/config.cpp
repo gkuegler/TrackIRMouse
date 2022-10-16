@@ -341,11 +341,13 @@ void Config::SaveToFile(std::string filename) {
   const toml::value general{
     {"track_on_start", userData.trackOnStart},
     {"quit_on_loss_of_track_ir", userData.quitOnLossOfTrackIr},
-    {"watchdog_enabled", userData.watchdogEnabled},
-    {"trackir_dll_directory", userData.trackIrDllFolder},
-    {"active_profile", userData.activeProfileName},
-    {"log_level", static_cast<int>(userData.logLevel)},
     {"auto_find_trackir_dll", userData.autoFindTrackIrDll},
+    {"trackir_dll_directory", userData.trackIrDllFolder},
+    {"watchdog_enabled", userData.watchdogEnabled},
+		{"pipe_server_name", userData.pipeServerName},
+    {"active_profile", userData.activeProfileName},
+    {"hotkey_enabled", userData.hotkey_enabled},
+    {"log_level", static_cast<int>(userData.logLevel)},
   };
 
   const toml::value padding{

@@ -78,6 +78,8 @@ retcode TrackIR::start() {
       // yaw and pitch come reversed relative to GUI program for some reason
       // from trackIR
 
+      // head down is pitch increasing
+      // head left is yaw increaseing
       double yaw = (*pTIRData).fNPYaw * (180.0 / 16383);
       double pitch = (*pTIRData).fNPPitch * (180.0 / 16383);
 

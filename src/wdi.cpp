@@ -6,7 +6,7 @@
 
 namespace environment {
 
-// constexpr static double USHORT_MAX_VAL = 65535;
+constexpr static double USHORT_MAX_VAL = 65535;
 
 static std::vector<RectPixels> g_displays;
 
@@ -66,7 +66,7 @@ WinDisplayInfo GetWindowsMonitorInformation() {
           g_displays,
           origin_offset_x_,
           origin_offset_y_,
-          65535 / static_cast<double>(virtual_desktop_width),
-          65535 / static_cast<double>(virtual_desktop_height)};
+          USHORT_MAX_VAL / static_cast<double>(virtual_desktop_width),
+          USHORT_MAX_VAL / static_cast<double>(virtual_desktop_height)};
 }
 }  // namespace environment

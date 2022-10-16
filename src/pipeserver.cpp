@@ -194,7 +194,7 @@ void PipeServer::HandleConnection(Handle pipe) {
 
   return;
 }
-
+// clang-format off
 // Reads message and performs actions based on the content.
 // Writes a reply into the reply char* buffer.
 std::string PipeServer::HandleMsg(std::string request) {
@@ -207,6 +207,26 @@ std::string PipeServer::HandleMsg(std::string request) {
     return request;
   } else if (request == "PAUSE") {
     SendThreadMessage(msgcode::toggle_tracking, "");
+    return request;
+  } else if (request == "SCROLL_LEFT_SMALL") {
+    SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_left_small));
+		spdlog::info("set alternate mouse mode: SCROLL_LEFT_SMALL");
+    return request;
+  } else if (request == "SCROLL_LEFT_MINI_MAP") {
+    SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_left_mini_map));
+		spdlog::info("set alternate mouse mode: SCROLL_LEFT_MINI_MAP");
+    return request;
+  } else if (request == "SCROLL_RIGHT_SMALL") {
+    SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_right_small));
+		spdlog::info("set alternate mouse mode: SCROLL_RIGHT_SMALL");
+    return request;
+  } else if (request == "SCROLL_RIGHT_MINI_MAP") {
+    SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_right_mini_map));
+		spdlog::info("set alternate mouse mode: SCROLL_RIGHT_MINI_MAP");
+    return request;
+  } else if (request == "SCROLL_HOLD_X") {
+    SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_hold_x));
+		spdlog::info("set alternate mouse mode: SCROLL_HOLD_X");
     return request;
   } else {
     return "NONE";

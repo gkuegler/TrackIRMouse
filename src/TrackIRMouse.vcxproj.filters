@@ -107,6 +107,9 @@
     <ClInclude Include="environment.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="hotkey.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">

@@ -25,6 +25,12 @@
  *   fix internal override of handling default display padding
  */
 
+// TODO: change the variable styling
+// TODO: change the method styleing?
+// TODO: change the function styling?
+// TODO: add documentation?
+// TODO: prune includes
+
 // This was a bug some point and needed to define.
 // #define _CRT_SECURE_NO_WARNINGS
 
@@ -50,19 +56,18 @@
 #include "types.hpp"
 #include "util.hpp"
 
-const constexpr std::string_view kVersionNo = "0.8.3";
-const std::string kRotationTitle = "bound (Degrees)";
-const std::string kPaddingTitle = "padding (Pixels)";
+const constexpr std::string_view kVersionNo = "0.9.1";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
 const wxSize kDefaultButtonSize2 = wxSize(150, 25);
 const constexpr int kMaxProfileLength = 30;
+const wxTextValidator validatorAlphanumeric(wxFILTER_ALPHANUMERIC);
 
+// colors used for testing
 const wxColor yellow(255, 255, 0);
 const wxColor blue(255, 181, 102);
 const wxColor pink(198, 102, 255);
 const wxColor green(142, 255, 102);
 const wxColor orange(102, 201, 255);
-const wxTextValidator validatorAlphanumeric(wxFILTER_ALPHANUMERIC);
 
 wxIMPLEMENT_APP(cApp);
 
@@ -72,6 +77,10 @@ wxPoint GetOrigin(const int w, const int h) {
   int desktopHeight = GetSystemMetrics(SM_CYMAXIMIZED);
   return wxPoint((desktopWidth / 2) - (w / 2), (desktopHeight / 2) - (h / 2));
 }
+
+//////////////////////////////////////////////////////////////////////
+//                         Main Application                         //
+//////////////////////////////////////////////////////////////////////
 
 bool cApp::OnInit() {
   // Initialize global default loggers
@@ -110,9 +119,9 @@ bool cApp::OnInit() {
         }
       } break;
       case msgcode::set_mode: {
-        auto mode = static_cast<mouse_mode>(event.GetExtraLong());
         if (m_frame->m_pTrackThread) {
-          // m_frame->m_pTrackThread->m_tracker->set_mode(mode);
+          m_frame->m_pTrackThread->m_tracker->m_handler->set_alternate_mode(
+              static_cast<mouse_mode>(event.GetExtraLong()));
         }
       } break;
       case msgcode::close_app:
@@ -148,14 +157,7 @@ bool cApp::OnInit() {
   return true;
 }
 
-int cApp::OnExit() {
-  // delete this if unregister handle works on app close
-  //// Stop tracking so window handle can be unregistered.
-  // if (m_frame->m_pTrackThread) {
-  //   m_frame->m_pTrackThread->m_tracker->stop();
-  // }
-  return 0;
-}
+int cApp::OnExit() { return 0; }
 
 //////////////////////////////////////////////////////////////////////
 //                            Main Frame                            //
@@ -347,9 +349,8 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
 	//This function is currently only implemented under Windows.
 	//It is used in the Windows CE port for detecting hardware button presses.
 	// TODO: wrap hotkeys in their own class to ensure destructor is called, or make a table
-	this->RegisterHotKey(HOTKEY_ID_SCROLL_LAST, wxMOD_NONE, WXK_CONTROL_O);
-	Bind(wxEVT_HOTKEY, &cFrame::OnGlobalHotkey, this, HOTKEY_ID_SCROLL_LAST);
-
+	hotkey_alternate_mode = std::make_unique<GlobalHotkey>(GetHandle(), HOTKEY_ID_SCROLL_LAST, wxMOD_NONE, VK_F18);  // b key
+	Bind(wxEVT_HOTKEY, &cFrame::OnGlobalHotkey, this, hotkey_alternate_mode->m_id);
 
 
   // Bind Menu Events
@@ -437,6 +438,9 @@ void cFrame::OnSave(wxCommandEvent &event) {
 
 void cFrame::OnGlobalHotkey(wxKeyEvent &event) {
   spdlog::debug("hot key event");
+  if (m_pTrackThread) {
+    m_pTrackThread->m_handler->toggle_alternate_mode();
+  }
 }
 
 void cFrame::InitializeSettings() {
@@ -488,7 +492,7 @@ void cFrame::OnReload(wxCommandEvent &event) {
 
 void cFrame::OnSettings(wxCommandEvent &event) {
   auto config = config::Get();
-  auto usr = config->userData;
+  auto usr = config->userData;  // copy user data
 
   // Show the settings pop up while disabling input on main window
   cSettingsPopup dlg(this, &usr);
@@ -496,8 +500,10 @@ void cFrame::OnSettings(wxCommandEvent &event) {
 
   if (wxID_OK == results) {
     spdlog::debug("settings applied.");
-    config->userData = usr;
+    config->userData = usr;  // apply settings
 
+    // reload any resources from setting changes:
+    // TODO: make resources reload on setting changes
     auto logger = spdlog::get("main");
     logger->set_level(usr.logLevel);
   } else if (wxID_CANCEL == results) {

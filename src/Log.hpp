@@ -13,6 +13,7 @@
 #include "types.hpp"
 
 void SendThreadMessage(msgcode code, wxString msg);
+void SendThreadMessage(msgcode code, wxString msg, long);
 
 namespace mylogging {
 std::shared_ptr<spdlog::logger> MakeLoggerFromStd(std::string name);

@@ -26,6 +26,7 @@ enum class msgcode {
   set_mode,
   close_app
 };
+
 enum class mouse_mode {
   move_mouse,
   scrollbar_left_small,

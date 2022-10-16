@@ -26,10 +26,12 @@ cSettingsPopup::cSettingsPopup(wxWindow* parent, config::UserData* pUserData)
   CreateButtons(wxOK | wxCANCEL);
   CreateBookCtrl();
 
-  m_pnlGen = new cSettingsGeneralPanel(GetBookCtrl(), pUserData);
-  m_pnlAdv = new cSettingsAdvancedlPanel(GetBookCtrl(), pUserData);
-  GetBookCtrl()->AddPage(m_pnlGen, "General");
-  GetBookCtrl()->AddPage(m_pnlAdv, "Advanced");
+  auto* general = new cSettingsGeneralPanel(GetBookCtrl(), pUserData);
+  auto* advanced = new cSettingsAdvancedPanel(GetBookCtrl(), pUserData);
+  auto* hotkey = new cSettingsHotkeyPanel(GetBookCtrl(), pUserData);
+  GetBookCtrl()->AddPage(general, "General");
+  GetBookCtrl()->AddPage(advanced, "Advanced");
+  GetBookCtrl()->AddPage(hotkey, "Hotkey");
 
   LayoutDialog();
 }
@@ -99,8 +101,8 @@ void cSettingsGeneralPanel::OnLogLevel(wxCommandEvent& event) {
   m_pUserData->logLevel = static_cast<spdlog::level::level_enum>(selection);
 }
 
-cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow* parent,
-                                                 config::UserData* pUserData)
+cSettingsAdvancedPanel::cSettingsAdvancedPanel(wxWindow* parent,
+                                               config::UserData* pUserData)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
               wxTAB_TRAVERSAL, "") {
   m_pUserData = pUserData;
@@ -137,23 +139,23 @@ cSettingsAdvancedlPanel::cSettingsAdvancedlPanel(wxWindow* parent,
   SetSizer(border);
 
   m_txtTrackIrDllPath->Bind(wxEVT_TEXT,
-                            &cSettingsAdvancedlPanel::OnTrackIrDllPath, this);
+                            &cSettingsAdvancedPanel::OnTrackIrDllPath, this);
   m_txtTrackIrDllPath->Bind(wxEVT_BUTTON,
-                            &cSettingsAdvancedlPanel::OnAutoFindDll, this);
+                            &cSettingsAdvancedPanel::OnAutoFindDll, this);
 }
 
-void cSettingsAdvancedlPanel::OnTrackIrDllPath(wxCommandEvent& event) {
+void cSettingsAdvancedPanel::OnTrackIrDllPath(wxCommandEvent& event) {
   wxString wxsPath = m_txtTrackIrDllPath->GetLineText(0);
   std::string path(wxsPath.mb_str());
   m_pUserData->trackIrDllFolder = path;
 }
 
-void cSettingsAdvancedlPanel::OnAutoFindDll(wxCommandEvent& event) {
+void cSettingsAdvancedPanel::OnAutoFindDll(wxCommandEvent& event) {
   m_pUserData->autoFindTrackIrDll = m_cbxAutoFindDll->IsChecked();
 }
 
-cSettingsServerlPanel::cSettingsServerlPanel(wxWindow* parent,
-                                             config::UserData* pUserData)
+cSettingsServerPanel::cSettingsServerPanel(wxWindow* parent,
+                                           config::UserData* pUserData)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
               wxTAB_TRAVERSAL, "") {
   m_pUserData = pUserData;
@@ -187,15 +189,42 @@ cSettingsServerlPanel::cSettingsServerlPanel(wxWindow* parent,
   SetSizer(border);
 
   m_cbxServerEnabled->Bind(wxEVT_CHECKBOX,
-                           &cSettingsServerlPanel::OnServerEnabled, this);
-  m_txtServerName->Bind(wxEVT_TEXT, &cSettingsServerlPanel::OnServerName, this);
+                           &cSettingsServerPanel::OnServerEnabled, this);
+  m_txtServerName->Bind(wxEVT_TEXT, &cSettingsServerPanel::OnServerName, this);
 }
 
-void cSettingsServerlPanel::OnServerEnabled(wxCommandEvent&) {
+void cSettingsServerPanel::OnServerEnabled(wxCommandEvent&) {
   m_pUserData->watchdogEnabled = m_cbxServerEnabled->IsChecked();
 }
 
-void cSettingsServerlPanel::OnServerName(wxCommandEvent&) {
+void cSettingsServerPanel::OnServerName(wxCommandEvent&) {
   wxString line_text = m_txtServerName->GetLineText(0);
   m_pUserData->pipeServerName = line_text.mb_str();
+}
+
+cSettingsHotkeyPanel::cSettingsHotkeyPanel(wxWindow* parent,
+                                           config::UserData* pUserData)
+    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+              wxTAB_TRAVERSAL, "") {
+  m_pUserData = pUserData;
+  m_cbxHotkeyEnabled = new wxCheckBox(
+      this, wxID_ANY, "Enable alternate mouse modes with hotkey: F18",
+      wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+
+  m_cbxHotkeyEnabled->SetValue(pUserData->hotkey_enabled);
+
+  wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+  topSizer->Add(m_cbxHotkeyEnabled, 0, wxALL, 0);
+
+  wxBoxSizer* border = new wxBoxSizer(wxVERTICAL);
+  border->Add(topSizer, 0, wxALL, 10);
+
+  SetSizer(border);
+
+  m_cbxHotkeyEnabled->Bind(wxEVT_CHECKBOX,
+                           &cSettingsHotkeyPanel::OnHotkeyEnable, this);
+}
+
+void cSettingsHotkeyPanel::OnHotkeyEnable(wxCommandEvent& event) {
+  m_pUserData->hotkey_enabled = m_cbxHotkeyEnabled->IsChecked();
 }

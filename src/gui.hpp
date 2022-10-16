@@ -7,6 +7,7 @@
 #include "config.hpp"
 #include "gui-control-id.hpp"
 #include "gui-graphic.hpp"
+#include "hotkey.hpp"
 #include "log.hpp"
 #include "trackers.hpp"
 
@@ -50,13 +51,18 @@ class cFrame : public wxFrame {
   wxTextCtrl *m_profileGameTitle;
   wxCheckBox *m_useDefaultPadding;
   wxDataViewListCtrl *m_tlcMappingData;
+  // global hotkey has to be wrapped in a smart pointer to avoid a bug
+  // where my same object would be deleted following the initialization of my
+  // frame
+  std::unique_ptr<GlobalHotkey> hotkey_alternate_mode;
 
   cFrame(wxPoint, wxSize);
-  ~cFrame() { UnregisterHotKey(HOTKEY_ID_SCROLL_LAST); }
+  ~cFrame(){};
   void InitializeSettings();
   void UpdateGuiUsingSettings();
 
  public:
+  // menu handlers
   void OnExit(wxCommandEvent &event);
   void OnAbout(wxCommandEvent &event);
   void OnSave(wxCommandEvent &event);

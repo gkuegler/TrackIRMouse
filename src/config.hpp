@@ -31,13 +31,22 @@ struct Profile {
 struct UserData {
   bool trackOnStart = true;
   bool quitOnLossOfTrackIr = true;
-  bool watchdogEnabled = true;
-  std::string pipeServerName = "";
-  spdlog::level::level_enum logLevel = spdlog::level::info;
   bool autoFindTrackIrDll = true;
   std::string trackIrDllFolder = "";
-  std::string activeProfileName = Profile().name;
+  // TODO: make setting file parse for this
+  std::string pipeServerName = "";
+  // TODO: change this variable name
+  bool watchdogEnabled = true;
+  std::string activeProfileName =
+      Profile().name;  // use default profile name
+                       // TODO: make setting file parse for this
+  bool hotkey_enabled = true;
+  spdlog::level::level_enum logLevel = spdlog::level::info;
+
   std::array<Pixels, 4> defaultPaddings = {0, 0, 0, 0};
+
+  // invariant: the active profile member will always exist in the profiles
+  // list
   std::vector<Profile> profiles = {Profile()};
 };
 
