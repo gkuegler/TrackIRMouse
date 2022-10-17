@@ -2,23 +2,27 @@
 #define TRACKIRMOUSE_LOG_H
 
 #define SPDLOG_NO_THREAD_ID
-#define SPDLOG_NO_ATOMIC_LEVELS  // code never modifies a logger's log levels
-                                 // concurrently by different threads.
+#define SPDLOG_NO_ATOMIC_LEVELS // code never modifies a logger_'s log levels
+                                // concurrently by different threads.
 
-#include <spdlog/spdlog.h>  // used to export default logger
+#include <spdlog/spdlog.h> // used to export default logger_
 #include <wx/wx.h>
 
 #include <string>
 
 #include "types.hpp"
 
-void SendThreadMessage(msgcode code, wxString msg);
-void SendThreadMessage(msgcode code, wxString msg, long);
+void
+SendThreadMessage(msgcode code, wxString msg);
+void
+SendThreadMessage(msgcode code, wxString msg, long);
 
 namespace mylogging {
-std::shared_ptr<spdlog::logger> MakeLoggerFromStd(std::string name);
-void SetGlobalLogger(std::shared_ptr<spdlog::logger> l);
+std::shared_ptr<spdlog::logger>
+MakeLoggerFromStd(std::string name);
+void
+SetGlobalLogger(std::shared_ptr<spdlog::logger> l);
 void SetUpLogging(std::string);
-}  // namespace mylogging
+} // namespace mylogging
 
 #endif /* TRACKIRMOUSE_LOG_H */

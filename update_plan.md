@@ -2,9 +2,20 @@
 
 ## Improvement
 * confirm watchdog pipe server works and/or fix
-- convert track to class
-    - 
-    - change watchdog pause option to gui message
+* convert track to class
+    * change watchdog pause option to gui message
+- get solution project folder off of wonder
+    - look up gitignore file to restructure head tracking directory
+        - src - only source files in source folder
+        - help - folder for application end-user documentation
+        - docs - folder for development documentation
+        - resources - binaries and definitions that are supposed not to be touched by users, such as fonts, images, special parts, etc.
+        - tools - utilities for making releases, scraping for to do notes, etc.
+        solution and project files should be in the same directory if seperate directory for projects
+    - use symbolic directory to link project folder head tracking folder
+    - create headless git backup folder in onedrive for tracking
+    - create backup folder for general projects?
+    - create local software projects folder
 
 
 ## Convert To Graphical Utility: completed
@@ -28,7 +39,47 @@ Optional Features:
 
 ## Scrolling Features
 ### Lock Mouse to Scrollbar
+- use window global hook to detect when a new window takes focus
+    32bit hook runs in context of focused process
+    look for message code that says to accept focus
+    now that hook is running in process context, get executable path
+    spin up a pipe server
+    notify mouse tracker application
+
+Your callback should look more like this instead (assuming your callback is implemented in a DLL, which is required to detect global events, which also means you need separate 32bit and 64bit DLLs on a 64bit system. This is explained in the SetWindowsHookEx() documentation):
+
+LRESULT CALLBACK windowChangeHook(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    if (nCode == HCBT_SETFOCUS)
+    {
+        HWND hwnd = (HWND) wParam;
+        // retreive and use the title of hwnd as needed...
+    }
+
+    return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+
+ SetWinEventHook()  => doesn't have dll requirement
+
+#### Out-of-Context Hook Functions
+https://learn.microsoft.com/en-us/windows/win32/winauto/out-of-context-hook-functions?redirectedfrom=MSDN
+Note: Out-of-context hook functions are noticeably slower than in-context hook functions due to marshaling.
+looks like i contest my coat out with an out of process of, then create an in process of if i like it for increased speed
+
+void CALLBACK windowChangeHook(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+{
+    // retreive and use the title of hwnd as needed...
+}
+
+HWINEVENTHOOK hEventHook = SetWinEventHook(EVENT_OBJECT_FOCUS, EVENT_OBJECT_FOCUS, NULL, &windowChangeHook, 0, 0, WINEVENT_OUTOFCONTEXT);
+...
+UnhookWinEvent(hEventHook);
+
 ### Scroll Anywhere
+send a windows message to the focused application
+SetScrollRange function (winuser.h)
+SetScrollPos function (winuser.h)
+
 ### AutoCAD Zoom Mode
 
 ## Future Features:

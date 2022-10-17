@@ -3,7 +3,8 @@
 
 #include <wx/wx.h>
 
-enum {
+enum
+{
   myID_MENU_RELOAD = wxID_HIGHEST + 1,
   myID_MENU_SETTINGS,
   myID_TRACK_ON_START,

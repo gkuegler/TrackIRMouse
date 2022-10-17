@@ -10,99 +10,111 @@
 
 #include "config.hpp"
 
-class cSettingsGeneralPanel : public wxPanel {
- public:
-  wxCheckBox *m_cbxEnableWatchdog;
-  wxCheckBox *m_cbxTrackOnStart;
-  wxCheckBox *m_cbxQuitOnLossOfTrackIR;
-  wxChoice *m_cmbLogLevel;
-  cSettingsGeneralPanel(wxWindow *parent, config::UserData *pUserData);
+class SettingsGeneralPanel : public wxPanel
+{
+public:
+  wxCheckBox* p_enable_watchdog_;
+  wxCheckBox* p_track_on_start_;
+  wxCheckBox* p_quit_on_loss_of_track_ir;
+  wxChoice* p_log_level_;
+  SettingsGeneralPanel(wxWindow* parent, config::UserData* pUserData);
 
- private:
-  config::UserData *m_pUserData = nullptr;
-  void OnEnabledWatchdog(wxCommandEvent &event);
-  void OnTrackOnStart(wxCommandEvent &event);
-  void OnQuitOnLossOfTrackIr(wxCommandEvent &event);
-  void OnLogLevel(wxCommandEvent &event);
+private:
+  config::UserData* p_user_data_ = nullptr;
+  void OnEnabledWatchdog(wxCommandEvent& event);
+  void OnTrackOnStart(wxCommandEvent& event);
+  void OnQuitOnLossOfTrackIr(wxCommandEvent& event);
+  void OnLogLevel(wxCommandEvent& event);
 };
 
-class cSettingsAdvancedPanel : public wxPanel {
- public:
-  wxCheckBox *m_cbxAutoFindDll;
-  wxTextCtrl *m_txtTrackIrDllPath;
-  cSettingsAdvancedPanel(wxWindow *parent, config::UserData *pUserData);
+class SettingsAdvancedPanel : public wxPanel
+{
+public:
+  wxCheckBox* p_auto_find_dll_;
+  wxTextCtrl* p_track_ir_dll_path;
+  SettingsAdvancedPanel(wxWindow* parent, config::UserData* pUserData);
 
- private:
-  config::UserData *m_pUserData = nullptr;
-  void OnAutoFindDll(wxCommandEvent &event);
-  void OnTrackIrDllPath(wxCommandEvent &event);
+private:
+  config::UserData* p_user_data_ = nullptr;
+  void OnAutoFindDll(wxCommandEvent& event);
+  void OnTrackIrDllPath(wxCommandEvent& event);
 };
 
-class cSettingsServerPanel : public wxPanel {
- public:
-  wxCheckBox *m_cbxServerEnabled;
-  wxTextCtrl *m_txtServerName;
-  cSettingsServerPanel(wxWindow *parent, config::UserData *pUserData);
+class cSettingsServerPanel : public wxPanel
+{
+public:
+  wxCheckBox* p_server_enabled_;
+  wxTextCtrl* p_server_name_;
+  cSettingsServerPanel(wxWindow* parent, config::UserData* pUserData);
 
- private:
-  config::UserData *m_pUserData = nullptr;
-  void OnServerEnabled(wxCommandEvent &event);
-  void OnServerName(wxCommandEvent &event);
+private:
+  config::UserData* p_user_data_ = nullptr;
+  void OnServerEnabled(wxCommandEvent& event);
+  void OnServerName(wxCommandEvent& event);
 };
 
-class cSettingsHotkeyPanel : public wxPanel {
- public:
-  wxCheckBox *m_cbxHotkeyEnabled;
-  cSettingsHotkeyPanel(wxWindow *parent, config::UserData *pUserData);
+class cSettingsHotkeyPanel : public wxPanel
+{
+public:
+  wxCheckBox* p_hotkey_enabled_;
+  cSettingsHotkeyPanel(wxWindow* parent, config::UserData* pUserData);
 
- private:
-  config::UserData *m_pUserData = nullptr;
-  void OnHotkeyEnable(wxCommandEvent &event);
+private:
+  config::UserData* p_user_data_ = nullptr;
+  void OnHotkeyEnable(wxCommandEvent& event);
 };
 
-class cSettingsPopup : public wxPropertySheetDialog {
- public:
-  config::UserData *m_userData = nullptr;
-  cSettingsPopup(wxWindow *parent, config::UserData *pUserData);
+class cSettingsPopup : public wxPropertySheetDialog
+{
+public:
+  config::UserData* p_user_data_ = nullptr;
+  cSettingsPopup(wxWindow* parent, config::UserData* pUserData);
 };
 
-class cProfileIdSelectorPanel : public wxPanel {
- public:
-  wxListView *m_lctProfileIds;
-  int *id = nullptr;
-  std::vector<std::pair<std::string, std::string>> profileIdList;
+class cProfileIdSelectorPanel : public wxPanel
+{
+public:
+  wxListView* p_profile_ids_;
+  int* p_profile_id_ = nullptr;
+  std::vector<std::pair<std::string, std::string>> profile_id_list_;
 
   /**
-   * Expects idList to be sorted alphabetically
+   * Expects id_list to be sorted alphabetically
    */
   cProfileIdSelectorPanel(
-      wxWindow *parent, int *profileId,
-      const std::vector<std::pair<std::string, std::string>> &idList)
-      : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0) {
-    id = profileId;
-    profileIdList = idList;
+    wxWindow* parent,
+    int* p_profile_id,
+    const std::vector<std::pair<std::string, std::string>>& id_list)
+    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0)
+  {
+    p_profile_id_ = p_profile_id;
+    profile_id_list_ = id_list;
 
-    m_lctProfileIds =
-        new wxListView(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                       wxLC_REPORT | wxLC_SINGLE_SEL, wxDefaultValidator, "");
+    p_profile_ids_ = new wxListView(this,
+                                    wxID_ANY,
+                                    wxDefaultPosition,
+                                    wxDefaultSize,
+                                    wxLC_REPORT | wxLC_SINGLE_SEL,
+                                    wxDefaultValidator,
+                                    "");
 
     // create list control columns
-    m_lctProfileIds->InsertColumn(0, "Tile", wxLIST_FORMAT_LEFT, 200);
-    m_lctProfileIds->InsertColumn(1, "ID", wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+    p_profile_ids_->InsertColumn(0, "Tile", wxLIST_FORMAT_LEFT, 200);
+    p_profile_ids_->InsertColumn(1, "ID", wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 
     // don't do thism move to constructor and dep inject
-    auto activeId = config::Get()->GetActiveProfile().profileId;
+    auto active_id = config::Get()->GetActiveProfile().profile_id;
     int selection = -1;
 
     // populate list
-    for (int i = 0; i < profileIdList.size(); i++) {
-      auto pair = profileIdList[i];
+    for (int i = 0; i < profile_id_list_.size(); i++) {
+      auto pair = profile_id_list_[i];
       auto title = std::get<0>(pair);
       auto ids = std::get<1>(pair);
-      auto idx = m_lctProfileIds->InsertItem(i, title);
-      m_lctProfileIds->SetItem(idx, 1, ids);
+      auto idx = p_profile_ids_->InsertItem(i, title);
+      p_profile_ids_->SetItem(idx, 1, ids);
       try {
-        if (std::stoi(ids) == activeId) {
+        if (std::stoi(ids) == active_id) {
           selection = i;
         }
       } catch (std::invalid_argument) {
@@ -110,72 +122,82 @@ class cProfileIdSelectorPanel : public wxPanel {
       }
     }
 
-    // set selection of current profile id
+    // set selection of current profile p_profile_id_
     if (selection > -1) {
-      m_lctProfileIds->Select(selection);
+      p_profile_ids_->Select(selection);
     }
 
-    wxBoxSizer *top = new wxBoxSizer(wxVERTICAL);
-    top->Add(m_lctProfileIds, 1, wxEXPAND, 0);
+    wxBoxSizer* top = new wxBoxSizer(wxVERTICAL);
+    top->Add(p_profile_ids_, 1, wxEXPAND, 0);
     SetSizer(top);
 
-    m_lctProfileIds->Bind(wxEVT_LIST_ITEM_SELECTED,
-                          &cProfileIdSelectorPanel::OnSelection, this);
+    p_profile_ids_->Bind(
+      wxEVT_LIST_ITEM_SELECTED, &cProfileIdSelectorPanel::OnSelection, this);
   }
 
-  void OnSelection(wxListEvent &event) {
-    auto idx = m_lctProfileIds->GetNextItem(-1, wxLIST_NEXT_ALL,
-                                            wxLIST_STATE_SELECTED);
+  void OnSelection(wxListEvent& event)
+  {
+    auto idx =
+      p_profile_ids_->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
     // get info from underlying data
-    auto pair = profileIdList[idx];
-    *id = std::stoi(std::get<1>(pair));
+    auto pair = profile_id_list_[idx];
+    *p_profile_id_ = std::stoi(std::get<1>(pair));
     return;
   }
 };
 
-class cOkayCancelDlgButtons : public wxPanel {
- public:
-  wxButton *okay;
-  wxButton *cancel;
-  wxDialog *dialog;
+class cOkayCancelDlgButtons : public wxPanel
+{
+public:
+  wxButton* okay_;
+  wxButton* cancel_;
+  wxDialog* dialog_;
 
-  cOkayCancelDlgButtons(wxDialog *parent) : wxPanel(parent) {
-    dialog = parent;
-    okay = new wxButton(this, wxID_ANY, "Okay", wxDefaultPosition,
-                        wxSize(110, 25));
-    cancel = new wxButton(this, wxID_ANY, "Cancel", wxDefaultPosition,
-                          wxSize(110, 25));
+  cOkayCancelDlgButtons(wxDialog* parent)
+    : wxPanel(parent)
+  {
+    dialog_ = parent;
+    okay_ =
+      new wxButton(this, wxID_ANY, "Okay", wxDefaultPosition, wxSize(110, 25));
+    cancel_ = new wxButton(
+      this, wxID_ANY, "Cancel", wxDefaultPosition, wxSize(110, 25));
 
     auto top = new wxBoxSizer(wxHORIZONTAL);
-    top->Add(okay, 0, wxALL, 0);
-    top->Add(cancel, 0, wxALL, 0);
+    top->Add(okay_, 0, wxALL, 0);
+    top->Add(cancel_, 0, wxALL, 0);
     SetSizer(top);
 
-    okay->Bind(wxEVT_BUTTON, &cOkayCancelDlgButtons::OnOkay, this);
-    cancel->Bind(wxEVT_BUTTON, &cOkayCancelDlgButtons::OnCancel, this);
+    okay_->Bind(wxEVT_BUTTON, &cOkayCancelDlgButtons::OnOkay, this);
+    cancel_->Bind(wxEVT_BUTTON, &cOkayCancelDlgButtons::OnCancel, this);
   }
 
-  void OnOkay(wxCommandEvent &event) { dialog->EndModal(wxID_OK); }
-  void OnCancel(wxCommandEvent &event) { dialog->EndModal(wxID_CANCEL); }
+  void OnOkay(wxCommandEvent& event) { dialog_->EndModal(wxID_OK); }
+  void OnCancel(wxCommandEvent& event) { dialog_->EndModal(wxID_CANCEL); }
 };
 
-class cProfileIdSelector : public wxDialog {
- public:
-  cProfileIdSelectorPanel *panel;
-  cOkayCancelDlgButtons *buttons;
+class cProfileIdSelector : public wxDialog
+{
+public:
+  cProfileIdSelectorPanel* panel_;
+  cOkayCancelDlgButtons* buttons_;
   cProfileIdSelector(
-      wxWindow *parent, int *id,
-      const std::vector<std::pair<std::string, std::string>> &gameTitleList)
-      : wxDialog(parent, wxID_ANY, "Pick an associated game tile.",
-                 wxDefaultPosition, wxSize(500, 800),
-                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
+    wxWindow* parent,
+    int* p_profile_id_,
+    const std::vector<std::pair<std::string, std::string>>& game_title_list)
+    : wxDialog(parent,
+               wxID_ANY,
+               "Pick an associated game tile.",
+               wxDefaultPosition,
+               wxSize(500, 800),
+               wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+  {
     this->CenterOnParent();
 
-    panel = new cProfileIdSelectorPanel(this, id, gameTitleList);
-    buttons = new cOkayCancelDlgButtons(this);
+    panel_ = new cProfileIdSelectorPanel(this, p_profile_id_, game_title_list);
+    buttons_ = new cOkayCancelDlgButtons(this);
     auto top = new wxBoxSizer(wxVERTICAL);
-    top->Add(panel, 1, wxEXPAND, 0);
-    top->Add(buttons, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 10);
+    top->Add(panel_, 1, wxEXPAND, 0);
+    top->Add(buttons_, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 10);
     SetSizer(top);
   }
 };
@@ -183,46 +205,63 @@ class cProfileIdSelector : public wxDialog {
 #include <type_traits>
 
 /**
- * Instantiate a modal dialog used to capture input.
+ * Instantiate a modal dialog_ used to capture input.
  * Has "Ok" and "Cancel" options.
- * Instantiate with user supplied panel and appropriate handlers within said
- * panel.
+ * Instantiate with user supplied panel_ and appropriate handlers within said
+ * panel_.
  *
  * T = wxPanel used for displaying user defined widgets
- * D = data object to be manupulated by reference by my panel
+ * D = data object to be manupulated by reference by my panel_
  * A = argument object supplied to T constructor
  *
  *
  */
-template <class T, class D, class A>
-class cModalInputDialog : public wxDialog {
- public:
-  wxPanel *panel;
-  wxPanel *buttons;
-  cModalInputDialog(wxWindow *parent, wxString title, wxSize size, D &data,
+template<class T, class D, class A>
+class cModalInputDialog : public wxDialog
+{
+public:
+  wxPanel* panel_;
+  wxPanel* buttons_;
+  cModalInputDialog(wxWindow* parent,
+                    wxString title,
+                    wxSize size,
+                    D& data,
                     A args)
-      : wxDialog(parent, wxID_ANY, title, wxDefaultPosition, size,
-                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
+    : wxDialog(parent,
+               wxID_ANY,
+               title,
+               wxDefaultPosition,
+               size,
+               wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+  {
     static_assert(std::is_base_of<wxPanel, T>::value,
                   "T must inherit from wxPanel");
-    panel = new T(this, data, args);
-    buttons = new cOkayCancelDlgButtons(this);
+    panel_ = new T(this, data, args);
+    buttons_ = new cOkayCancelDlgButtons(this);
     auto top = new wxBoxSizer(wxVERTICAL);
-    top->Add(panel, 1, wxEXPAND, 0);
-    top->Add(buttons, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 10);
+    top->Add(panel_, 1, wxEXPAND, 0);
+    top->Add(buttons_, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 10);
     SetSizer(top);
   }
-  cModalInputDialog(wxWindow *parent, wxString title, wxSize size, D &data,
-                    A &&args)
-      : wxDialog(parent, wxID_ANY, title, wxDefaultPosition, size,
-                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
+  cModalInputDialog(wxWindow* parent,
+                    wxString title,
+                    wxSize size,
+                    D& data,
+                    A&& args)
+    : wxDialog(parent,
+               wxID_ANY,
+               title,
+               wxDefaultPosition,
+               size,
+               wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+  {
     static_assert(std::is_base_of<wxPanel, T>::value,
                   "T must inherit from wxPanel");
-    panel = new T(this, data, std::forward<A>(args));
-    buttons = new cOkayCancelDlgButtons(this);
+    panel_ = new T(this, data, std::forward<A>(args));
+    buttons_ = new cOkayCancelDlgButtons(this);
     auto top = new wxBoxSizer(wxVERTICAL);
-    top->Add(panel, 1, wxEXPAND, 0);
-    top->Add(buttons, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 10);
+    top->Add(panel_, 1, wxEXPAND, 0);
+    top->Add(buttons_, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 10);
     SetSizer(top);
   }
 };
@@ -241,7 +280,7 @@ class cModalInputDialog : public wxDialog {
 //    string arg2 = "This is a string.";
 //  } foo_args_;
 
-// // Define the panel to be shown in the dialog box
+// // Define the panel_ to be shown in the dialog_ box
 // class foo {
 // public:
 //  foo(foo_data& d, foo_args& a){
@@ -252,10 +291,10 @@ class cModalInputDialog : public wxDialog {
 //  // Declare event handlers
 // };
 
-// // Implementation in the handler that is launching the dialog
+// // Implementation in the handler that is launching the dialog_
 // foo_data data{2, 3};
 // foo_args args;
-// baz<foo, foo_data, foo_args> dialog("title", data, "hello");
+// baz<foo, foo_data, foo_args> dialog_("title", data, "hello");
 //
 // int result = dialogjShowModal();
 // if (wxID_OK == result){

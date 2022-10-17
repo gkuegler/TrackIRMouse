@@ -1,5 +1,5 @@
 # ---
 # Clang Format Style
-BasedOnStyle: Google
+BasedOnStyle: Mozilla
 Language: Cpp
 # ---

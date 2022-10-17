@@ -10,97 +10,117 @@
 #include "toml11/toml/exception.hpp"
 #include "types.hpp"
 
-const constexpr std::array<std::string_view, 4> kBoundNames = {"left", "right",
-                                                               "top", "bottom"};
+constexpr const std::array<std::string_view, 4> k_edge_names = { "left",
+                                                                 "right",
+                                                                 "top",
+                                                                 "bottom" };
 namespace config {
 
-struct Display {
-  Display(RectDegrees r, RectPixels p) : rotation(r), padding(p) {}
-  RectDegrees rotation{0.0, 0.0, 0.0, 0.0};  // Left, Right, Top, Bottom
-  RectPixels padding{0, 0, 0, 0};            // Left, Right, Top, Bottom
+struct Display
+{
+  Display(RectDegrees r, RectPixels p)
+    : rotation(r)
+    , padding(p)
+  {
+  }
+  RectDegrees rotation{ 0.0, 0.0, 0.0, 0.0 }; // Left, Right, Top, Bottom
+  RectPixels padding{ 0, 0, 0, 0 };           // Left, Right, Top, Bottom
 };
 
-struct Profile {
+struct Profile
+{
   std::string name = "(empty)";
-  int profileId = 0;
-  bool useDefaultPadding = true;
+  int profile_id = 0;
+  bool use_default_padding = true;
   std::vector<Display> displays = {};
 };
 // const Profile kDefaultProfile = {"empty", 0, true, {}};
 
-struct UserData {
-  bool trackOnStart = true;
-  bool quitOnLossOfTrackIr = true;
-  bool autoFindTrackIrDll = true;
-  std::string trackIrDllFolder = "";
+struct UserData
+{
+  bool track_on_start = true;
+  bool quit_on_loss_of_trackir = true;
+  bool auto_find_track_ir_dll = true;
+  std::string track_ir_dll_folder = "";
   // TODO: make setting file parse for this
-  std::string pipeServerName = "";
+  std::string pipe_server_name = "";
   // TODO: change this variable name
-  bool watchdogEnabled = true;
-  std::string activeProfileName =
-      Profile().name;  // use default profile name
-                       // TODO: make setting file parse for this
+  bool watchdog_enabled = true;
+  std::string active_profile_name =
+    Profile().name; // use default profile name
+                    // TODO: make setting file parse for this
   bool hotkey_enabled = true;
-  spdlog::level::level_enum logLevel = spdlog::level::info;
+  spdlog::level::level_enum log_level = spdlog::level::info;
 
-  std::array<Pixels, 4> defaultPaddings = {0, 0, 0, 0};
+  std::array<Pixels, 4> default_padding = { 0, 0, 0, 0 };
 
   // invariant: the active profile member will always exist in the profiles
   // list
-  std::vector<Profile> profiles = {Profile()};
+  std::vector<Profile> profiles = { Profile() };
 };
 
-struct EnvData {
-  int monitorCount = 0;
-  std::string trackIrDllPath = "";
+struct EnvData
+{
+  int monitor_count = 0;
+  std::string track_ir_dll_path = "";
 };
 
-class Config {
- public:
-  UserData userData;
-  EnvData envData;
+class Config
+{
+public:
+  UserData user_data;
+  EnvData env_data;
 
-  Config() {}                          // load with default values
-  Config(const std::string filename);  // load from file
+  Config() {}                         // load with default values
+  Config(const std::string filename); // load from file
 
-  void SaveToFile(std::string filename);
-  // void SaveToFile();
+  void save_to_file(std::string filename);
+  // void save_to_file();
 
   // getter interface
-  Profile &GetActiveProfile();
+  Profile& GetActiveProfile();
   int GetActiveProfileDisplayCount();
   std::vector<std::string> GetProfileNames();
 
   // setter interface
-  bool SetActiveProfile(std::string profileName);
-  void SetActProfDisplayMappingParam(int displayNumber, int parameterType,
-                                     int parameterSide, double parameter);
-  void AddProfile(std::string newProfileName);
-  void RemoveProfile(std::string profileName);
+  bool SetActiveProfile(std::string profile_name);
+  void SetActProfDisplayMappingParam(int display_number,
+                                     int param_type,
+                                     int param_side,
+                                     double param);
+  void AddProfile(std::string new_profile_name);
+  void RemoveProfile(std::string profile_name);
   void DuplicateActiveProfile();
 
- private:
+private:
   std::string filename_ = "";
 };
 
-struct ConfigReturn {
+struct ConfigReturn
+{
   retcode code = retcode::fail;
   std::string err_msg = "";
   Config config;
 };
 
-ConfigReturn LoadFromFile(std::string filename);
-std::shared_ptr<Config> Get();
-void Set(const Config c);
-
+ConfigReturn
+LoadFromFile(std::string filename);
+std::shared_ptr<Config>
+Get();
+void
+Set(const Config c);
 using UserInput = std::vector<Display>;
-bool ValidateUserInput(const UserInput &displays);
+bool
+ValidateUserInput(const UserInput& displays);
 
 // toml::get only supports map type of which key_type is convertible from
 // std::string this is inherent to toml file; example: 11220 = "Game Title"
-// that is why I have to get my profile id as a string instead of native int
+// that is why I have to get my profile p_profile_id_ as a string instead of
+// native int
 using game_title_map_t = std::map<const std::string, std::string>;
-game_title_map_t GetTitleIds();
-}  // namespace config
+
+game_title_map_t
+GetTitleIds();
+} // namespace config
 
 #endif /* TRACKIRMOUSE_CONFIG_HPP */

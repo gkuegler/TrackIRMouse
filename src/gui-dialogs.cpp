@@ -1,6 +1,6 @@
 /**
  * GUI components for pop-up dialogues.
- * - Settings dialog pop-up
+ * - Settings dialog_ pop-up
  *
  * --License Boilerplate Placeholder--
  */
@@ -16,18 +16,32 @@
 #include "log.hpp"
 #include "util.hpp"
 
-const static std::array<std::string, 7> LogLevels = {
-    "trace", "debug", "info", "warning", "error", "critical", "off"};
-const static auto asLogLevels = util::BuildWxArrayString(LogLevels);
+// const static std::array<std::string, 7> k_log_levels = {
+//   "trace", "debug", "info", "warning", "error", "critical", "off"
+// };
+const static auto log_levels_arr =
+  util::BuildWxArrayString(std::array<std::string, 7>{ "trace",
+                                                       "debug",
+                                                       "info",
+                                                       "warning",
+                                                       "error",
+                                                       "critical",
+                                                       "off" });
 
 cSettingsPopup::cSettingsPopup(wxWindow* parent, config::UserData* pUserData)
-    : wxPropertySheetDialog(parent, wxID_ANY, "Settings", wxPoint(200, 200),
-                            wxSize(300, 300), wxDEFAULT_DIALOG_STYLE, "") {
+  : wxPropertySheetDialog(parent,
+                          wxID_ANY,
+                          "Settings",
+                          wxPoint(200, 200),
+                          wxSize(300, 300),
+                          wxDEFAULT_DIALOG_STYLE,
+                          "")
+{
   CreateButtons(wxOK | wxCANCEL);
   CreateBookCtrl();
 
-  auto* general = new cSettingsGeneralPanel(GetBookCtrl(), pUserData);
-  auto* advanced = new cSettingsAdvancedPanel(GetBookCtrl(), pUserData);
+  auto* general = new SettingsGeneralPanel(GetBookCtrl(), pUserData);
+  auto* advanced = new SettingsAdvancedPanel(GetBookCtrl(), pUserData);
   auto* hotkey = new cSettingsHotkeyPanel(GetBookCtrl(), pUserData);
   GetBookCtrl()->AddPage(general, "General");
   GetBookCtrl()->AddPage(advanced, "Advanced");
@@ -36,38 +50,39 @@ cSettingsPopup::cSettingsPopup(wxWindow* parent, config::UserData* pUserData)
   LayoutDialog();
 }
 
-cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent,
-                                             config::UserData* pUserData)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-              wxTAB_TRAVERSAL, "") {
-  m_pUserData = pUserData;
-  m_cbxEnableWatchdog =
-      new wxCheckBox(this, wxID_ANY, "Pipe Server Enabled", wxDefaultPosition,
-                     wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-  m_cbxTrackOnStart =
-      new wxCheckBox(this, wxID_ANY, "Track On Start", wxDefaultPosition,
-                     wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-  m_cbxQuitOnLossOfTrackIR = new wxCheckBox(
-      this, wxID_ANY, "Quit On Loss Of Track IR", wxDefaultPosition,
-      wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-  wxStaticText* txtLogLabel = new wxStaticText(this, wxID_ANY, "Log Level: ");
-  m_cmbLogLevel =
-      new wxChoice(this, wxID_ANY, wxDefaultPosition, wxSize(100, 25),
-                   asLogLevels, 0, wxDefaultValidator, "");
+SettingsGeneralPanel::SettingsGeneralPanel(wxWindow* parent,
+                                           config::UserData* pUserData)
+  : wxPanel(parent,
+            wxID_ANY,
+            wxDefaultPosition,
+            wxDefaultSize,
+            wxTAB_TRAVERSAL,
+            "")
+{
 
-  m_cbxEnableWatchdog->SetValue(pUserData->watchdogEnabled);
-  m_cbxTrackOnStart->SetValue(pUserData->trackOnStart);
-  m_cbxQuitOnLossOfTrackIR->SetValue(pUserData->quitOnLossOfTrackIr);
-  m_cmbLogLevel->SetSelection(pUserData->logLevel);
+  p_user_data_ = pUserData;
+
+  // clang-format off
+  p_enable_watchdog_ = new wxCheckBox(this, wxID_ANY, "Pipe Server Enabled", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  p_track_on_start_ = new wxCheckBox(this, wxID_ANY, "Track On Start", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  p_quit_on_loss_of_track_ir = new wxCheckBox(this, wxID_ANY, "Quit On Loss Of Track IR", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  p_log_level_ = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxSize(100, 25), log_levels_arr, 0, wxDefaultValidator, "");
+  wxStaticText* txtLogLabel = new wxStaticText(this, wxID_ANY, "Log Level: ");
+  // clang-format on
+
+  p_enable_watchdog_->SetValue(pUserData->watchdog_enabled);
+  p_track_on_start_->SetValue(pUserData->track_on_start);
+  p_quit_on_loss_of_track_ir->SetValue(pUserData->quit_on_loss_of_trackir);
+  p_log_level_->SetSelection(pUserData->log_level);
 
   wxBoxSizer* zrLogFile = new wxBoxSizer(wxHORIZONTAL);
   zrLogFile->Add(txtLogLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
-  zrLogFile->Add(m_cmbLogLevel, 0, wxALL, 0);
+  zrLogFile->Add(p_log_level_, 0, wxALL, 0);
 
   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
-  topSizer->Add(m_cbxEnableWatchdog, 0, wxALL, 0);
-  topSizer->Add(m_cbxTrackOnStart, 0, wxALL, 0);
-  topSizer->Add(m_cbxQuitOnLossOfTrackIR, 0, wxALL, 0);
+  topSizer->Add(p_enable_watchdog_, 0, wxALL, 0);
+  topSizer->Add(p_track_on_start_, 0, wxALL, 0);
+  topSizer->Add(p_quit_on_loss_of_track_ir, 0, wxALL, 0);
   topSizer->Add(zrLogFile, 0, wxALL, 0);
 
   wxBoxSizer* border = new wxBoxSizer(wxVERTICAL);
@@ -75,61 +90,80 @@ cSettingsGeneralPanel::cSettingsGeneralPanel(wxWindow* parent,
 
   SetSizer(border);
 
-  m_cbxEnableWatchdog->Bind(wxEVT_CHECKBOX,
-                            &cSettingsGeneralPanel::OnEnabledWatchdog, this);
-  m_cbxTrackOnStart->Bind(wxEVT_CHECKBOX,
-                          &cSettingsGeneralPanel::OnTrackOnStart, this);
-  m_cbxQuitOnLossOfTrackIR->Bind(
-      wxEVT_CHECKBOX, &cSettingsGeneralPanel::OnQuitOnLossOfTrackIr, this);
-  m_cmbLogLevel->Bind(wxEVT_CHOICE, &cSettingsGeneralPanel::OnLogLevel, this);
+  p_enable_watchdog_->Bind(
+    wxEVT_CHECKBOX, &SettingsGeneralPanel::OnEnabledWatchdog, this);
+  p_track_on_start_->Bind(
+    wxEVT_CHECKBOX, &SettingsGeneralPanel::OnTrackOnStart, this);
+  p_quit_on_loss_of_track_ir->Bind(
+    wxEVT_CHECKBOX, &SettingsGeneralPanel::OnQuitOnLossOfTrackIr, this);
+  p_log_level_->Bind(wxEVT_CHOICE, &SettingsGeneralPanel::OnLogLevel, this);
 }
 
-void cSettingsGeneralPanel::OnEnabledWatchdog(wxCommandEvent& event) {
-  m_pUserData->watchdogEnabled = m_cbxEnableWatchdog->IsChecked();
+void
+SettingsGeneralPanel::OnEnabledWatchdog(wxCommandEvent& event)
+{
+  p_user_data_->watchdog_enabled = p_enable_watchdog_->IsChecked();
 }
 
-void cSettingsGeneralPanel::OnTrackOnStart(wxCommandEvent& event) {
-  m_pUserData->trackOnStart = m_cbxTrackOnStart->IsChecked();
+void
+SettingsGeneralPanel::OnTrackOnStart(wxCommandEvent& event)
+{
+  p_user_data_->track_on_start = p_track_on_start_->IsChecked();
 }
 
-void cSettingsGeneralPanel::OnQuitOnLossOfTrackIr(wxCommandEvent& event) {
-  m_pUserData->quitOnLossOfTrackIr = m_cbxQuitOnLossOfTrackIR->IsChecked();
+void
+SettingsGeneralPanel::OnQuitOnLossOfTrackIr(wxCommandEvent& event)
+{
+  p_user_data_->quit_on_loss_of_trackir =
+    p_quit_on_loss_of_track_ir->IsChecked();
 }
 
-void cSettingsGeneralPanel::OnLogLevel(wxCommandEvent& event) {
-  auto selection = m_cmbLogLevel->GetSelection();
-  m_pUserData->logLevel = static_cast<spdlog::level::level_enum>(selection);
+void
+SettingsGeneralPanel::OnLogLevel(wxCommandEvent& event)
+{
+  auto selection = p_log_level_->GetSelection();
+  p_user_data_->log_level = static_cast<spdlog::level::level_enum>(selection);
 }
 
-cSettingsAdvancedPanel::cSettingsAdvancedPanel(wxWindow* parent,
-                                               config::UserData* pUserData)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-              wxTAB_TRAVERSAL, "") {
-  m_pUserData = pUserData;
+SettingsAdvancedPanel::SettingsAdvancedPanel(wxWindow* parent,
+                                             config::UserData* pUserData)
+  : wxPanel(parent,
+            wxID_ANY,
+            wxDefaultPosition,
+            wxDefaultSize,
+            wxTAB_TRAVERSAL,
+            "")
+{
+  p_user_data_ = pUserData;
 
-  m_cbxAutoFindDll = new wxCheckBox(
-      this, wxID_ANY,
-      "Auto find trackir dll from registry.\n(This is normal operation if "
-      "TrackIR is installed.\nUse of this feature is primarily aimed at users\n"
-      "who wish to spoof the dll to provide\ntheir own head tracking info)");
+  p_auto_find_dll_ = new wxCheckBox(
+    this,
+    wxID_ANY,
+    "Auto find trackir dll from registry.\n(This is normal operation if "
+    "TrackIR is installed.\nUse of this feature is primarily aimed at users\n"
+    "who wish to spoof the dll to provide\ntheir own head tracking info)");
 
   wxStaticText* txtTrackLocation1 =
-      new wxStaticText(this, wxID_ANY, "Path of 'NPClient64.dll':   ");
-  m_txtTrackIrDllPath =
-      new wxTextCtrl(this, myID_TRACK_IR_DLL_PATH, pUserData->trackIrDllFolder,
-                     wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
+    new wxStaticText(this, wxID_ANY, "Path of 'NPClient64.dll':   ");
+  p_track_ir_dll_path = new wxTextCtrl(this,
+                                       myID_TRACK_IR_DLL_PATH,
+                                       pUserData->track_ir_dll_folder,
+                                       wxDefaultPosition,
+                                       wxSize(300, 20),
+                                       wxTE_LEFT);
   wxStaticText* txtTrackLocation2 = new wxStaticText(
-      this, wxID_ANY,
-      "Note: a value of 'default' will get from install location.");
+    this,
+    wxID_ANY,
+    "Note: a value of 'default' will get from install location.");
 
-  m_cbxAutoFindDll->SetValue(pUserData->autoFindTrackIrDll);
+  p_auto_find_dll_->SetValue(pUserData->auto_find_track_ir_dll);
 
   wxBoxSizer* zrDllLocation = new wxBoxSizer(wxHORIZONTAL);
   zrDllLocation->Add(txtTrackLocation1, 0, wxTOP, 5);
-  zrDllLocation->Add(m_txtTrackIrDllPath, 1, wxALL | wxEXPAND, 0);
+  zrDllLocation->Add(p_track_ir_dll_path, 1, wxALL | wxEXPAND, 0);
 
   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
-  topSizer->Add(m_cbxAutoFindDll, 0, wxTOP | wxBOTTOM, 10);
+  topSizer->Add(p_auto_find_dll_, 0, wxTOP | wxBOTTOM, 10);
   topSizer->Add(zrDllLocation, 0, wxTOP | wxEXPAND, 10);
   topSizer->Add(txtTrackLocation2, 0, wxALL, 0);
 
@@ -138,49 +172,62 @@ cSettingsAdvancedPanel::cSettingsAdvancedPanel(wxWindow* parent,
 
   SetSizer(border);
 
-  m_txtTrackIrDllPath->Bind(wxEVT_TEXT,
-                            &cSettingsAdvancedPanel::OnTrackIrDllPath, this);
-  m_txtTrackIrDllPath->Bind(wxEVT_BUTTON,
-                            &cSettingsAdvancedPanel::OnAutoFindDll, this);
+  p_track_ir_dll_path->Bind(
+    wxEVT_TEXT, &SettingsAdvancedPanel::OnTrackIrDllPath, this);
+  p_track_ir_dll_path->Bind(
+    wxEVT_BUTTON, &SettingsAdvancedPanel::OnAutoFindDll, this);
 }
 
-void cSettingsAdvancedPanel::OnTrackIrDllPath(wxCommandEvent& event) {
-  wxString wxsPath = m_txtTrackIrDllPath->GetLineText(0);
+void
+SettingsAdvancedPanel::OnTrackIrDllPath(wxCommandEvent& event)
+{
+  wxString wxsPath = p_track_ir_dll_path->GetLineText(0);
   std::string path(wxsPath.mb_str());
-  m_pUserData->trackIrDllFolder = path;
+  p_user_data_->track_ir_dll_folder = path;
 }
 
-void cSettingsAdvancedPanel::OnAutoFindDll(wxCommandEvent& event) {
-  m_pUserData->autoFindTrackIrDll = m_cbxAutoFindDll->IsChecked();
+void
+SettingsAdvancedPanel::OnAutoFindDll(wxCommandEvent& event)
+{
+  p_user_data_->auto_find_track_ir_dll = p_auto_find_dll_->IsChecked();
 }
 
 cSettingsServerPanel::cSettingsServerPanel(wxWindow* parent,
                                            config::UserData* pUserData)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-              wxTAB_TRAVERSAL, "") {
-  m_pUserData = pUserData;
+  : wxPanel(parent,
+            wxID_ANY,
+            wxDefaultPosition,
+            wxDefaultSize,
+            wxTAB_TRAVERSAL,
+            "")
+{
+  p_user_data_ = pUserData;
 
-  m_cbxServerEnabled = new wxCheckBox(
-      this, wxID_ANY,
-      "Control the application by sending commands through a pipe server.");
+  p_server_enabled_ = new wxCheckBox(
+    this,
+    wxID_ANY,
+    "Control the application by sending commands through a pipe server.");
 
   wxStaticText* text_label =
-      new wxStaticText(this, wxID_ANY, "Pipe server name: ");
-  m_txtServerName =
-      new wxTextCtrl(this, myID_TRACK_IR_DLL_PATH, pUserData->trackIrDllFolder,
-                     wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
+    new wxStaticText(this, wxID_ANY, "Pipe server name: ");
+  p_server_name_ = new wxTextCtrl(this,
+                                  myID_TRACK_IR_DLL_PATH,
+                                  pUserData->track_ir_dll_folder,
+                                  wxDefaultPosition,
+                                  wxSize(300, 20),
+                                  wxTE_LEFT);
   // wxStaticText* txtTrackLocation2 = new wxStaticText(
   //     this, wxID_ANY,
   //     "Note: a value of 'default' will get from install location.");
 
-  m_cbxServerEnabled->SetValue(pUserData->watchdogEnabled);
+  p_server_enabled_->SetValue(pUserData->watchdog_enabled);
 
   wxBoxSizer* zrTextEntry = new wxBoxSizer(wxHORIZONTAL);
   zrTextEntry->Add(text_label, 0, wxTOP, 5);
-  zrTextEntry->Add(m_cbxServerEnabled, 1, wxALL | wxEXPAND, 0);
+  zrTextEntry->Add(p_server_enabled_, 1, wxALL | wxEXPAND, 0);
 
   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
-  topSizer->Add(m_cbxServerEnabled, 0, wxTOP | wxBOTTOM, 10);
+  topSizer->Add(p_server_enabled_, 0, wxTOP | wxBOTTOM, 10);
   topSizer->Add(zrTextEntry, 0, wxTOP | wxEXPAND, 10);
 
   wxBoxSizer* border = new wxBoxSizer(wxVERTICAL);
@@ -188,43 +235,60 @@ cSettingsServerPanel::cSettingsServerPanel(wxWindow* parent,
 
   SetSizer(border);
 
-  m_cbxServerEnabled->Bind(wxEVT_CHECKBOX,
-                           &cSettingsServerPanel::OnServerEnabled, this);
-  m_txtServerName->Bind(wxEVT_TEXT, &cSettingsServerPanel::OnServerName, this);
+  p_server_enabled_->Bind(
+    wxEVT_CHECKBOX, &cSettingsServerPanel::OnServerEnabled, this);
+  p_server_name_->Bind(wxEVT_TEXT, &cSettingsServerPanel::OnServerName, this);
 }
 
-void cSettingsServerPanel::OnServerEnabled(wxCommandEvent&) {
-  m_pUserData->watchdogEnabled = m_cbxServerEnabled->IsChecked();
+void
+cSettingsServerPanel::OnServerEnabled(wxCommandEvent&)
+{
+  p_user_data_->watchdog_enabled = p_server_enabled_->IsChecked();
 }
 
-void cSettingsServerPanel::OnServerName(wxCommandEvent&) {
-  wxString line_text = m_txtServerName->GetLineText(0);
-  m_pUserData->pipeServerName = line_text.mb_str();
+void
+cSettingsServerPanel::OnServerName(wxCommandEvent&)
+{
+  wxString line_text = p_server_name_->GetLineText(0);
+  p_user_data_->pipe_server_name = line_text.mb_str();
 }
 
 cSettingsHotkeyPanel::cSettingsHotkeyPanel(wxWindow* parent,
                                            config::UserData* pUserData)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-              wxTAB_TRAVERSAL, "") {
-  m_pUserData = pUserData;
-  m_cbxHotkeyEnabled = new wxCheckBox(
-      this, wxID_ANY, "Enable alternate mouse modes with hotkey: F18",
-      wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  : wxPanel(parent,
+            wxID_ANY,
+            wxDefaultPosition,
+            wxDefaultSize,
+            wxTAB_TRAVERSAL,
+            "")
+{
+  p_user_data_ = pUserData;
+  p_hotkey_enabled_ =
+    new wxCheckBox(this,
+                   wxID_ANY,
+                   "Enable alternate mouse modes with hotkey: F18",
+                   wxDefaultPosition,
+                   wxDefaultSize,
+                   wxCHK_2STATE,
+                   wxDefaultValidator,
+                   "");
 
-  m_cbxHotkeyEnabled->SetValue(pUserData->hotkey_enabled);
+  p_hotkey_enabled_->SetValue(pUserData->hotkey_enabled);
 
   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
-  topSizer->Add(m_cbxHotkeyEnabled, 0, wxALL, 0);
+  topSizer->Add(p_hotkey_enabled_, 0, wxALL, 0);
 
   wxBoxSizer* border = new wxBoxSizer(wxVERTICAL);
   border->Add(topSizer, 0, wxALL, 10);
 
   SetSizer(border);
 
-  m_cbxHotkeyEnabled->Bind(wxEVT_CHECKBOX,
-                           &cSettingsHotkeyPanel::OnHotkeyEnable, this);
+  p_hotkey_enabled_->Bind(
+    wxEVT_CHECKBOX, &cSettingsHotkeyPanel::OnHotkeyEnable, this);
 }
 
-void cSettingsHotkeyPanel::OnHotkeyEnable(wxCommandEvent& event) {
-  m_pUserData->hotkey_enabled = m_cbxHotkeyEnabled->IsChecked();
+void
+cSettingsHotkeyPanel::OnHotkeyEnable(wxCommandEvent& event)
+{
+  p_user_data_->hotkey_enabled = p_hotkey_enabled_->IsChecked();
 }

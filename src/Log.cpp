@@ -20,16 +20,20 @@
 // TODO: high dpi support, and text size
 // TODO: test dpi support on 4K monito
 
-void SendThreadMessage(msgcode code, wxString msg, long optional_param) {
-  wxThreadEvent *event = new wxThreadEvent(wxEVT_THREAD);
+void
+SendThreadMessage(msgcode code, wxString msg, long optional_param)
+{
+  wxThreadEvent* event = new wxThreadEvent(wxEVT_THREAD);
   event->SetInt(static_cast<int>(code));
   event->SetString(msg);
   event->SetExtraLong(static_cast<long>(optional_param));
   wxTheApp->QueueEvent(event);
 }
 
-void SendThreadMessage(msgcode code, wxString msg) {
-  wxThreadEvent *event = new wxThreadEvent(wxEVT_THREAD);
+void
+SendThreadMessage(msgcode code, wxString msg)
+{
+  wxThreadEvent* event = new wxThreadEvent(wxEVT_THREAD);
   event->SetString(msg);
   event->SetInt(static_cast<long>(code));
   wxTheApp->QueueEvent(event);
@@ -37,12 +41,14 @@ void SendThreadMessage(msgcode code, wxString msg) {
 
 namespace mylogging {
 
-template <typename Mutex>
-class WxSink : public spdlog::sinks::base_sink<Mutex> {
- protected:
-  void sink_it_(const spdlog::details::log_msg &msg) override {
+template<typename Mutex>
+class WxSink : public spdlog::sinks::base_sink<Mutex>
+{
+protected:
+  void sink_it_(const spdlog::details::log_msg& msg) override
+  {
     // log_msg is a struct containing the log entry info like level, timestamp,
-    // thread id etc. msg.raw contains pre formatted log
+    // thread p_profile_id_ etc. msg.raw contains pre formatted log
 
     // Format message according to sink specific formatter.
     spdlog::memory_buf_t formatted;
@@ -76,16 +82,16 @@ using WxSink_st = WxSink<spdlog::details::null_mutex>;
 // clang-format off
 
 /**
- * Get new logger with standard sinks, named name.
+ * Get new logger_ with standard sinks, named name.
  *
- * @param[in]  {string} name - Name of logger.
+ * @param[in]  {string} name - Name of logger_.
  *
- * @return shared pointer to logger
+ * @return shared pointer to logger_
  */
 std::shared_ptr<spdlog::logger> MakeLoggerFromStd(std::string name){
 
-  // cutom logger with sink specific logging level
-  // to wx txt control on app main panel
+  // cutom logger_ with sink specific logging level
+  // to wx txt control on app main panel_
   static std::shared_ptr<WxSink_mt> wx_txtctrl_sink = std::make_shared<WxSink_mt>();
   wx_txtctrl_sink->set_level(spdlog::level::info);
 
@@ -98,27 +104,27 @@ std::shared_ptr<spdlog::logger> MakeLoggerFromStd(std::string name){
     wx_txtctrl_sink
   };
 
-  auto logger = std::make_shared<spdlog::logger>(name, begin(sinks), end(sinks));
-  logger->set_level(spdlog::level::trace);
-  logger->set_pattern("[%T][%n][%l] %v"); // "[HH:MM:SS][logger_name][level] msg"
+  auto logger_ = std::make_shared<spdlog::logger>(name, begin(sinks), end(sinks));
+  logger_->set_level(spdlog::level::trace);
+  logger_->set_pattern("[%T][%n][%l] %v"); // "[HH:MM:SS][logger_name][level] msg"
 
-  // set sink specific format pattern after becuase setting pattern on logger
+  // set sink specific format pattern after becuase setting pattern on logger_
   // overrides the sink specific format pattern
   wx_txtctrl_sink->set_pattern("%v"); // "msg"
   spdlog::flush_every(std::chrono::seconds(2));
 
-  return logger;
+  return logger_;
 }
 
 /**
- * @brief      Sets the global logger.
+ * @brief      Sets the global logger_.
  *
- * @param[in]  l     The logger to be set as global and consumed.
+ * @param[in]  l     The logger_ to be set as global and consumed.
  */
 void SetGlobalLogger(std::shared_ptr<spdlog::logger> l) {
-  // NOTE: setting as default also registers it in the logger registry by name
+  // NOTE: setting as default also registers it in the logger_ registry by name
   spdlog::set_default_logger(std::move(l));
   spdlog::flush_every(std::chrono::seconds(2));
 }
 // clang-format on
-}  // namespace mylogging
+} // namespace mylogging

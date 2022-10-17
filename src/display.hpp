@@ -3,28 +3,32 @@
 
 #include "types.hpp"
 
-typedef struct mouse_values_ {
+typedef struct mouse_values_
+{
   bool contains = false;
   double x = -1;
   double y = -1;
 } CursorPosition;
 
-class CDisplay {
- public:
-  RectDegrees rotation_boundaries;  // User-specified
-  RectPixels padding;               // padding
-  RectPixels rel_edge_pixel;        // virtual desktop bounds
-  RectShort coordinates;            // virtual desktop bounds
+class CDisplay
+{
+public:
+  RectDegrees rotation_boundaries; // User-specified
+  RectPixels padding;              // padding
+  RectPixels rel_edge_pixel;       // virtual desktop bounds
+  RectShort coordinates;           // virtual desktop bounds
 
   // Ratio of input rotation to abolutized integer
   // used for linear interpolation
-  double m_slope_coord_over_degrees_x{0.0};
-  double m_slope_coord_over_degrees_y{0.0};
-  double m_short_to_pixels_ratio_x{0.0};
-  double m_short_to_pixels_ratio_y{0.0};
+  double m_slope_coord_over_degrees_x{ 0.0 };
+  double m_slope_coord_over_degrees_y{ 0.0 };
+  double m_short_to_pixels_ratio_x{ 0.0 };
+  double m_short_to_pixels_ratio_y{ 0.0 };
 
-  CDisplay(const RectPixels pixel_edges, const RectDegrees rotation_values,
-           const RectPixels padding_values) {
+  CDisplay(const RectPixels pixel_edges,
+           const RectDegrees rotation_values,
+           const RectPixels padding_values)
+  {
     rel_edge_pixel = pixel_edges;
     rotation_boundaries = rotation_values;
     padding = padding_values;
@@ -76,23 +80,26 @@ class CDisplay {
     return;
   }
   // clang-format on
-  const double get_horizontal_value(const Degrees yaw) {
+  const double get_horizontal_value(const Degrees yaw)
+  {
     // linearly interpolate horizontal distance from left edge of display
     // note the direction sign conventions in above func
     return coordinates[LEFT_EDGE] + m_slope_coord_over_degrees_x *
-                                        (rotation_boundaries[LEFT_EDGE] - yaw);
+                                      (rotation_boundaries[LEFT_EDGE] - yaw);
     ;
   }
 
-  const double get_vertical_value(const Degrees pitch) {
+  const double get_vertical_value(const Degrees pitch)
+  {
     // linearly interpolate vertical distance from top edge of display
     // note the direction sign conventions in above func
     return coordinates[TOP_EDGE] + m_slope_coord_over_degrees_y *
-                                       (pitch - rotation_boundaries[TOP_EDGE]);
+                                     (pitch - rotation_boundaries[TOP_EDGE]);
   }
 
   const CursorPosition get_cursor_coordinates(const Degrees yaw,
-                                              const Degrees pitch) {
+                                              const Degrees pitch)
+  {
     const double left = rotation_boundaries[LEFT_EDGE];
     const double right = rotation_boundaries[RIGHT_EDGE];
     const double top = rotation_boundaries[TOP_EDGE];
@@ -101,13 +108,14 @@ class CDisplay {
     // test if degrees are within the displays mapping boundaries
     // note the direction sign conventions in above func
     if ((yaw < left) && (yaw > right) && (pitch > top) && (pitch < bottom)) {
-      return {true, get_horizontal_value(yaw), get_vertical_value(pitch)};
+      return { true, get_horizontal_value(yaw), get_vertical_value(pitch) };
     } else {
-      return {false, -1, -1};
+      return { false, -1, -1 };
     }
   }
 
-  const double get_inside_offset_from_edge(int edge, int pixels) {
+  const double get_inside_offset_from_edge(int edge, int pixels)
+  {
     switch (edge) {
       case LEFT_EDGE:
         return coordinates[edge] + pixels * m_short_to_pixels_ratio_x;
@@ -120,7 +128,8 @@ class CDisplay {
     }
   }
 
-  const double get_padding_offset_from_edge(int edge) {
+  const double get_padding_offset_from_edge(int edge)
+  {
     switch (edge) {
       case LEFT_EDGE:
         return coordinates[edge] + padding[edge] * m_short_to_pixels_ratio_x;
@@ -134,4 +143,4 @@ class CDisplay {
   }
 };
 
-#endif  // TRACKIRMOUSE_DISPLAY_H
+#endif // TRACKIRMOUSE_DISPLAY_H

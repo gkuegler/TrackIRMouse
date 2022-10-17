@@ -7,13 +7,15 @@ namespace env {
 
 using HardwareDisplays = std::vector<std::vector<int>>;
 
-typedef struct HardwareDisplayInfo {
+typedef struct HardwareDisplayInfo_
+{
   HardwareDisplays displays;
   int height;
   int width;
-};
+} HardwareDisplayInfo;
 
-HardwareDisplayInfo GetHardwareDisplayInfo();
-}  // namespace env
+HardwareDisplayInfo
+GetHardwareDisplayInfo();
+} // namespace env
 
 #endif /* TRACKIRMOUSE_ENVIROMENT_H */

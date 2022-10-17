@@ -21,7 +21,7 @@
  *   duplicate profile
  *
  *   maintain selections to move up and down
- *   convert values to doubles in validation step of handle event
+ *   convert values to doubles in validation step of handle_ event
  *   fix internal override of handling default display padding
  */
 
@@ -56,7 +56,7 @@
 #include "types.hpp"
 #include "util.hpp"
 
-const constexpr std::string_view kVersionNo = "0.9.1";
+const constexpr std::string_view k_version_no = "0.9.2";
 const wxSize kDefaultButtonSize = wxSize(110, 25);
 const wxSize kDefaultButtonSize2 = wxSize(150, 25);
 const constexpr int kMaxProfileLength = 30;
@@ -69,10 +69,12 @@ const wxColor pink(198, 102, 255);
 const wxColor green(142, 255, 102);
 const wxColor orange(102, 201, 255);
 
-wxIMPLEMENT_APP(cApp);
+wxIMPLEMENT_APP(App);
 
 // Center app on main display
-wxPoint GetOrigin(const int w, const int h) {
+wxPoint
+GetOrigin(const int w, const int h)
+{
   int desktopWidth = GetSystemMetrics(SM_CXMAXIMIZED);
   int desktopHeight = GetSystemMetrics(SM_CYMAXIMIZED);
   return wxPoint((desktopWidth / 2) - (w / 2), (desktopHeight / 2) - (h / 2));
@@ -82,26 +84,28 @@ wxPoint GetOrigin(const int w, const int h) {
 //                         Main Application                         //
 //////////////////////////////////////////////////////////////////////
 
-bool cApp::OnInit() {
+bool
+App::OnInit()
+{
   // Initialize global default loggers
-  auto logger = mylogging::MakeLoggerFromStd("main");
-  mylogging::SetGlobalLogger(logger);
+  auto logger_ = mylogging::MakeLoggerFromStd("main");
+  mylogging::SetGlobalLogger(logger_);
 
   // App initialization constants
   constexpr int appWidth = 1200;
   constexpr int appHeight = 900;
 
-  // Construct child elements first. The main panel contains a text control that
-  // is a log target.
-  m_frame =
-      new cFrame(GetOrigin(appWidth, appHeight), wxSize(appWidth, appHeight));
+  // Construct child elements first. The main panel_ contains a text control
+  // that is a log target.
+  p_frame_ =
+    new Frame(GetOrigin(appWidth, appHeight), wxSize(appWidth, appHeight));
 
   //////////////////////////////////////////////////////////////////////
   //               Messages From Threads Outside Of GUI               //
   //////////////////////////////////////////////////////////////////////
 
-  Bind(wxEVT_THREAD, [this](wxThreadEvent &event) {
-    cTextCtrl *textrich = m_frame->m_textrich;
+  Bind(wxEVT_THREAD, [this](wxThreadEvent& event) {
+    LogWindow* textrich = p_frame_->p_text_rich_;
 
     switch (static_cast<msgcode>(event.GetInt())) {
       case msgcode::log_normal_text: {
@@ -114,59 +118,64 @@ bool cApp::OnInit() {
         textrich->SetDefaultStyle(existing_style);
       } break;
       case msgcode::toggle_tracking: {
-        if (m_frame->m_pTrackThread) {
-          m_frame->m_pTrackThread->m_tracker->toggle();
+        if (p_frame_->p_track_thread_) {
+          p_frame_->p_track_thread_->tracker_->toggle();
         }
       } break;
       case msgcode::set_mode: {
-        if (m_frame->m_pTrackThread) {
-          m_frame->m_pTrackThread->m_tracker->m_handler->set_alternate_mode(
-              static_cast<mouse_mode>(event.GetExtraLong()));
+        if (p_frame_->p_track_thread_) {
+          p_frame_->p_track_thread_->tracker_->handler_->set_alternate_mode(
+            static_cast<mouse_mode>(event.GetExtraLong()));
         }
       } break;
       case msgcode::close_app:
-        m_frame->Close(true);
+        p_frame_->Close(true);
         break;
       default:
         break;
     }
   });
 
-  m_frame->InitializeSettings();
-  m_frame->UpdateGuiUsingSettings();
-  m_frame->Show();
+  p_frame_->InitializeSettings();
+  p_frame_->UpdateGuiUsingSettings();
+  p_frame_->Show();
 
   // Start the track IR thread if enabled
-  auto usr = config::Get()->userData;
-  if (usr.trackOnStart) {
-    wxCommandEvent event = {};  // blank event to reuse start handler code
-    m_frame->OnStart(event);
+  auto usr = config::Get()->user_data;
+  if (usr.track_on_start) {
+    wxCommandEvent event = {}; // blank event to reuse start handler code
+    p_frame_->OnStart(event);
   }
 
   // Start the pipe server thread.
   // Pipe server is only started at first application startup.
-  if (usr.watchdogEnabled) {
-    m_frame->m_pServerThread = new ControlServerThread(m_frame);
-    if (m_frame->m_pServerThread->Run() != wxTHREAD_NO_ERROR) {
+  if (usr.watchdog_enabled) {
+    p_frame_->p_server_thread_ = new ControlServerThread(p_frame_);
+    if (p_frame_->p_server_thread_->Run() != wxTHREAD_NO_ERROR) {
       spdlog::error("Can't run server thread.");
-      delete m_frame->m_pServerThread;
-      m_frame->m_pServerThread = nullptr;
+      delete p_frame_->p_server_thread_;
+      p_frame_->p_server_thread_ = nullptr;
     }
   }
 
   return true;
 }
 
-int cApp::OnExit() { return 0; }
+int
+App::OnExit()
+{
+  return 0;
+}
 
 //////////////////////////////////////////////////////////////////////
 //                            Main Frame                            //
 //////////////////////////////////////////////////////////////////////
 
-// TODO: convert to single frame, no separate panel class
-cFrame::cFrame(wxPoint origin, wxSize dimensions)
-    : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", origin, dimensions) {
-  wxMenu *menuFile = new wxMenu;
+// TODO: convert to single frame, no separate panel_ class
+Frame::Frame(wxPoint origin, wxSize dimensions)
+  : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", origin, dimensions)
+{
+  wxMenu* menuFile = new wxMenu;
 
   //////////////////////////////////////////////////////////////////////
   //                            Menu Bar                              //
@@ -182,14 +191,14 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
 
-  wxMenu *menuEdit = new wxMenu;
+  wxMenu* menuEdit = new wxMenu;
   menuEdit->Append(myID_MENU_SETTINGS, "&Settings", "Edit app settings.");
 
-  wxMenu *menuHelp = new wxMenu;
+  wxMenu* menuHelp = new wxMenu;
   // menuHelp->AppendSeparator();
   menuHelp->Append(wxID_ABOUT);
 
-  wxMenuBar *menuBar = new wxMenuBar;
+  wxMenuBar* menuBar = new wxMenuBar;
   menuBar->Append(menuFile, "&File");
   menuBar->Append(menuEdit, "&Edit");
   menuBar->Append(menuHelp, "&Help");
@@ -214,9 +223,9 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   
 
   // Logging Window
-  m_lbtextrich = new wxStaticText(main, wxID_ANY, "Log Output:");
-  m_textrich = new cTextCtrl(main, wxID_ANY, "", wxDefaultPosition, wxSize(300, 10), wxTE_RICH | wxTE_MULTILINE);
-  m_textrich->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+  label_text_rich_ = new wxStaticText(main, wxID_ANY, "Log Output:");
+  p_text_rich_ = new LogWindow(main, wxID_ANY, "", wxDefaultPosition, wxSize(300, 10), wxTE_RICH | wxTE_MULTILINE);
+  p_text_rich_->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
 
   // Track Controls
   auto btnStartMouse = new wxButton(main, myID_START_TRACK, "Start Mouse", wxDefaultPosition, kDefaultButtonSize);
@@ -224,33 +233,33 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   auto btnHide = new wxButton(main, wxID_ANY, "Show/Hide Log", wxDefaultPosition, kDefaultButtonSize);
 
   // Display Graphic
-  m_displayGraphic = new cDisplayGraphic(main, wxSize(650, 200));
-  //m_displayGraphic->SetBackgroundColour(blue);
+  p_display_graphic_ = new cDisplayGraphic(main, wxSize(650, 200));
+  //p_display_graphic_->SetBackgroundColour(blue);
 
   // Profiles Controls
   auto *txtProfiles = new wxStaticText(pnlProfile, wxID_ANY, " Active Profile: ");
   // TODO: make this choice control visually taller when not dropped down
-  m_cmbProfiles = new wxChoice(pnlProfile, myID_PROFILE_SELECTION, wxDefaultPosition, wxSize(100, 25), 0, 0, wxCB_SORT, wxDefaultValidator, "");
+  p_combo_profiles_ = new wxChoice(pnlProfile, myID_PROFILE_SELECTION, wxDefaultPosition, wxSize(100, 25), 0, 0, wxCB_SORT, wxDefaultValidator, "");
   auto btnAddProfile = new wxButton(pnlProfile, wxID_ANY, "Add a Profile", wxDefaultPosition, kDefaultButtonSize2);
   auto btnRemoveProfile = new wxButton(pnlProfile, wxID_ANY, "Remove a Profile", wxDefaultPosition, kDefaultButtonSize2);
   auto btnDuplicateProfile = new wxButton(pnlProfile, wxID_ANY, "Duplicate this Profile", wxDefaultPosition, kDefaultButtonSize2);
 
   // Profiles Box
-  m_titlesMap = std::make_unique<config::game_title_map_t>(config::GetTitleIds());
-  m_name = new wxTextCtrl(pnlProfile, wxID_ANY, "Lorem Ipsum", wxDefaultPosition, wxSize(250, 20), wxTE_LEFT);
-  m_name->SetMaxLength(kMaxProfileLength);
-  m_profileGameTitle = new wxTextCtrl(pnlProfile, wxID_ANY, "lorem", wxDefaultPosition, wxSize(200, 20), wxTE_READONLY | wxTE_LEFT);
-  m_profileID = new wxTextCtrl(pnlProfile, wxID_ANY, "2201576", wxDefaultPosition, wxSize(60, 20), wxTE_LEFT, validatorAlphanumeric, "");
-  auto btnPickTitle = new wxButton(pnlProfile, wxID_ANY, "Pick Title", wxDefaultPosition, kDefaultButtonSize, 0, wxDefaultValidator, "");
-  m_useDefaultPadding = new wxCheckBox(pnlProfile, wxID_ANY, "Use Default Padding", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-  auto btnMoveUp = new wxButton(pnlProfile, wxID_ANY, "Up", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
-  auto btnMoveDown = new wxButton(pnlProfile, wxID_ANY, "Down", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
-  auto btnAddDisplay = new wxButton(pnlProfile, wxID_ANY, "+", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
-  auto btnRemoveDisplay = new wxButton(pnlProfile, wxID_ANY, "-", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
+  p_titles_map_ = std::make_unique<config::game_title_map_t>(config::GetTitleIds());
+  p_text_name_ = new wxTextCtrl(pnlProfile, wxID_ANY, "Lorem Ipsum", wxDefaultPosition, wxSize(250, 20), wxTE_LEFT);
+  p_text_name_->SetMaxLength(kMaxProfileLength);
+  p_text_profile_game_title_ = new wxTextCtrl(pnlProfile, wxID_ANY, "lorem", wxDefaultPosition, wxSize(200, 20), wxTE_READONLY | wxTE_LEFT);
+  p_text_profile_id_ = new wxTextCtrl(pnlProfile, wxID_ANY, "2201576", wxDefaultPosition, wxSize(60, 20), wxTE_LEFT, validatorAlphanumeric, "");
+  auto btn_pick_title = new wxButton(pnlProfile, wxID_ANY, "Pick Title", wxDefaultPosition, kDefaultButtonSize, 0, wxDefaultValidator, "");
+  p_check_use_default_padding_ = new wxCheckBox(pnlProfile, wxID_ANY, "Use Default Padding", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  auto btn_move_up = new wxButton(pnlProfile, wxID_ANY, "Up", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
+  auto btn_move_down = new wxButton(pnlProfile, wxID_ANY, "Down", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
+  auto btn_add_display = new wxButton(pnlProfile, wxID_ANY, "+", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
+  auto btn_remove_display = new wxButton(pnlProfile, wxID_ANY, "-", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
 
   constexpr int kColumnWidth = 70;
-  m_tlcMappingData = new wxDataViewListCtrl(pnlProfile, myID_MAPPING_DATA, wxDefaultPosition, wxSize(680, 180), wxDV_HORIZ_RULES, wxDefaultValidator);
-  m_tlcMappingData->AppendTextColumn("Display #", wxDATAVIEW_CELL_INERT, -1, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  p_view_mapping_data_ = new wxDataViewListCtrl(pnlProfile, myID_MAPPING_DATA, wxDefaultPosition, wxSize(680, 180), wxDV_HORIZ_RULES, wxDefaultValidator);
+  p_view_mapping_data_->AppendTextColumn("Display #", wxDATAVIEW_CELL_INERT, -1, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
   //int col = 1;
   // 
   // TODO: add dataview spin class renderer to control
@@ -259,15 +268,15 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   //auto tttl = new wxString("titleee");
   //auto dvcol = new wxDataViewColumn(*tttl, rend, 1);
 
-  //m_tlcMappingData->AppendColumn(dvcol);
-  m_tlcMappingData->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Right", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Bottom", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Right", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  m_tlcMappingData->AppendTextColumn("Bottom", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  //p_view_mapping_data_->AppendColumn(dvcol);
+  p_view_mapping_data_->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  p_view_mapping_data_->AppendTextColumn("Right", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  p_view_mapping_data_->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  p_view_mapping_data_->AppendTextColumn("Bottom", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  p_view_mapping_data_->AppendTextColumn("Left", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  p_view_mapping_data_->AppendTextColumn("Right", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  p_view_mapping_data_->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
+  p_view_mapping_data_->AppendTextColumn("Bottom", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
 
   auto txtPanelTitle = new wxStaticText(pnlProfile, wxID_ANY, "Active Profile - Panel");
   auto txtProfileName = new wxStaticText(pnlProfile, wxID_ANY, "Name:  ");
@@ -282,13 +291,13 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
 
   // Profile Info Panel
   auto zrDisplayControls = new wxBoxSizer(wxVERTICAL);
-  zrDisplayControls->Add(btnMoveUp);
-  zrDisplayControls->Add(btnMoveDown);
-  zrDisplayControls->Add(btnAddDisplay);
-  zrDisplayControls->Add(btnRemoveDisplay);
+  zrDisplayControls->Add(btn_move_up);
+  zrDisplayControls->Add(btn_move_down);
+  zrDisplayControls->Add(btn_add_display);
+  zrDisplayControls->Add(btn_remove_display);
 
   auto zrMapping = new wxBoxSizer(wxHORIZONTAL);
-  zrMapping->Add(m_tlcMappingData, 0, wxALL, 5);
+  zrMapping->Add(p_view_mapping_data_, 0, wxALL, 5);
   zrMapping->Add(zrDisplayControls, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 
   auto zrInfo = new wxFlexGridSizer(4, 5, 5);
@@ -296,14 +305,14 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   zrInfo->Add(txtGameTitle);
   zrInfo->Add(txtProfileId);
   zrInfo->AddSpacer(1);
-  zrInfo->Add(m_name, 0, wxALIGN_CENTER_VERTICAL, 0);
-  zrInfo->Add(m_profileGameTitle, 0, wxALIGN_CENTER_VERTICAL, 0);
-  zrInfo->Add(m_profileID, 0, wxALIGN_CENTER_VERTICAL, 0);
-  zrInfo->Add(btnPickTitle, 0, wxALIGN_CENTER_VERTICAL, 0);
+  zrInfo->Add(p_text_name_, 0, wxALIGN_CENTER_VERTICAL, 0);
+  zrInfo->Add(p_text_profile_game_title_, 0, wxALIGN_CENTER_VERTICAL, 0);
+  zrInfo->Add(p_text_profile_id_, 0, wxALIGN_CENTER_VERTICAL, 0);
+  zrInfo->Add(btn_pick_title, 0, wxALIGN_CENTER_VERTICAL, 0);
 
   auto *zrProfileCmds = new wxBoxSizer(wxHORIZONTAL);
   zrProfileCmds->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
-  zrProfileCmds->Add(m_cmbProfiles, 1, wxEXPAND | wxTOP | wxRIGHT, 1);
+  zrProfileCmds->Add(p_combo_profiles_, 1, wxEXPAND | wxTOP | wxRIGHT, 1);
   zrProfileCmds->Add(btnAddProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
   zrProfileCmds->Add(btnRemoveProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
   zrProfileCmds->Add(btnDuplicateProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
@@ -312,7 +321,7 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   zrProfilePnl->Add(zrProfileCmds, 0, wxBOTTOM | wxEXPAND, 10);
   zrProfilePnl->Add(txtPanelTitle, 0, wxALL, 5);
   zrProfilePnl->Add(zrInfo, 0, wxALL | wxEXPAND, 5);
-  zrProfilePnl->Add(m_useDefaultPadding, 0, wxALL, 5);
+  zrProfilePnl->Add(p_check_use_default_padding_, 0, wxALL, 5);
   zrProfilePnl->Add(txtHeaders, 0, wxLEFT | wxTOP, 5);
   zrProfilePnl->Add(zrMapping, 0, wxLEFT | wxTOP, 5);
 
@@ -325,12 +334,12 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
   zrTrackCmds->Add(btnHide, 0, wxALL, 0);
 
   auto *zrLogWindow = new wxBoxSizer(wxVERTICAL);
-  zrLogWindow->Add(m_lbtextrich, 0, wxBOTTOM, 5);
-  zrLogWindow->Add(m_textrich, 1, wxEXPAND, 0);
+  zrLogWindow->Add(label_text_rich_, 0, wxBOTTOM, 5);
+  zrLogWindow->Add(p_text_rich_, 1, wxEXPAND, 0);
 
   auto *zrApp = new wxBoxSizer(wxVERTICAL);
   zrApp->Add(zrTrackCmds, 0, wxBOTTOM, 10);
-  zrApp->Add(m_displayGraphic, 1, wxALL | wxEXPAND, 20);
+  zrApp->Add(p_display_graphic_, 1, wxALL | wxEXPAND, 20);
   zrApp->Add(pnlProfile, 0, wxALL, 5);
 
   auto *top = new wxBoxSizer(wxHORIZONTAL);
@@ -349,61 +358,67 @@ cFrame::cFrame(wxPoint origin, wxSize dimensions)
 	//This function is currently only implemented under Windows.
 	//It is used in the Windows CE port for detecting hardware button presses.
 	// TODO: wrap hotkeys in their own class to ensure destructor is called, or make a table
-	hotkey_alternate_mode = std::make_unique<GlobalHotkey>(GetHandle(), HOTKEY_ID_SCROLL_LAST, wxMOD_NONE, VK_F18);  // b key
-	Bind(wxEVT_HOTKEY, &cFrame::OnGlobalHotkey, this, hotkey_alternate_mode->m_id);
+	hotkey_alternate_mode_ = std::make_unique<GlobalHotkey>(GetHandle(), HOTKEY_ID_SCROLL_LAST, wxMOD_NONE, VK_F18);  // b key
+	Bind(wxEVT_HOTKEY, &Frame::OnGlobalHotkey, this, hotkey_alternate_mode_->profile_id_);
 
 
   // Bind Menu Events
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnAbout, this, wxID_ABOUT);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnExit, this, wxID_EXIT);
-  // Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnOpen, this, wxID_OPEN);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnSave, this, wxID_SAVE);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnReload, this, myID_MENU_RELOAD);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &cFrame::OnSettings, this, myID_MENU_SETTINGS);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnAbout, this, wxID_ABOUT);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnExit, this, wxID_EXIT);
+  // Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnOpen, this, wxID_OPEN);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnSave, this, wxID_SAVE);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnReload, this, myID_MENU_RELOAD);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnSettings, this, myID_MENU_SETTINGS);
 
   // Set Control Tooltips
   btnStartMouse->SetToolTip(wxT("Start controlling mouse with head tracking."));
   btnStopMouse->SetToolTip(wxT("Stop control of the mouse."));
 
   // Bind Main Controls
-  btnStartMouse->Bind(wxEVT_BUTTON, &cFrame::OnStart, this);
-  btnStopMouse->Bind(wxEVT_BUTTON, &cFrame::OnStop, this);
-  btnHide->Bind(wxEVT_BUTTON, &cFrame::OnShowLog, this);
+  btnStartMouse->Bind(wxEVT_BUTTON, &Frame::OnStart, this);
+  btnStopMouse->Bind(wxEVT_BUTTON, &Frame::OnStop, this);
+  btnHide->Bind(wxEVT_BUTTON, &Frame::OnShowLog, this);
   
-  m_cmbProfiles->Bind(wxEVT_CHOICE, &cFrame::OnActiveProfile, this);
-  btnAddProfile->Bind(wxEVT_BUTTON, &cFrame::OnAddProfile, this);
-  btnRemoveProfile->Bind(wxEVT_BUTTON, &cFrame::OnRemoveProfile, this);
-  btnDuplicateProfile->Bind(wxEVT_BUTTON, &cFrame::OnDuplicateProfile, this);
+  p_combo_profiles_->Bind(wxEVT_CHOICE, &Frame::OnActiveProfile, this);
+  btnAddProfile->Bind(wxEVT_BUTTON, &Frame::OnAddProfile, this);
+  btnRemoveProfile->Bind(wxEVT_BUTTON, &Frame::OnRemoveProfile, this);
+  btnDuplicateProfile->Bind(wxEVT_BUTTON, &Frame::OnDuplicateProfile, this);
 
   // Bind Profile Info Controls
-  m_name->Bind(wxEVT_TEXT, &cFrame::OnName, this);
-  m_profileID->Bind(wxEVT_TEXT, &cFrame::OnProfileID, this);
-  btnPickTitle->Bind(wxEVT_BUTTON, &cFrame::OnPickTitle, this);
-  m_useDefaultPadding->Bind(wxEVT_CHECKBOX, &cFrame::OnUseDefaultPadding, this);
-  m_tlcMappingData->Bind(wxEVT_DATAVIEW_ITEM_EDITING_DONE, &cFrame::OnMappingData, this);
-  btnAddDisplay->Bind(wxEVT_BUTTON, &cFrame::OnAddDisplay, this);
-  btnRemoveDisplay->Bind(wxEVT_BUTTON, &cFrame::OnRemoveDisplay, this);
-  btnMoveUp->Bind(wxEVT_BUTTON, &cFrame::OnMoveUp, this);
-  btnMoveDown->Bind(wxEVT_BUTTON, &cFrame::OnMoveDown, this);
+  p_text_name_->Bind(wxEVT_TEXT, &Frame::OnName, this);
+  p_text_profile_id_->Bind(wxEVT_TEXT, &Frame::OnProfileID, this);
+  btn_pick_title->Bind(wxEVT_BUTTON, &Frame::OnPickTitle, this);
+  p_check_use_default_padding_->Bind(wxEVT_CHECKBOX, &Frame::OnUseDefaultPadding, this);
+  p_view_mapping_data_->Bind(wxEVT_DATAVIEW_ITEM_EDITING_DONE, &Frame::OnMappingData, this);
+  btn_add_display->Bind(wxEVT_BUTTON, &Frame::OnAddDisplay, this);
+  btn_remove_display->Bind(wxEVT_BUTTON, &Frame::OnRemoveDisplay, this);
+  btn_move_up->Bind(wxEVT_BUTTON, &Frame::OnMoveUp, this);
+  btn_move_down->Bind(wxEVT_BUTTON, &Frame::OnMoveDown, this);
 }
 // clang-format on
 
-void cFrame::OnExit(wxCommandEvent &event) { Close(true); }
+void
+Frame::OnExit(wxCommandEvent& event)
+{
+  Close(true);
+}
 
-void cFrame::OnAbout(wxCommandEvent &event) {
+void
+Frame::OnAbout(wxCommandEvent& event)
+{
   std::string msg = fmt::format(
-      "Version No.  {}\nThis is a mouse control application using head "
-      "tracking.\n"
-      "Author: George Kuegler\n"
-      "E-mail: georgekuegler@gmail.com",
-      kVersionNo);
+    "Version No.  {}\nThis is a mouse control application using head "
+    "tracking.\n"
+    "Author: George Kuegler\n"
+    "E-mail: georgekuegler@gmail.com",
+    k_version_no);
 
   wxMessageBox(msg, "About TrackIRMouse", wxOK | wxICON_NONE);
 }
 
 // Not implementing till future. Having the user pick their own settings
 // filename would require the use of saved data outside this program
-// void cFrame::OnOpen(wxCommandEvent &event) {
+// void Frame::OnOpen(wxCommandEvent &event) {
 //   const char lpFilename[MAX_PATH] = {0};
 //   DWORD result = GetModuleFileNameA(0, (LPSTR)lpFilename, MAX_PATH);
 //   wxString defaultFilePath;
@@ -412,7 +427,7 @@ void cFrame::OnAbout(wxCommandEvent &event) {
 //     defaultFilePath =
 //         executablePath.substr(0, executablePath.find_last_of("\\/"));
 //     // defaultFilePath = wxString(lpFilename, static_cast<size_t>(result));
-//     spdlog::debug("default file path for dialog: {}", defaultFilePath);
+//     spdlog::debug("default file path for dialog_: {}", defaultFilePath);
 //   } else {
 //     defaultFilePath = wxEmptyString;
 //   }
@@ -432,18 +447,24 @@ void cFrame::OnAbout(wxCommandEvent &event) {
 //   wxLogError("Method not implemented yet!");
 // }
 
-void cFrame::OnSave(wxCommandEvent &event) {
-  config::Get()->SaveToFile("settings.toml");
+void
+Frame::OnSave(wxCommandEvent& event)
+{
+  config::Get()->save_to_file("settings.toml");
 }
 
-void cFrame::OnGlobalHotkey(wxKeyEvent &event) {
+void
+Frame::OnGlobalHotkey(wxKeyEvent& event)
+{
   spdlog::debug("hot key event");
-  if (m_pTrackThread) {
-    m_pTrackThread->m_handler->toggle_alternate_mode();
+  if (p_track_thread_) {
+    p_track_thread_->handler_->toggle_alternate_mode();
   }
 }
 
-void cFrame::InitializeSettings() {
+void
+Frame::InitializeSettings()
+{
   const std::string filename = "settings.toml";
   config::ConfigReturn result = config::LoadFromFile(filename);
   if (retcode::success == result.code) {
@@ -451,14 +472,17 @@ void cFrame::InitializeSettings() {
   } else {
     const wxString ok = "Load Empty User Settings";
     const wxString cancel = "Quit";
-    const wxString instructions = wxString::Format(
-        "\n\nPress \"%s\" to load a default user settings "
-        "template.\nWarning: "
-        "data may be overwritten if you "
-        "continue with this option and then later save.\n"
-        "Press \"%s\" to exit the program.",
-        ok, cancel);
-    auto dlg = wxMessageDialog(this, result.err_msg + instructions, "Error",
+    const wxString instructions =
+      wxString::Format("\n\nPress \"%s\" to load a default user settings "
+                       "template.\nWarning: "
+                       "data may be overwritten if you "
+                       "continue with this option and then later save.\n"
+                       "Press \"%s\" to exit the program.",
+                       ok,
+                       cancel);
+    auto dlg = wxMessageDialog(this,
+                               result.err_msg + instructions,
+                               "Error",
                                wxICON_ERROR | wxOK | wxCANCEL);
     dlg.SetOKCancelLabels(ok, cancel);
 
@@ -466,8 +490,7 @@ void cFrame::InitializeSettings() {
     // give user the chance to quit application (preventing possible data
     // loss and manually fixing the error) or load default/empty config
     if (dlg.ShowModal() == wxID_OK) {
-      auto config = config::Config();
-      config::Set(config);
+      config::Set(config::Config());
     } else {
       spdlog::warn("user closed app when presented with invalid settings load");
       Close(true);
@@ -475,13 +498,17 @@ void cFrame::InitializeSettings() {
   }
 }
 
-void cFrame::UpdateGuiUsingSettings() {
+void
+Frame::UpdateGuiUsingSettings()
+{
   // Populate GUI With Settings
   PopulateComboBoxWithProfiles();
   LoadDisplaySettings();
 }
 
-void cFrame::OnReload(wxCommandEvent &event) {
+void
+Frame::OnReload(wxCommandEvent& event)
+{
   // TODO: urgent, delete existing settings
   // a smarter idea would be to make a settings builder function would
   // make sure that the settings can be loaded first before replacing
@@ -490,9 +517,11 @@ void cFrame::OnReload(wxCommandEvent &event) {
   UpdateGuiUsingSettings();
 }
 
-void cFrame::OnSettings(wxCommandEvent &event) {
+void
+Frame::OnSettings(wxCommandEvent& event)
+{
   auto config = config::Get();
-  auto usr = config->userData;  // copy user data
+  auto usr = config->user_data; // copy user data
 
   // Show the settings pop up while disabling input on main window
   cSettingsPopup dlg(this, &usr);
@@ -500,55 +529,60 @@ void cFrame::OnSettings(wxCommandEvent &event) {
 
   if (wxID_OK == results) {
     spdlog::debug("settings applied.");
-    config->userData = usr;  // apply settings
+    config->user_data = usr; // apply settings
 
     // reload any resources from setting changes:
     // TODO: make resources reload on setting changes
-    auto logger = spdlog::get("main");
-    logger->set_level(usr.logLevel);
+    auto logger_ = spdlog::get("main");
+    logger_->set_level(usr.log_level);
   } else if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
   }
 }
 
-void cFrame::PopulateComboBoxWithProfiles() {
+void
+Frame::PopulateComboBoxWithProfiles()
+{
   spdlog::trace("repopulating profiles combobox");
-  m_cmbProfiles->Clear();
-  for (auto &item : config::Get()->GetProfileNames()) {
-    m_cmbProfiles->Append(item);
+  p_combo_profiles_->Clear();
+  for (auto& item : config::Get()->GetProfileNames()) {
+    p_combo_profiles_->Append(item);
   }
 
-  int index = m_cmbProfiles->FindString(config::Get()->GetActiveProfile().name);
+  int index =
+    p_combo_profiles_->FindString(config::Get()->GetActiveProfile().name);
   if (wxNOT_FOUND != index) {
-    m_cmbProfiles->SetSelection(index);
+    p_combo_profiles_->SetSelection(index);
     LoadDisplaySettings();
   } else {
     wxFAIL_MSG("unable to find new profile in drop-down");
   }
 }
 
-void cFrame::OnStart(wxCommandEvent &event) {
-  if (m_pTrackThread) {
+void
+Frame::OnStart(wxCommandEvent& event)
+{
+  if (p_track_thread_) {
     spdlog::warn("Tracking thread was already running. Stopped.");
-    m_pTrackThread->m_tracker->stop();
+    p_track_thread_->tracker_->stop();
     // loop to wait for destruction of thread
     // thread will set its pointer to NULL upon destruction
     while (true) {
       Sleep(8);
-      wxCriticalSectionLocker enter(m_pThreadCS);
-      if (m_pTrackThread == NULL) {
+      wxCriticalSectionLocker enter(p_thread_cs);
+      if (p_track_thread_ == NULL) {
         break;
       }
     }
   }
 
   // Threads run in detached mode by default.
-  m_pTrackThread = new TrackThread(this, GetHandle(), config::Get());
+  p_track_thread_ = new TrackThread(this, GetHandle(), config::Get());
 
-  if (m_pTrackThread->Run() != wxTHREAD_NO_ERROR) {  // returns immediately
+  if (p_track_thread_->Run() != wxTHREAD_NO_ERROR) { // returns immediately
     wxLogError("Can't run the tracking thread!");
-    delete m_pTrackThread;
-    m_pTrackThread = nullptr;
+    delete p_track_thread_;
+    p_track_thread_ = nullptr;
     return;
   }
 
@@ -560,41 +594,49 @@ void cFrame::OnStart(wxCommandEvent &event) {
   // nullptr when the thread dies.
 }
 
-void cFrame::OnStop(wxCommandEvent &event) {
+void
+Frame::OnStop(wxCommandEvent& event)
+{
   // Threads run in detached mode by default.
-  // The thread is responsible for setting m_pTrackThread to nullptr when
+  // The thread is responsible for setting p_track_thread_ to nullptr when
   // it finishes and destroys itself.
-  if (m_pTrackThread) {
+  if (p_track_thread_) {
     // This will gracefully exit the tracking loop and return control to
     // the wxThread class. The thread will then finish and and delete
     // itself.
-    m_pTrackThread->m_tracker->stop();
+    p_track_thread_->tracker_->stop();
   } else {
     spdlog::warn("Track thread not running!");
   }
 }
 
-void cFrame::OnShowLog(wxCommandEvent &event) {
-  if (m_textrich->IsShown()) {
-    m_textrich->Hide();
-    m_lbtextrich->Hide();
+void
+Frame::OnShowLog(wxCommandEvent& event)
+{
+  if (p_text_rich_->IsShown()) {
+    p_text_rich_->Hide();
+    label_text_rich_->Hide();
   } else {
-    m_textrich->Show();
-    m_lbtextrich->Show();
+    p_text_rich_->Show();
+    label_text_rich_->Show();
   }
 }
 
-void cFrame::OnActiveProfile(wxCommandEvent &event) {
-  const int index = m_cmbProfiles->GetSelection();
+void
+Frame::OnActiveProfile(wxCommandEvent& event)
+{
+  const int index = p_combo_profiles_->GetSelection();
   // TODO: make all strings utf-8
-  const auto name = m_cmbProfiles->GetString(index).ToStdString();
+  const auto name = p_combo_profiles_->GetString(index).ToStdString();
   config::Get()->SetActiveProfile(name);
   LoadDisplaySettings();
 }
 
-void cFrame::OnAddProfile(wxCommandEvent &event) {
-  wxTextEntryDialog dlg(this, "Add Profile",
-                        "Specify a Name for the New Profile");
+void
+Frame::OnAddProfile(wxCommandEvent& event)
+{
+  wxTextEntryDialog dlg(
+    this, "Add Profile", "Specify a Name for the New Profile");
   // dlg.SetTextValidator(wxFILTER_ALPHANUMERIC);
   dlg.SetMaxLength(kMaxProfileLength);
   if (dlg.ShowModal() == wxID_OK) {
@@ -606,20 +648,22 @@ void cFrame::OnAddProfile(wxCommandEvent &event) {
   }
 }
 
-void cFrame::OnRemoveProfile(wxCommandEvent &event) {
+void
+Frame::OnRemoveProfile(wxCommandEvent& event)
+{
   wxArrayString choices;
-  for (auto &name : config::Get()->GetProfileNames()) {
+  for (auto& name : config::Get()->GetProfileNames()) {
     choices.Add(name);
   }
 
   const wxString msg = "Delete a Profile";
   const wxString msg2 = "Press OK";
-  wxMultiChoiceDialog dlg(this, msg, msg2, choices, wxOK | wxCANCEL,
-                          wxDefaultPosition);
+  wxMultiChoiceDialog dlg(
+    this, msg, msg2, choices, wxOK | wxCANCEL, wxDefaultPosition);
 
   if (wxID_OK == dlg.ShowModal()) {
     auto selections = dlg.GetSelections();
-    for (auto &index : selections) {
+    for (auto& index : selections) {
       config::Get()->RemoveProfile(choices[index].ToStdString());
     }
 
@@ -628,13 +672,17 @@ void cFrame::OnRemoveProfile(wxCommandEvent &event) {
   }
 }
 
-void cFrame::OnDuplicateProfile(wxCommandEvent &event) {
+void
+Frame::OnDuplicateProfile(wxCommandEvent& event)
+{
   config::Get()->DuplicateActiveProfile();
   LoadDisplaySettings();
   PopulateComboBoxWithProfiles();
 }
 
-void cFrame::LoadDisplaySettings() {
+void
+Frame::LoadDisplaySettings()
+{
   const auto profile = config::Get()->GetActiveProfile();
   // auto map = config::GetTitleIds();
 
@@ -642,13 +690,14 @@ void cFrame::LoadDisplaySettings() {
   // SetValue does not cause an event to be sent for checkboxes.
   // Use ChangeEvent instead.
   // We don't want to register event when we're just loading values.
-  m_name->ChangeValue(profile.name);
-  auto *titles = m_titlesMap.get();
-  m_profileGameTitle->ChangeValue((*titles)[std::to_string(profile.profileId)]);
-  m_profileID->ChangeValue(wxString::Format("%d", profile.profileId));
-  m_useDefaultPadding->SetValue(profile.useDefaultPadding);
+  p_text_name_->ChangeValue(profile.name);
+  auto* titles = p_titles_map_.get();
+  p_text_profile_game_title_->ChangeValue(
+    (*titles)[std::to_string(profile.profile_id)]);
+  p_text_profile_id_->ChangeValue(wxString::Format("%d", profile.profile_id));
+  p_check_use_default_padding_->SetValue(profile.use_default_padding);
 
-  m_tlcMappingData->DeleteAllItems();
+  p_view_mapping_data_->DeleteAllItems();
 
   int displayNum = 0;
 
@@ -656,102 +705,116 @@ void cFrame::LoadDisplaySettings() {
     wxVector<wxVariant> row;
     row.push_back(wxVariant(wxString::Format("%d", i)));
 
-    for (int j = 0; j < 4; j++) {  // left, right, top, bottom
-      row.push_back(wxVariant(
-          wxString::Format("%7.2f", profile.displays[i].rotation[j])));
+    for (int j = 0; j < 4; j++) { // left, right, top, bottom
+      row.push_back(
+        wxVariant(wxString::Format("%7.2f", profile.displays[i].rotation[j])));
     }
-    for (int j = 0; j < 4; j++) {  // left, right, top, bottom
-      if (m_useDefaultPadding->IsChecked()) {
+    for (int j = 0; j < 4; j++) { // left, right, top, bottom
+      if (p_check_use_default_padding_->IsChecked()) {
         row.push_back(wxVariant(wxString::Format("%s", "(default)")));
       } else {
         row.push_back(
-            wxVariant(wxString::Format("%d", profile.displays[i].padding[j])));
+          wxVariant(wxString::Format("%d", profile.displays[i].padding[j])));
       }
     }
-    m_tlcMappingData->AppendItem(row);
+    p_view_mapping_data_->AppendItem(row);
   }
   // display graphic->PaintNow();
 }
 
-void cFrame::OnName(wxCommandEvent &event) {
-  const auto text = m_name->GetLineText(0).ToStdString();
-  auto &profile = config::Get()->GetActiveProfile();
+void
+Frame::OnName(wxCommandEvent& event)
+{
+  const auto text = p_text_name_->GetLineText(0).ToStdString();
+  auto& profile = config::Get()->GetActiveProfile();
   profile.name = text;
-  config::Get()->userData.activeProfileName = text;
+  config::Get()->user_data.active_profile_name = text;
   // TODO: fix parent hierarchy
-  // m_parent->PopulateComboBoxWithProfiles();
+  // p_parent_->PopulateComboBoxWithProfiles();
 }
 
-void cFrame::OnProfileID(wxCommandEvent &event) {
-  const auto number = m_profileID->GetValue();  // from txt entry inheritted
+void
+Frame::OnProfileID(wxCommandEvent& event)
+{
+  const auto number =
+    p_text_profile_id_->GetValue(); // from txt entry inheritted
   long value;
-  if (!number.ToLong(&value)) {  // wxWidgets has odd conversions
+  if (!number.ToLong(&value)) { // wxWidgets has odd conversions
     spdlog::error("Couldn't convert value to integer.");
     return;
   };
-  auto &profile = config::Get()->GetActiveProfile();
-  profile.profileId = static_cast<int>(value);
+  auto& profile = config::Get()->GetActiveProfile();
+  profile.profile_id = static_cast<int>(value);
   LoadDisplaySettings();
 }
 
-void cFrame::OnPickTitle(wxCommandEvent &event) {
+void
+Frame::OnPickTitle(wxCommandEvent& event)
+{
   // a defaut map should have been provided at load time
   // if the map failed to load from file
-  wxASSERT((*m_titlesMap).empty() == false);
+  wxASSERT((*p_titles_map_).empty() == false);
 
   // seperate named and unamed for sorting purposes
   // in this case I would like title ID #'s with names to be sorted
   // alphabetically up front, while the ID #'s with no name to be sorted
   // by ID # after.
-  game_titles_t titlesNamed;
-  game_titles_t titlesEmptyName;
-  titlesNamed.reserve(m_titlesMap->size());
-  titlesEmptyName.reserve(m_titlesMap->size());
+  GameTitles titles_named;
+  GameTitles titles_no_name;
+  titles_named.reserve(p_titles_map_->size());
+  titles_no_name.reserve(p_titles_map_->size());
 
-  for (auto &[key, item] : *m_titlesMap) {
+  for (auto& [key, item] : *p_titles_map_) {
     if (item.empty()) {
-      titlesEmptyName.push_back({item, key});
+      titles_no_name.push_back({ item, key });
     } else {
-      titlesNamed.push_back({item, key});
+      titles_named.push_back({ item, key });
     }
   }
 
-  std::sort(titlesNamed.begin(), titlesNamed.end(),
-            [](const std::pair<std::string, std::string> &left,
-               const std::pair<std::string, std::string> &right) {
+  std::sort(titles_named.begin(),
+            titles_named.end(),
+            [](const std::pair<std::string, std::string>& left,
+               const std::pair<std::string, std::string>& right) {
               return left.first < right.first;
             });
 
-  std::sort(titlesEmptyName.begin(), titlesEmptyName.end(),
-            [](const std::pair<std::string, std::string> &left,
-               const std::pair<std::string, std::string> &right) {
+  std::sort(titles_no_name.begin(),
+            titles_no_name.end(),
+            [](const std::pair<std::string, std::string>& left,
+               const std::pair<std::string, std::string>& right) {
               return std::stoi(left.second) < std::stoi(right.second);
             });
 
   // construct array used for displaying game titles to user
-  game_titles_t titles(titlesNamed.size() + titlesEmptyName.size());
-  titles.insert(titles.end(), titlesNamed.begin(), titlesNamed.end());
-  titles.insert(titles.end(), titlesEmptyName.begin(), titlesEmptyName.end());
+  GameTitles titles(titles_named.size() + titles_no_name.size());
+  titles.insert(titles.end(), titles_named.begin(), titles_named.end());
+  titles.insert(titles.end(), titles_no_name.begin(), titles_no_name.end());
 
-  int id = 0;
-  cProfileIdSelector dlg(this, &id, titles);
+  // TODO: this can't be good
+  int profile_id = 0;
+  cProfileIdSelector dlg(this, &profile_id, titles);
   if (dlg.ShowModal() == wxID_OK) {
-    auto &profile = config::Get()->GetActiveProfile();
-    profile.profileId = id;
+    auto& profile = config::Get()->GetActiveProfile();
+    profile.profile_id = profile_id;
 
     LoadDisplaySettings();
   }
   return;
 }
 
-void cFrame::OnUseDefaultPadding(wxCommandEvent &event) {
-  auto &profile = config::Get()->GetActiveProfile();
-  profile.useDefaultPadding = m_useDefaultPadding->IsChecked();
+void
+Frame::OnUseDefaultPadding(wxCommandEvent& event)
+{
+  auto& profile = config::Get()->GetActiveProfile();
+  profile.use_default_padding = p_check_use_default_padding_->IsChecked();
   LoadDisplaySettings();
 }
 
-void cFrame::OnMappingData(wxDataViewEvent &event) {
-  auto &profile = config::Get()->GetActiveProfile();
+void
+Frame::OnMappingData(wxDataViewEvent& event)
+{
+  auto& profile = config::Get()->GetActiveProfile();
 
   // finding column
   const wxVariant value = event.GetValue();
@@ -759,14 +822,14 @@ void cFrame::OnMappingData(wxDataViewEvent &event) {
 
   // finding associated row; there is no event->GetRow()!?
   const wxDataViewItem item = event.GetItem();
-  const wxDataViewIndexListModel *model =
-      (wxDataViewIndexListModel *)(event.GetModel());
+  const wxDataViewIndexListModel* model =
+    (wxDataViewIndexListModel*)(event.GetModel());
   const int row = model->GetRow(item);
 
   // if rotation value was selected
   // note 0th column made non-editable
   if (column < 5) {
-    double number;  // wxWidgets has odd string conversion procedures
+    double number; // wxWidgets has odd string conversion procedures
     if (!value.GetString().ToDouble(&number)) {
       spdlog::error("Value could not be converted to a number.");
       return;
@@ -776,20 +839,19 @@ void cFrame::OnMappingData(wxDataViewEvent &event) {
     // input make numbers only allowed too. validate input
     if (number > 180) {
       spdlog::error(
-          "Value can't be greater than 180. This is a limitation of the "
-          "TrackIR software.");
+        "Value can't be greater than 180. This is a limitation of the "
+        "TrackIR software.");
       return;
     }
     if (number < -180) {
-      spdlog::error(
-          "Value can't be less than -180. This is a limitation of "
-          "the TrackIR "
-          "software.");
+      spdlog::error("Value can't be less than -180. This is a limitation of "
+                    "the TrackIR "
+                    "software.");
       return;
     }
     profile.displays[row].rotation[column - 1] = static_cast<double>(number);
-  } else {        // padding value selected
-    long number;  // wxWidgets has odd string conversion procedures
+  } else {       // padding value selected
+    long number; // wxWidgets has odd string conversion procedures
     if (!value.GetString().ToLong(&number)) {
       wxLogError("Value could not be converted to a number.");
       return;
@@ -802,69 +864,79 @@ void cFrame::OnMappingData(wxDataViewEvent &event) {
   }
 
   LoadDisplaySettings();
-  m_displayGraphic->PaintNow();
+  p_display_graphic_->PaintNow();
 }
 
-void cFrame::OnAddDisplay(wxCommandEvent &event) {
-  auto &profile = config::Get()->GetActiveProfile();
+void
+Frame::OnAddDisplay(wxCommandEvent& event)
+{
+  auto& profile = config::Get()->GetActiveProfile();
   // TODO: can this be emplace back?
-  profile.displays.push_back(config::Display({0, 0, 0, 0}, {0, 0, 0, 0}));
+  profile.displays.push_back(config::Display({ 0, 0, 0, 0 }, { 0, 0, 0, 0 }));
   LoadDisplaySettings();
-  m_displayGraphic->PaintNow();
+  p_display_graphic_->PaintNow();
 }
 
-void cFrame::OnRemoveDisplay(wxCommandEvent &event) {
-  auto &profile = config::Get()->GetActiveProfile();
+void
+Frame::OnRemoveDisplay(wxCommandEvent& event)
+{
+  auto& profile = config::Get()->GetActiveProfile();
   // TODO: add const here to index, and everywhere possible
-  const auto index = m_tlcMappingData->GetSelectedRow();
+  const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND != index) {
     profile.displays.erase(profile.displays.begin() + index);
     LoadDisplaySettings();
-    m_displayGraphic->PaintNow();
+    p_display_graphic_->PaintNow();
   } else {
     wxLogError("Display row not selected.");
   }
 }
 
-void cFrame::OnMoveUp(wxCommandEvent &event) {
-  auto &profile = config::Get()->GetActiveProfile();
-  const auto index = m_tlcMappingData->GetSelectedRow();
+void
+Frame::OnMoveUp(wxCommandEvent& event)
+{
+  auto& profile = config::Get()->GetActiveProfile();
+  const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     wxLogError("Display row not selected.");
   } else if (0 == index) {
-    return;  // selection is at the top. do nothing
+    return; // selection is at the top. do nothing
   } else {
     std::swap(profile.displays[index], profile.displays[index - 1]);
     LoadDisplaySettings();
 
     // Change the selection index to match the item we just moved
     // This is a terrible hack to find the row of the item we just moved
-    const auto model = (wxDataViewIndexListModel *)m_tlcMappingData->GetModel();
+    const auto model =
+      (wxDataViewIndexListModel*)p_view_mapping_data_->GetModel();
     const auto item = model->GetItem(index - 1);
-    wxDataViewItemArray items(size_t(1));  // no braced init constructor :(
-    items[0] = item;                       // assumed single selection mode
-    m_tlcMappingData->SetSelections(items);
-    m_displayGraphic->PaintNow();
+    wxDataViewItemArray items(size_t(1)); // no braced init constructor :(
+    items[0] = item;                      // assumed single selection mode
+    p_view_mapping_data_->SetSelections(items);
+    p_display_graphic_->PaintNow();
   }
 }
-void cFrame::OnMoveDown(wxCommandEvent &event) {
-  auto &profile = config::Get()->GetActiveProfile();
-  const auto index = m_tlcMappingData->GetSelectedRow();
+void
+Frame::OnMoveDown(wxCommandEvent& event)
+{
+  auto& profile = config::Get()->GetActiveProfile();
+  const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     wxLogError("Display row not selected.");
-  } else if ((m_tlcMappingData->GetItemCount() - 1) == index) {
-    return;  // selection is at the bottom. do nothing
+  } else if ((p_view_mapping_data_->GetItemCount() - 1) == index) {
+    return; // selection is at the bottom. do nothing
   } else {
     std::swap(profile.displays[index], profile.displays[index + 1]);
     LoadDisplaySettings();
 
     // Change the selection index to match the item we just moved
     // This is a terrible hack to find the row of the item we just moved
-    const auto model = (wxDataViewIndexListModel *)m_tlcMappingData->GetModel();
+    const auto model =
+      (wxDataViewIndexListModel*)p_view_mapping_data_->GetModel();
     const auto item = (model->GetItem(index + 1));
-    wxDataViewItemArray items(size_t(1));  // no braced init constructor :(
-    items[0] = item;                       // assumed single selection mode
-    m_tlcMappingData->SetSelections(items);
-    m_displayGraphic->PaintNow();
+    wxDataViewItemArray items(size_t(1)); // no braced init constructor :(
+    items[0] = item;                      // assumed single selection mode
+    p_view_mapping_data_->SetSelections(items);
+    p_display_graphic_->PaintNow();
   }
 }

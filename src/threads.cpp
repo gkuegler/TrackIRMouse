@@ -12,39 +12,44 @@
 //                           TrackThread                            //
 //////////////////////////////////////////////////////////////////////
 
-TrackThread::TrackThread(cFrame* pHandler, HWND hWnd,
+TrackThread::TrackThread(Frame* p_window_handler,
+                         HWND hWnd,
                          std::shared_ptr<config::Config> config)
-    : wxThread() {
-  m_pHandler = pHandler;
-  m_hWnd = hWnd;
-  m_config = config;  // create copy of user data & etc. for tracking threaded
+  : wxThread()
+{
+  p_window_handler_ = p_window_handler;
+  hWnd_ = hWnd;
+  config_ = config; // create copy of user data & etc. for tracking threaded
 }
 
-TrackThread::~TrackThread() {
+TrackThread::~TrackThread()
+{
   // Threads are detached anddelete themselves when they are done running.
   // Will need to provide locks in the future with critical sections
   // https://docs.wxwidgets.org/3.0/classwx_thread.html
-  wxCriticalSectionLocker enter(m_pHandler->m_pThreadCS);
-  m_pHandler->m_pTrackThread = NULL;
+  wxCriticalSectionLocker enter(p_window_handler_->p_thread_cs);
+  p_window_handler_->p_track_thread_ = NULL;
 }
 
 // TODO: move to polymorphic track object created by dependency injection
-wxThread::ExitCode TrackThread::Entry() {
-  auto profile = m_config->GetActiveProfile();
-  auto path = m_config->envData.trackIrDllPath;
-  auto quit_on_no_trackir = m_config->userData.quitOnLossOfTrackIr;
+wxThread::ExitCode
+TrackThread::Entry()
+{
+  auto profile = config_->GetActiveProfile();
+  auto path = config_->env_data.track_ir_dll_path;
+  auto quit_on_no_trackir = config_->user_data.quit_on_loss_of_trackir;
 
-  m_handler = std::make_shared<handlers::MouseHandler>();
-  m_tracker = std::make_shared<trackers::TrackIR>(
-      m_hWnd, path, profile.profileId, m_handler.get());
+  handler_ = std::make_shared<handlers::MouseHandler>();
+  tracker_ = std::make_shared<trackers::TrackIR>(
+    hWnd_, path, profile.profile_id, handler_.get());
 
   if (false == config::ValidateUserInput(profile.displays)) {
     throw std::runtime_error("invalid user profile data");
   }
 
   try {
-    if (m_tracker->start() == retcode::fail &&
-        m_config->userData.quitOnLossOfTrackIr) {
+    if (tracker_->start() == retcode::fail &&
+        config_->user_data.quit_on_loss_of_trackir) {
       spdlog::trace("quitting on loss of track ir");
       SendThreadMessage(msgcode::close_app, "");
     }
@@ -59,20 +64,25 @@ wxThread::ExitCode TrackThread::Entry() {
 //                         WatchdogThread                           //
 //////////////////////////////////////////////////////////////////////
 
-ControlServerThread::ControlServerThread(cFrame* pHandler) : wxThread() {
-  m_pHandler = pHandler;
+ControlServerThread::ControlServerThread(Frame* p_window_handler)
+  : wxThread()
+{
+  p_window_handler_ = p_window_handler;
 }
 
-ControlServerThread::~ControlServerThread() {
+ControlServerThread::~ControlServerThread()
+{
   // Threads are detached anddelete themselves when they are done running.
   // TODO: Will need to provide different locks in the future with critical
   // sections https://docs.wxwidgets.org/3.0/classwx_thread.html
-  wxCriticalSectionLocker enter(m_pHandler->m_pThreadCS);
-  m_pHandler->m_pServerThread = NULL;
+  wxCriticalSectionLocker enter(p_window_handler_->p_thread_cs);
+  p_window_handler_->p_server_thread_ = NULL;
   // end of critical section
 }
 
-wxThread::ExitCode ControlServerThread::Entry() {
+wxThread::ExitCode
+ControlServerThread::Entry()
+{
   try {
     // TODO: make name part of construction
     auto server = PipeServer();

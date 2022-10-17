@@ -11,13 +11,15 @@ namespace util {
 
 // container must be an irritable array of type T,
 // where type T can be implicitly converted to wxString
-template <typename T> 
-wxArrayString BuildWxArrayString(const T container) {
+template<typename T>
+wxArrayString
+BuildWxArrayString(const T container)
+{
   wxArrayString array;
   for (const auto& text : container) {
     array.Add(wxString(text), 1);
   }
   return array;
 }
-}  // namespace util
+} // namespace util
 #endif /* TRACKIRMOUSE_UTIL_H */

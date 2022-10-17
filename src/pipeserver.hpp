@@ -9,29 +9,31 @@
 
 #include "Log.hpp"
 
-class Handle {
- public:
+class Handle
+{
+public:
   HANDLE handle = INVALID_HANDLE_VALUE;
   Handle(HANDLE h) { handle = h; };
 
-  Handle() = delete;                         // default constructor
-  Handle(const Handle&) = delete;            // copy constructor
-  Handle& operator=(Handle other) = delete;  // copy assignment constructor
+  Handle() = delete;                        // default constructor
+  Handle(const Handle&) = delete;           // copy constructor
+  Handle& operator=(Handle other) = delete; // copy assignment constructor
 
   ~Handle() { CloseHandle(handle); };
 };
 
 // Single threaded pipe server
-class PipeServer {
- private:
-  std::shared_ptr<spdlog::logger> logger;
+class PipeServer
+{
+private:
+  std::shared_ptr<spdlog::logger> logger_;
 
- public:
+public:
   PipeServer();
   //~PipeServer();
   void Serve(std::string);
 
- private:
+private:
   void HandleConnection(Handle hPipe);
   std::string HandleMsg(std::string);
 };

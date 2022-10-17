@@ -1,6 +1,6 @@
 /**
  * Natural Point TrackIR5 interface.
- * 
+ *
  * Supplied by Natural Point SDK.
  *
  * --License Boilerplate Placeholder--
@@ -148,28 +148,28 @@ NPRESULT NPClient_Init(LPTSTR pszDLLPath) {
   // resolve address to verify signature
   gpfNP_GetSignature = (PF_NP_GETSIGNATURE)::GetProcAddress(ghNPClientDLL, "NP_GetSignature");
 
-  SIGNATUREDATA pSignature;
-  SIGNATUREDATA verifySignature;
+  SIGNATUREDATA signature;
+  SIGNATUREDATA verify_signature;
 
   // initialize the signatures
-  strcpy_s(verifySignature.DllSignature, 200,
+  strcpy_s(verify_signature.DllSignature, 200,
            "precise head tracking\n put your head into the game\n now go "
            "look around\n\n Copyright EyeControl "
            "Technologies");
-  strcpy_s(verifySignature.AppSignature, 200,
+  strcpy_s(verify_signature.AppSignature, 200,
            "hardware camera\n software processing data\n track user "
            "movement\n\n Copyright EyeControl Technologies");
 
   // query the dll and compare the results
-  NPRESULT signature_result = NP_GetSignature(&pSignature);
+  NPRESULT signature_result = NP_GetSignature(&signature);
 
-  if (NP_GetSignature(&pSignature) != NP_OK) {
+  if (NP_GetSignature(&signature) != NP_OK) {
     spdlog::error("NP Get Signature Failed");
     return NP_ERR;
   }
 
-  if ((strcmp(verifySignature.DllSignature, pSignature.DllSignature) != 0) 
-      && (strcmp(verifySignature.AppSignature, pSignature.AppSignature) != 0)){
+  if ((strcmp(verify_signature.DllSignature, signature.DllSignature) != 0) 
+      && (strcmp(verify_signature.AppSignature, signature.AppSignature) != 0)){
     spdlog::error("NP TrackIR Program Not Running");
     return NP_ERR;
   }

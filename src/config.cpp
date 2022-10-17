@@ -1,5 +1,5 @@
 /**
- * Singleton holding user & environment userData.
+ * Singleton holding user & environment user_data.
  * Loads user data from json file and environment data from registry and other
  * system calls.
  *
@@ -21,81 +21,93 @@
 
 namespace config {
 
-// const static Profile DefaultProfile = ;
-
 // settings singletons
-static std::shared_ptr<Config> config_;
+static std::shared_ptr<Config> g_config;
 
 // TODO: a shared pointer will not work for thread safety
-std::shared_ptr<Config> Get() { return config_; }
+std::shared_ptr<Config>
+Get()
+{
+  return g_config;
+}
 
 // attemp at some thread safety
-void Set(const Config c) { config_ = std::make_shared<Config>(c); }
+void
+Set(const Config c)
+{
+  g_config = std::make_shared<Config>(c);
+}
 
-typedef struct _RegistryQuery {
+typedef struct RegistryQuery_
+{
   int result;
-  std::string resultString;
+  std::string result_string;
   std::string value;
 } RegistryQuery;
 
 /**
  * [GetStringFromRegistry description]
- * @param  hParentKey [description]
- * @param  subKey     [description]
- * @param  subValue   [description]
+ * @param  parent_key [description]
+ * @param  sub_key     [description]
+ * @param  sub_value   [description]
  * @return            [description]
  */
-RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
-                                    const char *subValue) {
+RegistryQuery
+GetStringFromRegistry(HKEY parent_key,
+                      const char* sub_key,
+                      const char* sub_value)
+{
   //////////////////////////////////////////////////////////////////////
   //                         Opening The Key                          //
   //////////////////////////////////////////////////////////////////////
 
   HKEY hKey = 0;
 
-  LSTATUS statusOpen =
-      RegOpenKeyExA(hParentKey,  // should usually be HKEY_CURRENT_USER
-                    subKey,
-                    0,         //[in]           DWORD  ulOptions,
-                    KEY_READ,  //[in]           REGSAM samDesired,
-                    &hKey);
+  LSTATUS status_key_open =
+    RegOpenKeyExA(parent_key, // should usually be HKEY_CURRENT_USER
+                  sub_key,
+                  0,        //[in]           DWORD  ulOptions,
+                  KEY_READ, //[in]           REGSAM samDesired,
+                  &hKey);
 
-  if (ERROR_FILE_NOT_FOUND == statusOpen) {
-    return RegistryQuery{ERROR_FILE_NOT_FOUND, "Registry key not found.", ""};
+  if (ERROR_FILE_NOT_FOUND == status_key_open) {
+    return RegistryQuery{ ERROR_FILE_NOT_FOUND, "Registry key not found.", "" };
   }
 
   // Catch all other errors
-  if (ERROR_SUCCESS != statusOpen) {
-    return RegistryQuery{statusOpen, "Could not open registry key.", ""};
+  if (ERROR_SUCCESS != status_key_open) {
+    return RegistryQuery{ status_key_open, "Could not open registry key.", "" };
   }
 
   //////////////////////////////////////////////////////////////////////
   //                    Querying Value Information                    //
   //////////////////////////////////////////////////////////////////////
 
-  DWORD valueType = 0;
-  DWORD sizeOfBuffer = 0;
+  DWORD value_type = 0;
+  DWORD size_of_buffer = 0;
 
-  LSTATUS statusQueryValue =
-      RegQueryValueExA(hKey,        // [in]                HKEY    hKey,
-                       "Path",      // [in, optional]      LPCSTR  lpValueName,
-                       0,           // LPDWORD lpReserved,
-                       &valueType,  // [out, optional]     LPDWORD lpType,
-                       0,           // [out, optional]     LPBYTE  lpData,
-                       &sizeOfBuffer  // [in, out, optional] LPDWORD lpcbData
-      );
+  LSTATUS query_status =
+    RegQueryValueExA(hKey,           // [in]                HKEY    hKey,
+                     "Path",         // [in, optional]      LPCSTR  lpValueName,
+                     0,              // LPDWORD lpReserved,
+                     &value_type,    // [out, optional]     LPDWORD lpType,
+                     0,              // [out, optional]     LPBYTE  lpData,
+                     &size_of_buffer // [in, out, optional] LPDWORD lpcbData
+    );
 
-  if (ERROR_FILE_NOT_FOUND == statusQueryValue) {
-    return RegistryQuery{ERROR_FILE_NOT_FOUND, "Value not found for key.", ""};
+  if (ERROR_FILE_NOT_FOUND == query_status) {
+    return RegistryQuery{ ERROR_FILE_NOT_FOUND,
+                          "Value not found for key.",
+                          "" };
   }
 
   // Catch all other errors of RegQueryValueExA
-  if (ERROR_SUCCESS != statusQueryValue) {
-    return RegistryQuery{statusQueryValue, "RegQueryValueExA failed.", ""};
+  if (ERROR_SUCCESS != query_status) {
+    return RegistryQuery{ query_status, "RegQueryValueExA failed.", "" };
   }
 
-  if (REG_SZ != valueType) {
-    return RegistryQuery{1, "Registry value not a string type.", ""};
+  if (REG_SZ != value_type) {
+    return RegistryQuery{ 1, "Registry value not a string type.", "" };
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -104,26 +116,26 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
 
   // Registry key may or may not be stored with a null terminator
   // add one just in case
-  char *szPath = static_cast<char *>(calloc(1, sizeOfBuffer + 1));
+  char* szPath = static_cast<char*>(calloc(1, size_of_buffer + 1));
 
   if (NULL == szPath) {
-    return RegistryQuery{1, "Failed to allocate memory.", ""};
+    return RegistryQuery{ 1, "Failed to allocate memory.", "" };
   }
 
-  LSTATUS statusGetValue =
-      RegGetValueA(hKey,            // [in]                HKEY    hkey,
-                   0,               // [in, optional]      LPCSTR  lpSubKey,
-                   subValue,        // [in, optional]      LPCSTR  lpValue,
-                   RRF_RT_REG_SZ,   // [in, optional]      DWORD   dwFlags,
-                   &valueType,      // [out, optional]     LPDWORD pdwType,
-                   (void *)szPath,  // [out, optional]     PVOID   pvData,
-                   &sizeOfBuffer    // [in, out, optional] LPDWORD pcbData
-      );
+  LSTATUS status_get_value =
+    RegGetValueA(hKey,           // [in]                HKEY    hkey,
+                 0,              // [in, optional]      LPCSTR  lpSubKey,
+                 sub_value,      // [in, optional]      LPCSTR  lpValue,
+                 RRF_RT_REG_SZ,  // [in, optional]      DWORD   dwFlags,
+                 &value_type,    // [out, optional]     LPDWORD pdwType,
+                 (void*)szPath,  // [out, optional]     PVOID   pvData,
+                 &size_of_buffer // [in, out, optional] LPDWORD pcbData
+    );
 
-  if (ERROR_SUCCESS == statusOpen) {
-    return RegistryQuery{0, "", std::string(szPath)};
+  if (ERROR_SUCCESS == status_get_value) {
+    return RegistryQuery{ 0, "", std::string(szPath) };
   } else {
-    return RegistryQuery{statusGetValue, "Could not get registry key.", ""};
+    return RegistryQuery{ status_get_value, "Could not get registry key.", "" };
   }
 }
 
@@ -135,77 +147,80 @@ RegistryQuery GetStringFromRegistry(HKEY hParentKey, const char *subKey,
  *   - toml::type_error - failed conversion from 'toml::find'
  *   - std::out_of_range - a table or value is not found
  */
-Config::Config(const std::string filename) {
+Config::Config(const std::string filename)
+{
   // note: hungarian notation prefix tv___ = toml::value
   filename_ = filename;
-  const auto tvData = toml::parse<toml::preserve_comments>(filename);
-  envData.monitorCount = GetSystemMetrics(SM_CMONITORS);
+  const auto t_data = toml::parse<toml::preserve_comments>(filename);
+  env_data.monitor_count = GetSystemMetrics(SM_CMONITORS);
 
   // Find the general settings table
-  const auto &vGeneralSettings = toml::find(tvData, "General");
+  const auto& t_general_settings = toml::find(t_data, "General");
 
   // Verify values exist and parse to correct type
-  userData.trackOnStart = toml::find<bool>(vGeneralSettings, "track_on_start");
-  userData.quitOnLossOfTrackIr =
-      toml::find<bool>(vGeneralSettings, "quit_on_loss_of_track_ir");
-  userData.watchdogEnabled =
-      toml::find<bool>(vGeneralSettings, "watchdog_enabled");
-  userData.logLevel = static_cast<spdlog::level::level_enum>(
-      toml::find<int>(vGeneralSettings, "log_level"));
-  userData.autoFindTrackIrDll =
-      toml::find<bool>(vGeneralSettings, "auto_find_trackir_dll");
+  user_data.track_on_start =
+    toml::find<bool>(t_general_settings, "track_on_start");
+  user_data.quit_on_loss_of_trackir =
+    toml::find<bool>(t_general_settings, "quit_on_loss_of_track_ir");
+  user_data.watchdog_enabled =
+    toml::find<bool>(t_general_settings, "watchdog_enabled");
+  user_data.log_level = static_cast<spdlog::level::level_enum>(
+    toml::find<int>(t_general_settings, "log_level"));
+  user_data.auto_find_track_ir_dll =
+    toml::find<bool>(t_general_settings, "auto_find_trackir_dll");
 
   // Optionally the user can specify the location to the trackIR dll
-  userData.trackIrDllFolder =
-      toml::find<std::string>(vGeneralSettings, "trackir_dll_directory");
+  user_data.track_ir_dll_folder =
+    toml::find<std::string>(t_general_settings, "trackir_dll_directory");
 
-  userData.activeProfileName =
-      toml::find<std::string>(vGeneralSettings, "active_profile");
+  user_data.active_profile_name =
+    toml::find<std::string>(t_general_settings, "active_profile");
 
   // TODO: implement this in settings file
-  userData.autoFindTrackIrDll = true;
+  user_data.auto_find_track_ir_dll = true;
 
   //////////////////////////////////////////////////////////////////////
   //                  Finding NPTrackIR DLL Location                  //
   //////////////////////////////////////////////////////////////////////
-  std::string dllpath;
+  std::string dll_path;
 
-  if (userData.autoFindTrackIrDll) {
+  if (user_data.auto_find_track_ir_dll) {
     RegistryQuery path = GetStringFromRegistry(
-        HKEY_CURRENT_USER,
-        "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
+      HKEY_CURRENT_USER,
+      "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location",
+      "Path");
 
     if (0 == path.result) {
-      dllpath = path.value;
+      dll_path = path.value;
       spdlog::info("Acquired DLL location from registry.");
     } else {
       spdlog::error(
-          "Could not find registry path. NP TrackIR may not be installed. To "
-          "fix error, try specifying the folder of the \"NPClient64.dll\" in "
-          "edit->settings.");
-      spdlog::info(
-          "path.result: {}\n"
-          "path.resultString: {}",
-          path.result, path.resultString);
+        "Could not find registry path. NP TrackIR may not be installed. To "
+        "fix error, try specifying the folder of the \"NPClient64.dll\" in "
+        "edit->settings.");
+      spdlog::info("path.result: {}\n"
+                   "path.resultString: {}",
+                   path.result,
+                   path.result_string);
     }
   } else {
-    dllpath = userData.trackIrDllFolder;
+    dll_path = user_data.track_ir_dll_folder;
   }
 
   // Check if DLL folder path is postfixed with slashes
-  if (dllpath.back() != '\\') {
-    dllpath.push_back('\\');
+  if (dll_path.back() != '\\') {
+    dll_path.push_back('\\');
   }
 
 // Match to the correct bitness of this application
 #if defined(_WIN64) || defined(__amd64__)
-  dllpath.append("NPClient64.dll");
+  dll_path.append("NPClient64.dll");
 #else
-  m_sTrackIrDllLocation.append("NPClient.dll");
+  dll_path.append("NPClient.dll");
 #endif
 
-  spdlog::debug("NPTrackIR DLL Path: {}", dllpath);
-  envData.trackIrDllPath = dllpath;
+  spdlog::debug("NPTrackIR DLL Path: {}", dll_path);
+  env_data.track_ir_dll_path = dll_path;
 
   //////////////////////////////////////////////////////////////////////
   //                     Finding Default Padding                      //
@@ -213,46 +228,47 @@ Config::Config(const std::string filename) {
 
   // Catch padding table errors and notify user, because reverting to e
   // 0 padding is not a critical to program function
-  toml::value vDefaultPaddingTable;
+  toml::value default_padding_table;
 
   try {
-    vDefaultPaddingTable = toml::find(tvData, "DefaultPadding");
+    default_padding_table = toml::find(t_data, "DefaultPadding");
   } catch (std::out_of_range e) {
     spdlog::warn("Default Padding Table Not Found");
-    spdlog::warn(
-        "Please add the following to the settings.toml file:\n"
-        "[DefaultPadding]\n"
-        "left   = 0\n"
-        "right  = 0\n"
-        "top    = 0\n"
-        "bottom = 0");
+    spdlog::warn("Please add the following to the settings.toml file:\n"
+                 "[DefaultPadding]\n"
+                 "left   = 0\n"
+                 "right  = 0\n"
+                 "top    = 0\n"
+                 "bottom = 0");
   }
 
-  userData.defaultPaddings[0] = toml::find<int>(vDefaultPaddingTable, "left");
-  userData.defaultPaddings[1] = toml::find<int>(vDefaultPaddingTable, "right");
-  userData.defaultPaddings[2] = toml::find<int>(vDefaultPaddingTable, "top");
-  userData.defaultPaddings[3] = toml::find<int>(vDefaultPaddingTable, "bottom");
+  user_data.default_padding[0] = toml::find<int>(default_padding_table, "left");
+  user_data.default_padding[1] =
+    toml::find<int>(default_padding_table, "right");
+  user_data.default_padding[2] = toml::find<int>(default_padding_table, "top");
+  user_data.default_padding[3] =
+    toml::find<int>(default_padding_table, "bottom");
 
   //////////////////////////////////////////////////////////////////////
   //                      Find Profiles Mapping                       //
   //////////////////////////////////////////////////////////////////////
 
-  userData.profiles = {};  // clear default profile
+  user_data.profiles = {}; // clear default profile
 
   // Find the profiles table that contains all mapping profiles.
-  const auto &profiles = toml::find(tvData, "Profiles").as_array();
+  const auto& profiles = toml::find(t_data, "Profiles").as_array();
   for (int i = 0; i < profiles.size(); i++) {
-    const auto &profile = profiles[i];
-    Profile newProfile;
-    newProfile.name = toml::find<std::string>(profile, "name");
-    newProfile.profileId = toml::find<int>(profile, "profile_id");
-    newProfile.useDefaultPadding =
-        toml::find<bool>(profile, "use_default_padding");
+    const auto& profile = profiles[i];
+    Profile new_profile;
+    new_profile.name = toml::find<std::string>(profile, "name");
+    new_profile.profile_id = toml::find<int>(profile, "profile_id");
+    new_profile.use_default_padding =
+      toml::find<bool>(profile, "use_default_padding");
 
     // Find the display mapping table for the given profile
-    auto &tvDisplayMapping = toml::find(profile, "DisplayMappings");
+    auto& t_display_mapping = toml::find(profile, "DisplayMappings");
 
-    for (auto &display : tvDisplayMapping.as_array()) {
+    for (auto& display : t_display_mapping.as_array()) {
       // bring in the rotational bounds
       toml::value left = toml::find(display, "left");
       toml::value right = toml::find(display, "right");
@@ -261,70 +277,75 @@ Config::Config(const std::string filename) {
 
       // Each value is checked because this toml library cannot
       // convert integers to doubles from a toml value
-      const Degrees rotLeft = (left.type() == toml::value_t::integer)
-                                  ? static_cast<Degrees>(left.as_integer())
-                                  : static_cast<Degrees>(left.as_floating());
+      const Degrees deg_left = (left.type() == toml::value_t::integer)
+                                 ? static_cast<Degrees>(left.as_integer())
+                                 : static_cast<Degrees>(left.as_floating());
 
-      const Degrees rotRight = (right.type() == toml::value_t::integer)
-                                   ? static_cast<Degrees>(right.as_integer())
-                                   : static_cast<Degrees>(right.as_floating());
+      const Degrees deg_right = (right.type() == toml::value_t::integer)
+                                  ? static_cast<Degrees>(right.as_integer())
+                                  : static_cast<Degrees>(right.as_floating());
 
-      const Degrees rotTop = (top.type() == toml::value_t::integer)
-                                 ? static_cast<Degrees>(top.as_integer())
-                                 : static_cast<Degrees>(top.as_floating());
+      const Degrees deg_top = (top.type() == toml::value_t::integer)
+                                ? static_cast<Degrees>(top.as_integer())
+                                : static_cast<Degrees>(top.as_floating());
 
-      const Degrees rotBottom =
-          (bottom.type() == toml::value_t::integer)
-              ? static_cast<Degrees>(bottom.as_integer())
-              : static_cast<Degrees>(bottom.as_floating());
+      const Degrees deg_bottom = (bottom.type() == toml::value_t::integer)
+                                   ? static_cast<Degrees>(bottom.as_integer())
+                                   : static_cast<Degrees>(bottom.as_floating());
 
       // I return an ungodly fake high padding numbelong,
       // so that I can tell if one was found in the toml config file
       // without producing an exception if a value was not found.
       // Padding values are not critical the program operation.
-      Pixels paddingLeft = toml::find_or<Pixels>(display, "pad_left", 5555);
-      Pixels paddingRight = toml::find_or<Pixels>(display, "pad_right", 5555);
-      Pixels paddingTop = toml::find_or<Pixels>(display, "pad_top", 5555);
-      Pixels paddingBottom = toml::find_or<Pixels>(display, "pad_bottom", 5555);
+      Pixels pleft = toml::find_or<Pixels>(display, "pad_left", 5555);
+      Pixels pright = toml::find_or<Pixels>(display, "pad_right", 5555);
+      Pixels ptop = toml::find_or<Pixels>(display, "pad_top", 5555);
+      Pixels pbottom = toml::find_or<Pixels>(display, "pad_bottom", 5555);
 
-      if (paddingLeft == 5555) paddingLeft = userData.defaultPaddings[0];
-      if (paddingRight == 5555) paddingRight = userData.defaultPaddings[1];
-      if (paddingTop == 5555) paddingTop = userData.defaultPaddings[2];
-      if (paddingBottom == 5555) paddingBottom = userData.defaultPaddings[3];
+      if (pleft == 5555)
+        pleft = user_data.default_padding[0];
+      if (pright == 5555)
+        pright = user_data.default_padding[1];
+      if (ptop == 5555)
+        ptop = user_data.default_padding[2];
+      if (pbottom == 5555)
+        pbottom = user_data.default_padding[3];
 
       // Report padding values
-      spdlog::debug(
-          "Display {} Padding -> {}{}, {}{}, {}{}, {}{}", i,
-          userData.defaultPaddings[0], (paddingLeft == 5555) ? "(default)" : "",
-          userData.defaultPaddings[1],
-          (paddingRight == 5555) ? "(default)" : "",
-          userData.defaultPaddings[2], (paddingTop == 5555) ? "(default)" : "",
-          userData.defaultPaddings[3],
-          (paddingBottom == 5555) ? "(default)" : "");
+      spdlog::debug("Display {} Padding -> {}{}, {}{}, {}{}, {}{}",
+                    i,
+                    user_data.default_padding[0],
+                    (pleft == 5555) ? "(default)" : "",
+                    user_data.default_padding[1],
+                    (pright == 5555) ? "(default)" : "",
+                    user_data.default_padding[2],
+                    (ptop == 5555) ? "(default)" : "",
+                    user_data.default_padding[3],
+                    (pbottom == 5555) ? "(default)" : "");
 
-      newProfile.displays.push_back(
-          {{rotLeft, rotRight, rotTop, rotBottom},
-           {paddingLeft, paddingRight, paddingTop, paddingBottom}});
+      new_profile.displays.push_back(
+        { { deg_left, deg_right, deg_top, deg_bottom },
+          { pleft, pright, ptop, pbottom } });
     }
 
-    userData.profiles.push_back(newProfile);
+    user_data.profiles.push_back(new_profile);
   }
 
   // validate that active profile exists in profiles list
-  if (userData.profiles.size() > 0) {
+  if (user_data.profiles.size() > 0) {
     bool found = false;
-    for (auto &profile : userData.profiles) {
-      if (profile.name == userData.activeProfileName) {
+    for (auto& profile : user_data.profiles) {
+      if (profile.name == user_data.active_profile_name) {
         found = true;
       }
     }
     if (!found) {
       // arbitrarily pick the first profile in the list
-      userData.activeProfileName = userData.profiles[0].name;
+      user_data.active_profile_name = user_data.profiles[0].name;
     }
-  } else {  // append default profile to list if empty
-    userData.profiles = {{"empty", 0, true, {}}};
-    userData.activeProfileName = "empty";
+  } else { // append default profile to list if empty
+    user_data.profiles = { { "empty", 0, true, {} } };
+    user_data.active_profile_name = "empty";
   }
 
   return;
@@ -337,30 +358,30 @@ Config::Config(const std::string filename) {
  * Builds a toml object.
  * Uses toml supplied serializer via ostream operators to write to file.
  */
-void Config::SaveToFile(std::string filename) {
+void Config::save_to_file(std::string filename) {
   const toml::value general{
-    {"track_on_start", userData.trackOnStart},
-    {"quit_on_loss_of_track_ir", userData.quitOnLossOfTrackIr},
-    {"auto_find_trackir_dll", userData.autoFindTrackIrDll},
-    {"trackir_dll_directory", userData.trackIrDllFolder},
-    {"watchdog_enabled", userData.watchdogEnabled},
-		{"pipe_server_name", userData.pipeServerName},
-    {"active_profile", userData.activeProfileName},
-    {"hotkey_enabled", userData.hotkey_enabled},
-    {"log_level", static_cast<int>(userData.logLevel)},
+    {"track_on_start", user_data.track_on_start},
+    {"quit_on_loss_of_track_ir", user_data.quit_on_loss_of_trackir},
+    {"auto_find_trackir_dll", user_data.auto_find_track_ir_dll},
+    {"trackir_dll_directory", user_data.track_ir_dll_folder},
+    {"watchdog_enabled", user_data.watchdog_enabled},
+		{"pipe_server_name", user_data.pipe_server_name},
+    {"active_profile", user_data.active_profile_name},
+    {"hotkey_enabled", user_data.hotkey_enabled},
+    {"log_level", static_cast<int>(user_data.log_level)},
   };
 
   const toml::value padding{
-    {"left", userData.defaultPaddings[0]},
-    {"right", userData.defaultPaddings[1]},
-    {"top", userData.defaultPaddings[2]},
-    {"bottom", userData.defaultPaddings[3]}
+    {"left", user_data.default_padding[0]},
+    {"right", user_data.default_padding[1]},
+    {"top", user_data.default_padding[2]},
+    {"bottom", user_data.default_padding[3]}
   };
 
   // toml library has overloads for creating arrays from std::vector
   std::vector<toml::value> profiles;
   // write out profile data
-  for(auto& profile : userData.profiles){
+  for(auto& profile : user_data.profiles){
     std::vector<toml::value> displays;
     for(auto& display : profile.displays){
         const toml::value d{
@@ -377,186 +398,206 @@ void Config::SaveToFile(std::string filename) {
     }
     const toml::value top{
       {"name", profile.name},
-      {"profile_id", profile.profileId},
-      {"use_default_padding", profile.useDefaultPadding},
+      {"profile_id", profile.profile_id},
+      {"use_default_padding", profile.use_default_padding},
       {"DisplayMappings", displays}
     };
     profiles.push_back(top);
   }
 
-  const toml::value topTable{
+  const toml::value top_table{
     {"General", general},
     {"DefaultPadding", padding},
     {"Profiles", profiles},
   };
 
   std::fstream file(filename, std::ios_base::out);
-  file << topTable << std::endl;
+  file << top_table << std::endl;
   file.close();
 }
 // clang-format on
 
 // set the profile with the given name as active
 // assumes active profile is always present within the vector of profiles
-bool Config::SetActiveProfile(std::string profileName) {
-  // check if a valid name
-  const auto profileNames = GetProfileNames();
-  bool found = false;
-  for (auto name : profileNames) {
-    if (name == profileName) {
-      found = true;
+bool
+Config::SetActiveProfile(std::string profile_name)
+{
+  // check if name exists in user data
+  for (const auto& name : GetProfileNames()) {
+    if (name == profile_name) {
+      user_data.active_profile_name = profile_name;
+      return true;
     }
   }
-  if (!found) {
-    spdlog::error("Profile could not be found.");
-    return false;
-  }
-
-  userData.activeProfileName = profileName;
-  return true;
+  spdlog::error("Profile could not be found.");
+  return false;
 }
 
 // created default profile with the given name
-void Config::AddProfile(std::string newProfileName = "") {
-  const auto profileNames = GetProfileNames();
+void
+Config::AddProfile(std::string new_profile_name = "")
+{
 
   // Prohibit conflicting names
-  for (auto name : profileNames) {
-    if (name == newProfileName) {
+  for (const auto& name : GetProfileNames()) {
+    if (name == new_profile_name) {
       spdlog::error("Profile name already exists, please pick another name.");
       return;
     }
   }
 
-  Profile p;  // Creat default profile
+  // TODO: dont create and set later
+  Profile p; // Creat default profile
 
   // otherwise use default name
-  if (newProfileName != "") {
-    p.name = newProfileName;
+  if (new_profile_name != "") {
+    p.name = new_profile_name;
   }
-  userData.profiles.push_back(p);
+  user_data.profiles.push_back(p);
 
-  SetActiveProfile(newProfileName);
+  SetActiveProfile(new_profile_name);
 }
 
 // remove profile with the given name from internal configuration
-void Config::RemoveProfile(std::string profileName) {
-  for (int i = 0; i < userData.profiles.size(); i++) {
-    if (profileName == userData.profiles[i].name) {
-      userData.profiles.erase(userData.profiles.begin() + i);
-      spdlog::info("Deleted profile: {}", profileName);
+void
+Config::RemoveProfile(std::string profile_name)
+{
+  for (int i = 0; i < user_data.profiles.size(); i++) {
+    if (profile_name == user_data.profiles[i].name) {
+      user_data.profiles.erase(user_data.profiles.begin() + i);
+      spdlog::info("Deleted profile: {}", profile_name);
     }
   }
-  if (userData.profiles.size() < 1) {
-    userData.profiles.emplace_back();
+  if (user_data.profiles.size() < 1) {
+    user_data.profiles.emplace_back();
   }
   // change the active profile if deleted
-  if (userData.activeProfileName == profileName) {
-    auto name = userData.profiles[0].name;
-    SetActiveProfile(name);
+  if (user_data.active_profile_name == profile_name) {
+    auto first = user_data.profiles[0].name;
+    SetActiveProfile(first);
   }
 }
 
 // make a copy of the active profile with an arbitrary temporary name
-void Config::DuplicateActiveProfile() {
-  auto profile = GetActiveProfile();
-  profile.name.append("2");  // incremental profile name
-  userData.profiles.push_back(profile);
-  userData.activeProfileName = profile.name;
+void
+Config::DuplicateActiveProfile()
+{
+  auto new_profile = GetActiveProfile();
+  new_profile.name.append("2"); // incremental profile name
+  user_data.profiles.push_back(new_profile);
+  user_data.active_profile_name = new_profile.name;
 }
 
-std::vector<std::string> Config::GetProfileNames() {
-  std::vector<std::string> profileNames;
-  for (const auto &profile : userData.profiles) {
-    profileNames.push_back(profile.name);
+std::vector<std::string>
+Config::GetProfileNames()
+{
+  std::vector<std::string> profile_names;
+  for (const auto& profile : user_data.profiles) {
+    profile_names.push_back(profile.name);
   }
-  return profileNames;
+  return profile_names;
 }
 
 // return reference the underlying active profile
 // assumes active profile is always present within the vector of profiles
-Profile &Config::GetActiveProfile() {
-  for (auto &profile : userData.profiles) {
-    if (profile.name == userData.activeProfileName) {
+Profile&
+Config::GetActiveProfile()
+{
+  for (auto& profile : user_data.profiles) {
+    if (profile.name == user_data.active_profile_name) {
       return profile;
     }
   }
   // an active profile should exist, code shouldn't be reachable
   // design interface accordingly
   spdlog::critical(
-      "An internal error has occured. Couldn't find active profile by name.");
+    "An internal error has occured. Couldn't find active profile by name.");
 }
 
 // get the number of displays specified in the active profile
-int Config::GetActiveProfileDisplayCount() {
+int
+Config::GetActiveProfileDisplayCount()
+{
   return static_cast<int>(GetActiveProfile().displays.size());
 }
 
-void Config::SetActProfDisplayMappingParam(int displayNumber, int parameterType,
-                                           int parameterSide,
-                                           double parameter) {}
+void
+Config::SetActProfDisplayMappingParam(int display_number,
+                                      int param_type,
+                                      int param_side,
+                                      double param)
+{
+}
 
-ConfigReturn LoadFromFile(std::string filename) {
+ConfigReturn
+LoadFromFile(std::string filename)
+{
   std::string err_msg = "lorem ipsum";
   try {
     auto config = Config(filename);
     // return a successfully parsed and validated config file
-    return ConfigReturn{retcode::success, "", config};
-  } catch (const toml::syntax_error &ex) {
+    return ConfigReturn{ retcode::success, "", config };
+  } catch (const toml::syntax_error& ex) {
     err_msg = fmt::format(
-        "Syntax error in toml file: \"{}\"\nSee error message below for hints "
-        "on how to fix.\n{}",
-        filename, ex.what());
-  } catch (const toml::type_error &ex) {
+      "Syntax error in toml file: \"{}\"\nSee error message below for hints "
+      "on how to fix.\n{}",
+      filename,
+      ex.what());
+  } catch (const toml::type_error& ex) {
     err_msg = fmt::format("Incorrect type when parsing toml file \"{}\".\n\n{}",
-                          filename, ex.what());
-  } catch (const std::out_of_range &ex) {
-    err_msg = fmt::format("Missing data in toml file \"{}\".\n\n{}", filename,
+                          filename,
                           ex.what());
-  } catch (const std::runtime_error &ex) {
+  } catch (const std::out_of_range& ex) {
+    err_msg = fmt::format(
+      "Missing data in toml file \"{}\".\n\n{}", filename, ex.what());
+  } catch (const std::runtime_error& ex) {
     err_msg = fmt::format("Failed to open \"{}\"", filename);
   } catch (...) {
     err_msg = fmt::format(
-        "Exception has gone unhandled loading \"{}\" and verifying values.",
-        filename);
+      "Exception has gone unhandled loading \"{}\" and verifying values.",
+      filename);
   }
 
   // return a default config object with a message explaining failure
-  return ConfigReturn{retcode::fail, err_msg, Config()};
+  return ConfigReturn{ retcode::fail, err_msg, Config() };
 }
 
 // load game titles by ID number from file
-game_title_map_t GetTitleIds() {
+game_title_map_t
+GetTitleIds()
+{
   // loading from file allows the game titles to be modified for future
   // natural point continually adds new titles
   constexpr auto filename = "track-ir-numbers.toml";
   const std::string instructions =
-      "Couldn't load game titles from file. See above error for how to fix.\nA "
-      "sample of the title list will be loaded by default.\nUse "
-      "\"File->Reload\" to fix the error and reload list.";
+    "Couldn't load game titles from file. See above error for how to fix.\nA "
+    "sample of the title list will be loaded by default.\nUse "
+    "\"File->Reload\" to fix the error and reload list.";
   std::string err_msg = "lorem ipsum";
 
   try {
     // load, parse, and return as map
     auto data = toml::parse(filename);
     return toml::find<game_title_map_t>(data, "data");
-  } catch (const toml::syntax_error &ex) {
+  } catch (const toml::syntax_error& ex) {
     err_msg = fmt::format(
-        "Syntax error in toml file: \"%s\"\nSee error message below for hints "
-        "on how to fix.\n%s",
-        filename, ex.what());
-  } catch (const toml::type_error &ex) {
+      "Syntax error in toml file: \"%s\"\nSee error message below for hints "
+      "on how to fix.\n%s",
+      filename,
+      ex.what());
+  } catch (const toml::type_error& ex) {
     err_msg = fmt::format("Incorrect type when parsing toml file \"%s\".\n\n%s",
-                          filename, ex.what());
-  } catch (const std::out_of_range &ex) {
-    err_msg = fmt::format("Missing data in toml file \"%s\".\n\n%s", filename,
+                          filename,
                           ex.what());
-  } catch (std::runtime_error &ex) {
+  } catch (const std::out_of_range& ex) {
+    err_msg = fmt::format(
+      "Missing data in toml file \"%s\".\n\n%s", filename, ex.what());
+  } catch (std::runtime_error& ex) {
     err_msg = fmt::format("Failed to open \"%s\"", filename);
   } catch (...) {
     err_msg = fmt::format(
-        "exception has gone unhandled loading \"%s\" and verifying values.",
-        filename);
+      "exception has gone unhandled loading \"%s\" and verifying values.",
+      filename);
   }
 
   spdlog::error("{}\n\n{}", err_msg, instructions);
@@ -576,17 +617,19 @@ game_title_map_t GetTitleIds() {
   return sample_map;
 }
 
-bool ValidateUserInput(const UserInput &displays) {
+bool
+ValidateUserInput(const UserInput& displays)
+{
   // compare bounds not more than abs|180|
   for (int i = 0; i < displays.size(); i++) {
     for (int j = 0; j < 4; j++) {
-      double Degrees = displays[i].rotation[j];
-      int padding = displays[i].padding[j];
-      if (Degrees > 180.0 || Degrees < -180.0) {
-        spdlog::error(
-            "rotation bound param \"{}\" on display #{} is outside "
-            "allowable range of -180Deg -> 180Deg.",
-            kBoundNames[j], i);
+      auto d = displays[i].rotation[j];
+      auto padding = displays[i].padding[j];
+      if (d > 180.0 || d < -180.0) {
+        spdlog::error("rotation bound param \"{}\" on display #{} is outside "
+                      "allowable range of -180° -> 180°.",
+                      k_edge_names[j],
+                      i);
         return false;
       }
     }
@@ -607,7 +650,7 @@ bool ValidateUserInput(const UserInput &displays) {
       if (A_left < B_right && A_right > B_left && A_top > B_bottom &&
           A_bottom < B_top) {
         spdlog::error(
-            "Overlapping rotational bounds between display #{} and #{}", i, j);
+          "Overlapping rotational bounds between display #{} and #{}", i, j);
         return false;
       }
     }
@@ -615,4 +658,4 @@ bool ValidateUserInput(const UserInput &displays) {
   spdlog::trace("user input validated");
   return true;
 }
-}  // namespace config
+} // namespace config

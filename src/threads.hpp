@@ -10,31 +10,34 @@
 #include "handlers.hpp"
 #include "trackers.hpp"
 
-class cFrame;
-class cPanel;
+class Frame;
+class Panel;
 
-class TrackThread : public wxThread {
- public:
-  cFrame* m_pHandler = nullptr;
-  std::shared_ptr<trackers::TrackIR> m_tracker;
-  std::shared_ptr<handlers::MouseHandler> m_handler;
+class TrackThread : public wxThread
+{
+public:
+  Frame* p_window_handler_ = nullptr;
+  std::shared_ptr<trackers::TrackIR> tracker_;
+  std::shared_ptr<handlers::MouseHandler> handler_;
 
- private:
-  HWND m_hWnd;
-  std::shared_ptr<config::Config> m_config;
+private:
+  HWND hWnd_;
+  std::shared_ptr<config::Config> config_;
 
- public:
-  TrackThread(cFrame* m_pHandler, HWND hWnd,
+public:
+  TrackThread(Frame* window_handler,
+              HWND hWnd,
               std::shared_ptr<config::Config> config);
   ~TrackThread();
   ExitCode Entry();
 };
 
-class ControlServerThread : public wxThread {
- public:
-  cFrame* m_pHandler = nullptr;
+class ControlServerThread : public wxThread
+{
+public:
+  Frame* p_window_handler_ = nullptr;
 
-  ControlServerThread(cFrame* pHandler);
+  ControlServerThread(Frame* window_handler);
   ~ControlServerThread();
   ExitCode Entry();
 

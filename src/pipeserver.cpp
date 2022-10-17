@@ -21,13 +21,18 @@
 
 constexpr size_t BUFSIZE = 512 * sizeof(unsigned char);
 
-PipeServer::PipeServer() { logger = mylogging::MakeLoggerFromStd("watchdog"); }
+PipeServer::PipeServer()
+{
+  logger_ = mylogging::MakeLoggerFromStd("watchdog");
+}
 
 // Watchdog::~Watchdog() {
 //  nothing to clean up explicitly
 //}
 
-void PipeServer::Serve(std::string name) {
+void
+PipeServer::Serve(std::string name)
+{
   std::string full_path = "\\\\.\\pipe\\" + name;
 
   // Initialize Security Descriptor For Named Pipe
@@ -41,22 +46,22 @@ void PipeServer::Serve(std::string name) {
   if (NULL ==
       InitializeSecurityDescriptor(pSD.get(), SECURITY_DESCRIPTOR_REVISION)) {
     throw std::runtime_error(std::format(
-        "Failed to initialize watchdog security descriptor with error code: {}",
-        GetLastError()));
+      "Failed to initialize watchdog security descriptor with error code: {}",
+      GetLastError()));
   }
 
   // Add the Access Control List (ACL) to the security descriptor
   // TODO: make this safer, maybe limit to just user processes?
-#pragma warning(disable : 6248)  // Allow all unrestricted access to the pipe
+#pragma warning(disable : 6248) // Allow all unrestricted access to the pipe
   if (!SetSecurityDescriptorDacl(
-          pSD.get(),
-          TRUE,        // bDaclPresent flag
-          (PACL)NULL,  // if a NULL DACL is assigned to the security descriptor,
-                       // all access is allowed
-          FALSE))      // not a default DACL
+        pSD.get(),
+        TRUE,       // bDaclPresent flag
+        (PACL)NULL, // if a NULL DACL is assigned to the security descriptor,
+                    // all access is allowed
+        FALSE))     // not a default DACL
   {
     throw std::runtime_error(
-        std::format("SetSecurityDescriptorDacl Error {}", GetLastError()));
+      std::format("SetSecurityDescriptorDacl Error {}", GetLastError()));
   }
 #pragma warning(default : 4700)
 
@@ -66,36 +71,36 @@ void PipeServer::Serve(std::string name) {
   sa.lpSecurityDescriptor = pSD.get();
   sa.bInheritHandle = FALSE;
 
-  // Create a new named pipe instance for a new client to handle.
+  // Create a new named pipe instance for a new client to handle_.
   // Setting the max number of instances to a reasonable level
   // will prevent rogue clients from freezing my computer.
   // If I was feeling brave I could use PIPE_UNLIMITED_INSTANCES.
   while (1) {
     HANDLE hPipe =
-        CreateNamedPipeA(full_path.c_str(),           // pipe name
-                         PIPE_ACCESS_DUPLEX,          // read/write access
-                         PIPE_TYPE_MESSAGE |          // message type pipe
-                             PIPE_READMODE_MESSAGE |  // message-read mode
-                             PIPE_WAIT,               // blocking mode
-                         10,       // max. instances, i.e max number of clients
-                         BUFSIZE,  // output buffer size
-                         BUFSIZE,  // input buffer size
-                         0,        // client time-out
-                         &sa);     // default security attribute
+      CreateNamedPipeA(full_path.c_str(),        // pipe name
+                       PIPE_ACCESS_DUPLEX,       // read/write access
+                       PIPE_TYPE_MESSAGE |       // message type pipe
+                         PIPE_READMODE_MESSAGE | // message-read mode
+                         PIPE_WAIT,              // blocking mode
+                       10,      // max. instances, i.e max number of clients
+                       BUFSIZE, // output buffer size
+                       BUFSIZE, // input buffer size
+                       0,       // client time-out
+                       &sa);    // default security attribute
 
     if (hPipe == INVALID_HANDLE_VALUE) {
       DWORD gle = GetLastError();
       if (gle == ERROR_PIPE_BUSY) {
         throw std::runtime_error(
-            "CreateNamedPipe failed, all instances are busy.");
+          "CreateNamedPipe failed, all instances are busy.");
       } else if (gle == ERROR_INVALID_PARAMETER) {
         throw std::runtime_error(
-            "CreateNamedPipe failed, function called with incorrect "
-            "parameters.");
+          "CreateNamedPipe failed, function called with incorrect "
+          "parameters.");
 
       } else {
         throw std::runtime_error(
-            std::format("CreateNamedPipe failed, GLE={}.", gle));
+          std::format("CreateNamedPipe failed, GLE={}.", gle));
       }
     }
 
@@ -103,12 +108,12 @@ void PipeServer::Serve(std::string name) {
     // the function returns a nonzero value. If the function
     // returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
     bool connected = ConnectNamedPipe(hPipe, NULL)
-                         ? TRUE
-                         : (GetLastError() == ERROR_PIPE_CONNECTED);
+                       ? TRUE
+                       : (GetLastError() == ERROR_PIPE_CONNECTED);
 
     if (connected) {
       // printf("client connected, creating a processing thread.\n");
-      logger->debug("client connected");
+      logger_->debug("client connected");
       HandleConnection(hPipe);
 
       // https://learn.microsoft.com/en-us/windows/win32/ipc/multithreaded-pipe-server
@@ -134,8 +139,10 @@ void PipeServer::Serve(std::string name) {
 
 // Handle a client on an instance of a main pipe.
 // Handle closed on destruction.
-void PipeServer::HandleConnection(Handle pipe) {
-  logger->trace("starting watchdog server");
+void
+PipeServer::HandleConnection(Handle pipe)
+{
+  logger_->trace("starting watchdog server");
 
   // Initialize send and return buffers
   std::vector<char> request_buffer(BUFSIZE, '\0');
@@ -145,48 +152,47 @@ void PipeServer::HandleConnection(Handle pipe) {
 
   // Read client requests from the pipe. This simplistic code only allows
   // messages up to BUFSIZE characters in length.
-  BOOL read_result = ReadFile(pipe.handle,            // handle to pipe
-                              request_buffer.data(),  // buffer to receive data
-                              BUFSIZE,                // size of buffer
-                              &bytes_read_count,      // number of bytes read
-                              NULL);                  // not overlapped I/O
+  BOOL read_result = ReadFile(pipe.handle,           // handle_ to pipe
+                              request_buffer.data(), // buffer to receive data
+                              BUFSIZE,               // size of buffer
+                              &bytes_read_count,     // number of bytes read
+                              NULL);                 // not overlapped I/O
 
   if (!read_result || bytes_read_count == 0) {
     if (GetLastError() == ERROR_BROKEN_PIPE) {
-      logger->debug("client disconnected");
+      logger_->debug("client disconnected");
       return;
     } else {
-      logger->error("ReadFile failed, GLE={}.", GetLastError());
+      logger_->error("ReadFile failed, GLE={}.", GetLastError());
       return;
     }
   }
 
   std::string request(request_buffer.data());
-  logger->debug("client message received: {}", request);
+  logger_->debug("client message received: {}", request);
 
   // Process the incoming message.
   const auto reply = HandleMsg(request);
   DWORD reply_byte_count = reply.length();
   DWORD bytes_written_count = 0;
 
-  logger->debug("reply message formulated: {}", reply);
+  logger_->debug("reply message formulated: {}", reply);
 
   // Write the reply to the pipe.
-  BOOL write_result =
-      WriteFile(pipe.handle,           // handle to pipe
-                reply.c_str(),         // buffer to write from
-                reply_byte_count,      // number of bytes to write
-                &bytes_written_count,  // number of bytes written
-                NULL                   // not overlapped I/O
-      );
+  BOOL write_result = WriteFile(pipe.handle,      // handle_ to pipe
+                                reply.c_str(),    // buffer to write from
+                                reply_byte_count, // number of bytes to write
+                                &bytes_written_count, // number of bytes written
+                                NULL                  // not overlapped I/O
+  );
 
   if (!write_result || reply_byte_count != bytes_written_count) {
-    logger->error("WriteFile failed, GLE={}.", GetLastError());
+    logger_->error("WriteFile failed, GLE={}.", GetLastError());
   }
 
   // Flush the pipe to allowe the client to read the pipe's contents
   // before disconnecting. Then disconnect the pipe, and close the
-  // handle to this pipe instance.
+  // handle_ to this pipe instance.
   // Client should poll until pipe becomes available.
   FlushFileBuffers(pipe.handle);
   DisconnectNamedPipe(pipe.handle);
@@ -200,7 +206,7 @@ void PipeServer::HandleConnection(Handle pipe) {
 std::string PipeServer::HandleMsg(std::string request) {
   if (request == "KILL") {
     if (system("taskkill /T /IM TrackIR5.exe") == -1) {
-      logger->error("Failed to kill TrackIR5 program");
+      logger_->error("Failed to kill TrackIR5 program");
     }
     return request;
   } else if (request == "HEARTBEAT") {
