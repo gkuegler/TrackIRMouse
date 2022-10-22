@@ -14,6 +14,7 @@
 
 #include "log.hpp"
 #include "np-client.h"
+#include "registry_access.h"
 #include "types.hpp"
 
 // Uncomment this line for testing to prevent program
@@ -28,22 +29,45 @@ namespace trackers {
 // SendInput with absolute mouse movement flag takes a short int
 constexpr auto USHORT_MAX_VAL = 65535;
 
-TrackIR::TrackIR(HWND hWnd,
-                 std::string dll_path,
-                 int profile_id,
-                 handlers::MouseHandler* handler)
+TrackIR::TrackIR(handlers::MouseHandler* handler)
   : handler_(handler)
   , tracking_allowed_to_run_(true)
-  , pause_tracking_(false)
+  , pause_mouse_(false)
 {
-  logger_ = mylogging::MakeLoggerFromStd("trackir");
+  logger_ = mylogging::GetClonedLogger("trackir");
+}
+
+void
+TrackIR::initialize(HWND hWnd,
+                    bool auto_find_dll,
+                    std::string user_dll_folder,
+                    int profile_id)
+
+{
 
   logger_->trace("Starting Initialization Of TrackIR");
 
-  // start watchdog thread
-  // load trackir dll and getproc addresses
-  // connect to trackir and request data type
-  //
+  //////////////////////////////////////////////////////////////////////
+  //                  Finding NPTrackIR DLL Location                  //
+  //////////////////////////////////////////////////////////////////////
+
+  std::string dll_path =
+    auto_find_dll ? GetTrackIRDllFolderFromRegistry() : user_dll_folder;
+
+  // ensure path has a slash at the end before appending filename
+  if (dll_path.back() != '\\') {
+    dll_path.push_back('\\');
+  }
+
+// Match to the correct bitness of this application
+#if defined(_WIN64) || defined(__amd64__)
+  dll_path.append("NPClient64.dll");
+#else
+  dll_path.append("NPClient.dll");
+#endif
+
+  spdlog::debug("NPTrackIR DLL Path: {}", dll_path);
+
   // Find and load TrackIR DLL
 #ifdef UNICODE
   TCHAR sDll[MAX_PATH];
@@ -59,23 +83,32 @@ TrackIR::TrackIR(HWND hWnd,
                         MAX_PATH);
 
   if (0 == conversion_result) {
-    throw std::runtime_error(std::format(
-      "failed to convert track dll location to wchart* with error code: {}",
-      GetLastError()));
+    throw std::runtime_error(
+      std::format("Windows Error: failed to convert track dll location to "
+                  "wchar_t* with error code: {}",
+                  GetLastError()));
   }
 #else
-  TCHAR sDLL = dllpath.c_str()
+  TCHAR sDLL = dll_path.c_str()
 #endif
 
-  // Load trackir dll and resolve function addresses
-  if (NP_OK != NPClient_Init(sDll)) {
-    throw std::runtime_error("couldn't initialize track ir");
+  // Load the DLL and resolved dll function pointers
+  switch (NPClient_Init(sDll)) {
+    case NP_ERR_DLL_NOT_FOUND:
+      throw std::runtime_error(std::format("dll not found:\n\'{}\'", dll_path));
+      break;
+    case NP_ERR:
+      throw std::runtime_error("couldn't load dll");
+      break;
+    default:
+      // a comment here for breakpoint
+      break;
   }
 
-  // NP software needs a window handle_ to know when it should
-  // stop sending data frames if window is closed.
-  // TEST_NO_TRACK defined so that this program doesn't boot control of NP
-  // software from my local MouseTrackIR instance while developing.
+    // NP software needs a window handle_ to know when it should
+    // stop sending data frames if window is closed.
+    // TEST_NO_TRACK defined so that this program doesn't boot control of NP
+    // software from my local MouseTrackIR instance while developing.
 #ifndef TEST_NO_TRACK
 
   switch (NP_RegisterWindowHandle(hWnd)) {
@@ -161,27 +194,31 @@ TrackIR::start()
         continue;
       }
 
-      // Watchdog enables software to be controlled via a named pipe. This is
-      // primarily used during testing so that my test instance can latch on
-      // to active tracking data without re-registering a window handle_. A
-      // disbale msg is sent before my test instance launches, then my normal
-      // instance is enables after as part of my build script.
-      if (pause_tracking_ == false) {
+      // Pause mouse move calls without stopping NPTrackIR data transmission or
+      // disconnecting. This is  primarily used during testing/debugging so that
+      // my test instance can latch on to active tracking data without
+      // re-registering a window handle and disrupting my normal copy. The pause
+      // tracking method is called from the named pipe server. I use build
+      // scripts to send commands to my working copy's pipe server to pause
+      // mouse moving before and enabling mouse moving after.
+      if (pause_mouse_ == false) {
         handler_->handle_input(yaw, pitch);
       }
 
       last_frame = framesig;
-    }
-
-    else if (NP_ERR_DEVICE_NOT_PRESENT == gdf) {
+    } else if (NP_ERR_DEVICE_NOT_PRESENT == gdf) {
       logger_->warn("device not present, tracking stopped");
-      return retcode::fail;
+      return retcode::track_ir_loss;
+    } else {
+      throw std::runtime_error(
+        std::format("tracking loop exit due to unknown problem.\ncode returned "
+                    "from NP dll: {}",
+                    static_cast<int>(gdf)));
     }
-
     Sleep(8);
   }
 
-  return retcode::success;
+  return retcode::graceful_exit;
 }
 // Tracking loop uses this to check if it should break, return to thread, then
 // have thread auto clean up
@@ -199,23 +236,21 @@ TrackIR::disconnect_from_np_trackir()
 #endif
 }
 
-// TODO: there is a risk of the thread closing between the check and the set
 void
-TrackIR::toggle()
+TrackIR::toggle_mouse()
 {
-  pause_tracking_ = !pause_tracking_;
-  if (pause_tracking_) {
-    logger_->warn("tracking paused");
+  pause_mouse_ = !pause_mouse_;
+  if (pause_mouse_) {
+    logger_->warn("mouse paused");
   } else {
-    logger_->warn("tracking resumed");
+    logger_->warn("mouse resumed");
   }
 }
 
-// TODO: there is a risk of the thread closing between the check and the set
 void
 TrackIR::stop()
 {
-  logger_->trace("Stop called into.");
+  logger_->trace("stop tracking called into");
   tracking_allowed_to_run_ = false;
 }
 

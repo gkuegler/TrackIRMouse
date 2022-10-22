@@ -40,6 +40,7 @@ WinDisplayInfo
 GetWindowsMonitorInformation()
 {
   spdlog::trace("entering WinSetup");
+  g_displays.clear();
 
   // Use a callback to go through each monitor
   if (0 == EnumDisplayMonitors(NULL, NULL, PopulateVirtMonitorBounds, NULL)) {

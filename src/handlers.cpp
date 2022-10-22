@@ -19,12 +19,23 @@ MouseHandler::MouseHandler()
   const auto profile = config::Get()->GetActiveProfile();
   const auto info = environment::GetWindowsMonitorInformation();
 
-  if (info.rectangles.size() != profile.displays.size()) {
+  auto hardware_display_count = info.rectangles.size();
+  auto user_display_count = profile.displays.size();
+
+  if (hardware_display_count > user_display_count) {
+    // TODO: do wx log error here and pres okay to continue
+    spdlog::error(
+      "Warning: More displays found that were specified by the user. This "
+      "should still work but will limit the mouse to only those displays "
+      "specified.\n{} monitors specified but {} monitors found",
+      user_display_count,
+      hardware_display_count);
+  } else if (hardware_display_count < user_display_count) {
     throw std::runtime_error(
-      std::format("Incompatible config: {} monitors specified but {} "
+      std::format("Incompatible user config: {} monitors specified but {} "
                   "monitors found",
-                  profile.displays.size(),
-                  info.rectangles.size()));
+                  user_display_count,
+                  hardware_display_count));
   }
 
   std::vector<CDisplay> displays;

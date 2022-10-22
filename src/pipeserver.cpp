@@ -23,7 +23,7 @@ constexpr size_t BUFSIZE = 512 * sizeof(unsigned char);
 
 PipeServer::PipeServer()
 {
-  logger_ = mylogging::MakeLoggerFromStd("watchdog");
+  logger_ = mylogging::GetClonedLogger("watchdog");
 }
 
 // Watchdog::~Watchdog() {

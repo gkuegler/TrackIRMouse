@@ -70,7 +70,7 @@ SettingsGeneralPanel::SettingsGeneralPanel(wxWindow* parent,
   wxStaticText* txtLogLabel = new wxStaticText(this, wxID_ANY, "Log Level: ");
   // clang-format on
 
-  p_enable_watchdog_->SetValue(pUserData->watchdog_enabled);
+  p_enable_watchdog_->SetValue(pUserData->pipe_server_enabled);
   p_track_on_start_->SetValue(pUserData->track_on_start);
   p_quit_on_loss_of_track_ir->SetValue(pUserData->quit_on_loss_of_trackir);
   p_log_level_->SetSelection(pUserData->log_level);
@@ -102,7 +102,7 @@ SettingsGeneralPanel::SettingsGeneralPanel(wxWindow* parent,
 void
 SettingsGeneralPanel::OnEnabledWatchdog(wxCommandEvent& event)
 {
-  p_user_data_->watchdog_enabled = p_enable_watchdog_->IsChecked();
+  p_user_data_->pipe_server_enabled = p_enable_watchdog_->IsChecked();
 }
 
 void
@@ -136,26 +136,29 @@ SettingsAdvancedPanel::SettingsAdvancedPanel(wxWindow* parent,
 {
   p_user_data_ = pUserData;
 
-  p_auto_find_dll_ = new wxCheckBox(
+  p_auto_find_dll_ =
+    new wxCheckBox(this, wxID_ANY, "Auto find trackir dll from registry.");
+
+  auto p_auto_find_text = new wxStaticText(
     this,
     wxID_ANY,
-    "Auto find trackir dll from registry.\n(This is normal operation if "
-    "TrackIR is installed.\nUse of this feature is primarily aimed at users\n"
-    "who wish to spoof the dll to provide\ntheir own head tracking info)");
+    "Enabling this option is normal if TrackIR is installed.\n"
+    "Use of this feature is primarily aimed at users who wish\n"
+    "to spoof the dll to provide their own head tracking source.");
 
-  wxStaticText* txtTrackLocation1 =
+  auto txtTrackLocation1 =
     new wxStaticText(this, wxID_ANY, "Path of 'NPClient64.dll':   ");
+
   p_track_ir_dll_path = new wxTextCtrl(this,
                                        myID_TRACK_IR_DLL_PATH,
                                        pUserData->track_ir_dll_folder,
                                        wxDefaultPosition,
                                        wxSize(300, 20),
                                        wxTE_LEFT);
-  wxStaticText* txtTrackLocation2 = new wxStaticText(
-    this,
-    wxID_ANY,
-    "Note: a value of 'default' will get from install location.");
+  auto txtTrackLocation2 = new wxStaticText(
+    this, wxID_ANY, "This field is ignored when 'auto find dll' is enabled.");
 
+  // checkboxes cannot be initialized with a value
   p_auto_find_dll_->SetValue(pUserData->auto_find_track_ir_dll);
 
   wxBoxSizer* zrDllLocation = new wxBoxSizer(wxHORIZONTAL);
@@ -164,6 +167,7 @@ SettingsAdvancedPanel::SettingsAdvancedPanel(wxWindow* parent,
 
   wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
   topSizer->Add(p_auto_find_dll_, 0, wxTOP | wxBOTTOM, 10);
+  topSizer->Add(p_auto_find_text, 0, wxTOP | wxBOTTOM, 10);
   topSizer->Add(zrDllLocation, 0, wxTOP | wxEXPAND, 10);
   topSizer->Add(txtTrackLocation2, 0, wxALL, 0);
 
@@ -172,10 +176,16 @@ SettingsAdvancedPanel::SettingsAdvancedPanel(wxWindow* parent,
 
   SetSizer(border);
 
+  p_auto_find_dll_->Bind(
+    wxEVT_CHECKBOX, &SettingsAdvancedPanel::OnAutoFindDll, this);
   p_track_ir_dll_path->Bind(
     wxEVT_TEXT, &SettingsAdvancedPanel::OnTrackIrDllPath, this);
-  p_track_ir_dll_path->Bind(
-    wxEVT_BUTTON, &SettingsAdvancedPanel::OnAutoFindDll, this);
+}
+
+void
+SettingsAdvancedPanel::OnAutoFindDll(wxCommandEvent& event)
+{
+  p_user_data_->auto_find_track_ir_dll = p_auto_find_dll_->IsChecked();
 }
 
 void
@@ -184,12 +194,6 @@ SettingsAdvancedPanel::OnTrackIrDllPath(wxCommandEvent& event)
   wxString wxsPath = p_track_ir_dll_path->GetLineText(0);
   std::string path(wxsPath.mb_str());
   p_user_data_->track_ir_dll_folder = path;
-}
-
-void
-SettingsAdvancedPanel::OnAutoFindDll(wxCommandEvent& event)
-{
-  p_user_data_->auto_find_track_ir_dll = p_auto_find_dll_->IsChecked();
 }
 
 cSettingsServerPanel::cSettingsServerPanel(wxWindow* parent,
@@ -220,7 +224,7 @@ cSettingsServerPanel::cSettingsServerPanel(wxWindow* parent,
   //     this, wxID_ANY,
   //     "Note: a value of 'default' will get from install location.");
 
-  p_server_enabled_->SetValue(pUserData->watchdog_enabled);
+  p_server_enabled_->SetValue(pUserData->pipe_server_enabled);
 
   wxBoxSizer* zrTextEntry = new wxBoxSizer(wxHORIZONTAL);
   zrTextEntry->Add(text_label, 0, wxTOP, 5);
@@ -243,7 +247,7 @@ cSettingsServerPanel::cSettingsServerPanel(wxWindow* parent,
 void
 cSettingsServerPanel::OnServerEnabled(wxCommandEvent&)
 {
-  p_user_data_->watchdog_enabled = p_server_enabled_->IsChecked();
+  p_user_data_->pipe_server_enabled = p_server_enabled_->IsChecked();
 }
 
 void

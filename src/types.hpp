@@ -10,7 +10,11 @@ using Pixels = signed int;
 using RectDegrees = std::array<Degrees, 4>;
 using RectPixels = std::array<Pixels, 4>;
 using RectShort = std::array<double, 4>;
-using GameTitles = std::vector<std::pair<std::string, std::string>>;
+using GameTitleVector = std::vector<std::pair<std::string, std::string>>;
+constexpr const std::array<std::string_view, 4> k_edge_names = { "left",
+                                                                 "right",
+                                                                 "top",
+                                                                 "bottom" };
 
 constexpr static const int LEFT_EDGE = 0;
 constexpr static const int RIGHT_EDGE = 1;
@@ -20,12 +24,15 @@ constexpr static const int BOTTOM_EDGE = 3;
 enum class retcode
 {
   success,
-  fail
+  fail,
+  track_ir_loss,
+  graceful_exit
 };
 
 enum class msgcode
 {
   normal,
+  log,
   log_normal_text,
   log_red_text,
   toggle_tracking,

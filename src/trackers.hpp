@@ -16,20 +16,22 @@ class TrackIR
 {
 public:
   handlers::MouseHandler* handler_;
-  std::atomic<bool> tracking_allowed_to_run_ = false;
-  std::atomic<bool> pause_tracking_ = false;
 
 private:
   std::shared_ptr<spdlog::logger> logger_;
+  std::atomic<bool> tracking_allowed_to_run_ = true;
+  std::atomic<bool> pause_mouse_ = false;
 
 public:
-  TrackIR(HWND hWnd,
-          std::string dll_path,
-          int profile_id,
-          handlers::MouseHandler* handler);
+  TrackIR(handlers::MouseHandler* handler);
   ~TrackIR();
+
+  void initialize(HWND hWnd,
+                  bool auto_find_dll,
+                  std::string user_dll_folder,
+                  int profile_id);
   retcode start(); // main tracking loop
-  void toggle();
+  void toggle_mouse();
   void stop();
 
 private:

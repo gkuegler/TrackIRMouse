@@ -356,6 +356,7 @@
     <ClCompile Include="wdi.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\OneDrive\Python\head tracking\cpp implementation\TrackIRMouse - VS2022\src\resource.h" />
     <ClInclude Include="config.hpp" />
     <ClInclude Include="environment.hpp" />
     <ClInclude Include="hotkey.hpp" />
@@ -368,7 +369,7 @@
     <ClInclude Include="log.hpp" />
     <ClInclude Include="np-client.h" />
     <ClInclude Include="pipeserver.hpp" />
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="registry_access.h" />
     <ClInclude Include="threads.hpp" />
     <ClInclude Include="trackers.hpp" />
     <ClInclude Include="types.hpp" />
@@ -376,9 +377,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

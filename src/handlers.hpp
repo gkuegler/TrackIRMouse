@@ -6,6 +6,8 @@
 #include "display.hpp"
 #include "types.hpp"
 
+// TODO: make a persistent scroll mode for each monitor
+
 namespace handlers {
 
 // takes yaw and pitch information then converts it to mouse coordinates.
@@ -15,7 +17,6 @@ class MouseHandler
 public:
   std::shared_ptr<std::vector<CDisplay>> displays_;
   std::atomic<bool> normal_mode_ = true;
-  // TODO: make a persistent scroll mode for each monitor
   std::atomic<mouse_mode> mode_ = mouse_mode::scrollbar_right_mini_map;
 
   MouseHandler();

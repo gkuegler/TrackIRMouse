@@ -41,7 +41,8 @@ class Frame : public wxFrame
 public:
   TrackThread* p_track_thread_ = nullptr;
   ControlServerThread* p_server_thread_ = nullptr;
-  wxCriticalSection p_thread_cs; // protects all thread pointers
+  wxCriticalSection p_cs_track_thread; // protects track thread
+  wxCriticalSection p_cs_pipe_thread;  // protects pipe server thread
 
   // log window
   wxStaticText* label_text_rich_;
@@ -52,6 +53,7 @@ public:
   wxChoice* p_combo_profiles_;
 
   std::unique_ptr<config::game_title_map_t> p_titles_map_;
+  GameTitleVector titles_;
   wxTextCtrl* p_text_name_;
   wxTextCtrl* p_text_profile_id_;
   wxTextCtrl* p_text_profile_game_title_;
@@ -65,7 +67,7 @@ public:
   Frame(wxPoint, wxSize);
   ~Frame(){};
   void InitializeSettings();
-  void UpdateGuiUsingSettings();
+  void UpdateGuiFromConfig();
 
 public:
   // menu handlers
@@ -88,7 +90,7 @@ public:
   void OnDuplicateProfile(wxCommandEvent& event);
 
   // display config controls
-  void LoadDisplaySettings();
+  void UpdateProfilePanelFromConfig();
   int m_ival = 0;
   void OnName(wxCommandEvent& event);
   void OnProfileID(wxCommandEvent& event);

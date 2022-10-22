@@ -10,15 +10,11 @@
 #include "toml11/toml/exception.hpp"
 #include "types.hpp"
 
-constexpr const std::array<std::string_view, 4> k_edge_names = { "left",
-                                                                 "right",
-                                                                 "top",
-                                                                 "bottom" };
 namespace config {
 
-struct Display
+struct UserDisplay
 {
-  Display(RectDegrees r, RectPixels p)
+  UserDisplay(RectDegrees r, RectPixels p)
     : rotation(r)
     , padding(p)
   {
@@ -27,28 +23,26 @@ struct Display
   RectPixels padding{ 0, 0, 0, 0 };           // Left, Right, Top, Bottom
 };
 
+using UserInput = std::vector<UserDisplay>;
+
 struct Profile
 {
   std::string name = "(empty)";
   int profile_id = 0;
   bool use_default_padding = true;
-  std::vector<Display> displays = {};
+  std::vector<UserDisplay> displays = {};
 };
 // const Profile kDefaultProfile = {"empty", 0, true, {}};
 
 struct UserData
 {
+  std::string active_profile_name = Profile().name; // use default profile name
   bool track_on_start = true;
   bool quit_on_loss_of_trackir = true;
   bool auto_find_track_ir_dll = true;
   std::string track_ir_dll_folder = "";
-  // TODO: make setting file parse for this
+  bool pipe_server_enabled = true;
   std::string pipe_server_name = "";
-  // TODO: change this variable name
-  bool watchdog_enabled = true;
-  std::string active_profile_name =
-    Profile().name; // use default profile name
-                    // TODO: make setting file parse for this
   bool hotkey_enabled = true;
   spdlog::level::level_enum log_level = spdlog::level::info;
 
@@ -109,13 +103,12 @@ std::shared_ptr<Config>
 Get();
 void
 Set(const Config c);
-using UserInput = std::vector<Display>;
 bool
 ValidateUserInput(const UserInput& displays);
 
 // toml::get only supports map type of which key_type is convertible from
 // std::string this is inherent to toml file; example: 11220 = "Game Title"
-// that is why I have to get my profile p_profile_id_ as a string instead of
+// that is why I have to get my profile id as a string instead of
 // native int
 using game_title_map_t = std::map<const std::string, std::string>;
 

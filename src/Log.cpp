@@ -21,20 +21,20 @@
 // TODO: test dpi support on 4K monito
 
 void
-SendThreadMessage(msgcode code, wxString msg, long optional_param)
+SendThreadMessage(msgcode code, std::string msg, long optional_param)
 {
   wxThreadEvent* event = new wxThreadEvent(wxEVT_THREAD);
   event->SetInt(static_cast<int>(code));
-  event->SetString(msg);
+  event->SetString(wxString(msg));
   event->SetExtraLong(static_cast<long>(optional_param));
   wxTheApp->QueueEvent(event);
 }
 
 void
-SendThreadMessage(msgcode code, wxString msg)
+SendThreadMessage(msgcode code, std::string msg)
 {
   wxThreadEvent* event = new wxThreadEvent(wxEVT_THREAD);
-  event->SetString(msg);
+  event->SetString(wxString(msg));
   event->SetInt(static_cast<long>(code));
   wxTheApp->QueueEvent(event);
 }
@@ -53,21 +53,22 @@ protected:
     // Format message according to sink specific formatter.
     spdlog::memory_buf_t formatted;
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
-    wxString message(fmt::to_string(formatted));
+    std::string message(fmt::to_string(formatted));
 
     // raise a wxWidgets error box oand/or shut down app if fatal
-    if (msg.level == spdlog::level::critical) {
-      wxLogFatalError(message);
-    } else if (msg.level == spdlog::level::err) {
-      wxLogError(message);
-    } else {
-      // send output to log consol in app
-      if (msg.level > spdlog::level::info) {
-        SendThreadMessage(msgcode::log_red_text, message, 0);
-      } else {
-        SendThreadMessage(msgcode::log_normal_text, message, 0);
-      }
-    }
+    SendThreadMessage(msgcode::log, message, static_cast<long>(msg.level));
+    // if (msg.level == spdlog::level::critical) {
+    //   //wxLogFatalError(message);
+    // } else if (msg.level == spdlog::level::err) {
+    //   wxLogError(message);
+    // } else {
+    //   // send output to log consol in app
+    //   if (msg.level > spdlog::level::info) {
+    //     SendThreadMessage(msgcode::log_red_text, message, 0);
+    //   } else {
+    //     SendThreadMessage(msgcode::log_normal_text, message, 0);
+    //   }
+    // }
   }
 
   // Nothing to manually flush. Message queue handles everything.
@@ -81,50 +82,41 @@ using WxSink_st = WxSink<spdlog::details::null_mutex>;
 
 // clang-format off
 
-/**
- * Get new logger_ with standard sinks, named name.
- *
- * @param[in]  {string} name - Name of logger_.
- *
- * @return shared pointer to logger_
- */
-std::shared_ptr<spdlog::logger> MakeLoggerFromStd(std::string name){
+//std::shared_ptr<>
 
-  // cutom logger_ with sink specific logging level
+void SetUpLogging() {
+	// cutom logger_ with sink sp{ecific logging level
   // to wx txt control on app main panel_
-  static std::shared_ptr<WxSink_mt> wx_txtctrl_sink = std::make_shared<WxSink_mt>();
+  std::shared_ptr<WxSink_mt> wx_txtctrl_sink = std::make_shared<WxSink_mt>();
   wx_txtctrl_sink->set_level(spdlog::level::info);
 
   // create sinks (3) in total
   // Loggers accessing the same files need to use the same sinks or "weird things
-  // happen". Create static sinks to be reuses
-  static std::vector<spdlog::sink_ptr> sinks = {
+  // happen". Create static sinks to be reused.
+  std::vector<spdlog::sink_ptr> sinks = {
     std::make_shared<spdlog::sinks::stdout_sink_mt>(),
     std::make_shared<spdlog::sinks::basic_file_sink_mt>("log-trackir.txt", true),
     wx_txtctrl_sink
   };
 
-  auto logger_ = std::make_shared<spdlog::logger>(name, begin(sinks), end(sinks));
+  auto logger_ = std::make_shared<spdlog::logger>("main", begin(sinks), end(sinks));
   logger_->set_level(spdlog::level::trace);
   logger_->set_pattern("[%T][%n][%l] %v"); // "[HH:MM:SS][logger_name][level] msg"
 
-  // set sink specific format pattern after becuase setting pattern on logger_
+  // set sink specific format pattern after becuase setting global pattern on logger_
   // overrides the sink specific format pattern
   wx_txtctrl_sink->set_pattern("%v"); // "msg"
+
+	spdlog::set_default_logger(std::move(logger_));
   spdlog::flush_every(std::chrono::seconds(2));
 
-  return logger_;
+  return;
+
 }
 
-/**
- * @brief      Sets the global logger_.
- *
- * @param[in]  l     The logger_ to be set as global and consumed.
- */
-void SetGlobalLogger(std::shared_ptr<spdlog::logger> l) {
-  // NOTE: setting as default also registers it in the logger_ registry by name
-  spdlog::set_default_logger(std::move(l));
-  spdlog::flush_every(std::chrono::seconds(2));
+std::shared_ptr<spdlog::logger> GetClonedLogger(std::string name) {
+	return spdlog::get("main")->clone(name);
 }
+
 // clang-format on
 } // namespace mylogging

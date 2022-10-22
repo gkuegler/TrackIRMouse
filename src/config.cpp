@@ -21,7 +21,7 @@
 
 namespace config {
 
-// settings singletons
+// settings singleton
 static std::shared_ptr<Config> g_config;
 
 // TODO: a shared pointer will not work for thread safety
@@ -36,107 +36,6 @@ void
 Set(const Config c)
 {
   g_config = std::make_shared<Config>(c);
-}
-
-typedef struct RegistryQuery_
-{
-  int result;
-  std::string result_string;
-  std::string value;
-} RegistryQuery;
-
-/**
- * [GetStringFromRegistry description]
- * @param  parent_key [description]
- * @param  sub_key     [description]
- * @param  sub_value   [description]
- * @return            [description]
- */
-RegistryQuery
-GetStringFromRegistry(HKEY parent_key,
-                      const char* sub_key,
-                      const char* sub_value)
-{
-  //////////////////////////////////////////////////////////////////////
-  //                         Opening The Key                          //
-  //////////////////////////////////////////////////////////////////////
-
-  HKEY hKey = 0;
-
-  LSTATUS status_key_open =
-    RegOpenKeyExA(parent_key, // should usually be HKEY_CURRENT_USER
-                  sub_key,
-                  0,        //[in]           DWORD  ulOptions,
-                  KEY_READ, //[in]           REGSAM samDesired,
-                  &hKey);
-
-  if (ERROR_FILE_NOT_FOUND == status_key_open) {
-    return RegistryQuery{ ERROR_FILE_NOT_FOUND, "Registry key not found.", "" };
-  }
-
-  // Catch all other errors
-  if (ERROR_SUCCESS != status_key_open) {
-    return RegistryQuery{ status_key_open, "Could not open registry key.", "" };
-  }
-
-  //////////////////////////////////////////////////////////////////////
-  //                    Querying Value Information                    //
-  //////////////////////////////////////////////////////////////////////
-
-  DWORD value_type = 0;
-  DWORD size_of_buffer = 0;
-
-  LSTATUS query_status =
-    RegQueryValueExA(hKey,           // [in]                HKEY    hKey,
-                     "Path",         // [in, optional]      LPCSTR  lpValueName,
-                     0,              // LPDWORD lpReserved,
-                     &value_type,    // [out, optional]     LPDWORD lpType,
-                     0,              // [out, optional]     LPBYTE  lpData,
-                     &size_of_buffer // [in, out, optional] LPDWORD lpcbData
-    );
-
-  if (ERROR_FILE_NOT_FOUND == query_status) {
-    return RegistryQuery{ ERROR_FILE_NOT_FOUND,
-                          "Value not found for key.",
-                          "" };
-  }
-
-  // Catch all other errors of RegQueryValueExA
-  if (ERROR_SUCCESS != query_status) {
-    return RegistryQuery{ query_status, "RegQueryValueExA failed.", "" };
-  }
-
-  if (REG_SZ != value_type) {
-    return RegistryQuery{ 1, "Registry value not a string type.", "" };
-  }
-
-  //////////////////////////////////////////////////////////////////////
-  //                      Getting the hKey Value                       //
-  //////////////////////////////////////////////////////////////////////
-
-  // Registry key may or may not be stored with a null terminator
-  // add one just in case
-  char* szPath = static_cast<char*>(calloc(1, size_of_buffer + 1));
-
-  if (NULL == szPath) {
-    return RegistryQuery{ 1, "Failed to allocate memory.", "" };
-  }
-
-  LSTATUS status_get_value =
-    RegGetValueA(hKey,           // [in]                HKEY    hkey,
-                 0,              // [in, optional]      LPCSTR  lpSubKey,
-                 sub_value,      // [in, optional]      LPCSTR  lpValue,
-                 RRF_RT_REG_SZ,  // [in, optional]      DWORD   dwFlags,
-                 &value_type,    // [out, optional]     LPDWORD pdwType,
-                 (void*)szPath,  // [out, optional]     PVOID   pvData,
-                 &size_of_buffer // [in, out, optional] LPDWORD pcbData
-    );
-
-  if (ERROR_SUCCESS == status_get_value) {
-    return RegistryQuery{ 0, "", std::string(szPath) };
-  } else {
-    return RegistryQuery{ status_get_value, "Could not get registry key.", "" };
-  }
 }
 
 /**
@@ -155,72 +54,24 @@ Config::Config(const std::string filename)
   env_data.monitor_count = GetSystemMetrics(SM_CMONITORS);
 
   // Find the general settings table
-  const auto& t_general_settings = toml::find(t_data, "General");
+  const auto& t_general = toml::find(t_data, "General");
 
+  // TODO: consider that default values are now being specified in 2 places
   // Verify values exist and parse to correct type
-  user_data.track_on_start =
-    toml::find<bool>(t_general_settings, "track_on_start");
-  user_data.quit_on_loss_of_trackir =
-    toml::find<bool>(t_general_settings, "quit_on_loss_of_track_ir");
-  user_data.watchdog_enabled =
-    toml::find<bool>(t_general_settings, "watchdog_enabled");
-  user_data.log_level = static_cast<spdlog::level::level_enum>(
-    toml::find<int>(t_general_settings, "log_level"));
-  user_data.auto_find_track_ir_dll =
-    toml::find<bool>(t_general_settings, "auto_find_trackir_dll");
-
-  // Optionally the user can specify the location to the trackIR dll
-  user_data.track_ir_dll_folder =
-    toml::find<std::string>(t_general_settings, "trackir_dll_directory");
-
-  user_data.active_profile_name =
-    toml::find<std::string>(t_general_settings, "active_profile");
-
-  // TODO: implement this in settings file
-  user_data.auto_find_track_ir_dll = true;
-
-  //////////////////////////////////////////////////////////////////////
-  //                  Finding NPTrackIR DLL Location                  //
-  //////////////////////////////////////////////////////////////////////
-  std::string dll_path;
-
-  if (user_data.auto_find_track_ir_dll) {
-    RegistryQuery path = GetStringFromRegistry(
-      HKEY_CURRENT_USER,
-      "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location",
-      "Path");
-
-    if (0 == path.result) {
-      dll_path = path.value;
-      spdlog::info("Acquired DLL location from registry.");
-    } else {
-      spdlog::error(
-        "Could not find registry path. NP TrackIR may not be installed. To "
-        "fix error, try specifying the folder of the \"NPClient64.dll\" in "
-        "edit->settings.");
-      spdlog::info("path.result: {}\n"
-                   "path.resultString: {}",
-                   path.result,
-                   path.result_string);
-    }
-  } else {
-    dll_path = user_data.track_ir_dll_folder;
-  }
-
-  // Check if DLL folder path is postfixed with slashes
-  if (dll_path.back() != '\\') {
-    dll_path.push_back('\\');
-  }
-
-// Match to the correct bitness of this application
-#if defined(_WIN64) || defined(__amd64__)
-  dll_path.append("NPClient64.dll");
-#else
-  dll_path.append("NPClient.dll");
-#endif
-
-  spdlog::debug("NPTrackIR DLL Path: {}", dll_path);
-  env_data.track_ir_dll_path = dll_path;
+  UserData user = {
+    toml::find<std::string>(t_general, "active_profile"),
+    toml::find_or<bool>(t_general, "track_on_start", false),
+    toml::find_or<bool>(t_general, "quit_on_loss_of_track_ir", false),
+    toml::find_or<bool>(t_general, "auto_find_trackir_dll", true),
+    toml::find<std::string>(t_general, "trackir_dll_directory"),
+    toml::find_or<bool>(t_general, "pipe_server_enabled", false),
+    toml::find_or<std::string>(t_general, "pipe_server_name", "watchdog"),
+    toml::find_or<bool>(t_general, "hotkey_enabled", false),
+    static_cast<spdlog::level::level_enum>(
+      toml::find_or<int>(t_general, "log_level", spdlog::level::info))
+  };
+  // TODO: what to do when no active profile specified
+  // TODO: convert log level in settings file to string
 
   //////////////////////////////////////////////////////////////////////
   //                     Finding Default Padding                      //
@@ -228,10 +79,10 @@ Config::Config(const std::string filename)
 
   // Catch padding table errors and notify user, because reverting to e
   // 0 padding is not a critical to program function
-  toml::value default_padding_table;
+  toml::value t_default_padding;
 
   try {
-    default_padding_table = toml::find(t_data, "DefaultPadding");
+    t_default_padding = toml::find(t_data, "DefaultPadding");
   } catch (std::out_of_range e) {
     spdlog::warn("Default Padding Table Not Found");
     spdlog::warn("Please add the following to the settings.toml file:\n"
@@ -242,34 +93,34 @@ Config::Config(const std::string filename)
                  "bottom = 0");
   }
 
-  user_data.default_padding[0] = toml::find<int>(default_padding_table, "left");
-  user_data.default_padding[1] =
-    toml::find<int>(default_padding_table, "right");
-  user_data.default_padding[2] = toml::find<int>(default_padding_table, "top");
-  user_data.default_padding[3] =
-    toml::find<int>(default_padding_table, "bottom");
+  user.default_padding[LEFT_EDGE] = toml::find<int>(t_default_padding, "left");
+  user.default_padding[RIGHT_EDGE] =
+    toml::find<int>(t_default_padding, "right");
+  user.default_padding[TOP_EDGE] = toml::find<int>(t_default_padding, "top");
+  user.default_padding[BOTTOM_EDGE] =
+    toml::find<int>(t_default_padding, "bottom");
 
   //////////////////////////////////////////////////////////////////////
   //                      Find Profiles Mapping                       //
   //////////////////////////////////////////////////////////////////////
 
-  user_data.profiles = {}; // clear default profile
+  // user_data.profiles = {}; // clear default profile
 
   // Find the profiles table that contains all mapping profiles.
   const auto& profiles = toml::find(t_data, "Profiles").as_array();
   for (int i = 0; i < profiles.size(); i++) {
     const auto& profile = profiles[i];
-    Profile new_profile;
-    new_profile.name = toml::find<std::string>(profile, "name");
-    new_profile.profile_id = toml::find<int>(profile, "profile_id");
-    new_profile.use_default_padding =
-      toml::find<bool>(profile, "use_default_padding");
+    Profile new_profile = {
+      toml::find<std::string>(profile, "name"),
+      toml::find<int>(profile, "profile_id"),
+      toml::find<bool>(profile, "use_default_padding"),
+    }; // partial initialization
 
     // Find the display mapping table for the given profile
     auto& t_display_mapping = toml::find(profile, "DisplayMappings");
 
     for (auto& display : t_display_mapping.as_array()) {
-      // bring in the rotational bounds
+      // find the rotational bounds
       toml::value left = toml::find(display, "left");
       toml::value right = toml::find(display, "right");
       toml::value top = toml::find(display, "top");
@@ -293,34 +144,38 @@ Config::Config(const std::string filename)
                                    ? static_cast<Degrees>(bottom.as_integer())
                                    : static_cast<Degrees>(bottom.as_floating());
 
-      // I return an ungodly fake high padding numbelong,
+      // Return the padding rectangle specific to the display.
+      // To avoid exceptions, I return an ungodly fake high padding numbe,
       // so that I can tell if one was found in the toml config file
       // without producing an exception if a value was not found.
+      // This enables the user to specify individual padding values without
+      // having to specify all or any of them.
       // Padding values are not critical the program operation.
+
       Pixels pleft = toml::find_or<Pixels>(display, "pad_left", 5555);
       Pixels pright = toml::find_or<Pixels>(display, "pad_right", 5555);
       Pixels ptop = toml::find_or<Pixels>(display, "pad_top", 5555);
       Pixels pbottom = toml::find_or<Pixels>(display, "pad_bottom", 5555);
 
       if (pleft == 5555)
-        pleft = user_data.default_padding[0];
+        pleft = user.default_padding[LEFT_EDGE];
       if (pright == 5555)
-        pright = user_data.default_padding[1];
+        pright = user.default_padding[RIGHT_EDGE];
       if (ptop == 5555)
-        ptop = user_data.default_padding[2];
+        ptop = user.default_padding[TOP_EDGE];
       if (pbottom == 5555)
-        pbottom = user_data.default_padding[3];
+        pbottom = user.default_padding[BOTTOM_EDGE];
 
       // Report padding values
-      spdlog::debug("Display {} Padding -> {}{}, {}{}, {}{}, {}{}",
+      spdlog::trace("Display {} Padding -> {}{}, {}{}, {}{}, {}{}",
                     i,
-                    user_data.default_padding[0],
+                    user.default_padding[LEFT_EDGE],
                     (pleft == 5555) ? "(default)" : "",
-                    user_data.default_padding[1],
+                    user.default_padding[RIGHT_EDGE],
                     (pright == 5555) ? "(default)" : "",
-                    user_data.default_padding[2],
+                    user.default_padding[TOP_EDGE],
                     (ptop == 5555) ? "(default)" : "",
-                    user_data.default_padding[3],
+                    user.default_padding[BOTTOM_EDGE],
                     (pbottom == 5555) ? "(default)" : "");
 
       new_profile.displays.push_back(
@@ -328,25 +183,27 @@ Config::Config(const std::string filename)
           { pleft, pright, ptop, pbottom } });
     }
 
-    user_data.profiles.push_back(new_profile);
+    user.profiles.push_back(new_profile);
   }
 
   // validate that active profile exists in profiles list
-  if (user_data.profiles.size() > 0) {
+  if (user.profiles.size() > 0) {
     bool found = false;
-    for (auto& profile : user_data.profiles) {
-      if (profile.name == user_data.active_profile_name) {
+    for (auto& profile : user.profiles) {
+      if (profile.name == user.active_profile_name) {
         found = true;
       }
     }
     if (!found) {
       // arbitrarily pick the first profile in the list
-      user_data.active_profile_name = user_data.profiles[0].name;
+      user.active_profile_name = user.profiles[0].name;
     }
   } else { // append default profile to list if empty
-    user_data.profiles = { { "empty", 0, true, {} } };
-    user_data.active_profile_name = "empty";
+    user.profiles = { Profile() };
+    user.active_profile_name = user.profiles[0].name;
   }
+
+  user_data = user;
 
   return;
 }
@@ -360,22 +217,22 @@ Config::Config(const std::string filename)
  */
 void Config::save_to_file(std::string filename) {
   const toml::value general{
+    {"active_profile", user_data.active_profile_name},
     {"track_on_start", user_data.track_on_start},
     {"quit_on_loss_of_track_ir", user_data.quit_on_loss_of_trackir},
     {"auto_find_trackir_dll", user_data.auto_find_track_ir_dll},
     {"trackir_dll_directory", user_data.track_ir_dll_folder},
-    {"watchdog_enabled", user_data.watchdog_enabled},
+    {"pipe_server_enabled", user_data.pipe_server_enabled},
 		{"pipe_server_name", user_data.pipe_server_name},
-    {"active_profile", user_data.active_profile_name},
     {"hotkey_enabled", user_data.hotkey_enabled},
     {"log_level", static_cast<int>(user_data.log_level)},
   };
 
   const toml::value padding{
-    {"left", user_data.default_padding[0]},
-    {"right", user_data.default_padding[1]},
-    {"top", user_data.default_padding[2]},
-    {"bottom", user_data.default_padding[3]}
+    {"left", user_data.default_padding[LEFT_EDGE]},
+    {"right", user_data.default_padding[RIGHT_EDGE]},
+    {"top", user_data.default_padding[TOP_EDGE]},
+    {"bottom", user_data.default_padding[BOTTOM_EDGE]}
   };
 
   // toml library has overloads for creating arrays from std::vector
@@ -385,14 +242,14 @@ void Config::save_to_file(std::string filename) {
     std::vector<toml::value> displays;
     for(auto& display : profile.displays){
         const toml::value d{
-          {"left", display.rotation[0]},
-          {"right", display.rotation[1]},
-          {"top", display.rotation[2]},
-          {"bottom", display.rotation[3]},
-          {"pad_left", display.padding[0]},
-          {"pad_right", display.padding[1]},
-          {"pad_top", display.padding[2]},
-          {"pad_bottom", display.padding[3]},
+          {"left", display.rotation[LEFT_EDGE]},
+          {"right", display.rotation[RIGHT_EDGE]},
+          {"top", display.rotation[TOP_EDGE]},
+          {"bottom", display.rotation[BOTTOM_EDGE]},
+          {"pad_left", display.padding[LEFT_EDGE]},
+          {"pad_right", display.padding[RIGHT_EDGE]},
+          {"pad_top", display.padding[TOP_EDGE]},
+          {"pad_bottom", display.padding[BOTTOM_EDGE]},
         };
       displays.push_back(d);
     }
@@ -473,7 +330,7 @@ Config::RemoveProfile(std::string profile_name)
   }
   // change the active profile if deleted
   if (user_data.active_profile_name == profile_name) {
-    auto first = user_data.profiles[0].name;
+    auto first = user_data.profiles[LEFT_EDGE].name;
     SetActiveProfile(first);
   }
 }
@@ -639,14 +496,14 @@ ValidateUserInput(const UserInput& displays)
   for (int i = 0; i < displays.size(); i++) {
     int j = i;
     while (++j < displays.size()) {
-      Degrees A_left = displays[i].rotation[0];
-      Degrees A_right = displays[i].rotation[1];
-      Degrees A_top = displays[i].rotation[2];
-      Degrees A_bottom = displays[i].rotation[3];
-      Degrees B_left = displays[j].rotation[0];
-      Degrees B_right = displays[j].rotation[1];
-      Degrees B_top = displays[j].rotation[2];
-      Degrees B_bottom = displays[j].rotation[3];
+      Degrees A_left = displays[i].rotation[LEFT_EDGE];
+      Degrees A_right = displays[i].rotation[RIGHT_EDGE];
+      Degrees A_top = displays[i].rotation[TOP_EDGE];
+      Degrees A_bottom = displays[i].rotation[BOTTOM_EDGE];
+      Degrees B_left = displays[j].rotation[LEFT_EDGE];
+      Degrees B_right = displays[j].rotation[RIGHT_EDGE];
+      Degrees B_top = displays[j].rotation[TOP_EDGE];
+      Degrees B_bottom = displays[j].rotation[BOTTOM_EDGE];
       if (A_left < B_right && A_right > B_left && A_top > B_bottom &&
           A_bottom < B_top) {
         spdlog::error(

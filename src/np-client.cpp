@@ -136,15 +136,22 @@ NPRESULT __stdcall NP_StopDataTransmission() {
   return result;
 }  // NP_StopDataTransmission
 
-// Load the DLL and retrieve pointers to all exports
-NPRESULT NPClient_Init(LPTSTR pszDLLPath) {
+// clang-format on
+// Load the DLL and resolved dll function pointers
+NPRESULT
+NPClient_Init(LPTSTR pszDLLPath)
+{
   ghNPClientDLL = LoadLibrary(pszDLLPath);
 
   if (NULL == ghNPClientDLL) {
-    spdlog::error("NP DLL load failed with error code: {}", GetLastError());
-    return NP_ERR_DLL_NOT_FOUND;
+    if (GetLastError() == ERROR_MOD_NOT_FOUND) {
+      return NP_ERR_DLL_NOT_FOUND;
+    } else {
+      spdlog::error("NP DLL load failed with error code: {}", GetLastError());
+      return NP_ERR;
+    }
   }
-
+  // clang-format off
   // resolve address to verify signature
   gpfNP_GetSignature = (PF_NP_GETSIGNATURE)::GetProcAddress(ghNPClientDLL, "NP_GetSignature");
 
