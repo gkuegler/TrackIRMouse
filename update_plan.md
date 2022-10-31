@@ -4,18 +4,16 @@
 * confirm watchdog pipe server works and/or fix
 * convert track to class
     * change watchdog pause option to gui message
-- get solution project folder off of wonder
-    - look up gitignore file to restructure head tracking directory
-        - src - only source files in source folder
-        - help - folder for application end-user documentation
-        - docs - folder for development documentation
-        - resources - binaries and definitions that are supposed not to be touched by users, such as fonts, images, special parts, etc.
-        - tools - utilities for making releases, scraping for to do notes, etc.
-        solution and project files should be in the same directory if seperate directory for projects
-    - use symbolic directory to link project folder head tracking folder
-    - create headless git backup folder in onedrive for tracking
-    - create backup folder for general projects?
-    - create local software projects folder
+* get solution project folder off of OneDrive
+    * look up gitignore file to restructure head tracking directory
+        * src - only source files in source folder
+        * help - folder for application end-user documentation
+        * docs - folder for development documentation
+        * resources - binaries and definitions that are supposed not to be touched by users, such as fonts, images, special parts, etc.
+        * tools - utilities for making releases, scraping for to do notes, etc.
+        * solution and project files should be in the same directory if seperate directory for projects
+    * create headless git backup folder in onedrive for tracking
+    * create local software projects folder
 
 
 ## Convert To Graphical Utility: completed

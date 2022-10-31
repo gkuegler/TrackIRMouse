@@ -1,13 +1,13 @@
-#ifndef TRACKIRMOUSE_HOCKEY_HPP
-#define TRACKIRMOUSE_HOCKEY_HPP
+#ifndef TRACKIRMOUSE_HOTKEY_HPP
+#define TRACKIRMOUSE_HOTKEY_HPP
 
 #include <windows.h>
 
 #include "Log.hpp"
 
 enum
-{ // For applications this must be between 0 and 0xBFFF
-  HOTKEY_ID_SCROLL_LAST = 5,
+{ // Windows: For applications this must be between 0 and 0xBFFF
+  HOTKEY_ID_SCROLL_ALTERNATE = 5,
 };
 
 // map global windows hotkey
@@ -41,4 +41,4 @@ private:
   bool is_registered_ = false;
 };
 
-#endif /* TRACKIRMOUSE_HOCKEY_HPP */
+#endif /* TRACKIRMOUSE_HOTKEY_HPP */

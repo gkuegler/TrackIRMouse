@@ -48,7 +48,7 @@ Set(const Config c)
  */
 Config::Config(const std::string filename)
 {
-  // note: hungarian notation prefix tv___ = toml::value
+  // note: prefix t_* = toml::value
   filename_ = filename;
   const auto t_data = toml::parse<toml::preserve_comments>(filename);
   env_data.monitor_count = GetSystemMetrics(SM_CMONITORS);

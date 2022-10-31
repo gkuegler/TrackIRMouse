@@ -376,7 +376,7 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
 	//This function is currently only implemented under Windows.
 	//It is used in the Windows CE port for detecting hardware button presses.
 	// TODO: wrap hotkeys in their own class to ensure destructor is called, or make a table
-	hotkey_alternate_mode_ = std::make_unique<GlobalHotkey>(GetHandle(), HOTKEY_ID_SCROLL_LAST, wxMOD_NONE, VK_F18);  // b key
+	hotkey_alternate_mode_ = std::make_unique<GlobalHotkey>(GetHandle(), HOTKEY_ID_SCROLL_ALTERNATE, wxMOD_NONE, VK_F18);  // b key
 	Bind(wxEVT_HOTKEY, &Frame::OnGlobalHotkey, this, hotkey_alternate_mode_->profile_id_);
 
 

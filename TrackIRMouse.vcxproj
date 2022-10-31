@@ -153,24 +153,32 @@
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir);$(SolutionDir)spdlog-1.9.2\include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)lib/vc_x64_lib;$(SolutionDir)splgod-1.9.2\lib\Debug</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
+    <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir);$(SolutionDir)spdlog-1.9.2\include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)lib/vc_x64_lib;$(SolutionDir)splgod-1.9.2\lib\Debug</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
+    <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir);$(SolutionDir)spdlog-1.9.2\include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)lib/vc_x64_lib;$(SolutionDir)spdlog-1.9.2\lib/Release</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
+    <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir);$(SolutionDir)spdlog-1.9.2\include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)lib/vc_x64_lib;$(SolutionDir)spdlog-1.9.2\lib/Release</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
+    <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -259,6 +267,10 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">
     <ClCompile>
@@ -274,11 +286,14 @@
       <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_x64_lib</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>"py" "$(ProjectDir)Build Steps\pause-current-trackir.py"
+      <Command>"py" "$(SolutionDir)build steps\pause-current-trackir.py"
 "$(TargetDir)TrackIRMouse.exe"
-"py" "$(ProjectDir)Build Steps\pause-current-trackir.py"
-</Command>
+"py" "$(SolutionDir)build steps\pause-current-trackir.py"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -305,6 +320,10 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">
     <ClCompile>
@@ -329,54 +348,66 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="config.cpp" />
-    <ClCompile Include="environment.cpp" />
-    <ClCompile Include="gui-graphic.cpp" />
-    <ClCompile Include="gui.cpp" />
-    <ClCompile Include="gui-dialogs.cpp" />
-    <ClCompile Include="handlers.cpp" />
-    <ClCompile Include="log.cpp" />
-    <ClCompile Include="np-client.cpp" />
-    <ClCompile Include="pipeserver.cpp" />
-    <ClCompile Include="threads.cpp" />
-    <ClCompile Include="trackers.cpp" />
-    <ClCompile Include="util.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="wdi.cpp" />
-    <ClCompile Include="wdi.hpp" />
+    <ClCompile Include="src\config.cpp" />
+    <ClCompile Include="src\environment.cpp" />
+    <ClCompile Include="src\gui-graphic.cpp" />
+    <ClCompile Include="src\gui.cpp" />
+    <ClCompile Include="src\gui-dialogs.cpp" />
+    <ClCompile Include="src\handlers.cpp" />
+    <ClCompile Include="src\log.cpp" />
+    <ClCompile Include="src\np-client.cpp" />
+    <ClCompile Include="src\pipeserver.cpp" />
+    <ClCompile Include="src\threads.cpp" />
+    <ClCompile Include="src\trackers.cpp" />
+    <ClCompile Include="src\wdi.cpp" />
+    <ClCompile Include="src\wdi.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\OneDrive\Python\head tracking\cpp implementation\TrackIRMouse - VS2022\src\resource.h" />
-    <ClInclude Include="config.hpp" />
-    <ClInclude Include="environment.hpp" />
-    <ClInclude Include="hotkey.hpp" />
-    <ClInclude Include="gui-control-id.hpp" />
-    <ClInclude Include="display.hpp" />
-    <ClInclude Include="gui-graphic.hpp" />
-    <ClInclude Include="gui.hpp" />
-    <ClInclude Include="gui-dialogs.hpp" />
-    <ClInclude Include="handlers.hpp" />
-    <ClInclude Include="log.hpp" />
-    <ClInclude Include="np-client.h" />
-    <ClInclude Include="pipeserver.hpp" />
-    <ClInclude Include="registry_access.h" />
-    <ClInclude Include="threads.hpp" />
-    <ClInclude Include="trackers.hpp" />
-    <ClInclude Include="types.hpp" />
-    <ClInclude Include="util.hpp" />
+    <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\config.hpp" />
+    <ClInclude Include="src\environment.hpp" />
+    <ClInclude Include="src\hotkey.hpp" />
+    <ClInclude Include="src\gui-control-id.hpp" />
+    <ClInclude Include="src\display.hpp" />
+    <ClInclude Include="src\gui-graphic.hpp" />
+    <ClInclude Include="src\gui.hpp" />
+    <ClInclude Include="src\gui-dialogs.hpp" />
+    <ClInclude Include="src\handlers.hpp" />
+    <ClInclude Include="src\log.hpp" />
+    <ClInclude Include="src\np-client.h" />
+    <ClInclude Include="src\pipeserver.hpp" />
+    <ClInclude Include="src\registry_access.h" />
+    <ClInclude Include="src\threads.hpp" />
+    <ClInclude Include="src\trackers.hpp" />
+    <ClInclude Include="src\types.hpp" />
+    <ClInclude Include="src\util.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Resource.rc" />
+    <ResourceCompile Include="src\Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="resources\settings.toml">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">true</DeploymentContent>
+      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TreatOutputAsContent>
+      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">true</TreatOutputAsContent>
+      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</TreatOutputAsContent>
+      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">true</TreatOutputAsContent>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="resources\track-ir-numbers.toml">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
