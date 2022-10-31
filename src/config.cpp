@@ -10,6 +10,7 @@
 
 #include <Windows.h>
 
+#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -20,6 +21,32 @@
 #include "toml11/toml.hpp"
 
 namespace config {
+
+std::string
+GetExecutableFolder()
+{
+  // TODO: use unicode to avoid maximum path length
+  char full_path[MAX_PATH];
+  auto n_char = GetModuleFileNameA(nullptr, full_path, MAX_PATH);
+  if (n_char != 0 && n_char != MAX_PATH) {
+    std::filesystem::path path(full_path);
+    auto file_path = path.parent_path().string();
+    SPDLOG_DEBUG(full_path);
+    SPDLOG_DEBUG(file_path);
+    return file_path;
+  } else {
+    auto last_error = GetLastError();
+    if (ERROR_INSUFFICIENT_BUFFER == last_error) {
+      throw std::runtime_error(
+        std::format("GetModuleFileNameA failed. File path of executable was "
+                    "too long. Consider moving executable and related folder "
+                    "to a folder with a shorter path."));
+    } else {
+      throw std::runtime_error(std::format(
+        "GetModuleFileNameA failed for unknown reason. GLE={}", last_error));
+    }
+  }
+}
 
 // settings singleton
 static std::shared_ptr<Config> g_config;
@@ -48,9 +75,10 @@ Set(const Config c)
  */
 Config::Config(const std::string filename)
 {
+
   // note: prefix t_* = toml::value
-  filename_ = filename;
-  const auto t_data = toml::parse<toml::preserve_comments>(filename);
+  file_path_ = GetExecutableFolder() + "\\" + filename;
+  const auto t_data = toml::parse<toml::preserve_comments>(file_path_);
   env_data.monitor_count = GetSystemMetrics(SM_CMONITORS);
 
   // Find the general settings table
@@ -215,7 +243,8 @@ Config::Config(const std::string filename)
  * Builds a toml object.
  * Uses toml supplied serializer via ostream operators to write to file.
  */
-void Config::save_to_file(std::string filename) {
+void Config::save_to_file(std::string ) {
+	// TODO: remove filename dependency
   const toml::value general{
     {"active_profile", user_data.active_profile_name},
     {"track_on_start", user_data.track_on_start},
@@ -268,14 +297,16 @@ void Config::save_to_file(std::string filename) {
     {"Profiles", profiles},
   };
 
-  std::fstream file(filename, std::ios_base::out);
+  std::fstream file(file_path_, std::ios_base::out);
   file << top_table << std::endl;
   file.close();
 }
 // clang-format on
 
-// set the profile with the given name as active
-// assumes active profile is always present within the vector of profiles
+/**
+ * set the profile with the given name as active
+ * assumes active profile is always present within the vector of profiles
+ */
 bool
 Config::SetActiveProfile(std::string profile_name)
 {
@@ -303,7 +334,6 @@ Config::AddProfile(std::string new_profile_name = "")
     }
   }
 
-  // TODO: dont create and set later
   Profile p; // Creat default profile
 
   // otherwise use default name
@@ -315,7 +345,9 @@ Config::AddProfile(std::string new_profile_name = "")
   SetActiveProfile(new_profile_name);
 }
 
-// remove profile with the given name from internal configuration
+/**
+ * remove profile with the given name from internal configuration
+ */
 void
 Config::RemoveProfile(std::string profile_name)
 {
@@ -427,34 +459,35 @@ GetTitleIds()
   // natural point continually adds new titles
   constexpr auto filename = "track-ir-numbers.toml";
   const std::string instructions =
-    "Couldn't load game titles from file. See above error for how to fix.\nA "
-    "sample of the title list will be loaded by default.\nUse "
-    "\"File->Reload\" to fix the error and reload list.";
+    "Couldn't load game titles from resource file.\n"
+    "A courtesy sub-sample of the title list will provided from source code.";
   std::string err_msg = "lorem ipsum";
+
+  auto full_path = GetExecutableFolder() + "\\" + filename;
 
   try {
     // load, parse, and return as map
-    auto data = toml::parse(filename);
+    auto data = toml::parse(full_path);
     return toml::find<game_title_map_t>(data, "data");
   } catch (const toml::syntax_error& ex) {
-    err_msg = fmt::format(
-      "Syntax error in toml file: \"%s\"\nSee error message below for hints "
-      "on how to fix.\n%s",
-      filename,
+    err_msg = std::format(
+      "Syntax error in toml file: \"{}\"\nSee error message below for hints "
+      "on how to fix.\n{}",
+      full_path,
       ex.what());
   } catch (const toml::type_error& ex) {
-    err_msg = fmt::format("Incorrect type when parsing toml file \"%s\".\n\n%s",
-                          filename,
+    err_msg = std::format("Incorrect type when parsing toml file \"{}\".\n\n{}",
+                          full_path,
                           ex.what());
   } catch (const std::out_of_range& ex) {
-    err_msg = fmt::format(
-      "Missing data in toml file \"%s\".\n\n%s", filename, ex.what());
+    err_msg = std::format(
+      "Missing data in toml file \"{}\".\n\n{}", full_path, ex.what());
   } catch (std::runtime_error& ex) {
-    err_msg = fmt::format("Failed to open \"%s\"", filename);
+    err_msg = std::format("Couldn't Find or Open \"{}\"", full_path);
   } catch (...) {
-    err_msg = fmt::format(
-      "exception has gone unhandled loading \"%s\" and verifying values.",
-      filename);
+    err_msg = std::format(
+      "exception has gone unhandled loading \"{}\" and verifying values.",
+      full_path);
   }
 
   spdlog::error("{}\n\n{}", err_msg, instructions);

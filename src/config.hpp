@@ -87,7 +87,7 @@ public:
   void DuplicateActiveProfile();
 
 private:
-  std::string filename_ = "";
+  std::string file_path_ = "";
 };
 
 struct ConfigReturn
