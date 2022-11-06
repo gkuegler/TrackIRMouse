@@ -356,29 +356,27 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\config.cpp" />
-    <ClCompile Include="src\environment.cpp" />
-    <ClCompile Include="src\gui-graphic.cpp" />
-    <ClCompile Include="src\gui.cpp" />
-    <ClCompile Include="src\gui-dialogs.cpp" />
+    <ClCompile Include="src\ui-frame.cpp" />
+    <ClCompile Include="src\ui-graphic.cpp" />
+    <ClCompile Include="src\ui-app.cpp" />
+    <ClCompile Include="src\ui-dialogs.cpp" />
     <ClCompile Include="src\handlers.cpp" />
     <ClCompile Include="src\log.cpp" />
     <ClCompile Include="src\np-client.cpp" />
     <ClCompile Include="src\pipeserver.cpp" />
     <ClCompile Include="src\threads.cpp" />
     <ClCompile Include="src\trackers.cpp" />
-    <ClCompile Include="src\wdi.cpp" />
-    <ClCompile Include="src\wdi.hpp" />
+    <ClCompile Include="src\environment.cpp" />
+    <ClCompile Include="src\environment.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\config.hpp" />
-    <ClInclude Include="src\environment.hpp" />
     <ClInclude Include="src\hotkey.hpp" />
-    <ClInclude Include="src\gui-control-id.hpp" />
+    <ClInclude Include="src\ui-control-id.hpp" />
     <ClInclude Include="src\display.hpp" />
-    <ClInclude Include="src\gui-graphic.hpp" />
-    <ClInclude Include="src\gui.hpp" />
-    <ClInclude Include="src\gui-dialogs.hpp" />
+    <ClInclude Include="src\ui-graphic.hpp" />
+    <ClInclude Include="src\ui-dialogs.hpp" />
     <ClInclude Include="src\handlers.hpp" />
     <ClInclude Include="src\log.hpp" />
     <ClInclude Include="src\np-client.h" />
@@ -387,6 +385,7 @@
     <ClInclude Include="src\threads.hpp" />
     <ClInclude Include="src\trackers.hpp" />
     <ClInclude Include="src\types.hpp" />
+    <ClInclude Include="src\ui-frame.hpp" />
     <ClInclude Include="src\util.hpp" />
   </ItemGroup>
   <ItemGroup>

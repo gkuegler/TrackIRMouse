@@ -8,16 +8,16 @@
 
 #include "config.hpp"
 #include "display.hpp"
+#include "environment.hpp"
 #include "log.hpp"
 #include "types.hpp"
-#include "wdi.hpp"
 
 namespace handlers {
 
 MouseHandler::MouseHandler()
 {
   const auto profile = config::Get()->GetActiveProfile();
-  const auto info = environment::GetWindowsMonitorInformation();
+  const auto info = environment::GetHardwareDisplayInformation();
 
   auto hardware_display_count = info.rectangles.size();
   auto user_display_count = profile.displays.size();

@@ -1,64 +1,29 @@
 /**
- * Main app entry and GUI components.
+ * Main app frame window and GUI components.
  *
  * --License Boilerplate Placeholder--
  *
- * TODO section:
- * transform mapping values for head distance
- * use default padding overwrites user padding values
- * allow user to select custom settings file
- * upon not finding settings on load; in blank profile add number of displays
- * that are the same number of monitors detected
- * implement crtl-s save feature
- * remove generate example settings file action
- * generator an icon
- *
- *
- * profile box:
- *   set size limitations for text for inputs
- *   pick number of displays
- *   configuration window?
- *   duplicate profile
- *
- *   maintain selections to move up and down
- *   convert values to doubles in validation step of handle_ event
- *   fix internal override of handling default display padding
  */
 
-// TODO: change the variable styling
-// TODO: change the method styleing?
-// TODO: change the function styling?
-// TODO: add documentation?
-// TODO: prune includes
+#include "ui-frame.hpp"
 
-// bug list
-//  TODO: empty profile created by default
-//  TODO: example monitors don't automatically update with the rest of the GUI
-//  TODO: remove duplicate windows hardware methods
-
-#include "GUI.hpp"
-
-#include <wx/bookctrl.h>
 #include <wx/colour.h>
 #include <wx/dataview.h>
-#include <wx/filedlg.h>
-#include <wx/popupwin.h>
-#include <wx/valnum.h>
-#include <wx/wfstream.h>
 
 #include <algorithm>
 #include <string>
 
 #include "config.hpp"
-#include "gui-dialogs.hpp"
 #include "log.hpp"
 #include "pipeserver.hpp"
 #include "threads.hpp"
 #include "trackers.hpp"
 #include "types.hpp"
+#include "ui-control-id.hpp"
+#include "ui-dialogs.hpp"
 #include "util.hpp"
 
-const constexpr std::string_view k_version_no = "0.9.3";
+const constexpr std::string_view k_version_no = "0.9.4";
 const wxSize k_default_button_size = wxSize(110, 25);
 const wxSize k_default_button_size_2 = wxSize(150, 25);
 const constexpr int k_max_profile_length = 30;
@@ -71,139 +36,17 @@ const wxColor pink(198, 102, 255);
 const wxColor green(142, 255, 102);
 const wxColor orange(102, 201, 255);
 
-wxIMPLEMENT_APP(App);
-
-// Center app on main display
-wxPoint
-GetOrigin(const int w, const int h)
-{
-  int desktopWidth = GetSystemMetrics(SM_CXMAXIMIZED);
-  int desktopHeight = GetSystemMetrics(SM_CYMAXIMIZED);
-  return wxPoint((desktopWidth / 2) - (w / 2), (desktopHeight / 2) - (h / 2));
-}
-
-//////////////////////////////////////////////////////////////////////
-//                         Main Application                         //
-//////////////////////////////////////////////////////////////////////
-
-bool
-App::OnInit()
-{
-  // Initialize global default loggers
-  mylogging::SetUpLogging();
-
-  // App initialization constants
-  constexpr int appWidth = 1200;
-  constexpr int appHeight = 900;
-
-  // Construct child elements first. The main panel_ contains a text control
-  // that is a log target.
-  p_frame_ =
-    new Frame(GetOrigin(appWidth, appHeight), wxSize(appWidth, appHeight));
-
-  //////////////////////////////////////////////////////////////////////
-  //               Messages From Threads Outside Of GUI               //
-  //////////////////////////////////////////////////////////////////////
-
-  Bind(wxEVT_THREAD, [this](wxThreadEvent& event) {
-    LogWindow* textrich = p_frame_->p_text_rich_;
-
-    switch (static_cast<msgcode>(event.GetInt())) {
-      case msgcode::log: {
-        const auto& level = event.GetExtraLong();
-        const auto& msg = event.GetString();
-        if (spdlog::level::critical == level) {
-          wxLogFatalError(msg);
-        } else if (spdlog::level::err == level) {
-          wxLogError(msg);
-        } else if (spdlog::level::warn == level) {
-          const auto existing_style = textrich->GetDefaultStyle();
-          textrich->SetDefaultStyle(wxTextAttr(*wxRED));
-          textrich->AppendText(msg);
-          textrich->SetDefaultStyle(existing_style);
-        } else {
-          textrich->AppendText(msg);
-        }
-      } break;
-      // case msgcode::log_normal_text: {
-      //   textrich->AppendText(event.GetString());
-      // } break;
-      // case msgcode::log_red_text: {
-      //   const auto existing_style = textrich->GetDefaultStyle();
-      //   textrich->SetDefaultStyle(wxTextAttr(*wxRED));
-      //   textrich->AppendText(event.GetString());
-      //   textrich->SetDefaultStyle(existing_style);
-      // } break;
-      case msgcode::toggle_tracking: {
-        if (p_frame_->p_track_thread_) {
-          p_frame_->p_track_thread_->tracker_->toggle_mouse();
-        }
-      } break;
-      case msgcode::set_mode: {
-        if (p_frame_->p_track_thread_) {
-          p_frame_->p_track_thread_->tracker_->handler_->set_alternate_mode(
-            static_cast<mouse_mode>(event.GetExtraLong()));
-        }
-      } break;
-      case msgcode::close_app:
-        p_frame_->Close(true);
-        break;
-      default:
-        break;
-    }
-  });
-
-  p_frame_->InitializeSettings();
-  p_frame_->UpdateGuiFromConfig();
-  p_frame_->Show();
-
-  // Start the track IR thread if enabled
-  auto usr = config::Get()->user_data;
-  if (usr.track_on_start) {
-    wxCommandEvent event = {}; // blank event to reuse start handler code
-    p_frame_->OnStart(event);
-  }
-
-  // Start the pipe server thread.
-  // Pipe server is only started at first application startup.
-  if (usr.pipe_server_enabled) {
-    p_frame_->p_server_thread_ = new ControlServerThread(p_frame_);
-    if (p_frame_->p_server_thread_->Run() != wxTHREAD_NO_ERROR) {
-      spdlog::error("Can't run server thread.");
-      delete p_frame_->p_server_thread_;
-      p_frame_->p_server_thread_ = nullptr;
-    }
-  }
-
-  return true;
-}
-
-int
-App::OnExit()
-{
-  return 0;
-}
-
-//////////////////////////////////////////////////////////////////////
-//                            Main Frame                            //
-//////////////////////////////////////////////////////////////////////
-
-// TODO: convert to single frame, no separate panel_ class
 Frame::Frame(wxPoint origin, wxSize dimensions)
   : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", origin, dimensions)
 {
-  wxMenu* menuFile = new wxMenu;
-
   //////////////////////////////////////////////////////////////////////
   //                            Menu Bar                              //
   //////////////////////////////////////////////////////////////////////
+  wxMenu* menuFile = new wxMenu;
   // TODO: implement open file? this will require use of the registry
   // menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
-  // TODO: implement ctrl-s keyboard shortcut.
   // "Open a new settings file from disk.");
-  // menuFile->Append(wxID_SAVE, "&Save\tCtrl-s", "Save the configuration
-  // file.");
-  menuFile->Append(wxID_SAVE);
+  menuFile->Append(wxID_SAVE, "&Save\tCtrl-S", "Save the configuration file");
   menuFile->Append(myID_MENU_RELOAD, "&Reload", "Reload the settings file.");
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
@@ -212,7 +55,8 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   menuEdit->Append(myID_MENU_SETTINGS, "&Settings", "Edit app settings.");
 
   wxMenu* menuHelp = new wxMenu;
-  // menuHelp->AppendSeparator();
+  // TODO: implement a help file
+  // menuHelp->Append(wxID_HELP);
   menuHelp->Append(wxID_ABOUT);
 
   wxMenuBar* menuBar = new wxMenuBar;
@@ -221,12 +65,13 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   menuBar->Append(menuHelp, "&Help");
 
   SetMenuBar(menuBar);
+  // CreateStatusBar();  // not currently using status bar
+  // SetStatusText("0");
 
-  CreateStatusBar();
   //////////////////////////////////////////////////////////////////////
   //                               Panel                              //
   //////////////////////////////////////////////////////////////////////
-  // SetStatusText("0");
+
   // TODO: make app expand on show log window
   // TODO: make app retract on hide log window
   // Layout paneles
@@ -234,9 +79,9 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   
   // Panels 
   auto main = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
-  auto pnlProfile = new wxPanel(main, wxID_ANY, wxDefaultPosition, wxSize(800, 400), wxBORDER_SIMPLE);
+  auto p_pnl_profile = new wxPanel(main, wxID_ANY, wxDefaultPosition, wxSize(800, 400), wxBORDER_SIMPLE);
   // auto m_pnlDisplayConfig = new wxPanel(profile);???????
-  //pnlProfile->SetBackgroundColour(orange);
+  //p_pnl_profile->SetBackgroundColour(orange);
   
 
   // Logging Window
@@ -245,41 +90,41 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   p_text_rich_->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
 
   // Track Controls
-  auto btnStartMouse = new wxButton(main, myID_START_TRACK, "Start Mouse", wxDefaultPosition, k_default_button_size);
-  auto btnStopMouse = new wxButton(main, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition, k_default_button_size);
-  auto btnHide = new wxButton(main, wxID_ANY, "Show/Hide Log", wxDefaultPosition, k_default_button_size);
+  auto btn_start_mouse = new wxButton(main, myID_START_TRACK, "Start Mouse", wxDefaultPosition, k_default_button_size);
+  auto btn_stop_mouse = new wxButton(main, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition, k_default_button_size);
+  auto btn_hide_log = new wxButton(main, wxID_ANY, "Show/Hide Log", wxDefaultPosition, k_default_button_size);
 
   // Display Graphic
   p_display_graphic_ = new cDisplayGraphic(main, wxSize(650, 200));
   //p_display_graphic_->SetBackgroundColour(blue);
 
   // Profiles Controls
-  auto *txtProfiles = new wxStaticText(pnlProfile, wxID_ANY, " Active Profile: ");
+  auto *txtProfiles = new wxStaticText(p_pnl_profile, wxID_ANY, " Active Profile: ");
   // TODO: make this choice control visually taller when not dropped down
-  p_combo_profiles_ = new wxChoice(pnlProfile, myID_PROFILE_SELECTION, wxDefaultPosition, wxSize(100, 25), 0, 0, wxCB_SORT, wxDefaultValidator, "");
-  auto btnAddProfile = new wxButton(pnlProfile, wxID_ANY, "Add a Profile", wxDefaultPosition, k_default_button_size_2);
-  auto btnRemoveProfile = new wxButton(pnlProfile, wxID_ANY, "Remove a Profile", wxDefaultPosition, k_default_button_size_2);
-  auto btnDuplicateProfile = new wxButton(pnlProfile, wxID_ANY, "Duplicate this Profile", wxDefaultPosition, k_default_button_size_2);
+  p_combo_profiles_ = new wxChoice(p_pnl_profile, myID_PROFILE_SELECTION, wxDefaultPosition, wxSize(100, 25), 0, 0, wxCB_SORT, wxDefaultValidator, "");
+  auto btn_add_profile = new wxButton(p_pnl_profile, wxID_ANY, "Add a Profile", wxDefaultPosition, k_default_button_size_2);
+  auto btn_remove_profile = new wxButton(p_pnl_profile, wxID_ANY, "Remove a Profile", wxDefaultPosition, k_default_button_size_2);
+  auto btn_duplicate_profile = new wxButton(p_pnl_profile, wxID_ANY, "Duplicate this Profile", wxDefaultPosition, k_default_button_size_2);
 
   // Profiles Box
   p_titles_map_ = std::make_unique<config::game_title_map_t>(config::GetTitleIds());
-	//titles_ = MakeGameTitleVector(p_titles_map_);
-  p_text_name_ = new wxTextCtrl(pnlProfile, wxID_ANY, "Lorem Ipsum", wxDefaultPosition, wxSize(250, 20), wxTE_LEFT);
+	
+  p_text_name_ = new wxTextCtrl(p_pnl_profile, wxID_ANY, "Lorem Ipsum", wxDefaultPosition, wxSize(250, 20), wxTE_LEFT);
   p_text_name_->SetMaxLength(k_max_profile_length);
-  p_text_profile_game_title_ = new wxTextCtrl(pnlProfile, wxID_ANY, "lorem", wxDefaultPosition, wxSize(200, 20), wxTE_READONLY | wxTE_LEFT);
-  p_text_profile_id_ = new wxTextCtrl(pnlProfile, wxID_ANY, "2201576", wxDefaultPosition, wxSize(60, 20), wxTE_LEFT, alphanumeric_validator, "");
-  auto btn_pick_title = new wxButton(pnlProfile, wxID_ANY, "Pick Title", wxDefaultPosition, k_default_button_size, 0, wxDefaultValidator, "");
-  p_check_use_default_padding_ = new wxCheckBox(pnlProfile, wxID_ANY, "Use Default Padding", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
-  auto btn_move_up = new wxButton(pnlProfile, wxID_ANY, "Up", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
-  auto btn_move_down = new wxButton(pnlProfile, wxID_ANY, "Down", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
-  auto btn_add_display = new wxButton(pnlProfile, wxID_ANY, "+", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
-  auto btn_remove_display = new wxButton(pnlProfile, wxID_ANY, "-", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
+  p_text_profile_game_title_ = new wxTextCtrl(p_pnl_profile, wxID_ANY, "lorem", wxDefaultPosition, wxSize(200, 20), wxTE_READONLY | wxTE_LEFT);
+  p_text_profile_id_ = new wxTextCtrl(p_pnl_profile, wxID_ANY, "2201576", wxDefaultPosition, wxSize(60, 20), wxTE_LEFT, alphanumeric_validator, "");
+  auto btn_pick_title = new wxButton(p_pnl_profile, wxID_ANY, "Pick Title", wxDefaultPosition, k_default_button_size, 0, wxDefaultValidator, "");
+  p_check_use_default_padding_ = new wxCheckBox(p_pnl_profile, wxID_ANY, "Use Default Padding", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  auto btn_move_up = new wxButton(p_pnl_profile, wxID_ANY, "Up", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
+  auto btn_move_down = new wxButton(p_pnl_profile, wxID_ANY, "Down", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
+  auto btn_add_display = new wxButton(p_pnl_profile, wxID_ANY, "+", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
+  auto btn_remove_display = new wxButton(p_pnl_profile, wxID_ANY, "-", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
 
   constexpr int kColumnWidth = 70;
-  p_view_mapping_data_ = new wxDataViewListCtrl(pnlProfile, myID_MAPPING_DATA, wxDefaultPosition, wxSize(680, 180), wxDV_HORIZ_RULES, wxDefaultValidator);
+  p_view_mapping_data_ = new wxDataViewListCtrl(p_pnl_profile, myID_MAPPING_DATA, wxDefaultPosition, wxSize(680, 180), wxDV_HORIZ_RULES, wxDefaultValidator);
   p_view_mapping_data_->AppendTextColumn("Display #", wxDATAVIEW_CELL_INERT, -1, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
-  //int col = 1;
-  // 
+  
+  
   // TODO: add dataview spin class renderer to control
   ////auto dvcol = wxDataViewColumn("1", wxDataViewSpinRenderer(0, 5), col++);
   //auto rend = new wxDataViewSpinRenderer(0, 5);
@@ -296,11 +141,11 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   p_view_mapping_data_->AppendTextColumn("Top", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
   p_view_mapping_data_->AppendTextColumn("Bottom", wxDATAVIEW_CELL_EDITABLE, kColumnWidth, wxALIGN_RIGHT, wxDATAVIEW_COL_RESIZABLE);
 
-  auto txtPanelTitle = new wxStaticText(pnlProfile, wxID_ANY, "Active Profile - Panel");
-  auto txtProfileName = new wxStaticText(pnlProfile, wxID_ANY, "Name:  ");
-  auto txtProfileId = new wxStaticText(pnlProfile, wxID_ANY, "Game ID:  ");
-  auto txtGameTitle = new wxStaticText(pnlProfile, wxID_ANY, "Game Title:  ");
-  auto txtHeaders = new wxStaticText(pnlProfile, wxID_ANY,
+  auto txtPanelTitle = new wxStaticText(p_pnl_profile, wxID_ANY, "Active Profile - Panel");
+  auto txtProfileName = new wxStaticText(p_pnl_profile, wxID_ANY, "Name:  ");
+  auto txtProfileId = new wxStaticText(p_pnl_profile, wxID_ANY, "Game ID:  ");
+  auto txtGameTitle = new wxStaticText(p_pnl_profile, wxID_ANY, "Game Title:  ");
+  auto txtHeaders = new wxStaticText(p_pnl_profile, wxID_ANY,
                                               "                           |------------- Rotational "
                                               "Bounds Mapping -----------|-------------------- "
                                               "Display Edge Padding -------------------|");
@@ -331,9 +176,9 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   auto *zrProfileCmds = new wxBoxSizer(wxHORIZONTAL);
   zrProfileCmds->Add(txtProfiles, 0, wxALIGN_CENTER_VERTICAL, 0);
   zrProfileCmds->Add(p_combo_profiles_, 1, wxEXPAND | wxTOP | wxRIGHT, 1);
-  zrProfileCmds->Add(btnAddProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
-  zrProfileCmds->Add(btnRemoveProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
-  zrProfileCmds->Add(btnDuplicateProfile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+  zrProfileCmds->Add(btn_add_profile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+  zrProfileCmds->Add(btn_remove_profile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+  zrProfileCmds->Add(btn_duplicate_profile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
   auto zrProfilePnl = new wxBoxSizer(wxVERTICAL);
   zrProfilePnl->Add(zrProfileCmds, 0, wxBOTTOM | wxEXPAND, 10);
@@ -343,13 +188,13 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   zrProfilePnl->Add(txtHeaders, 0, wxLEFT | wxTOP, 5);
   zrProfilePnl->Add(zrMapping, 0, wxLEFT | wxTOP, 5);
 
-  pnlProfile->SetSizer(zrProfilePnl);
+  p_pnl_profile->SetSizer(zrProfilePnl);
 
   // Main Panel Layout
   auto *zrTrackCmds = new wxBoxSizer(wxHORIZONTAL);
-  zrTrackCmds->Add(btnStartMouse, 0, wxALL, 0);
-  zrTrackCmds->Add(btnStopMouse, 0, wxALL, 0);
-  zrTrackCmds->Add(btnHide, 0, wxALL, 0);
+  zrTrackCmds->Add(btn_start_mouse, 0, wxALL, 0);
+  zrTrackCmds->Add(btn_stop_mouse, 0, wxALL, 0);
+  zrTrackCmds->Add(btn_hide_log, 0, wxALL, 0);
 
   auto *zrLogWindow = new wxBoxSizer(wxVERTICAL);
   zrLogWindow->Add(label_text_rich_, 0, wxBOTTOM, 5);
@@ -358,7 +203,7 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   auto *zrApp = new wxBoxSizer(wxVERTICAL);
   zrApp->Add(zrTrackCmds, 0, wxBOTTOM, 10);
   zrApp->Add(p_display_graphic_, 1, wxALL | wxEXPAND, 20);
-  zrApp->Add(pnlProfile, 0, wxALL, 5);
+  zrApp->Add(p_pnl_profile, 0, wxALL, 5);
 
   auto *top = new wxBoxSizer(wxHORIZONTAL);
   top->Add(zrApp, 2, wxALL | wxEXPAND, 10);
@@ -389,18 +234,18 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnSettings, this, myID_MENU_SETTINGS);
 
   // Set Control Tooltips
-  btnStartMouse->SetToolTip(wxT("Start controlling mouse with head tracking."));
-  btnStopMouse->SetToolTip(wxT("Stop control of the mouse."));
+  btn_start_mouse->SetToolTip(wxT("Start controlling mouse with head tracking."));
+  btn_stop_mouse->SetToolTip(wxT("Stop control of the mouse."));
 
   // Bind Main Controls
-  btnStartMouse->Bind(wxEVT_BUTTON, &Frame::OnStart, this);
-  btnStopMouse->Bind(wxEVT_BUTTON, &Frame::OnStop, this);
-  btnHide->Bind(wxEVT_BUTTON, &Frame::OnShowLog, this);
+  btn_start_mouse->Bind(wxEVT_BUTTON, &Frame::OnStart, this);
+  btn_stop_mouse->Bind(wxEVT_BUTTON, &Frame::OnStop, this);
+  btn_hide_log->Bind(wxEVT_BUTTON, &Frame::OnShowLog, this);
   
   p_combo_profiles_->Bind(wxEVT_CHOICE, &Frame::OnActiveProfile, this);
-  btnAddProfile->Bind(wxEVT_BUTTON, &Frame::OnAddProfile, this);
-  btnRemoveProfile->Bind(wxEVT_BUTTON, &Frame::OnRemoveProfile, this);
-  btnDuplicateProfile->Bind(wxEVT_BUTTON, &Frame::OnDuplicateProfile, this);
+  btn_add_profile->Bind(wxEVT_BUTTON, &Frame::OnAddProfile, this);
+  btn_remove_profile->Bind(wxEVT_BUTTON, &Frame::OnRemoveProfile, this);
+  btn_duplicate_profile->Bind(wxEVT_BUTTON, &Frame::OnDuplicateProfile, this);
 
   // Bind Profile Info Controls
   p_text_name_->Bind(wxEVT_TEXT, &Frame::OnName, this);
@@ -433,37 +278,6 @@ Frame::OnAbout(wxCommandEvent& event)
 
   wxMessageBox(msg, "About TrackIRMouse", wxOK | wxICON_NONE);
 }
-
-// Not implementing till future. Having the user pick their own settings
-// filename would require the use of saved data outside this program
-// void Frame::OnOpen(wxCommandEvent &event) {
-//   const char lpFilename[MAX_PATH] = {0};
-//   DWORD result = GetModuleFileNameA(0, (LPSTR)lpFilename, MAX_PATH);
-//   wxString defaultFilePath;
-//   if (result) {
-//     wxString executablePath(lpFilename, static_cast<size_t>(result));
-//     defaultFilePath =
-//         executablePath.substr(0, executablePath.find_last_of("\\/"));
-//     // defaultFilePath = wxString(lpFilename, static_cast<size_t>(result));
-//     spdlog::debug("default file path for dialog_: {}", defaultFilePath);
-//   } else {
-//     defaultFilePath = wxEmptyString;
-//   }
-//   wxFileDialog openFileDialog(this, "Open Settings File", defaultFilePath,
-//                               wxEmptyString, "Toml (*.toml)|*.toml",
-//                               wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-//   if (openFileDialog.ShowModal() == wxID_CANCEL) {
-//     return;  // the user changed their mind...
-//   }
-//   // proceed loading the file chosen by the user;
-//   // this can be done with e.g. wxWidgets input streams:
-//   wxFileInputStream input_stream(openFileDialog.GetPath());
-//   if (!input_stream.IsOk()) {
-//     wxLogError("Cannot open file '%s'.", openFileDialog.GetPath());
-//     return;
-//   }
-//   wxLogError("Method not implemented yet!");
-// }
 
 void
 Frame::OnSave(wxCommandEvent& event)
@@ -527,10 +341,6 @@ Frame::UpdateGuiFromConfig()
 void
 Frame::OnReload(wxCommandEvent& event)
 {
-  // TODO: urgent, delete existing settings
-  // a smarter idea would be to make a settings builder function would
-  // make sure that the settings can be loaded first before replacing
-  // existing settings
   InitializeSettings();
   UpdateGuiFromConfig();
 }
@@ -950,6 +760,7 @@ Frame::OnMoveUp(wxCommandEvent& event)
     p_display_graphic_->PaintNow();
   }
 }
+
 void
 Frame::OnMoveDown(wxCommandEvent& event)
 {

@@ -1,4 +1,4 @@
-#include "gui-graphic.hpp"
+#include "ui-graphic.hpp"
 
 #include <Windows.h>
 #include <spdlog/spdlog.h>
@@ -9,6 +9,7 @@
 
 #include "config.hpp"
 #include "environment.hpp"
+#include "types.hpp"
 
 cDisplayGraphic::cDisplayGraphic(wxWindow* parent, wxSize size)
   : wxPanel(parent,
@@ -103,26 +104,18 @@ cDisplayGraphic::Render(wxDC& dc)
   const double area_y = cheight - 50;
 
   // get array of monitor bounds
-  const auto hdi = env::GetHardwareDisplayInfo();
+  const auto hdi = environment::GetHardwareDisplayInformation();
   const auto usrDisplays = config::Get()->GetActiveProfile().displays;
 
-  // normalize virtual desktop rect for each monitor where 1 = total width_ in
-  // Pixels values can be negative
-  // auto normalized = NormalizeRect(bounds);
-  const int dwidth = hdi.width;
-  const int dheight = hdi.height;
-  // spdlog::info("dwidth -> {}", dwidth);
-  // spdlog::info("dheight -> {}", dheight);
-
   // offset all rectangles so that 0,0 as top left most value
-  env::HardwareDisplays bounds_offset;
+  std::vector<RectPixels> bounds_offset;
   {
     int l{ 0 }, t{ 0 };
-    for (auto& d : hdi.displays) {
+    for (auto& d : hdi.rectangles) {
       l = (d[0] < l) ? d[0] : l; // get leftmost value
       t = (d[2] < t) ? d[2] : t; // get topmost value
     }
-    for (auto& d : hdi.displays) {
+    for (auto& d : hdi.rectangles) {
       // int x = (dwidth / 2) + l;
       // int y = (dheight / 2) + t;
       bounds_offset.push_back({ d[0] - l, d[1] - l, d[2] - t, d[3] - t });
@@ -137,8 +130,8 @@ cDisplayGraphic::Render(wxDC& dc)
   // available
   std::vector<std::vector<double>> bounds_norm;
   {
-    const double xratio = area_x / dwidth;
-    const double yratio = area_y / dheight;
+    const double xratio = area_x / hdi.desktop_width;
+    const double yratio = area_y / hdi.desktop_height;
     const double ratio = std::min<double>(xratio, yratio);
     for (auto& d : bounds_offset) {
       bounds_norm.push_back({ static_cast<double>(d[0]) * ratio,

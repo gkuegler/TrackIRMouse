@@ -4,9 +4,9 @@
 
 #include <memory>
 
-#include "gui.hpp"
 #include "pipeserver.hpp"
 #include "types.hpp"
+#include "ui-frame.hpp"
 
 // Error Message Boxes
 

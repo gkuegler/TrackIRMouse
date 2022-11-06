@@ -15,22 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\wdi.hpp">
+    <ClCompile Include="src\environment.hpp">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\gui-graphic.cpp">
+    <ClCompile Include="src\ui-graphic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\environment.cpp">
+    <ClCompile Include="src\ui-app.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\gui.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gui-dialogs.cpp">
+    <ClCompile Include="src\ui-dialogs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\handlers.cpp">
@@ -51,7 +48,10 @@
     <ClCompile Include="src\trackers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\wdi.cpp">
+    <ClCompile Include="src\environment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui-frame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -62,19 +62,13 @@
     <ClInclude Include="src\display.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\environment.hpp">
+    <ClInclude Include="src\ui-control-id.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\gui-control-id.hpp">
+    <ClInclude Include="src\ui-dialogs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\gui.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gui-dialogs.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gui-graphic.hpp">
+    <ClInclude Include="src\ui-graphic.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\handlers.hpp">
@@ -108,6 +102,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\types.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui-frame.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

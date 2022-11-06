@@ -5,15 +5,15 @@
  * --License Boilerplate Placeholder--
  */
 
-#include "gui-dialogs.hpp"
+#include "ui-dialogs.hpp"
 
 #include <assert.h>
 #include <spdlog/common.h>
 #include <wx/bookctrl.h>
 
 #include "config.hpp"
-#include "gui-control-id.hpp"
 #include "log.hpp"
+#include "ui-control-id.hpp"
 #include "util.hpp"
 
 // const static std::array<std::string, 7> k_log_levels = {

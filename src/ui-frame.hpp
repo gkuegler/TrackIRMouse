@@ -1,15 +1,12 @@
-#ifndef TRACKIRMOUSE_GUI_H
-#define TRACKIRMOUSE_GUI_H
+#ifndef TRACKIRMOUSE_UI_FRAME_H
+#define TRACKIRMOUSE_UI_FRAME_H
 
 #include <wx/dataview.h>
 #include <wx/wx.h>
 
 #include "config.hpp"
-#include "gui-control-id.hpp"
-#include "gui-graphic.hpp"
 #include "hotkey.hpp"
-#include "log.hpp"
-#include "trackers.hpp"
+#include "ui-graphic.hpp"
 
 // forward decl of thread classes
 class TrackThread;
@@ -39,26 +36,28 @@ public:
 class Frame : public wxFrame
 {
 public:
+  std::unique_ptr<config::game_title_map_t> p_titles_map_;
+  GameTitleVector titles_;
+
+  // threads
   TrackThread* p_track_thread_ = nullptr;
   ControlServerThread* p_server_thread_ = nullptr;
   wxCriticalSection p_cs_track_thread; // protects track thread
   wxCriticalSection p_cs_pipe_thread;  // protects pipe server thread
 
-  // log window
-  wxStaticText* label_text_rich_;
+  // components
+  cDisplayGraphic* p_display_graphic_;
   LogWindow* p_text_rich_;
 
-  cDisplayGraphic* p_display_graphic_;
-
+  // controls
+  wxStaticText* label_text_rich_;
   wxChoice* p_combo_profiles_;
-
-  std::unique_ptr<config::game_title_map_t> p_titles_map_;
-  GameTitleVector titles_;
   wxTextCtrl* p_text_name_;
   wxTextCtrl* p_text_profile_id_;
   wxTextCtrl* p_text_profile_game_title_;
   wxCheckBox* p_check_use_default_padding_;
   wxDataViewListCtrl* p_view_mapping_data_;
+
   // global hotkey has to be wrapped in a smart pointer to avoid a bug
   // where my same object would be deleted following the initialization of my
   // frame
@@ -77,10 +76,7 @@ public:
   void OnGlobalHotkey(wxKeyEvent& event);
   void OnReload(wxCommandEvent& event);
   void OnSettings(wxCommandEvent& event);
-  // controls handlers
-  void PopulateComboBoxWithProfiles();
-  void PopulateSettings();
-
+  // control handlers
   void OnStart(wxCommandEvent& event);
   void OnStop(wxCommandEvent& event);
   void OnShowLog(wxCommandEvent& event);
@@ -88,7 +84,6 @@ public:
   void OnAddProfile(wxCommandEvent& event);
   void OnRemoveProfile(wxCommandEvent& event);
   void OnDuplicateProfile(wxCommandEvent& event);
-
   // display config controls
   void UpdateProfilePanelFromConfig();
   int m_ival = 0;
@@ -101,31 +96,9 @@ public:
   void OnRemoveDisplay(wxCommandEvent& event);
   void OnMoveUp(wxCommandEvent& event);
   void OnMoveDown(wxCommandEvent& event);
+  // helpers
+  void PopulateComboBoxWithProfiles();
+  void PopulateSettings();
 };
 
-//////////////////////////////////////////////////////////////////////
-//                         Main Application                         //
-//////////////////////////////////////////////////////////////////////
-
-class App : public wxApp
-{
-public:
-  App(){};
-  ~App(){};
-
-  virtual bool OnInit();
-  virtual int OnExit();
-  virtual void OnUnhandledException()
-  {
-    wxLogFatalError("An unhandled exception has occurred. "
-                    "Application will now terminate.");
-    std::terminate();
-  }
-
-private:
-  Frame* p_frame_ = nullptr;
-};
-
-wxDECLARE_APP(App);
-
-#endif /* TRACKIRMOUSE_GUI_H */
+#endif /* TRACKIRMOUSE_UI_FRAME_H */

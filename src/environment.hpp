@@ -1,21 +1,24 @@
-#ifndef TRACKIRMOUSE_ENVIROMENT_H
-#define TRACKIRMOUSE_ENVIROMENT_H
+#ifndef TRACKIRMOUSE_WINDISPLAY_HPP
+#define TRACKIRMOUSE_WINDISPLAY_HPP
 
-#include <vector>
+#include "types.hpp"
 
-namespace env {
+namespace environment {
 
-using HardwareDisplays = std::vector<std::vector<int>>;
-
-typedef struct HardwareDisplayInfo_
+typedef struct win_display_info_
 {
-  HardwareDisplays displays;
-  int height;
-  int width;
-} HardwareDisplayInfo;
+  int count = 0;
+  std::vector<RectPixels> rectangles;
+  Pixels origin_offset_x = 0;
+  Pixels origin_offset_y = 0;
+  double short_to_pixels_ratio_x = 0; // short value to desktop pixels ratio
+  double short_to_pixels_ratio_y = 0; // short value to desktop pixels ratio
+  int desktop_width;
+  int desktop_height;
+} WinDisplayInfo;
 
-HardwareDisplayInfo
-GetHardwareDisplayInfo();
-} // namespace env
+WinDisplayInfo
+GetHardwareDisplayInformation();
+} // namespace environment
 
-#endif /* TRACKIRMOUSE_ENVIROMENT_H */
+#endif /* TRACKIRMOUSE_WINDISPLAY_HPP */
