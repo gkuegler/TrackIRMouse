@@ -150,7 +150,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir);$(SolutionDir)spdlog-1.9.2\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir)\src;$(SolutionDir)spdlog-1.9.2\include;$(SolutionDir)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)lib/vc_x64_lib;$(SolutionDir)splgod-1.9.2\lib\Debug</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -158,7 +158,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir);$(SolutionDir)spdlog-1.9.2\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir)\src;$(SolutionDir)spdlog-1.9.2\include;$(SolutionDir)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)lib/vc_x64_lib;$(SolutionDir)splgod-1.9.2\lib\Debug</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -167,7 +167,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir);$(SolutionDir)spdlog-1.9.2\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir)\src;$(SolutionDir)spdlog-1.9.2\include;$(SolutionDir)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)lib/vc_x64_lib;$(SolutionDir)spdlog-1.9.2\lib/Release</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -175,7 +175,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir);$(SolutionDir)spdlog-1.9.2\include</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)include;$(WXWIN)include\msvc;$(SolutionDir)\src;$(SolutionDir)spdlog-1.9.2\include;$(SolutionDir)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)lib/vc_x64_lib;$(SolutionDir)spdlog-1.9.2\lib/Release</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -263,6 +263,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_x64_lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -285,6 +286,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_x64_lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>"py" "$(SolutionDir)build steps\pause-current-trackir.py"
@@ -316,6 +318,7 @@
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
       <UACUIAccess>false</UACUIAccess>
       <AllowIsolation>true</AllowIsolation>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -344,6 +347,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_x64_lib</AdditionalLibraryDirectories>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -355,6 +359,9 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="hooks.cpp" />
+    <ClCompile Include="messages.cpp" />
+    <ClCompile Include="mouse-modes.cpp" />
     <ClCompile Include="src\config.cpp" />
     <ClCompile Include="src\ui-frame.cpp" />
     <ClCompile Include="src\ui-graphic.cpp" />
@@ -370,6 +377,9 @@
     <ClCompile Include="src\environment.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="hooks.hpp" />
+    <ClInclude Include="messages.hpp" />
+    <ClInclude Include="mouse-modes.hpp" />
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\config.hpp" />
     <ClInclude Include="src\hotkey.hpp" />

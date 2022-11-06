@@ -16,28 +16,10 @@
 
 #include <mutex>
 
-#include "types.hpp"
+#include "messages.hpp"
+
 // TODO: high dpi support, and text size
-// TODO: test dpi support on 4K monito
-
-void
-SendThreadMessage(msgcode code, std::string msg, long optional_param)
-{
-  wxThreadEvent* event = new wxThreadEvent(wxEVT_THREAD);
-  event->SetInt(static_cast<int>(code));
-  event->SetString(wxString(msg));
-  event->SetExtraLong(static_cast<long>(optional_param));
-  wxTheApp->QueueEvent(event);
-}
-
-void
-SendThreadMessage(msgcode code, std::string msg)
-{
-  wxThreadEvent* event = new wxThreadEvent(wxEVT_THREAD);
-  event->SetString(wxString(msg));
-  event->SetInt(static_cast<long>(code));
-  wxTheApp->QueueEvent(event);
-}
+// TODO: test dpi support on 4K monitor
 
 namespace mylogging {
 
@@ -57,18 +39,6 @@ protected:
 
     // raise a wxWidgets error box oand/or shut down app if fatal
     SendThreadMessage(msgcode::log, message, static_cast<long>(msg.level));
-    // if (msg.level == spdlog::level::critical) {
-    //   //wxLogFatalError(message);
-    // } else if (msg.level == spdlog::level::err) {
-    //   wxLogError(message);
-    // } else {
-    //   // send output to log consol in app
-    //   if (msg.level > spdlog::level::info) {
-    //     SendThreadMessage(msgcode::log_red_text, message, 0);
-    //   } else {
-    //     SendThreadMessage(msgcode::log_normal_text, message, 0);
-    //   }
-    // }
   }
 
   // Nothing to manually flush. Message queue handles everything.

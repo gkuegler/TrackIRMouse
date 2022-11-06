@@ -41,6 +41,8 @@
 #include <string>
 
 #include "log.hpp"
+#include "messages.hpp"
+#include "mouse-modes.hpp"
 #include "threads.hpp"
 #include "types.hpp"
 #include "ui-frame.hpp"
@@ -68,7 +70,8 @@ public:
   virtual void OnUnhandledException();
 
 private:
-  Frame* p_main_window_ = nullptr;
+  Frame* main_window_ = nullptr;
+  wxString top_app_name_;
 };
 
 wxIMPLEMENT_APP(App);
@@ -93,7 +96,7 @@ App::OnInit()
 
   // Construct child elements first. The main panel_ contains a text control
   // that is a log target.
-  p_main_window_ =
+  main_window_ =
     new Frame(GetOrigin(app_width, app_height), wxSize(app_width, app_height));
 
   //////////////////////////////////////////////////////////////////////
@@ -101,9 +104,14 @@ App::OnInit()
   //////////////////////////////////////////////////////////////////////
 
   Bind(wxEVT_THREAD, [this](wxThreadEvent& event) {
-    LogWindow* textrich = p_main_window_->p_text_rich_;
-
+    LogWindow* textrich = main_window_->p_text_rich_;
     switch (static_cast<msgcode>(event.GetInt())) {
+
+      // exposes gui dependent logging from outside threads.
+      // Log messages (lvl: error & critical) launch an error message dialog.
+      // log messages (lvl: warning) appear as written text in the output
+      // window. log messages (lvl: <=info) appear as written text in the
+      // output window.
       case msgcode::log: {
         const auto& level = event.GetExtraLong();
         const auto& msg = event.GetString();
@@ -121,43 +129,63 @@ App::OnInit()
         }
       } break;
       case msgcode::toggle_tracking: {
-        if (p_main_window_->p_track_thread_) {
-          p_main_window_->p_track_thread_->tracker_->toggle_mouse();
+        if (main_window_->track_thread_) {
+          main_window_->track_thread_->tracker_->toggle_mouse();
         }
       } break;
+
+      // retrieve alternate mouse mode by application.
+      // currently locks the mouse the different scrollbar x positions by
+      // application.
+      // this message is generated (using a global hook procedure) every
+      // time a new window takes focus.
+      case msgcode::notify_app: {
+        top_app_name_ = wxString(event.GetString());
+        if (main_window_->track_thread_) {
+          main_window_->track_thread_->tracker_->handler_->set_alternate_mode(
+            GetModeByExecutableName(top_app_name_));
+        }
+      } break;
+
+      // set the alternate mouse mode for the current focused application.
+      // this message is currently sent by a pipe server in a local thread.
       case msgcode::set_mode: {
-        if (p_main_window_->p_track_thread_) {
-          p_main_window_->p_track_thread_->tracker_->handler_
-            ->set_alternate_mode(static_cast<mouse_mode>(event.GetExtraLong()));
+        auto mode = static_cast<mouse_mode>(event.GetExtraLong());
+        UpdateModesbyExecutableName(top_app_name_, mode);
+        if (main_window_->track_thread_) {
+          main_window_->track_thread_->tracker_->handler_->set_alternate_mode(
+            mode);
         }
       } break;
+
+      // close the application gracefully
       case msgcode::close_app:
-        p_main_window_->Close(true);
+        main_window_->Close(true);
         break;
       default:
         break;
     }
   });
 
-  p_main_window_->InitializeSettings();
-  p_main_window_->UpdateGuiFromConfig();
-  p_main_window_->Show();
+  main_window_->InitializeSettings();
+  main_window_->UpdateGuiFromConfig();
+  main_window_->Show();
 
   // Start the track IR thread if enabled
   auto usr = config::Get()->user_data;
   if (usr.track_on_start) {
     wxCommandEvent event = {}; // blank event to reuse start handler code
-    p_main_window_->OnStart(event);
+    main_window_->OnStart(event);
   }
 
   // Start the pipe server thread.
   // Pipe server is only started at first application startup.
   if (usr.pipe_server_enabled) {
-    p_main_window_->p_server_thread_ = new ControlServerThread(p_main_window_);
-    if (p_main_window_->p_server_thread_->Run() != wxTHREAD_NO_ERROR) {
+    main_window_->p_server_thread_ = new ControlServerThread(main_window_);
+    if (main_window_->p_server_thread_->Run() != wxTHREAD_NO_ERROR) {
       spdlog::error("Can't run server thread.");
-      delete p_main_window_->p_server_thread_;
-      p_main_window_->p_server_thread_ = nullptr;
+      delete main_window_->p_server_thread_;
+      main_window_->p_server_thread_ = nullptr;
     }
   }
 

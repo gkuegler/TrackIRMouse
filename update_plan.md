@@ -73,6 +73,12 @@ HWINEVENTHOOK hEventHook = SetWinEventHook(EVENT_OBJECT_FOCUS, EVENT_OBJECT_FOCU
 ...
 UnhookWinEvent(hEventHook);
 
+- create callback to get module path/name
+- create function to set alternate scroll mode based on path
+    - use a worker function or send a message?
+    - keep work out of call back?
+
+
 ### Scroll Anywhere
 send a windows message to the focused application
 SetScrollRange function (winuser.h)

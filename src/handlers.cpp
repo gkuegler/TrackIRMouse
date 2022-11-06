@@ -1,5 +1,3 @@
-
-
 #include "handlers.hpp"
 
 #include <windows.h>
@@ -10,6 +8,7 @@
 #include "display.hpp"
 #include "environment.hpp"
 #include "log.hpp"
+#include "mouse-modes.hpp"
 #include "types.hpp"
 
 namespace handlers {
@@ -158,5 +157,11 @@ MouseHandler::handle_input(const Degrees yaw, const Degrees pitch)
   set_cursor_pos(x, y);
   return;
 }
+
+void
+MouseHandler::set_alternate_mode(mouse_mode mode)
+{
+  mode_ = mode;
+};
 
 } // namespace handlers

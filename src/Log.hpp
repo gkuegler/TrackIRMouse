@@ -10,14 +10,6 @@
 #include <memory>
 #include <string>
 
-#include "types.hpp"
-
-void
-SendThreadMessage(msgcode code, std::string msg);
-
-void
-SendThreadMessage(msgcode code, std::string msg, long);
-
 namespace mylogging {
 
 void

@@ -9,7 +9,6 @@ trackir_dll_directory = ""
 auto_find_trackir_dll = true
 log_level = 5
 
-
 [[Profiles]]
 name = "Laptop"
 profile_id = 2025

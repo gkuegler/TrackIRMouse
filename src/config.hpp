@@ -32,7 +32,6 @@ struct Profile
   bool use_default_padding = true;
   std::vector<UserDisplay> displays = {};
 };
-// const Profile kDefaultProfile = {"empty", 0, true, {}};
 
 struct UserData
 {

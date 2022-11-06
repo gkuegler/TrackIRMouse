@@ -23,7 +23,7 @@
 #include "ui-dialogs.hpp"
 #include "util.hpp"
 
-const constexpr std::string_view k_version_no = "0.9.4";
+const constexpr std::string_view k_version_no = "0.10.1";
 const wxSize k_default_button_size = wxSize(110, 25);
 const wxSize k_default_button_size_2 = wxSize(150, 25);
 const constexpr int k_max_profile_length = 30;
@@ -218,12 +218,12 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
 
 	// Bind Systemwide Keyboard Hooks
 	// Use EVT_HOTKEY(hotkeyId, fnc) in the event table to capture the event.
-	//This function is currently only implemented under Windows.
-	//It is used in the Windows CE port for detecting hardware button presses.
-	// TODO: wrap hotkeys in their own class to ensure destructor is called, or make a table
-	hotkey_alternate_mode_ = std::make_unique<GlobalHotkey>(GetHandle(), HOTKEY_ID_SCROLL_ALTERNATE, wxMOD_NONE, VK_F18);  // b key
-	Bind(wxEVT_HOTKEY, &Frame::OnGlobalHotkey, this, hotkey_alternate_mode_->profile_id_);
+	// This function is currently only implemented under Windows.
+	// It is used in the Windows CE port for detecting hardware button presses.
+	hotkey_alternate_mode_ = std::make_unique<GlobalHotkey>(GetHandle(), HOTKEY_ID_SCROLL_ALTERNATE, wxMOD_NONE, VK_F18);
+	Bind(wxEVT_HOTKEY, &Frame::OnGlobalHotkey, this, hotkey_alternate_mode_->hk_id);
 
+	hook_window_changed_ = std::make_unique<WindowChangedHook>();
 
   // Bind Menu Events
   Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnAbout, this, wxID_ABOUT);
@@ -289,8 +289,8 @@ void
 Frame::OnGlobalHotkey(wxKeyEvent& event)
 {
   spdlog::debug("hot key event");
-  if (p_track_thread_) {
-    p_track_thread_->handler_->toggle_alternate_mode();
+  if (track_thread_) {
+    track_thread_->handler_->toggle_alternate_mode();
   }
 }
 
@@ -396,14 +396,14 @@ Frame::OnStart(wxCommandEvent& event)
   // At any moment the thread may cease to exist (because it completes its work)
   // and cause NULL exceptions upon access.
   // To avoid dangling pointers, ~MyThread() will enter the critical section and
-  // set p_track_thread_ to nullptr.
+  // set track_thread_ to nullptr.
 
   bool wait_for_stop = false;
   { // scope critical section locker
     // TODO: find a better way to enter critical section
     wxCriticalSectionLocker enter(p_cs_track_thread);
-    if (p_track_thread_) {
-      p_track_thread_->tracker_->stop();
+    if (track_thread_) {
+      track_thread_->tracker_->stop();
       wait_for_stop = true;
     }
   } // leave critical section
@@ -416,7 +416,7 @@ Frame::OnStart(wxCommandEvent& event)
       { // scope critical section locker
         // TODO: find a better way to enter critical section
         wxCriticalSectionLocker enter(p_cs_track_thread);
-        if (p_track_thread_ == NULL) {
+        if (track_thread_ == NULL) {
           break;
         }
       } // leave critical section
@@ -424,18 +424,18 @@ Frame::OnStart(wxCommandEvent& event)
   }
 
   try {
-    p_track_thread_ = new TrackThread(this, GetHandle(), config::Get());
+    track_thread_ = new TrackThread(this, GetHandle(), config::Get());
   } catch (const std::runtime_error& e) {
     spdlog::error(e.what());
     return;
   }
 
-  if (p_track_thread_->Run() == wxTHREAD_NO_ERROR) { // returns immediately
+  if (track_thread_->Run() == wxTHREAD_NO_ERROR) { // returns immediately
     spdlog::info("Started Mouse.");
   } else {
     spdlog::error("Can't run the tracking thread!");
-    delete p_track_thread_;
-    // p_track_thread_ = nullptr; // thread destructor should do this anyway?
+    delete track_thread_;
+    // track_thread_ = nullptr; // thread destructor should do this anyway?
     return;
   }
 }
@@ -444,13 +444,13 @@ void
 Frame::OnStop(wxCommandEvent& event)
 {
   // Threads run in detached mode by default.
-  // The thread is responsible for setting p_track_thread_ to nullptr when
+  // The thread is responsible for setting track_thread_ to nullptr when
   // it finishes and destroys itself.
-  if (p_track_thread_) {
+  if (track_thread_) {
     // This will gracefully exit the tracking loop and return control to
     // the wxThread class. The thread will then finish and and delete
     // itself.
-    p_track_thread_->tracker_->stop();
+    track_thread_->tracker_->stop();
   } else {
     spdlog::warn("Track thread not running!");
   }
@@ -680,19 +680,19 @@ Frame::OnMappingData(wxDataViewEvent& event)
     // TODO: use a wxValidator
     // this will prevent the value from sticking in the box on non valid
     // input make numbers only allowed too. validate input
-    if (number > 180) {
+    if (number > 180.0) {
       spdlog::error(
         "Value can't be greater than 180. This is a limitation of the "
         "TrackIR software.");
       return;
     }
-    if (number < -180) {
+    if (number < -180.0) {
       spdlog::error("Value can't be less than -180. This is a limitation of "
                     "the TrackIR "
                     "software.");
       return;
     }
-    profile.displays[row].rotation[column - 1] = static_cast<double>(number);
+    profile.displays[row].rotation[column - 1] = number;
   } else {       // padding value selected
     long number; // wxWidgets has odd string conversion procedures
     if (!value.GetString().ToLong(&number)) {

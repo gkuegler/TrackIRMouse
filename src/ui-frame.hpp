@@ -5,6 +5,7 @@
 #include <wx/wx.h>
 
 #include "config.hpp"
+#include "hooks.hpp"
 #include "hotkey.hpp"
 #include "ui-graphic.hpp"
 
@@ -40,7 +41,7 @@ public:
   GameTitleVector titles_;
 
   // threads
-  TrackThread* p_track_thread_ = nullptr;
+  TrackThread* track_thread_ = nullptr;
   ControlServerThread* p_server_thread_ = nullptr;
   wxCriticalSection p_cs_track_thread; // protects track thread
   wxCriticalSection p_cs_pipe_thread;  // protects pipe server thread
@@ -62,6 +63,7 @@ public:
   // where my same object would be deleted following the initialization of my
   // frame
   std::unique_ptr<GlobalHotkey> hotkey_alternate_mode_;
+  std::unique_ptr<WindowChangedHook> hook_window_changed_;
 
   Frame(wxPoint, wxSize);
   ~Frame(){};

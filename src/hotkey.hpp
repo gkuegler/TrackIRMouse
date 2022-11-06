@@ -3,37 +3,36 @@
 
 #include <windows.h>
 
-#include "Log.hpp"
+#include "log.hpp"
 
 enum
 { // Windows: For applications this must be between 0 and 0xBFFF
   HOTKEY_ID_SCROLL_ALTERNATE = 5,
 };
 
-// map global windows hotkey
+/**
+ * map a global windows hotkey
+ */
 class GlobalHotkey
 {
 public:
-  int profile_id_ = 0;
+  int hk_id = 0;
 
   GlobalHotkey(){};
-  GlobalHotkey(HWND hWnd, int profile_id, UINT modifier, UINT virtual_keycode)
+  GlobalHotkey(HWND hWnd, int hk_id, UINT modifier, UINT virtual_keycode)
     : hWnd_(hWnd)
-    , profile_id_(profile_id)
+    , hk_id(hk_id)
   {
-    if (RegisterHotKey(hWnd, profile_id_, modifier, virtual_keycode)) {
+    if (RegisterHotKey(hWnd, hk_id, modifier, virtual_keycode)) {
       is_registered_ = true;
     }
-    spdlog::debug("hotkey registered");
   }
 
   ~GlobalHotkey()
   {
     if (is_registered_) {
-      UnregisterHotKey(hWnd_, profile_id_);
-      spdlog::debug("hotkey un-registered");
+      UnregisterHotKey(hWnd_, hk_id);
     }
-    spdlog::debug("hotkey destroyed");
   }
 
 private:

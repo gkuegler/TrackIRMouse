@@ -29,28 +29,6 @@ enum class retcode
   graceful_exit
 };
 
-enum class msgcode
-{
-  normal,
-  log,
-  log_normal_text,
-  log_red_text,
-  toggle_tracking,
-  set_mode,
-  close_app
-};
-
-enum class mouse_mode
-{
-  move_mouse,
-  scrollbar_left_small,
-  scrollbar_left_mini_map,
-  scrollbar_right_small,
-  scrollbar_right_mini_map,
-  scrollbar_hold_x,
-  autocad_zoom,
-};
-
 using HandleFunction = void (*)(Degrees, Degrees);
 
 #endif /* TRACKIRMOUSE_TYPES_HPP */

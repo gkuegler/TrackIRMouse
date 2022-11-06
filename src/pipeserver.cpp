@@ -17,6 +17,8 @@
 
 #include "pipeserver.hpp"
 
+#include "messages.hpp"
+#include "mouse-modes.hpp"
 #include "trackers.hpp"
 
 constexpr size_t BUFSIZE = 512 * sizeof(unsigned char);

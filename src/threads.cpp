@@ -4,11 +4,10 @@
 
 #include <memory>
 
+#include "messages.hpp"
 #include "pipeserver.hpp"
 #include "types.hpp"
 #include "ui-frame.hpp"
-
-// Error Message Boxes
 
 //////////////////////////////////////////////////////////////////////
 //                           TrackThread                            //
@@ -34,7 +33,7 @@ TrackThread::~TrackThread()
   // method. Make sure thread object does not
   // https://docs.wxwidgets.org/3.0/classwx_thread.html
   wxCriticalSectionLocker enter(p_window_handler_->p_cs_track_thread);
-  p_window_handler_->p_track_thread_ = NULL;
+  p_window_handler_->track_thread_ = NULL;
 }
 
 wxThread::ExitCode
