@@ -10,6 +10,9 @@
 #include "toml11/toml/exception.hpp"
 #include "types.hpp"
 
+// TODO: move config validation to new file
+// TODO:
+
 namespace config {
 
 struct UserDisplay

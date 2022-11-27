@@ -43,7 +43,6 @@ MouseHandler::MouseHandler()
   for (size_t i = 0; i < profile.displays.size(); i++) {
     auto& d = profile.displays[i];
     auto& rect = info.rectangles[i];
-
     // transfer config data to internal strucuture
     CDisplay display(rect, d.rotation, d.padding);
     display.setAbsBounds(info.origin_offset_x,

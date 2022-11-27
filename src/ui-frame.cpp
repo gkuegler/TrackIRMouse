@@ -216,15 +216,6 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   wxAcceleratorEntry k1(wxACCEL_CTRL, WXK_CONTROL_S, wxID_SAVE);
   SetAcceleratorTable(wxAcceleratorTable(1, &k1));
 
-	// Bind Systemwide Keyboard Hooks
-	// Use EVT_HOTKEY(hotkeyId, fnc) in the event table to capture the event.
-	// This function is currently only implemented under Windows.
-	// It is used in the Windows CE port for detecting hardware button presses.
-	hotkey_alternate_mode_ = std::make_unique<GlobalHotkey>(GetHandle(), HOTKEY_ID_SCROLL_ALTERNATE, wxMOD_NONE, VK_F18);
-	Bind(wxEVT_HOTKEY, &Frame::OnGlobalHotkey, this, hotkey_alternate_mode_->hk_id);
-
-	hook_window_changed_ = std::make_unique<WindowChangedHook>();
-
   // Bind Menu Events
   Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnAbout, this, wxID_ABOUT);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnExit, this, wxID_EXIT);
@@ -366,6 +357,30 @@ Frame::OnSettings(wxCommandEvent& event)
   } else if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
   }
+}
+
+void
+Frame::Startup()
+{
+  Bind(wxEVT_HOTKEY, &Frame::OnGlobalHotkey, this, HOTKEY_ID_SCROLL_ALTERNATE);
+}
+
+void
+Frame::StartHooks()
+{
+  // Bind Systemwide Keyboard Hooks
+  // Use EVT_HOTKEY(hotkeyId, fnc) in the event table to capture the event.
+  // This function is currently only implemented under Windows.
+  // It is used in the Windows CE port for detecting hardware button presses.
+  hotkey_alternate_mode_ = std::make_unique<GlobalHotkey>(
+    GetHandle(), HOTKEY_ID_SCROLL_ALTERNATE, wxMOD_NONE, VK_F18);
+
+  hook_window_changed_ = std::make_unique<WindowChangedHook>();
+}
+
+void
+Frame::RemoveHooks()
+{
 }
 
 void

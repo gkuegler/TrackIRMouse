@@ -7,15 +7,15 @@
 #include <filesystem>
 #include <psapi.h>
 
-namespace other_global {
-static handlers::MouseHandler* g_handler = nullptr;
-}
-
-void
-SetHandler(handlers::MouseHandler* handler)
-{
-  other_global::g_handler = handler;
-}
+// namespace other_global {
+// static handlers::MouseHandler* g_handler = nullptr;
+// }
+//
+// void
+// SetHandler(handlers::MouseHandler* handler)
+//{
+//   other_global::g_handler = handler;
+// }
 
 /**
  * Out-of-Context Hook Function
@@ -89,26 +89,31 @@ ScrollHook(HWINEVENTHOOK hWinEventHook,
 
 WindowChangedHook::WindowChangedHook()
 {
-  h_hook_window_change =
-    SetWinEventHook(EVENT_OBJECT_FOCUS,
-                    EVENT_OBJECT_FOCUS,
-                    NULL,
-                    &WindowChangeHook,
-                    0,
-                    0,
-                    WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
-  // h_scroll = SetWinEventHook(EVENT_SYSTEM_SCROLLINGSTART,
-  //                            EVENT_SYSTEM_SCROLLINGEND,
-  //                            NULL,
-  //                            &ScrollHook,
-  //                            0,
-  //                            0,
-  //                            WINEVENT_OUTOFCONTEXT |
-  //                            WINEVENT_SKIPOWNPROCESS);
+  hook = SetWinEventHook(EVENT_OBJECT_FOCUS,
+                         EVENT_OBJECT_FOCUS,
+                         NULL,
+                         &WindowChangeHook,
+                         0,
+                         0,
+                         WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 }
 
 WindowChangedHook::~WindowChangedHook()
 {
-  UnhookWinEvent(h_hook_window_change);
-  // UnhookWinEvent(h_scroll);
+  UnhookWinEvent(hook);
+}
+
+ScrollEventHook::ScrollEventHook()
+{
+  hook = SetWinEventHook(EVENT_SYSTEM_SCROLLINGSTART,
+                         EVENT_SYSTEM_SCROLLINGEND,
+                         NULL,
+                         &ScrollHook,
+                         0,
+                         0,
+                         WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+}
+ScrollEventHook ::~ScrollEventHook()
+{
+  UnhookWinEvent(hook);
 }

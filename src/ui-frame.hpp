@@ -69,6 +69,9 @@ public:
   ~Frame(){};
   void InitializeSettings();
   void UpdateGuiFromConfig();
+  void StartHooks();
+  void RemoveHooks();
+  void Startup();
 
 public:
   // menu handlers

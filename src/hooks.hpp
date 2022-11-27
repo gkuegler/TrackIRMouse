@@ -11,8 +11,17 @@ public:
   ~WindowChangedHook();
 
 private:
-  HWINEVENTHOOK h_hook_window_change = 0;
-  HWINEVENTHOOK h_scroll = 0;
+  HWINEVENTHOOK hook = 0;
+};
+
+class ScrollEventHook
+{
+public:
+  ScrollEventHook();
+  ~ScrollEventHook();
+
+private:
+  HWINEVENTHOOK hook = 0;
 };
 
 #endif /* TRACKIRMOUSE_HOOKS_HPP */

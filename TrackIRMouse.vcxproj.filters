@@ -54,13 +54,13 @@
     <ClCompile Include="src\ui-frame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hooks.cpp">
+    <ClCompile Include="src\hooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mouse-modes.cpp">
+    <ClCompile Include="src\messages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="messages.cpp">
+    <ClCompile Include="src\mouse-modes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -116,13 +116,13 @@
     <ClInclude Include="src\ui-frame.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hooks.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="mouse-modes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="messages.hpp">
+    <ClInclude Include="src\hooks.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\messages.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
