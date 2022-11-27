@@ -8,6 +8,7 @@
 #include "pipeserver.hpp"
 #include "types.hpp"
 #include "ui-frame.hpp"
+#include "validation.hpp"
 
 //////////////////////////////////////////////////////////////////////
 //                           TrackThread                            //
@@ -45,7 +46,7 @@ TrackThread::Entry()
   auto quit_on_no_trackir = config_->user_data.quit_on_loss_of_trackir;
 
   // TODO: check validation is correct
-  if (false == config::ValidateUserInput(profile.displays)) {
+  if (false == validation::ValidateUserInput(profile.displays)) {
     spdlog::error("invalid user profile data");
     return NULL;
   }

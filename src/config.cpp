@@ -16,51 +16,27 @@
 
 #include "log.hpp"
 #include "types.hpp"
+#include "util.hpp"
 
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
 #include "toml11/toml.hpp"
+#include "toml11/toml/exception.hpp"
 
 namespace config {
-
-std::string
-GetExecutableFolder()
-{
-  // TODO: use unicode to avoid maximum path length
-  char full_path[MAX_PATH];
-  auto n_char = GetModuleFileNameA(nullptr, full_path, MAX_PATH);
-  if (n_char != 0 && n_char != MAX_PATH) {
-    std::filesystem::path path(full_path);
-    auto file_path = path.parent_path().string();
-    SPDLOG_DEBUG(full_path);
-    SPDLOG_DEBUG(file_path);
-    return file_path;
-  } else {
-    auto last_error = GetLastError();
-    if (ERROR_INSUFFICIENT_BUFFER == last_error) {
-      throw std::runtime_error(
-        std::format("GetModuleFileNameA failed. File path of executable was "
-                    "too long. Consider moving executable and related folder "
-                    "to a folder with a shorter path."));
-    } else {
-      throw std::runtime_error(std::format(
-        "GetModuleFileNameA failed for unknown reason. GLE={}", last_error));
-    }
-  }
-}
 
 // settings singleton
 static std::shared_ptr<Config> g_config;
 
 // TODO: a shared pointer will not work for thread safety
-std::shared_ptr<Config>
-Get()
+auto
+Get() -> std::shared_ptr<Config>
 {
   return g_config;
 }
 
 // attemp at some thread safety
-void
-Set(const Config c)
+auto
+Set(const Config c) -> void
 {
   g_config = std::make_shared<Config>(c);
 }
@@ -77,9 +53,8 @@ Config::Config(const std::string filename)
 {
 
   // note: prefix t_* = toml::value
-  file_path_ = GetExecutableFolder() + "\\" + filename;
+  file_path_ = util::GetExecutableFolder() + "\\" + filename;
   const auto t_data = toml::parse<toml::preserve_comments>(file_path_);
-  env_data.monitor_count = GetSystemMetrics(SM_CMONITORS);
 
   // Find the general settings table
   const auto& t_general = toml::find(t_data, "General");
@@ -243,8 +218,7 @@ Config::Config(const std::string filename)
  * Builds a toml object.
  * Uses toml supplied serializer via ostream operators to write to file.
  */
-void Config::save_to_file(std::string ) {
-	// TODO: remove filename dependency
+void Config::SaveToFile() {
   const toml::value general{
     {"active_profile", user_data.active_profile_name},
     {"track_on_start", user_data.track_on_start},
@@ -351,18 +325,22 @@ Config::AddProfile(std::string new_profile_name = "")
 void
 Config::RemoveProfile(std::string profile_name)
 {
+  // search for and remove desired profile
   for (int i = 0; i < user_data.profiles.size(); i++) {
     if (profile_name == user_data.profiles[i].name) {
       user_data.profiles.erase(user_data.profiles.begin() + i);
       spdlog::info("Deleted profile: {}", profile_name);
     }
   }
-  if (user_data.profiles.size() < 1) {
+
+  // ensure at least one profile exists
+  if (user_data.profiles.empty()) {
     user_data.profiles.emplace_back();
   }
-  // change the active profile if deleted
+
+  // change the active profile if the active profile was deleted
   if (user_data.active_profile_name == profile_name) {
-    auto first = user_data.profiles[LEFT_EDGE].name;
+    const auto& first = user_data.profiles[0].name;
     SetActiveProfile(first);
   }
 }
@@ -418,134 +396,4 @@ Config::SetActProfDisplayMappingParam(int display_number,
 {
 }
 
-ConfigReturn
-LoadFromFile(std::string filename)
-{
-  std::string err_msg = "lorem ipsum";
-  try {
-    auto config = Config(filename);
-    // return a successfully parsed and validated config file
-    return ConfigReturn{ retcode::success, "", config };
-  } catch (const toml::syntax_error& ex) {
-    err_msg = fmt::format(
-      "Syntax error in toml file: \"{}\"\nSee error message below for hints "
-      "on how to fix.\n{}",
-      filename,
-      ex.what());
-  } catch (const toml::type_error& ex) {
-    err_msg = fmt::format("Incorrect type when parsing toml file \"{}\".\n\n{}",
-                          filename,
-                          ex.what());
-  } catch (const std::out_of_range& ex) {
-    err_msg = fmt::format(
-      "Missing data in toml file \"{}\".\n\n{}", filename, ex.what());
-  } catch (const std::runtime_error& ex) {
-    err_msg = fmt::format("Failed to open \"{}\"", filename);
-  } catch (...) {
-    err_msg = fmt::format(
-      "Exception has gone unhandled loading \"{}\" and verifying values.",
-      filename);
-  }
-
-  // return a default config object with a message explaining failure
-  return ConfigReturn{ retcode::fail, err_msg, Config() };
-}
-
-// load game titles by ID number from file
-game_title_map_t
-GetTitleIds()
-{
-  // loading from file allows the game titles to be modified for future
-  // natural point continually adds new titles
-  constexpr auto filename = "track-ir-numbers.toml";
-  const std::string instructions =
-    "Couldn't load game titles from resource file.\n"
-    "A courtesy sub-sample of the title list will provided from source code.";
-  std::string err_msg = "lorem ipsum";
-
-  auto full_path = GetExecutableFolder() + "\\" + filename;
-
-  try {
-    // load, parse, and return as map
-    auto data = toml::parse(full_path);
-    return toml::find<game_title_map_t>(data, "data");
-  } catch (const toml::syntax_error& ex) {
-    err_msg = std::format(
-      "Syntax error in toml file: \"{}\"\nSee error message below for hints "
-      "on how to fix.\n{}",
-      full_path,
-      ex.what());
-  } catch (const toml::type_error& ex) {
-    err_msg = std::format("Incorrect type when parsing toml file \"{}\".\n\n{}",
-                          full_path,
-                          ex.what());
-  } catch (const std::out_of_range& ex) {
-    err_msg = std::format(
-      "Missing data in toml file \"{}\".\n\n{}", full_path, ex.what());
-  } catch (std::runtime_error& ex) {
-    err_msg = std::format("Couldn't Find or Open \"{}\"", full_path);
-  } catch (...) {
-    err_msg = std::format(
-      "exception has gone unhandled loading \"{}\" and verifying values.",
-      full_path);
-  }
-
-  spdlog::error("{}\n\n{}", err_msg, instructions);
-
-  // provide sample list since full list couldn't be loaded from file
-  game_title_map_t sample_map;
-  sample_map["1001"] = "IL-2 Forgotten Battles";
-  sample_map["1002"] = "Lock-On Modern Air";
-  sample_map["1003"] = "Black Shark";
-  sample_map["1004"] = "Tom Clancy's H.A.W.X.";
-  sample_map["1005"] = "LockOn: Flaming Cliffs 2";
-  sample_map["1006"] = "DCS: A-10C";
-  sample_map["1007"] = "Tom Clancy's H.A.W.X.";
-  sample_map["1008"] = "IL-2 Struremovik: Battle";
-  sample_map["1009"] = "The Crew";
-  sample_map["1025"] = "Down In Flames";
-  return sample_map;
-}
-
-bool
-ValidateUserInput(const UserInput& displays)
-{
-  // compare bounds not more than abs|180|
-  for (int i = 0; i < displays.size(); i++) {
-    for (int j = 0; j < 4; j++) {
-      auto d = displays[i].rotation[j];
-      auto padding = displays[i].padding[j];
-      if (d > 180.0 || d < -180.0) {
-        spdlog::error("rotation bound param \"{}\" on display #{} is outside "
-                      "allowable range of -180° -> 180°.",
-                      k_edge_names[j],
-                      i);
-        return false;
-      }
-    }
-  }
-  // see if any rectangles overlap
-  // visualization: https://silentmatt.com/rectangle-intersection/
-  for (int i = 0; i < displays.size(); i++) {
-    int j = i;
-    while (++j < displays.size()) {
-      Degrees A_left = displays[i].rotation[LEFT_EDGE];
-      Degrees A_right = displays[i].rotation[RIGHT_EDGE];
-      Degrees A_top = displays[i].rotation[TOP_EDGE];
-      Degrees A_bottom = displays[i].rotation[BOTTOM_EDGE];
-      Degrees B_left = displays[j].rotation[LEFT_EDGE];
-      Degrees B_right = displays[j].rotation[RIGHT_EDGE];
-      Degrees B_top = displays[j].rotation[TOP_EDGE];
-      Degrees B_bottom = displays[j].rotation[BOTTOM_EDGE];
-      if (A_left < B_right && A_right > B_left && A_top > B_bottom &&
-          A_bottom < B_top) {
-        spdlog::error(
-          "Overlapping rotational bounds between display #{} and #{}", i, j);
-        return false;
-      }
-    }
-  }
-  spdlog::trace("user input validated");
-  return true;
-}
 } // namespace config

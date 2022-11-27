@@ -5,6 +5,7 @@
 #include <wx/wx.h>
 
 #include "config.hpp"
+#include "game-titles.hpp"
 #include "hooks.hpp"
 #include "hotkey.hpp"
 #include "ui-graphic.hpp"
@@ -37,7 +38,7 @@ public:
 class Frame : public wxFrame
 {
 public:
-  std::unique_ptr<config::game_title_map_t> p_titles_map_;
+  std::unique_ptr<game_title_map_t> p_titles_map_;
   GameTitleVector titles_;
 
   // threads
@@ -67,7 +68,6 @@ public:
 
   Frame(wxPoint, wxSize);
   ~Frame(){};
-  void InitializeSettings();
   void UpdateGuiFromConfig();
   void StartHooks();
   void RemoveHooks();

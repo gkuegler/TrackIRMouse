@@ -1,0 +1,7 @@
+#ifndef TRACKIRMOUSE_CONFIG_LOADER_HPP
+#define TRACKIRMOUSE_CONFIG_LOADER_HPP
+
+bool
+InitializeConfigurationFromFile();
+
+#endif /* TRACKIRMOUSE_CONFIG_LOADER_HPP */

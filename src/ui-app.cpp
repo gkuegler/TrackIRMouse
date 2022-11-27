@@ -40,6 +40,7 @@
 
 #include <string>
 
+#include "config-loader.hpp"
 #include "log.hpp"
 #include "messages.hpp"
 #include "mouse-modes.hpp"
@@ -68,6 +69,7 @@ public:
   virtual bool OnInit();
   virtual int OnExit();
   virtual void OnUnhandledException();
+  bool InitializeConfiguration();
 
 private:
   Frame* main_window_ = nullptr;
@@ -167,12 +169,18 @@ App::OnInit()
     }
   });
 
-  main_window_->InitializeSettings();
+  // Presents a dialog to the user if loading state from the file fails.
+  // Initialization function returns false if the user presses cancel.
+  // This should be called before accessing any settings.
+  if (!InitializeConfigurationFromFile()) {
+    return false;
+  }
+
   main_window_->UpdateGuiFromConfig();
   main_window_->Show();
 
   // Start the track IR thread if enabled
-  auto usr = config::Get()->user_data;
+  const auto& usr = config::Get()->user_data;
   if (usr.track_on_start) {
     wxCommandEvent event = {}; // blank event to reuse start handler code
     main_window_->OnStart(event);

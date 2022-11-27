@@ -13,7 +13,9 @@
 #include <algorithm>
 #include <string>
 
+#include "config-loader.hpp"
 #include "config.hpp"
+#include "game-titles.hpp"
 #include "log.hpp"
 #include "pipeserver.hpp"
 #include "threads.hpp"
@@ -107,7 +109,7 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   auto btn_duplicate_profile = new wxButton(p_pnl_profile, wxID_ANY, "Duplicate this Profile", wxDefaultPosition, k_default_button_size_2);
 
   // Profiles Box
-  p_titles_map_ = std::make_unique<config::game_title_map_t>(config::GetTitleIds());
+  p_titles_map_ = std::make_unique<game_title_map_t>(GetTitleIds());
 	
   p_text_name_ = new wxTextCtrl(p_pnl_profile, wxID_ANY, "Lorem Ipsum", wxDefaultPosition, wxSize(250, 20), wxTE_LEFT);
   p_text_name_->SetMaxLength(k_max_profile_length);
@@ -273,7 +275,7 @@ Frame::OnAbout(wxCommandEvent& event)
 void
 Frame::OnSave(wxCommandEvent& event)
 {
-  config::Get()->save_to_file("settings.toml");
+  config::Get()->SaveToFile();
 }
 
 void
@@ -282,42 +284,6 @@ Frame::OnGlobalHotkey(wxKeyEvent& event)
   spdlog::debug("hot key event");
   if (track_thread_) {
     track_thread_->handler_->toggle_alternate_mode();
-  }
-}
-
-void
-Frame::InitializeSettings()
-{
-  const std::string filename = "settings.toml";
-  config::ConfigReturn result = config::LoadFromFile(filename);
-  if (retcode::success == result.code) {
-    config::Set(result.config);
-  } else {
-    const wxString ok = "Load Empty User Settings";
-    const wxString cancel = "Quit";
-    const wxString instructions =
-      wxString::Format("\n\nPress \"%s\" to load a default user settings "
-                       "template.\nWarning: "
-                       "data may be overwritten if you "
-                       "continue with this option and then later save.\n"
-                       "Press \"%s\" to exit the program.",
-                       ok,
-                       cancel);
-    auto dlg = wxMessageDialog(this,
-                               result.err_msg + instructions,
-                               "Error",
-                               wxICON_ERROR | wxOK | wxCANCEL);
-    dlg.SetOKCancelLabels(ok, cancel);
-
-    // display reason for error to user
-    // give user the chance to quit application (preventing possible data
-    // loss and manually fixing the error) or load default/empty config
-    if (dlg.ShowModal() == wxID_OK) {
-      config::Set(config::Config());
-    } else {
-      spdlog::warn("user closed app when presented with invalid settings load");
-      Close(true);
-    }
   }
 }
 
@@ -332,7 +298,7 @@ Frame::UpdateGuiFromConfig()
 void
 Frame::OnReload(wxCommandEvent& event)
 {
-  InitializeSettings();
+  InitializeConfigurationFromFile();
   UpdateGuiFromConfig();
 }
 
@@ -598,7 +564,6 @@ Frame::OnProfileID(wxCommandEvent& event)
 {
   // from txt entry inheritted
   const auto number = p_text_profile_id_->GetValue();
-  ;
   long value;
   if (!number.ToLong(&value)) { // wxWidgets has odd conversions
     spdlog::error("Couldn't convert value to integer.");
@@ -730,8 +695,7 @@ Frame::OnAddDisplay(wxCommandEvent& event)
 {
   auto& profile = config::Get()->GetActiveProfile();
   // TODO: can this be emplace back?
-  profile.displays.push_back(
-    config::UserDisplay({ 0, 0, 0, 0 }, { 0, 0, 0, 0 }));
+  profile.displays.push_back(UserDisplay({ 0, 0, 0, 0 }, { 0, 0, 0, 0 }));
   UpdateProfilePanelFromConfig();
   p_display_graphic_->PaintNow();
 }

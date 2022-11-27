@@ -15,19 +15,6 @@
 
 namespace config {
 
-struct UserDisplay
-{
-  UserDisplay(RectDegrees r, RectPixels p)
-    : rotation(r)
-    , padding(p)
-  {
-  }
-  RectDegrees rotation{ 0.0, 0.0, 0.0, 0.0 }; // Left, Right, Top, Bottom
-  RectPixels padding{ 0, 0, 0, 0 };           // Left, Right, Top, Bottom
-};
-
-using UserInput = std::vector<UserDisplay>;
-
 struct Profile
 {
   std::string name = "(empty)";
@@ -36,6 +23,8 @@ struct Profile
   std::vector<UserDisplay> displays = {};
 };
 
+// TODO: rename user preferences
+// things which can be modified
 struct UserData
 {
   std::string active_profile_name = Profile().name; // use default profile name
@@ -55,28 +44,24 @@ struct UserData
   std::vector<Profile> profiles = { Profile() };
 };
 
-struct EnvData
-{
-  int monitor_count = 0;
-  std::string track_ir_dll_path = "";
-};
-
 class Config
 {
 public:
   UserData user_data;
-  EnvData env_data;
 
+private:
+  std::string file_path_ = "";
+
+public:
   Config() {}                         // load with default values
   Config(const std::string filename); // load from file
 
-  void save_to_file(std::string filename);
-  // void save_to_file();
+  void SaveToFile();
 
   // getter interface
-  Profile& GetActiveProfile();
-  int GetActiveProfileDisplayCount();
-  std::vector<std::string> GetProfileNames();
+  auto GetActiveProfile() -> Profile&;
+  auto GetActiveProfileDisplayCount() -> int;
+  auto GetProfileNames() -> std::vector<std::string>;
 
   // setter interface
   bool SetActiveProfile(std::string profile_name);
@@ -87,35 +72,14 @@ public:
   void AddProfile(std::string new_profile_name);
   void RemoveProfile(std::string profile_name);
   void DuplicateActiveProfile();
-
-private:
-  std::string file_path_ = "";
 };
 
-struct ConfigReturn
-{
-  retcode code = retcode::fail;
-  std::string err_msg = "";
-  Config config;
-};
+auto
+Get() -> std::shared_ptr<Config>;
 
-ConfigReturn
-LoadFromFile(std::string filename);
-std::shared_ptr<Config>
-Get();
-void
-Set(const Config c);
-bool
-ValidateUserInput(const UserInput& displays);
+auto
+Set(Config c) -> void;
 
-// toml::get only supports map type of which key_type is convertible from
-// std::string this is inherent to toml file; example: 11220 = "Game Title"
-// that is why I have to get my profile id as a string instead of
-// native int
-using game_title_map_t = std::map<const std::string, std::string>;
-
-game_title_map_t
-GetTitleIds();
 } // namespace config
 
 #endif /* TRACKIRMOUSE_CONFIG_HPP */

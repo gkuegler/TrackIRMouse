@@ -16,6 +16,19 @@ constexpr const std::array<std::string_view, 4> k_edge_names = { "left",
                                                                  "top",
                                                                  "bottom" };
 
+struct UserDisplay
+{
+  UserDisplay(RectDegrees r, RectPixels p)
+    : rotation(r)
+    , padding(p)
+  {
+  }
+  RectDegrees rotation{ 0.0, 0.0, 0.0, 0.0 }; // Left, Right, Top, Bottom
+  RectPixels padding{ 0, 0, 0, 0 };           // Left, Right, Top, Bottom
+};
+
+using UserInput = std::vector<UserDisplay>;
+
 constexpr static const int LEFT_EDGE = 0;
 constexpr static const int RIGHT_EDGE = 1;
 constexpr static const int TOP_EDGE = 2;

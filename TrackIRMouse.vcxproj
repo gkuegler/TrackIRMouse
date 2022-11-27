@@ -259,6 +259,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableModules>true</EnableModules>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -283,6 +284,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableModules>true</EnableModules>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -311,6 +313,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableModules>true</EnableModules>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -343,6 +346,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableModules>true</EnableModules>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -363,6 +367,8 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="config-loader.cpp" />
+    <ClCompile Include="game-titles.cpp" />
     <ClCompile Include="src\config.cpp" />
     <ClCompile Include="src\hooks.cpp" />
     <ClCompile Include="src\messages.cpp" />
@@ -379,8 +385,20 @@
     <ClCompile Include="src\trackers.cpp" />
     <ClCompile Include="src\environment.cpp" />
     <ClCompile Include="src\environment.hpp" />
+    <ClCompile Include="validation.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">
+      </ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="config-loader.hpp" />
+    <ClInclude Include="game-titles.hpp" />
     <ClInclude Include="mouse-modes.hpp" />
     <ClInclude Include="src\hooks.hpp" />
     <ClInclude Include="src\messages.hpp" />
@@ -401,6 +419,7 @@
     <ClInclude Include="src\types.hpp" />
     <ClInclude Include="src\ui-frame.hpp" />
     <ClInclude Include="src\util.hpp" />
+    <ClInclude Include="validation.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\Resource.rc" />
