@@ -69,7 +69,6 @@ public:
   virtual bool OnInit();
   virtual int OnExit();
   virtual void OnUnhandledException();
-  bool InitializeConfiguration();
 
 private:
   Frame* main_window_ = nullptr;

@@ -98,22 +98,33 @@ WindowChangedHook::WindowChangedHook()
                          WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 }
 
-WindowChangedHook::~WindowChangedHook()
+auto
+WindowChangedHook::Disable() -> void
 {
-  UnhookWinEvent(hook);
+  if (hook) {
+    UnhookWinEvent(hook);
+    hook = 0;
+  }
 }
 
-ScrollEventHook::ScrollEventHook()
+WindowChangedHook::~WindowChangedHook()
 {
-  hook = SetWinEventHook(EVENT_SYSTEM_SCROLLINGSTART,
-                         EVENT_SYSTEM_SCROLLINGEND,
-                         NULL,
-                         &ScrollHook,
-                         0,
-                         0,
-                         WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+  if (hook) {
+    UnhookWinEvent(hook);
+  }
 }
-ScrollEventHook ::~ScrollEventHook()
-{
-  UnhookWinEvent(hook);
-}
+
+// ScrollEventHook::ScrollEventHook()
+//{
+//   hook = SetWinEventHook(EVENT_SYSTEM_SCROLLINGSTART,
+//                          EVENT_SYSTEM_SCROLLINGEND,
+//                          NULL,
+//                          &ScrollHook,
+//                          0,
+//                          0,
+//                          WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+// }
+// ScrollEventHook ::~ScrollEventHook()
+//{
+//   UnhookWinEvent(hook);
+// }
