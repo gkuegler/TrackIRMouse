@@ -12,4 +12,4 @@ CheckOptions:
 WarningsAsErrors:  ''
 HeaderFilterRegex: '.*'
 FormatStyle:       'file'
-User:              georg
+User:              george

@@ -65,7 +65,7 @@ void SetUpLogging() {
   // happen". Create static sinks to be reused.
   std::vector<spdlog::sink_ptr> sinks = {
     std::make_shared<spdlog::sinks::stdout_sink_mt>(),
-    std::make_shared<spdlog::sinks::basic_file_sink_mt>("log-trackir.txt", true),
+    std::make_shared<spdlog::sinks::basic_file_sink_mt>("logfile.log", true),
     wx_txtctrl_sink
   };
 

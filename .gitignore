@@ -1,12 +1,8 @@
 ##############################
 ## Project Specific Ignores ##
 ##############################
-log-*.txt
-log-*.log
-log.txt
-log.log
+*.log
 todo-notes-output.txt
-settings_test.toml
 
 ##########################
 ## Sublime Text Ignores ##
@@ -14,10 +10,14 @@ settings_test.toml
 *.sublime-project
 *.sublime-workspace
 
+##########################
+##    VSCode Ignores    ##
+##########################
+.vscode/
+
 #####################################
 ## GitHub Standard C++ Ignore File ##
 #####################################
-##
 ## Get latest from https://github.com/github/gitignore/blob/main/C++.gitignore
 ## Last Updated: 2022-10-30
 

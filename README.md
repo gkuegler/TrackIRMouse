@@ -13,27 +13,6 @@ Every loop iteration, a simple linear interpolation between monitor edges determ
 
 ![monitor diagram](https://github.com/georgekuegler/TrackIRMouse/blob/master/docs/Windows%20Desktop%20Diagram-Model.png)
 
-Here's an example of my settings file to show you what's comfortable for me.
-```
-[default_padding]
-left = 3
-right = 3
-top = 0
-bottom = 0
-
-[display0]
-left = -43.00
-right = 50.00
-top = 19.00
-bottom = -19.00
-
-[display1]
-left = 62.00
-right = 180.00
-top = 19.00
-bottom = -19.00
-```
-
 # Notes On Similar Software:
 
 FreePIE is an excellent tool that I started with. It is the first piece of software I used to get going quickly.
@@ -42,3 +21,23 @@ Unfortunately, it does not support the Win32 call, 'SendInput'. This is necessar
 # The Virtual Screen
 ...TODO explain Microsoft's quirky virtual desktop and the need to translate coordinates...
 Link: (https://docs.microsoft.com/en-us/windows/win32/gdi/the-virtual-screen)
+
+# Building from Source
+Note that WxWidgets is the only external library not included in this source tree.
+I am using Visual Studio 2022.
+Language Standard: at least C++20
+
+**Required 3rd Party Libraries:**
+- WxWidgets 3.2.2 (must get & build binaries for static linking)
+- spdlog 1.9.2 (included in folder '/3rd-party/' as header only library)
+- toml11 (included in folder '/3rd-party/' as header only library)
+
+Python 3 & py launcher located on path (only for 'DebugAndLaunch' build step)
+
+## Building WxWidgets
+See (https://github.com/wxWidgets/wxWidgets).
+
+Windows specific install instructions (https://github.com/wxWidgets/wxWidgets/blob/master/docs/msw/install.md).
+
+I made an environment variable called 'WXWIN' that specifies the location of the wxWidgets project folder.
+I use this variable to specify additional include & library directories to bring in wxWidgets.
