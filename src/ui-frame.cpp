@@ -25,7 +25,7 @@
 #include "ui-dialogs.hpp"
 #include "util.hpp"
 
-const constexpr std::string_view k_version_no = "0.10.1";
+const constexpr std::string_view k_version_no = "1.0.0";
 const wxSize k_default_button_size = wxSize(110, 25);
 const wxSize k_default_button_size_2 = wxSize(150, 25);
 const constexpr int k_max_profile_length = 30;
