@@ -63,13 +63,13 @@
     <ClCompile Include="src\mouse-modes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="game-titles.cpp">
+    <ClCompile Include="src\config-loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="validation.cpp">
+    <ClCompile Include="src\game-titles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="config-loader.cpp">
+    <ClCompile Include="src\validation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -134,13 +134,19 @@
     <ClInclude Include="src\messages.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="game-titles.hpp">
+    <ClInclude Include="src\config-loader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="validation.hpp">
+    <ClInclude Include="src\game-titles.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="config-loader.hpp">
+    <ClInclude Include="src\mouse-modes.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\validation.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows-wrapper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

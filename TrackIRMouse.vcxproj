@@ -150,16 +150,16 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)\include;$(WXWIN)\include\msvc;$(SolutionDir)src;$(SolutionDir)spdlog-1.9.2\include;$(SolutionDir)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)\lib\vc_x64_lib;$(SolutionDir)splgod-1.9.2\lib\Debug</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)\include;$(WXWIN)\include\msvc;$(SolutionDir)src;$(SolutionDir)3rd-party\spdlog\include;$(SolutionDir)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)\lib\vc_x64_lib;$(SolutionDir)3rd-party\spdlog\lib\Debug</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
     <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)\include;$(WXWIN)\include\msvc;$(SolutionDir)src;$(SolutionDir)spdlog-1.9.2\include;$(SolutionDir)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)\lib\vc_x64_lib;$(SolutionDir)splgod-1.9.2\lib\Debug</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)\include;$(WXWIN)\include\msvc;$(SolutionDir)src;$(SolutionDir)3rd-party\spdlog\include;$(SolutionDir)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)\lib\vc_x64_lib;$(SolutionDir)3rd-party\spdlog\lib\Debug</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
     <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
@@ -167,7 +167,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)\include;$(WXWIN)\include\msvc;$(SolutionDir)src;$(SolutionDir)spdlog-1.9.2\include;$(SolutionDir)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)\include;$(WXWIN)\include\msvc;$(SolutionDir)src;$(SolutionDir)3rd-party\spdlog\include;$(SolutionDir)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)\lib\vc_x64_lib;$(SolutionDir)spdlog-1.9.2\lib\Release</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -175,7 +175,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)\include;$(WXWIN)\include\msvc;$(SolutionDir)src;$(SolutionDir)spdlog-1.9.2\include;$(SolutionDir)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WXWIN)\include;$(WXWIN)\include\msvc;$(SolutionDir)src;$(SolutionDir)3rd-party\spdlog\include;$(SolutionDir)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(WXWIN)\lib\vc_x64_lib;$(SolutionDir)spdlog-1.9.2\lib\Release</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -367,9 +367,9 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="config-loader.cpp" />
-    <ClCompile Include="game-titles.cpp" />
+    <ClCompile Include="src\config-loader.cpp" />
     <ClCompile Include="src\config.cpp" />
+    <ClCompile Include="src\game-titles.cpp" />
     <ClCompile Include="src\hooks.cpp" />
     <ClCompile Include="src\messages.cpp" />
     <ClCompile Include="src\mouse-modes.cpp" />
@@ -385,23 +385,15 @@
     <ClCompile Include="src\trackers.cpp" />
     <ClCompile Include="src\environment.cpp" />
     <ClCompile Include="src\environment.hpp" />
-    <ClCompile Include="validation.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">
-      </ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      </ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">
-      </ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="src\validation.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="config-loader.hpp" />
-    <ClInclude Include="game-titles.hpp" />
     <ClInclude Include="mouse-modes.hpp" />
+    <ClInclude Include="src\config-loader.hpp" />
+    <ClInclude Include="src\game-titles.hpp" />
     <ClInclude Include="src\hooks.hpp" />
     <ClInclude Include="src\messages.hpp" />
+    <ClInclude Include="src\mouse-modes.hpp" />
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\config.hpp" />
     <ClInclude Include="src\hotkey.hpp" />
@@ -419,7 +411,8 @@
     <ClInclude Include="src\types.hpp" />
     <ClInclude Include="src\ui-frame.hpp" />
     <ClInclude Include="src\util.hpp" />
-    <ClInclude Include="validation.hpp" />
+    <ClInclude Include="src\validation.hpp" />
+    <ClInclude Include="src\windows-wrapper.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\Resource.rc" />
