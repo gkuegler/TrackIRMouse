@@ -1,10 +1,8 @@
 #ifndef TRACKIRMOUSE_DISPLAYGRAPHIC_H
 #define TRACKIRMOUSE_DISPLAYGRAPHIC_H
 
-#include <Windows.h>
 #include <wx/wx.h>
 
-#include <vector>
 class cDisplayGraphic : public wxPanel
 {
 public:

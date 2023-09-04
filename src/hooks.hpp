@@ -2,7 +2,8 @@
 #define TRACKIRMOUSE_HOOKS_HPP
 
 #include "handlers.hpp"
-#include <windows.h>
+
+#include "windows-wrapper.hpp"
 
 class WindowChangedHook
 {

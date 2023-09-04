@@ -1,7 +1,7 @@
 #ifndef TRACKIRMOUSE_REGISTRY_HPP
 #define TRACKIRMOUSE_REGISTRY_HPP
 
-#include <windows.h>
+#include "windows-wrapper.hpp"
 
 #include <string>
 

@@ -8,8 +8,6 @@
 
 #include "config.hpp"
 
-#include <Windows.h>
-
 #include <filesystem>
 #include <iostream>
 #include <string>

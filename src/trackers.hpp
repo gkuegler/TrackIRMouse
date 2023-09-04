@@ -1,7 +1,8 @@
 #ifndef TRACKIRMOUSE_TRACK_HPP
 #define TRACKIRMOUSE_TRACK_HPP
 
-#include <windows.h>
+
+#include "windows-wrapper.hpp"
 
 #include <string>
 

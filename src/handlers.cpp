@@ -1,6 +1,7 @@
 #include "handlers.hpp"
 
-#include <windows.h>
+
+#include "windows-wrapper.hpp"
 
 #include <memory>
 

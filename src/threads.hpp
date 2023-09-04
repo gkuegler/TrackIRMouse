@@ -1,7 +1,8 @@
 #ifndef TRACKIRMOUSE_THREADS_H
 #define TRACKIRMOUSE_THREADS_H
 
-#include <Windows.h>
+
+#include "windows-wrapper.hpp"
 #include <wx/thread.h>
 
 #include <memory>

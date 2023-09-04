@@ -1,7 +1,6 @@
 #include "ui-graphic.hpp"
 
-#include <Windows.h>
-#include <spdlog/spdlog.h>
+#include "windows-wrapper.hpp"
 #include <wx/wx.h>
 
 #include <algorithm>

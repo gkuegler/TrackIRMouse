@@ -1,7 +1,8 @@
 #ifndef TRACKIRMOUSE_HOTKEY_HPP
 #define TRACKIRMOUSE_HOTKEY_HPP
 
-#include <windows.h>
+
+#include "windows-wrapper.hpp"
 
 #include "log.hpp"
 

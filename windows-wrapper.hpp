@@ -1,0 +1,7 @@
+#ifndef TRACKIRMOUSE_WINDOWS_H
+#define TRACKIRMOUSE_WINDOWS_H
+
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
+#endif /* TRACKIRMOUSE_WINDOWS_H */

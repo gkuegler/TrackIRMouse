@@ -15,7 +15,7 @@
 
 // added by GK
 // clang-format off
-#include <Windows.h>
+#include "windows-wrapper.hpp"
 
 #ifndef _NPCLIENT_H_DEFINED_
 #define _NPCLIENT_H_DEFINED_

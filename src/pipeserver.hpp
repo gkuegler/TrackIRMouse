@@ -1,7 +1,8 @@
 #ifndef TRACKIRMOUSE_WATCHDOG_H
 #define TRACKIRMOUSE_WATCHDOG_H
 
-#include <Windows.h>
+
+#include "windows-wrapper.hpp"
 
 #include <atomic>
 #include <exception>
