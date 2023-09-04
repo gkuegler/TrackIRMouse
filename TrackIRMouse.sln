@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TrackIRMouse", "TrackIRMouse.vcxproj", "{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests", "tests\tests\tests.vcxproj", "{BAE3004A-C31F-42A9-8959-F07AB5AC6F1F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -23,14 +21,6 @@ Global
 		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.Release|x64.Build.0 = Release|x64
 		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.ReleaseNonAdmin|x64.ActiveCfg = ReleaseNonAdmin|x64
 		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.ReleaseNonAdmin|x64.Build.0 = ReleaseNonAdmin|x64
-		{BAE3004A-C31F-42A9-8959-F07AB5AC6F1F}.Debug|x64.ActiveCfg = Debug|x64
-		{BAE3004A-C31F-42A9-8959-F07AB5AC6F1F}.Debug|x64.Build.0 = Debug|x64
-		{BAE3004A-C31F-42A9-8959-F07AB5AC6F1F}.DebugAndLaunch|x64.ActiveCfg = Debug|x64
-		{BAE3004A-C31F-42A9-8959-F07AB5AC6F1F}.DebugAndLaunch|x64.Build.0 = Debug|x64
-		{BAE3004A-C31F-42A9-8959-F07AB5AC6F1F}.Release|x64.ActiveCfg = Release|x64
-		{BAE3004A-C31F-42A9-8959-F07AB5AC6F1F}.Release|x64.Build.0 = Release|x64
-		{BAE3004A-C31F-42A9-8959-F07AB5AC6F1F}.ReleaseNonAdmin|x64.ActiveCfg = Release|x64
-		{BAE3004A-C31F-42A9-8959-F07AB5AC6F1F}.ReleaseNonAdmin|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

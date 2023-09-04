@@ -5,7 +5,7 @@
 #include "util.hpp"
 
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
-#include "toml11/toml.hpp"
+#include "3rd-party/toml11/toml.hpp"
 
 // toml::get only supports map type of which key_type is convertible from
 // std::string this is inherent to toml file; example: 11220 = "Game Title"
