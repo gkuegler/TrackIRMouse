@@ -7,7 +7,7 @@
 
 #include "log.hpp"
 // TODO: remove toml exception dependency
-#include "3rd-party/toml11/toml/exception.hpp"
+#include "toml/exception.hpp"
 #include "types.hpp"
 
 // TODO: move config validation to new file

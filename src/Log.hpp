@@ -6,7 +6,7 @@
                                 // concurrently by different threads.
 
 // used to export default logger
-#include "3rd-party/spdlog/include/spdlog/spdlog.h"
+#include "spdlog/spdlog.h"
 
 #include <memory>
 #include <string>

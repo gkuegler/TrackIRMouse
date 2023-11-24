@@ -17,8 +17,8 @@
 #include "util.hpp"
 
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
-#include "3rd-party/toml11/toml.hpp"
-#include "3rd-party/toml11/toml/exception.hpp"
+#include "toml.hpp"
+#include "toml/exception.hpp"
 
 namespace config {
 

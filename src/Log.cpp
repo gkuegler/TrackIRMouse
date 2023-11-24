@@ -6,11 +6,11 @@
 
 #include "log.hpp"
 
-#include "3rd-party/spdlog/include/spdlog/details/null_mutex.h"
-#include "3rd-party/spdlog/include/spdlog/sinks/base_sink.h"
-#include "3rd-party/spdlog/include/spdlog/sinks/basic_file_sink.h"
-#include "3rd-party/spdlog/include/spdlog/sinks/stdout_sinks.h"
-#include "3rd-party/spdlog/include/spdlog/spdlog.h"
+#include "spdlog/details/null_mutex.h"
+#include "spdlog/sinks/base_sink.h"
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/sinks/stdout_sinks.h"
+#include "spdlog/spdlog.h"
 #include <wx/log.h>
 #include <wx/wx.h>
 

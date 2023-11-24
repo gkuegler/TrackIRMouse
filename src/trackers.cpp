@@ -134,7 +134,7 @@ TrackIR::initialize(HWND hWnd,
   // theres no info in the sdk on how to handle_ different software versions
 
   // Request roll, pitch. See NPClient.h
-  if (NP_OK != NP_RequestData(NPPitch | NPYaw)) {
+  if (NP_OK != NP_RequestData(NPPitch | NPYaw|NPX|NPY|NPZ)) {
     throw std::runtime_error("NP Request Data failed.");
   }
   if (NP_OK != NP_RegisterProgramProfileID(profile_id)) {

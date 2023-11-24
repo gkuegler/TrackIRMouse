@@ -3,6 +3,7 @@
 ##############################
 *.log
 todo-notes-output.txt
+vcpkg_installed/
 
 ##########################
 ## Sublime Text Ignores ##
