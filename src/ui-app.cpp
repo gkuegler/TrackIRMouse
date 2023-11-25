@@ -47,7 +47,7 @@
 #include "threads.hpp"
 #include "types.hpp"
 #include "ui-frame.hpp"
-#include "util.hpp"
+#include "utility.hpp"
 
 /**
  * Center the app on the main display.

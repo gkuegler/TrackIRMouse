@@ -2,7 +2,7 @@
 
 #include "game-titles.hpp"
 
-#include "util.hpp"
+#include "utility.hpp"
 
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
 #include "toml.hpp"
@@ -26,7 +26,7 @@ GetTitleIds()
     "A courtesy sub-sample of the title list will provided from source code.";
   std::string err_msg = "lorem ipsum";
 
-  auto full_path = util::GetExecutableFolder() + "\\" + filename;
+  auto full_path = utility::GetExecutableFolder() + "\\" + filename;
 
   try {
     // load, parse, and return as map

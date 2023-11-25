@@ -22,8 +22,9 @@
 #include "trackers.hpp"
 #include "types.hpp"
 #include "ui-control-id.hpp"
-#include "ui-dialogs.hpp"
-#include "util.hpp"
+#include "ui-profile-selector-dialog.hpp"
+#include "ui-settings-dialog.hpp"
+#include "utility.hpp"
 
 const constexpr std::string_view k_version_no = "1.0.0";
 const wxSize k_default_button_size = wxSize(110, 25);
@@ -309,17 +310,24 @@ Frame::OnSettings(wxCommandEvent& event)
   auto usr = config->user_data; // copy user data
 
   // Show the settings pop up while disabling input on main window
-  cSettingsPopup dlg(this, &usr);
+  // cSettingsPopup dlg(this, &usr);
+  SettingsFrame dlg(this, usr);
+
   int results = dlg.ShowModal();
 
-  if (wxID_OK == results) {
-    spdlog::debug("settings applied.");
-    config->user_data = usr; // apply settings
+  if (wxID_OK == results || wxID_APPLY == results) {
+    spdlog::debug("settings accepted");
+    dlg.ApplySettings(usr);
+    config->user_data = usr;
+    if (wxID_APPLY == results) {
+      // TODO: prevent race condition with an immediate load?
+      config->SaveToFile();
+    }
 
     // reload any resources from setting changes:
     // TODO: make resources reload on setting changes
-    auto logger_ = spdlog::get("main");
-    logger_->set_level(usr.log_level);
+    // auto logger_ = spdlog::get("main");
+    // logger_->set_level(usr.log_level);
   } else if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
   }

@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace util {
+namespace utility {
 // template <typename C<T>> requires ??
 
 // container must be an irritable array of type T,

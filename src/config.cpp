@@ -14,7 +14,7 @@
 
 #include "log.hpp"
 #include "types.hpp"
-#include "util.hpp"
+#include "utility.hpp"
 
 #define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
 #include "toml.hpp"
@@ -51,7 +51,7 @@ Config::Config(const std::string filename)
 {
 
   // note: prefix t_* = toml::value
-  file_path_ = util::GetExecutableFolder() + "\\" + filename;
+  file_path_ = utility::GetExecutableFolder() + "\\" + filename;
   const auto t_data = toml::parse<toml::preserve_comments>(file_path_);
 
   // Find the general settings table

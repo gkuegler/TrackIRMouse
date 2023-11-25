@@ -128,7 +128,7 @@
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;TEST_NO_TRACK</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableModules>true</EnableModules>
@@ -251,7 +251,6 @@
     <ClCompile Include="src\ui-frame.cpp" />
     <ClCompile Include="src\ui-graphic.cpp" />
     <ClCompile Include="src\ui-app.cpp" />
-    <ClCompile Include="src\ui-dialogs.cpp" />
     <ClCompile Include="src\handlers.cpp" />
     <ClCompile Include="src\log.cpp" />
     <ClCompile Include="src\np-client.cpp" />
@@ -275,7 +274,7 @@
     <ClInclude Include="src\ui-control-id.hpp" />
     <ClInclude Include="src\display.hpp" />
     <ClInclude Include="src\ui-graphic.hpp" />
-    <ClInclude Include="src\ui-dialogs.hpp" />
+    <ClInclude Include="src\ui-profile-selector-dialog.hpp" />
     <ClInclude Include="src\handlers.hpp" />
     <ClInclude Include="src\log.hpp" />
     <ClInclude Include="src\np-client.h" />
@@ -285,7 +284,8 @@
     <ClInclude Include="src\trackers.hpp" />
     <ClInclude Include="src\types.hpp" />
     <ClInclude Include="src\ui-frame.hpp" />
-    <ClInclude Include="src\util.hpp" />
+    <ClInclude Include="src\ui-settings-dialog.hpp" />
+    <ClInclude Include="src\utility.hpp" />
     <ClInclude Include="src\validation.hpp" />
     <ClInclude Include="src\windows-wrapper.hpp" />
   </ItemGroup>

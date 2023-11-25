@@ -27,9 +27,6 @@
     <ClCompile Include="src\ui-app.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui-dialogs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\handlers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -83,7 +80,7 @@
     <ClInclude Include="src\ui-control-id.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui-dialogs.hpp">
+    <ClInclude Include="src\ui-profile-selector-dialog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ui-graphic.hpp">
@@ -116,7 +113,7 @@
     <ClInclude Include="src\trackers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\util.hpp">
+    <ClInclude Include="src\utility.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\types.hpp">
@@ -147,6 +144,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\windows-wrapper.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui-settings-dialog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
