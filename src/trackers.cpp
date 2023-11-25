@@ -130,11 +130,12 @@ TrackIR::initialize(HWND hWnd,
       break;
   }
 
-  // I'm skipping query the software version, I don't think its necessary
-  // theres no info in the sdk on how to handle_ different software versions
+  // I'm skipping 'query the software version'. I don't think its necessary
+  // there's no info in the sdk on how to handle different software versions of
+  // NPTrackIR.
 
   // Request roll, pitch. See NPClient.h
-  if (NP_OK != NP_RequestData(NPPitch | NPYaw|NPX|NPY|NPZ)) {
+  if (NP_OK != NP_RequestData(NPPitch | NPYaw | NPX | NPY | NPZ)) {
     throw std::runtime_error("NP Request Data failed.");
   }
   if (NP_OK != NP_RegisterProgramProfileID(profile_id)) {
