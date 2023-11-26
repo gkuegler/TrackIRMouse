@@ -66,9 +66,6 @@
     <ClCompile Include="src\game-titles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\validation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\config.hpp">
@@ -140,9 +137,6 @@
     <ClInclude Include="src\mouse-modes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\validation.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\windows-wrapper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -156,10 +150,10 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="resources\settings.toml">
+    <CopyFileToFolders Include="resources\track-ir-numbers.toml">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="resources\track-ir-numbers.toml">
+    <CopyFileToFolders Include="resources\settings.json">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
   </ItemGroup>

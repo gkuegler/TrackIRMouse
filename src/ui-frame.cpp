@@ -702,8 +702,7 @@ void
 Frame::OnAddDisplay(wxCommandEvent& event)
 {
   auto& profile = config::Get()->GetActiveProfile();
-  // TODO: can this be emplace back?
-  profile.displays.push_back(UserDisplay({ 0, 0, 0, 0 }, { 0, 0, 0, 0 }));
+  profile.displays.emplace_back();
   UpdateProfilePanelFromConfig();
   p_display_graphic_->PaintNow();
 }

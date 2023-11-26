@@ -259,7 +259,6 @@
     <ClCompile Include="src\trackers.cpp" />
     <ClCompile Include="src\environment.cpp" />
     <ClCompile Include="src\environment.hpp" />
-    <ClCompile Include="src\validation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mouse-modes.hpp" />
@@ -286,27 +285,18 @@
     <ClInclude Include="src\ui-frame.hpp" />
     <ClInclude Include="src\ui-settings-dialog.hpp" />
     <ClInclude Include="src\utility.hpp" />
-    <ClInclude Include="src\validation.hpp" />
     <ClInclude Include="src\windows-wrapper.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\Resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="resources\settings.toml">
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+    <CopyFileToFolders Include="resources\track-ir-numbers.toml">
       <FileType>Document</FileType>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">true</DeploymentContent>
-      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TreatOutputAsContent>
-      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">true</TreatOutputAsContent>
-      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</TreatOutputAsContent>
-      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">true</TreatOutputAsContent>
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="resources\track-ir-numbers.toml">
+    <CopyFileToFolders Include="resources\settings.json">
       <FileType>Document</FileType>
     </CopyFileToFolders>
   </ItemGroup>

@@ -2,6 +2,7 @@
     "dependencies": [
         "spdlog",
         "toml11",
-        "wxwidgets"
+        "wxwidgets",
+        "nlohmann-json"
     ]
 }

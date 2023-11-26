@@ -7,75 +7,30 @@
 
 #include <string>
 
-struct LoadResults
-{
-  bool success = false;
-  std::string err_msg = "";
-};
-
-LoadResults
-LoadFromFile(std::string filename)
-{
-  std::string err_msg = "lorem ipsum";
-  try {
-    auto config = config::Config(filename);
-    // return a successfully parsed and validated config file
-    config::Set(config);
-    return LoadResults{ true, "" };
-  } catch (const toml::syntax_error& ex) {
-    err_msg = fmt::format(
-      "Syntax error in toml file: \"{}\"\nSee error message below for hints "
-      "on how to fix.\n{}",
-      filename,
-      ex.what());
-  } catch (const toml::type_error& ex) {
-    err_msg = fmt::format("Incorrect type when parsing toml file \"{}\".\n\n{}",
-                          filename,
-                          ex.what());
-  } catch (const std::out_of_range& ex) {
-    err_msg = fmt::format(
-      "Missing data in toml file \"{}\".\n\n{}", filename, ex.what());
-  } catch (const std::runtime_error& ex) {
-    err_msg = fmt::format("Failed to open \"{}\"", filename);
-  } catch (...) {
-    err_msg = fmt::format(
-      "Exception has gone unhandled loading \"{}\" and verifying values.",
-      filename);
-  }
-
-  // build a default configuration object
-  config::Set(config::Config());
-  return LoadResults{ false, err_msg };
-}
-
 /**
+ * Returns true if application should continue loading.
+ * Returns false if application should exit.
  * Guard loading of configuration from a file with the user dialog, if operation
  * fails.
  */
 bool
 InitializeConfigurationFromFile()
 {
-  const std::string filename = "settings.toml";
-  auto result = LoadFromFile(filename);
+  const std::string filename = "settings.json";
+  auto result = config::LoadFromFile(filename);
   if (result.success) {
     return true;
   } else {
     // press okay to keep empty settings.
-    // press cancel to quit program and have user fix it manually before
-    // restarting program.
-    const wxString ok = "Load Empty User Settings";
-    const wxString cancel = "Quit";
-    const wxString instructions =
-      wxString::Format("\n\nPress \"%s\" to load a default user settings "
-                       "template.\nWarning: "
-                       "data may be overwritten if you "
-                       "continue witto quit this option and then later save.\n"
-                       "Press \"%s\" to exit the program.",
-                       ok,
-                       cancel);
+    const wxString ok = "Overwrite with Default Settings";
+    const wxString cancel = "Exit Program";
+    const wxString prefix = "Error opening settings file.\n\n";
+    // const wxString instructions = ("\n\n");
+    const wxString instructions = "";
+
     auto dlg = wxMessageDialog(nullptr,
-                               result.err_msg + instructions,
-                               "Error",
+                               prefix + result.err_msg + instructions,
+                               "TrackIRMouse Error",
                                wxICON_ERROR | wxOK | wxCANCEL);
     dlg.SetOKCancelLabels(ok, cancel);
 

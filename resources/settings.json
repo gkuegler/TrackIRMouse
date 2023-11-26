@@ -1,0 +1,77 @@
+{
+    "user_data": {
+        "active_profile_name": "Dual Desktop",
+        "auto_find_track_ir_dll": true,
+        "default_padding": [
+            0,
+            0,
+            0,
+            0
+        ],
+        "hotkey_enabled": true,
+        "log_level": 2,
+        "pipe_server_enabled": true,
+        "pipe_server_name": "",
+        "profiles": [
+            {
+                "displays": [
+                    {
+                        "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "rotation": [
+                            -62.0,
+                            -180.0,
+                            -20.0,
+                            19.0
+                        ]
+                    },
+                    {
+                        "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "rotation": [
+                            43.0,
+                            -50.0,
+                            -20.0,
+                            19.0
+                        ]
+                    }
+                ],
+                "name": "Dual Desktop",
+                "profile_id": 0,
+                "use_default_padding": true
+            },
+            {
+                "displays": [
+                    {
+                        "padding": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "rotation": [
+                            60.0,
+                            -60.0,
+                            -20.0,
+                            15.0
+                        ]
+                    }
+                ],
+                "name": "Desktop Single Monitor Pams",
+                "profile_id": 13302,
+                "use_default_padding": true
+            }
+        ],
+        "quit_on_loss_of_trackir": false,
+        "track_ir_dll_folder": "",
+        "track_on_start": true
+    }
+}
