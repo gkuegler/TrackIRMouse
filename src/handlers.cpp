@@ -1,22 +1,21 @@
 #include "handlers.hpp"
 
-
 #include "windows-wrapper.hpp"
 
 #include <memory>
 
-#include "config.hpp"
 #include "display.hpp"
 #include "environment.hpp"
 #include "log.hpp"
 #include "mouse-modes.hpp"
+#include "settings.hpp"
 #include "types.hpp"
 
 namespace handlers {
 
 MouseHandler::MouseHandler()
 {
-  const auto profile = config::Get()->GetActiveProfile();
+  const auto profile = settings::Get()->GetActiveProfile();
   const auto info = environment::GetHardwareDisplayInformation();
 
   auto hardware_display_count = info.rectangles.size();

@@ -9,7 +9,7 @@
 
 #include "types.hpp"
 
-namespace config {
+namespace settings {
 
 struct UserDisplay
 {
@@ -32,11 +32,17 @@ struct Profile
   int profile_id = 0;
   bool use_default_padding = true;
   std::vector<UserDisplay> displays = { UserDisplay() };
+
+  int GetDisplayCount() const;
+  bool ValidateParameters() const;
 };
 
-class UserData
+class Settings
 {
 public:
+  // TODO: change config to settings
+  // TODO: move user data to config class
+  // UserData user_data;
   std::string active_profile_name = Profile().name; // use default profile name
   bool track_on_start = false;
   bool quit_on_loss_of_trackir = false;
@@ -51,21 +57,13 @@ public:
   // invariant: the active profile member will always exist in the profiles
   // list
   std::vector<Profile> profiles = { Profile() };
-};
-
-class Config
-{
-public:
-  // TODO: change config to settings
-  // TODO: move user data to config class
-  UserData user_data;
 
 private:
   std::string file_path_ = "";
 
 public:
-  Config() {}                         // load with default values
-  Config(const std::string filename); // load from file
+  Settings() {}                         // load with default values
+  Settings(const std::string filename); // load from file
 
   void SaveToFile();
 
@@ -87,10 +85,13 @@ public:
 };
 
 auto
-Get() -> std::shared_ptr<Config>;
+Get() -> std::shared_ptr<Settings>;
 
 auto
-Set(Config c) -> void;
+GetCopy() -> Settings;
+
+auto
+Set(Settings c) -> void;
 
 // TODO: changed to std::optional or something
 struct LoadResults
@@ -100,9 +101,6 @@ struct LoadResults
 };
 LoadResults
 LoadFromFile(std::string filename);
-
-auto
-InitializeFromFile() -> void;
 
 using UserInput = std::vector<UserDisplay>;
 

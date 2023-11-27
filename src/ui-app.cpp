@@ -99,6 +99,8 @@ App::OnInit()
   // that is a log target.
   main_window_ =
     new Frame(GetOrigin(app_width, app_height), wxSize(app_width, app_height));
+  main_window_->Show();
+  main_window_->StartScrollAlternateHooksAndHotkeys();
 
   //////////////////////////////////////////////////////////////////////
   //               Messages From Threads Outside Of GUI               //
@@ -168,26 +170,26 @@ App::OnInit()
     }
   });
 
-  // Presents a dialog to the user if loading state from the file fails.
+  // Presents a dialog to the user if loading from file fails.
   // Initialization function returns false if the user presses cancel.
   // This should be called before accessing any settings.
-  if (!InitializeConfigurationFromFile()) {
+  if (!LoadSettingsFile()) {
     return false;
   }
 
-  main_window_->UpdateGuiFromConfig();
-  main_window_->Show();
+  main_window_->UpdateGuiFromSettings();
 
   // Start the track IR thread if enabled
-  const auto& usr = config::Get()->user_data;
-  if (usr.track_on_start) {
+  const auto settings = settings::Get();
+
+  if (settings->track_on_start) {
     wxCommandEvent event = {}; // blank event to reuse start handler code
     main_window_->OnStart(event);
   }
 
   // Start the pipe server thread.
   // Pipe server is only started at first application startup.
-  if (usr.pipe_server_enabled) {
+  if (settings->pipe_server_enabled) {
     main_window_->p_server_thread_ = new ControlServerThread(main_window_);
     if (main_window_->p_server_thread_->Run() != wxTHREAD_NO_ERROR) {
       spdlog::error("Can't run server thread.");

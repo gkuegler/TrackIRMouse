@@ -8,7 +8,7 @@
 
 #include <string>
 
-#include "config.hpp"
+#include "settings.hpp"
 
 class cProfileIdSelectorPanel : public wxPanel
 {
@@ -51,7 +51,7 @@ public:
     }
 
     // don't do this, move to constructor and dep inject
-    auto active_id = config::Get()->GetActiveProfile().profile_id;
+    auto active_id = settings::Get()->GetActiveProfile().profile_id;
     int selection = -1;
 
     // set selection of current profile p_profile_id_

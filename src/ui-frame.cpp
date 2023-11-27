@@ -14,10 +14,10 @@
 #include <string>
 
 #include "config-loader.hpp"
-#include "config.hpp"
 #include "game-titles.hpp"
 #include "log.hpp"
 #include "pipeserver.hpp"
+#include "settings.hpp"
 #include "threads.hpp"
 #include "trackers.hpp"
 #include "types.hpp"
@@ -83,7 +83,6 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   // Panels 
   auto main = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
   auto p_pnl_profile = new wxPanel(main, wxID_ANY, wxDefaultPosition, wxSize(800, 400), wxBORDER_SIMPLE);
-  // auto m_pnlDisplayConfig = new wxPanel(profile);???????
   //p_pnl_profile->SetBackgroundColour(orange);
   
 
@@ -93,9 +92,8 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   p_text_rich_->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
 
   // Track Controls
-  auto btn_start_mouse = new wxButton(main, myID_START_TRACK, "Start Mouse", wxDefaultPosition, k_default_button_size);
+  auto btn_start_mouse = new wxButton(main, myID_START_TRACK, "Start/Restart Mouse", wxDefaultPosition, k_default_button_size);
   auto btn_stop_mouse = new wxButton(main, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition, k_default_button_size);
-  auto btn_hide_log = new wxButton(main, wxID_ANY, "Show/Hide Log", wxDefaultPosition, k_default_button_size);
 
   // Display Graphic
   p_display_graphic_ = new cDisplayGraphic(main, wxSize(650, 200));
@@ -197,7 +195,6 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   auto *zrTrackCmds = new wxBoxSizer(wxHORIZONTAL);
   zrTrackCmds->Add(btn_start_mouse, 0, wxALL, 0);
   zrTrackCmds->Add(btn_stop_mouse, 0, wxALL, 0);
-  zrTrackCmds->Add(btn_hide_log, 0, wxALL, 0);
 
   auto *zrLogWindow = new wxBoxSizer(wxVERTICAL);
   zrLogWindow->Add(label_text_rich_, 0, wxBOTTOM, 5);
@@ -234,7 +231,6 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   // Bind Main Controls
   btn_start_mouse->Bind(wxEVT_BUTTON, &Frame::OnStart, this);
   btn_stop_mouse->Bind(wxEVT_BUTTON, &Frame::OnStop, this);
-  btn_hide_log->Bind(wxEVT_BUTTON, &Frame::OnShowLog, this);
   
   p_combo_profiles_->Bind(wxEVT_CHOICE, &Frame::OnActiveProfile, this);
   btn_add_profile->Bind(wxEVT_BUTTON, &Frame::OnAddProfile, this);
@@ -253,6 +249,13 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   btn_move_down->Bind(wxEVT_BUTTON, &Frame::OnMoveDown, this);
 }
 // clang-format on
+void
+Frame::UpdateGuiFromSettings()
+{
+  // Populate GUI With Settings
+  PopulateComboBoxWithProfiles();
+  UpdateProfilePanelFromSettings();
+}
 
 void
 Frame::OnExit(wxCommandEvent& event)
@@ -276,52 +279,36 @@ Frame::OnAbout(wxCommandEvent& event)
 void
 Frame::OnSave(wxCommandEvent& event)
 {
-  config::Get()->SaveToFile();
-}
-
-void
-Frame::OnGlobalHotkey(wxKeyEvent& event)
-{
-  spdlog::debug("hot key event");
-  if (track_thread_) {
-    track_thread_->handler_->toggle_alternate_mode();
-  }
-}
-
-void
-Frame::UpdateGuiFromConfig()
-{
-  // Populate GUI With Settings
-  PopulateComboBoxWithProfiles();
-  UpdateProfilePanelFromConfig();
+  settings::Get()->SaveToFile();
 }
 
 void
 Frame::OnReload(wxCommandEvent& event)
 {
-  InitializeConfigurationFromFile();
-  UpdateGuiFromConfig();
+  LoadSettingsFile();
+  UpdateGuiFromSettings();
 }
 
 void
 Frame::OnSettings(wxCommandEvent& event)
 {
-  auto config = config::Get();
-  auto usr = config->user_data; // copy user data
+  // Only modify local copy.
+  // Update settings in one go with make_shared.
+  auto settings = settings::GetCopy();
 
   // Show the settings pop up while disabling input on main window
   // cSettingsPopup dlg(this, &usr);
-  SettingsFrame dlg(this, usr);
+  SettingsFrame dlg(this, settings);
 
   int results = dlg.ShowModal();
 
   if (wxID_OK == results || wxID_APPLY == results) {
     spdlog::debug("settings accepted");
-    dlg.ApplySettings(usr);
-    config->user_data = usr;
+    dlg.ApplySettings(settings);
+    settings::Set(settings);
     if (wxID_APPLY == results) {
       // TODO: prevent race condition with an immediate load?
-      config->SaveToFile();
+      settings.SaveToFile();
     }
 
     // reload any resources from setting changes:
@@ -334,14 +321,24 @@ Frame::OnSettings(wxCommandEvent& event)
 }
 
 void
-Frame::Startup()
+Frame::OnScrollAlternateHotkey(wxKeyEvent& event)
 {
-  Bind(wxEVT_HOTKEY, &Frame::OnGlobalHotkey, this, HOTKEY_ID_SCROLL_ALTERNATE);
+  spdlog::debug("hot key event");
+  wxCriticalSectionLocker enter(p_cs_track_thread);
+  if (track_thread_) {
+    track_thread_->handler_->toggle_alternate_mode();
+  }
 }
 
 void
-Frame::StartHooks()
+Frame::StartScrollAlternateHooksAndHotkeys()
 {
+  // Bind Global/System-wide Hotkeys
+  Bind(wxEVT_HOTKEY,
+       &Frame::OnScrollAlternateHotkey,
+       this,
+       HOTKEY_ID_SCROLL_ALTERNATE);
+
   // Bind Systemwide Keyboard Hooks
   // Use EVT_HOTKEY(hotkeyId, fnc) in the event table to capture the event.
   // This function is currently only implemented under Windows.
@@ -362,15 +359,15 @@ Frame::PopulateComboBoxWithProfiles()
 {
   spdlog::trace("repopulating profiles combobox");
   p_combo_profiles_->Clear();
-  for (auto& item : config::Get()->GetProfileNames()) {
+  for (auto& item : settings::Get()->GetProfileNames()) {
     p_combo_profiles_->Append(item);
   }
 
   int index =
-    p_combo_profiles_->FindString(config::Get()->GetActiveProfile().name);
+    p_combo_profiles_->FindString(settings::Get()->GetActiveProfile().name);
   if (wxNOT_FOUND != index) {
     p_combo_profiles_->SetSelection(index);
-    UpdateProfilePanelFromConfig();
+    UpdateProfilePanelFromSettings();
   } else {
     wxFAIL_MSG("unable to find new profile in drop-down");
   }
@@ -388,7 +385,7 @@ Frame::OnStart(wxCommandEvent& event)
   // set track_thread_ to nullptr.
 
   bool wait_for_stop = false;
-  { // scope critical section locker
+  { // scope for critical section locker limited oh lifetime
     // TODO: find a better way to enter critical section
     wxCriticalSectionLocker enter(p_cs_track_thread);
     if (track_thread_) {
@@ -402,7 +399,7 @@ Frame::OnStart(wxCommandEvent& event)
     while (true) {
       Sleep(8);
 
-      { // scope critical section locker
+      { // scope for critical section locker limited oh lifetime
         // TODO: find a better way to enter critical section
         wxCriticalSectionLocker enter(p_cs_track_thread);
         if (track_thread_ == NULL) {
@@ -413,7 +410,7 @@ Frame::OnStart(wxCommandEvent& event)
   }
 
   try {
-    track_thread_ = new TrackThread(this, GetHandle(), config::Get());
+    track_thread_ = new TrackThread(this, this->GetHandle(), settings::Get());
   } catch (const std::runtime_error& e) {
     spdlog::error(e.what());
     return;
@@ -424,6 +421,8 @@ Frame::OnStart(wxCommandEvent& event)
   } else {
     spdlog::error("Can't run the tracking thread!");
     delete track_thread_;
+    // If I leave this commented memory leaks will manifest as bugs during the
+    // track restart where I can catch them?
     // track_thread_ = nullptr; // thread destructor should do this anyway?
     return;
   }
@@ -433,12 +432,10 @@ void
 Frame::OnStop(wxCommandEvent& event)
 {
   // Threads run in detached mode by default.
-  // The thread is responsible for setting track_thread_ to nullptr when
-  // it finishes and destroys itself.
+  // The thread is responsible for setting track_thread_ to nullptr in its
+  // destructor.
   if (track_thread_) {
-    // This will gracefully exit the tracking loop and return control to
-    // the wxThread class. The thread will then finish and and delete
-    // itself.
+    // Gracefully exit the tracking loop.
     track_thread_->tracker_->stop();
   } else {
     spdlog::warn("Track thread not running!");
@@ -447,6 +444,7 @@ Frame::OnStop(wxCommandEvent& event)
 
 void
 Frame::OnShowLog(wxCommandEvent& event)
+// Deprecated
 {
   if (p_text_rich_->IsShown()) {
     p_text_rich_->Hide();
@@ -461,10 +459,11 @@ void
 Frame::OnActiveProfile(wxCommandEvent& event)
 {
   const int index = p_combo_profiles_->GetSelection();
-  // TODO: make all strings utf-8
+  // TODO: make all strings utf-8 and globalization?
+  // make a validator that only allows ASCII characters
   const auto name = p_combo_profiles_->GetString(index).ToStdString();
-  config::Get()->SetActiveProfile(name);
-  UpdateProfilePanelFromConfig();
+  settings::Get()->SetActiveProfile(name);
+  UpdateProfilePanelFromSettings();
 }
 
 void
@@ -476,8 +475,8 @@ Frame::OnAddProfile(wxCommandEvent& event)
   dlg.SetMaxLength(k_max_profile_length);
   if (dlg.ShowModal() == wxID_OK) {
     wxString value = dlg.GetValue();
-    config::Get()->AddProfile(std::string(value.ToStdString()));
-    UpdateGuiFromConfig();
+    settings::Get()->AddProfile(std::string(value.ToStdString()));
+    UpdateGuiFromSettings();
   } else {
     spdlog::debug("Add profile action canceled.");
   }
@@ -487,7 +486,7 @@ void
 Frame::OnRemoveProfile(wxCommandEvent& event)
 {
   wxArrayString choices;
-  for (auto& name : config::Get()->GetProfileNames()) {
+  for (auto& name : settings::Get()->GetProfileNames()) {
     choices.Add(name);
   }
 
@@ -499,24 +498,24 @@ Frame::OnRemoveProfile(wxCommandEvent& event)
   if (wxID_OK == dlg.ShowModal()) {
     auto selections = dlg.GetSelections();
     for (auto& index : selections) {
-      config::Get()->RemoveProfile(choices[index].ToStdString());
+      settings::Get()->RemoveProfile(choices[index].ToStdString());
     }
 
-    UpdateGuiFromConfig();
+    UpdateGuiFromSettings();
   }
 }
 
 void
 Frame::OnDuplicateProfile(wxCommandEvent& event)
 {
-  config::Get()->DuplicateActiveProfile();
-  UpdateGuiFromConfig();
+  settings::Get()->DuplicateActiveProfile();
+  UpdateGuiFromSettings();
 }
 
 void
-Frame::UpdateProfilePanelFromConfig()
+Frame::UpdateProfilePanelFromSettings()
 {
-  const auto config = config::Get(); // get shared pointer
+  const auto config = settings::Get(); // get shared pointer
   const auto& profile = config->GetActiveProfile();
 
   // SetValue causes an event to be sent for text control.
@@ -561,10 +560,10 @@ void
 Frame::OnName(wxCommandEvent& event)
 {
   const auto text = p_text_name_->GetLineText(0).ToStdString();
-  auto& profile = config::Get()->GetActiveProfile();
+  auto& profile = settings::Get()->GetActiveProfile();
   profile.name = text;
-  config::Get()->user_data.active_profile_name = text;
-  UpdateGuiFromConfig();
+  settings::Get()->active_profile_name = text;
+  UpdateGuiFromSettings();
 }
 
 void
@@ -577,9 +576,9 @@ Frame::OnProfileID(wxCommandEvent& event)
     spdlog::error("Couldn't convert value to integer.");
     return;
   };
-  auto& profile = config::Get()->GetActiveProfile();
+  auto& profile = settings::Get()->GetActiveProfile();
   profile.profile_id = static_cast<int>(value);
-  UpdateProfilePanelFromConfig();
+  UpdateProfilePanelFromSettings();
 }
 
 void
@@ -627,9 +626,9 @@ Frame::OnPickTitle(wxCommandEvent& event)
   int selected_profile_id = 0;
   cProfileIdSelector dlg(this, &selected_profile_id, titles);
   if (dlg.ShowModal() == wxID_OK) {
-    auto& profile = config::Get()->GetActiveProfile();
+    auto& profile = settings::Get()->GetActiveProfile();
     profile.profile_id = selected_profile_id;
-    UpdateProfilePanelFromConfig();
+    UpdateProfilePanelFromSettings();
   }
   return;
 }
@@ -637,15 +636,15 @@ Frame::OnPickTitle(wxCommandEvent& event)
 void
 Frame::OnUseDefaultPadding(wxCommandEvent& event)
 {
-  auto& profile = config::Get()->GetActiveProfile();
+  auto& profile = settings::Get()->GetActiveProfile();
   profile.use_default_padding = p_check_use_default_padding_->IsChecked();
-  UpdateProfilePanelFromConfig();
+  UpdateProfilePanelFromSettings();
 }
 
 void
 Frame::OnMappingData(wxDataViewEvent& event)
 {
-  auto& profile = config::Get()->GetActiveProfile();
+  auto& profile = settings::Get()->GetActiveProfile();
 
   // finding column
   const wxVariant value = event.GetValue();
@@ -694,27 +693,27 @@ Frame::OnMappingData(wxDataViewEvent& event)
     profile.displays[row].padding[column - 5] = static_cast<int>(number);
   }
 
-  UpdateProfilePanelFromConfig();
+  UpdateProfilePanelFromSettings();
   p_display_graphic_->PaintNow();
 }
 
 void
 Frame::OnAddDisplay(wxCommandEvent& event)
 {
-  auto& profile = config::Get()->GetActiveProfile();
+  auto& profile = settings::Get()->GetActiveProfile();
   profile.displays.emplace_back();
-  UpdateProfilePanelFromConfig();
+  UpdateProfilePanelFromSettings();
   p_display_graphic_->PaintNow();
 }
 
 void
 Frame::OnRemoveDisplay(wxCommandEvent& event)
 {
-  auto& profile = config::Get()->GetActiveProfile();
+  auto& profile = settings::Get()->GetActiveProfile();
   const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND != index) {
     profile.displays.erase(profile.displays.begin() + index);
-    UpdateProfilePanelFromConfig();
+    UpdateProfilePanelFromSettings();
     p_display_graphic_->PaintNow();
   } else {
     spdlog::warn("row not selected");
@@ -724,7 +723,7 @@ Frame::OnRemoveDisplay(wxCommandEvent& event)
 void
 Frame::OnMoveUp(wxCommandEvent& event)
 {
-  auto& profile = config::Get()->GetActiveProfile();
+  auto& profile = settings::Get()->GetActiveProfile();
   const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     spdlog::warn("row not selected");
@@ -733,7 +732,7 @@ Frame::OnMoveUp(wxCommandEvent& event)
     return; // selection is at the top. do nothing
   } else {
     std::swap(profile.displays[index], profile.displays[index - 1]);
-    UpdateProfilePanelFromConfig();
+    UpdateProfilePanelFromSettings();
 
     // Change the selection index to match the item we just moved
     // This is a terrible hack to find the row of the item we just moved
@@ -750,7 +749,7 @@ Frame::OnMoveUp(wxCommandEvent& event)
 void
 Frame::OnMoveDown(wxCommandEvent& event)
 {
-  auto& profile = config::Get()->GetActiveProfile();
+  auto& profile = settings::Get()->GetActiveProfile();
   const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     spdlog::warn("row not selected");
@@ -759,7 +758,7 @@ Frame::OnMoveDown(wxCommandEvent& event)
     return; // selection is at the bottom. do nothing
   } else {
     std::swap(profile.displays[index], profile.displays[index + 1]);
-    UpdateProfilePanelFromConfig();
+    UpdateProfilePanelFromSettings();
 
     // Change the selection index to match the item we just moved
     // This is a terrible hack to find the row of the item we just moved

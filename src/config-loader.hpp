@@ -2,6 +2,6 @@
 #define TRACKIRMOUSE_CONFIG_LOADER_HPP
 
 bool
-InitializeConfigurationFromFile();
+LoadSettingsFile();
 
 #endif /* TRACKIRMOUSE_CONFIG_LOADER_HPP */

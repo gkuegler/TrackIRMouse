@@ -99,12 +99,12 @@ This all seems too complicated and much work to implement correctly
 in addition I don't think this would scale to multiple other users easily
 
 ### Testing Behaviors for User Interaction
-- Config File
+- Settings File
     - missing file
-    - can't parse toml correctly
+    - can't parse correctly
     - warn on degrees > 180deg
     - warn on overlapping rotational bounds
-    - warn on general parameters not correct, but set to defaults
+    - warn on general parameters not correct, but set to defaults?
 - Start/Stop Mouse
     - error on incompatible no. of displays
     - error on larger than 180deg

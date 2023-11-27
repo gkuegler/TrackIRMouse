@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <vector>
 
-#include "config.hpp"
 #include "environment.hpp"
+#include "settings.hpp"
 #include "types.hpp"
 
 cDisplayGraphic::cDisplayGraphic(wxWindow* parent, wxSize size)
@@ -104,7 +104,7 @@ cDisplayGraphic::Render(wxDC& dc)
 
   // get array of monitor bounds
   const auto hdi = environment::GetHardwareDisplayInformation();
-  const auto usrDisplays = config::Get()->GetActiveProfile().displays;
+  const auto usrDisplays = settings::Get()->GetActiveProfile().displays;
 
   // offset all rectangles so that 0,0 as top left most value
   std::vector<RectPixels> bounds_offset;

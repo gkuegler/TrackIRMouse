@@ -14,7 +14,7 @@
 
 #include "log.hpp"
 #include "np-client.h"
-#include "registry_access.h"
+#include "registry-access.h"
 #include "types.hpp"
 
 // Uncomment this line for testing to prevent program

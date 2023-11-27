@@ -11,7 +11,7 @@
 #include <wx/statline.h>
 #include <wx/wx.h>
 
-#include "config.hpp"
+#include "settings.hpp"
 #include "utility.hpp"
 
 class OkayCancelDialogueButtons : public wxPanel
@@ -60,13 +60,13 @@ private:
   wxTextCtrl* text_dll_folder_location;
 
 public:
-  SettingsFrame(wxWindow* parent, const config::UserData& user_data);
+  SettingsFrame(wxWindow* parent, const settings::Settings& user_data);
   ~SettingsFrame(){};
-  void ApplySettings(config::UserData& user_data);
+  void ApplySettings(settings::Settings& user_data);
 };
 
 SettingsFrame::SettingsFrame(wxWindow* parent,
-                             const config::UserData& user_data)
+                             const settings::Settings& user_data)
   : wxDialog(parent, wxID_ANY, "Track IR - Settings")
 {
   const wxSize k_default_button_size = wxSize(110, 25);
@@ -215,7 +215,7 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
 }
 
 void
-SettingsFrame::ApplySettings(config::UserData& user_data)
+SettingsFrame::ApplySettings(settings::Settings& user_data)
 {
   user_data.auto_find_track_ir_dll = check_auto_find_dll->IsChecked();
   user_data.track_on_start = check_track_on_start->IsChecked();

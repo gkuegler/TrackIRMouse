@@ -5,7 +5,7 @@
 
 namespace environment {
 
-typedef struct win_display_info_
+struct WinDisplayInfo
 {
   int count = 0;
   std::vector<RectPixels> rectangles;
@@ -15,7 +15,7 @@ typedef struct win_display_info_
   double short_to_pixels_ratio_y = 0; // short value to desktop pixels ratio
   int desktop_width;
   int desktop_height;
-} WinDisplayInfo;
+};
 
 WinDisplayInfo
 GetHardwareDisplayInformation();

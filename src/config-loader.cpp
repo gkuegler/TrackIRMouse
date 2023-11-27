@@ -1,6 +1,6 @@
 #include "config-loader.hpp"
 
-#include "config.hpp"
+#include "settings.hpp"
 
 #include <wx/msgdlg.h>
 #include <wx/string.h>
@@ -14,10 +14,10 @@
  * fails.
  */
 bool
-InitializeConfigurationFromFile()
+LoadSettingsFile()
 {
   const std::string filename = "settings.json";
-  auto result = config::LoadFromFile(filename);
+  auto result = settings::LoadFromFile(filename);
   if (result.success) {
     return true;
   } else {

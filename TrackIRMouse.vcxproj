@@ -89,7 +89,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)3rd-party</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -97,7 +97,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)3rd-party</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -121,7 +121,7 @@
     </VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">
-    <VcpkgUseStatic>true</VcpkgUseStatic>
+    <VcpkgUseStatic>false</VcpkgUseStatic>
     <VcpkgUseMD>true</VcpkgUseMD>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -221,7 +221,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableModules>true</EnableModules>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -243,7 +243,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\config-loader.cpp" />
-    <ClCompile Include="src\config.cpp" />
+    <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\game-titles.cpp" />
     <ClCompile Include="src\hooks.cpp" />
     <ClCompile Include="src\messages.cpp" />
@@ -268,7 +268,7 @@
     <ClInclude Include="src\messages.hpp" />
     <ClInclude Include="src\mouse-modes.hpp" />
     <ClInclude Include="src\resource.h" />
-    <ClInclude Include="src\config.hpp" />
+    <ClInclude Include="src\settings.hpp" />
     <ClInclude Include="src\hotkey.hpp" />
     <ClInclude Include="src\ui-control-id.hpp" />
     <ClInclude Include="src\display.hpp" />
@@ -278,7 +278,7 @@
     <ClInclude Include="src\log.hpp" />
     <ClInclude Include="src\np-client.h" />
     <ClInclude Include="src\pipeserver.hpp" />
-    <ClInclude Include="src\registry_access.h" />
+    <ClInclude Include="src\registry-access.h" />
     <ClInclude Include="src\threads.hpp" />
     <ClInclude Include="src\trackers.hpp" />
     <ClInclude Include="src\types.hpp" />

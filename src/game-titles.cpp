@@ -8,12 +8,6 @@
 #include "toml.hpp"
 #include <format>
 
-// toml::get only supports map type of which key_type is convertible from
-// std::string this is inherent to toml file; example: 11220 = "Game Title"
-// that is why I have to get my profile id as a string instead of
-// native int
-using game_title_map_t = std::map<const std::string, std::string>;
-
 // load game titles by ID number from file
 game_title_map_t
 GetTitleIds()
@@ -29,7 +23,7 @@ GetTitleIds()
   auto full_path = utility::GetExecutableFolder() + "\\" + filename;
 
   try {
-    // load, parse, and return as map
+    // load, parse, and return as std::map
     auto data = toml::parse(full_path);
     return toml::find<game_title_map_t>(data, "data");
   } catch (const toml::syntax_error& ex) {

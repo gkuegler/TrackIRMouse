@@ -4,10 +4,10 @@
 #include <wx/dataview.h>
 #include <wx/wx.h>
 
-#include "config.hpp"
 #include "game-titles.hpp"
 #include "hooks.hpp"
 #include "hotkey.hpp"
+#include "settings.hpp"
 #include "ui-graphic.hpp"
 
 // forward decl of thread classes
@@ -66,19 +66,18 @@ public:
   std::unique_ptr<GlobalHotkey> hotkey_alternate_mode_;
   std::unique_ptr<WindowChangedHook> hook_window_changed_;
 
+public:
   Frame(wxPoint, wxSize);
   ~Frame(){};
-  void UpdateGuiFromConfig();
-  void StartHooks();
-  void RemoveHooks();
-  void Startup();
 
-public:
+  void StartScrollAlternateHooksAndHotkeys();
+  void RemoveHooks();
+  void UpdateGuiFromSettings();
   // menu handlers
   void OnExit(wxCommandEvent& event);
   void OnAbout(wxCommandEvent& event);
   void OnSave(wxCommandEvent& event);
-  void OnGlobalHotkey(wxKeyEvent& event);
+  void OnScrollAlternateHotkey(wxKeyEvent& event);
   void OnReload(wxCommandEvent& event);
   void OnSettings(wxCommandEvent& event);
   // control handlers
@@ -90,7 +89,7 @@ public:
   void OnRemoveProfile(wxCommandEvent& event);
   void OnDuplicateProfile(wxCommandEvent& event);
   // display config controls
-  void UpdateProfilePanelFromConfig();
+  void UpdateProfilePanelFromSettings();
   int m_ival = 0;
   void OnName(wxCommandEvent& event);
   void OnProfileID(wxCommandEvent& event);

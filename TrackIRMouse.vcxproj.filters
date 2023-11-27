@@ -21,7 +21,7 @@
     <ClCompile Include="src\ui-graphic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\config.cpp">
+    <ClCompile Include="src\settings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ui-app.cpp">
@@ -68,7 +68,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\config.hpp">
+    <ClInclude Include="src\settings.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\display.hpp">
@@ -98,7 +98,7 @@
     <ClInclude Include="src\pipeserver.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\registry_access.h">
+    <ClInclude Include="src\registry-access.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\resource.h">
