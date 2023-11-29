@@ -22,12 +22,10 @@ public:
 
 private:
   HWND hWnd_;
-  std::shared_ptr<settings::Settings> settings_;
+  settings::Settings settings_;
 
 public:
-  TrackThread(Frame* window_handler,
-              HWND hWnd,
-              std::shared_ptr<settings::Settings> config);
+  TrackThread(Frame* window_handler, HWND hWnd, settings::Settings settings);
   ~TrackThread();
   ExitCode Entry();
 };

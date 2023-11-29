@@ -15,12 +15,12 @@
 
 TrackThread::TrackThread(Frame* p_window_handler,
                          HWND hWnd,
-                         std::shared_ptr<settings::Settings> config)
+                         settings::Settings settings)
   : wxThread()
 {
   p_window_handler_ = p_window_handler;
   hWnd_ = hWnd;
-  settings_ = config; // create copy of user data for tracking thread
+  settings_ = settings; // create copy of user data for tracking thread
 
   // TODO: use a unique pointer instead
   handler_ = std::make_shared<handlers::MouseHandler>();
@@ -39,7 +39,7 @@ TrackThread::~TrackThread()
 wxThread::ExitCode
 TrackThread::Entry()
 {
-  auto profile = settings_->GetActiveProfile();
+  auto profile = settings_.GetActiveProfile();
 
   // TODO: check validation is correct
   if (false == profile.ValidateParameters()) {
@@ -51,15 +51,14 @@ TrackThread::Entry()
   try {
     // handler_ = std::make_shared<handlers::MouseHandler>();
     tracker_->initialize(hWnd_,
-                         settings_->auto_find_track_ir_dll,
-                         settings_->track_ir_dll_folder,
+                         settings_.auto_find_track_ir_dll,
+                         settings_.track_ir_dll_folder,
                          profile.profile_id);
 
     // run the main tracking loop
     auto result = tracker_->start();
 
-    if (retcode::track_ir_loss == result &&
-        settings_->quit_on_loss_of_trackir) {
+    if (retcode::track_ir_loss == result && settings_.quit_on_loss_of_trackir) {
       spdlog::trace("quitting on loss of track ir");
       SendThreadMessage(msgcode::close_app, "");
     }
