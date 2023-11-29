@@ -6,6 +6,7 @@
  * --License Boilerplate Placeholder--
  */
 
+#include "json.hpp"
 #include "settings.hpp"
 
 #include <filesystem>
@@ -17,11 +18,6 @@
 #include "log.hpp"
 #include "types.hpp"
 #include "utility.hpp"
-
-#define JSON_DIAGNOSTICS 1
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json;
 
 namespace settings {
 
@@ -68,29 +64,20 @@ Set(const Settings c) -> void
   g_config = std::make_shared<Settings>(c);
 }
 
-auto
-InitializeFromFile() -> void
-{
-  std::ifstream f("settings.json");
-
-  if (!f.good()) {
-    throw std::exception("can't access file 'settings.json'.");
-  }
-
-  json j = json::parse(f);
-  auto data = j.template get<Settings>();
-  Set(data);
-}
-
 LoadResults
 LoadFromFile(std::string filename)
 {
   try {
-    InitializeFromFile();
+    auto settings = LoadJsonFromFileIntoObject<Settings>("settings.json");
+    Set(settings);
     return LoadResults{ true, "" };
   } catch (const std::exception& ex) {
-    // json::exception inherits from std::exception
-    // build a default configuration object
+    // I catch any exceptions here because It gives me the flexibility to handle
+    // library specific exceptions without exposing library.
+    // json::exception inherits from std::exception build a default
+    // configuration object
+
+    // Make default settings.
     settings::Set(settings::Settings());
     return LoadResults{ false, ex.what() };
   }

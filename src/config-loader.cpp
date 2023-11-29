@@ -25,13 +25,12 @@ LoadSettingsFile()
     const wxString ok = "Overwrite with Default Settings";
     const wxString cancel = "Exit Program";
     const wxString prefix = "Error opening settings file.\n\n";
-    // const wxString instructions = ("\n\n");
-    const wxString instructions = "";
 
-    auto dlg = wxMessageDialog(nullptr,
-                               prefix + result.err_msg + instructions,
-                               "TrackIRMouse Error",
-                               wxICON_ERROR | wxOK | wxCANCEL);
+    auto dlg =
+      wxMessageDialog(nullptr,
+                      "Error opening settings file.\n\n" + result.err_msg,
+                      "TrackIRMouse Error",
+                      wxICON_ERROR | wxOK | wxCANCEL);
     dlg.SetOKCancelLabels(ok, cancel);
 
     // display reason for error to user

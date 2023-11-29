@@ -143,6 +143,9 @@
     <ClInclude Include="src\ui-settings-dialog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\Resource.rc">
@@ -150,10 +153,10 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="resources\track-ir-numbers.toml">
+    <CopyFileToFolders Include="resources\settings.json">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="resources\settings.json">
+    <CopyFileToFolders Include="resources\track-ir-numbers.json">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
   </ItemGroup>

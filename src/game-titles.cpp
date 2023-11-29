@@ -2,11 +2,11 @@
 
 #include "game-titles.hpp"
 
+#include "json.hpp"
 #include "utility.hpp"
 
-#define TOML11_PRESERVE_COMMENTS_BY_DEFAULT
-#include "toml.hpp"
 #include <format>
+#include <fstream>
 
 // load game titles by ID number from file
 game_title_map_t
@@ -14,40 +14,22 @@ GetTitleIds()
 {
   // loading from file allows the game titles to be modified for future
   // natural point continually adds new titles
-  constexpr auto filename = "track-ir-numbers.toml";
+  constexpr auto filename = "track-ir-numbers.json";
   const std::string instructions =
     "Couldn't load game titles from resource file.\n"
     "A courtesy sub-sample of the title list will provided from source code.";
-  std::string err_msg = "lorem ipsum";
 
   auto full_path = utility::GetExecutableFolder() + "\\" + filename;
 
   try {
     // load, parse, and return as std::map
-    auto data = toml::parse(full_path);
-    return toml::find<game_title_map_t>(data, "data");
-  } catch (const toml::syntax_error& ex) {
-    err_msg = std::format(
-      "Syntax error in toml file: \"{}\"\nSee error message below for hints "
-      "on how to fix.\n{}",
-      full_path,
-      ex.what());
-  } catch (const toml::type_error& ex) {
-    err_msg = std::format("Incorrect type when parsing toml file \"{}\".\n\n{}",
-                          full_path,
-                          ex.what());
-  } catch (const std::out_of_range& ex) {
-    err_msg = std::format(
-      "Missing data in toml file \"{}\".\n\n{}", full_path, ex.what());
-  } catch (std::runtime_error& ex) {
-    err_msg = std::format("Couldn't Find or Open \"{}\"", full_path);
-  } catch (...) {
-    err_msg = std::format(
-      "exception has gone unhandled loading \"{}\" and verifying values.",
-      full_path);
+    return LoadJsonFromFileIntoObject<game_title_map_t>(full_path);
+  } catch (const std::exception& ex) {
+    spdlog::error("Error opening game titles file '{}'. A sample file will be "
+                  "loaded.\n\n{}",
+                  filename,
+                  ex.what());
   }
-
-  spdlog::error("{}\n\n{}", err_msg, instructions);
 
   // provide sample list since full list couldn't be loaded from file
   game_title_map_t sample_map;
