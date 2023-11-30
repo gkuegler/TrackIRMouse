@@ -146,9 +146,9 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
     "Uncheck this option to manually specify the folder where 'NPClient64.dll' "
     "is installed.\n"
     "This option is default enabled when Natural Point TrackIR 5 is installed "
-    "Normally.\n"
-    "This feature is primarily aimed at users who wish to spoof the dll\n"
-    "and provide their own data source.");
+    "normally.\n"
+    "This feature is primarily aimed at users who wish to spoof the dll and "
+    "provide their own data source.");
 
   auto label_dll_folder_location = new wxStaticText(
     panel, wxID_ANY, "Manual Folder Location of 'NPClient64.dll':");
@@ -211,7 +211,7 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
     check_quit_on_loss, 0, wxLEFT | wxTOP | wxALIGN_LEFT, SMALL_SPACE);
   // basic settings
   top_sizer->Add(label_sizer_2, 0, wxEXPAND | wxTOP | wxBOTTOM, BIG_SPACE);
-  top_sizer->Add(hotkey_sizer, 0, wxLEFT | wxTOP | wxBOTTOM, SMALL_SPACE);
+  top_sizer->Add(hotkey_sizer, 0, wxLEFT, SMALL_SPACE);
   top_sizer->Add(pipeserver_sizer, 0, wxLEFT | wxTOP, SMALL_SPACE);
   top_sizer->Add(label_pipeserver, 0, wxLEFT | wxTOP, SMALL_SPACE);
 
