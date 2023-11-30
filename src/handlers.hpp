@@ -5,6 +5,7 @@
 
 #include "display.hpp"
 #include "mouse-modes.hpp"
+#include "settings.hpp"
 #include "types.hpp"
 
 namespace handlers {
@@ -19,7 +20,7 @@ public:
   std::atomic<mouse_mode> mode_ = mouse_mode::scrollbar_right_small;
 
 public:
-  MouseHandler();
+  MouseHandler(settings::Profile profile);
   ~MouseHandler(){};
 
   inline void set_cursor_pos(double x, double y);

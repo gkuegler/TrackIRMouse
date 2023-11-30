@@ -20,10 +20,13 @@ TrackThread::TrackThread(Frame* p_window_handler,
 {
   p_window_handler_ = p_window_handler;
   hWnd_ = hWnd;
+  // TODO: only copy the settings and active
+  // profile for speed and memory optimization.
   settings_ = settings; // create copy of user data for tracking thread
 
   // TODO: use a unique pointer instead
-  handler_ = std::make_shared<handlers::MouseHandler>();
+  handler_ =
+    std::make_shared<handlers::MouseHandler>(settings.GetActiveProfile());
   tracker_ = std::make_shared<trackers::TrackIR>(handler_.get());
 }
 

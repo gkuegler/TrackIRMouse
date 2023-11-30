@@ -2,8 +2,8 @@
     "active_profile_name": "Dual Desktop",
     "auto_find_track_ir_dll": true,
     "default_padding": [
-        0,
-        0,
+        3,
+        3,
         0,
         0
     ],

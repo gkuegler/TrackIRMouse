@@ -6,8 +6,8 @@
  * --License Boilerplate Placeholder--
  */
 
-#include "json.hpp"
 #include "settings.hpp"
+#include "json.hpp"
 
 #include <filesystem>
 #include <format>
@@ -43,21 +43,18 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,
 // settings singleton
 static std::shared_ptr<Settings> g_config;
 
-// TODO: a shared pointer will not work for thread safety
 auto
 Get() -> std::shared_ptr<Settings>
 {
   return g_config;
 }
 
-// TODO: a shared pointer will not work for thread safety
 auto
 GetCopy() -> Settings
 {
   return Settings(*g_config);
 }
 
-// attemp at some thread safety
 auto
 Set(const Settings c) -> void
 {
@@ -201,11 +198,15 @@ Settings::GetActiveProfile()
     "An internal error has occured. Couldn't find active profile by name.");
 }
 
-// get the number of displays specified in the active profile
-int
-Settings::GetActiveProfileDisplayCount()
+void
+Settings::ApplyNecessaryDefaults()
 {
-  return static_cast<int>(GetActiveProfile().displays.size());
+  auto& profile = GetActiveProfile();
+
+  // Apply default padding
+  for (auto&& display : profile.displays) {
+    display.padding = this->default_padding;
+  }
 }
 
 void

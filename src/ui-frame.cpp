@@ -410,8 +410,9 @@ Frame::OnStart(wxCommandEvent& event)
   }
 
   try {
-    track_thread_ =
-      new TrackThread(this, this->GetHandle(), settings::GetCopy());
+    auto settings = settings::GetCopy();
+    settings.ApplyNecessaryDefaults();
+    track_thread_ = new TrackThread(this, this->GetHandle(), settings);
   } catch (const std::runtime_error& e) {
     spdlog::error(e.what());
     return;

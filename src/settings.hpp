@@ -40,9 +40,6 @@ struct Profile
 class Settings
 {
 public:
-  // TODO: change config to settings
-  // TODO: move user data to config class
-  // UserData user_data;
   std::string active_profile_name = Profile().name; // use default profile name
   bool track_on_start = false;
   bool quit_on_loss_of_trackir = false;
@@ -54,7 +51,7 @@ public:
   spdlog::level::level_enum log_level = spdlog::level::info;
 
   std::array<Pixels, 4> default_padding = { 0, 0, 0, 0 };
-  // invariant: the active profile member will always exist in the profiles
+  // invariant: the active profile member should always exist in the profiles
   // list
   std::vector<Profile> profiles = { Profile() };
 
@@ -62,15 +59,13 @@ private:
   std::string file_path_ = "";
 
 public:
-  Settings() {}                         // load with default values
-  Settings(const std::string filename); // load from file
+  Settings() {} // load with default values
 
   void SaveToFile();
 
   // getter interface
   auto GetActiveProfile() -> Profile&;
-  // TODO: moved to profile class
-  auto GetActiveProfileDisplayCount() -> int;
+  auto ApplyNecessaryDefaults() -> void;
   auto GetProfileNames() -> std::vector<std::string>;
 
   // setter interface

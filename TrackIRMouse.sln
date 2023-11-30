@@ -9,6 +9,7 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		DebugAndLaunch|x64 = DebugAndLaunch|x64
+		DebugNoTrack|x64 = DebugNoTrack|x64
 		Release|x64 = Release|x64
 		ReleaseNonAdmin|x64 = ReleaseNonAdmin|x64
 	EndGlobalSection
@@ -17,6 +18,8 @@ Global
 		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.Debug|x64.Build.0 = Debug|x64
 		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.DebugAndLaunch|x64.ActiveCfg = DebugAndLaunch|x64
 		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.DebugAndLaunch|x64.Build.0 = DebugAndLaunch|x64
+		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.DebugNoTrack|x64.ActiveCfg = DebugNoTrack|x64
+		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.DebugNoTrack|x64.Build.0 = DebugNoTrack|x64
 		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.Release|x64.ActiveCfg = Release|x64
 		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.Release|x64.Build.0 = Release|x64
 		{CB6A24BF-D0F1-4B0D-8B12-8BD12B49C754}.ReleaseNonAdmin|x64.ActiveCfg = ReleaseNonAdmin|x64
