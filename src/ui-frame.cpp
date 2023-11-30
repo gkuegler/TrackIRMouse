@@ -343,10 +343,13 @@ Frame::StartScrollAlternateHooksAndHotkeys()
   // Use EVT_HOTKEY(hotkeyId, fnc) in the event table to capture the event.
   // This function is currently only implemented under Windows.
   // It is used in the Windows CE port for detecting hardware button presses.
-  hotkey_alternate_mode_ = std::make_unique<GlobalHotkey>(
-    GetHandle(), HOTKEY_ID_SCROLL_ALTERNATE, wxMOD_NONE, VK_F18);
-
-  hook_window_changed_ = std::make_unique<WindowChangedHook>();
+  if (!hotkey_alternate_mode_) {
+    hotkey_alternate_mode_ = std::make_unique<GlobalHotkey>(
+      GetHandle(), HOTKEY_ID_SCROLL_ALTERNATE, wxMOD_NONE, VK_F18);
+  }
+  if (!hook_window_changed_) {
+    hook_window_changed_ = std::make_unique<WindowChangedHook>();
+  }
 }
 
 void
