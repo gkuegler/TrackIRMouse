@@ -28,6 +28,8 @@ public:
   TrackThread(Frame* window_handler, HWND hWnd, settings::Settings settings);
   ~TrackThread();
   ExitCode Entry();
+  wxThreadError Delete(ExitCode* rc = NULL,
+                       wxThreadWait waitMode = wxTHREAD_WAIT_DEFAULT);
 };
 
 class ControlServerThread : public wxThread

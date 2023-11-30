@@ -73,6 +73,15 @@ TrackThread::Entry()
   spdlog::trace("track thread is closing");
   return NULL;
 }
+wxThreadError
+TrackThread::Delete(ExitCode* rc = NULL,
+                    wxThreadWait waitMode = wxTHREAD_WAIT_DEFAULT)
+{
+  // Custom thread stopping hook to keed thread interface consistent.
+  // Tracker uses an atomic<bool> instead of calling wxTestDestroy for
+  // performace reasons.
+  tracker_->stop();
+}
 //////////////////////////////////////////////////////////////////////
 //                         WatchdogThread                           //
 //////////////////////////////////////////////////////////////////////

@@ -248,6 +248,10 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   btn_move_up->Bind(wxEVT_BUTTON, &Frame::OnMoveUp, this);
   btn_move_down->Bind(wxEVT_BUTTON, &Frame::OnMoveDown, this);
 }
+
+Frame::~Frame(){
+
+}
 // clang-format on
 void
 Frame::UpdateGuiFromSettings()
@@ -377,6 +381,28 @@ Frame::PopulateComboBoxWithProfiles()
     wxFAIL_MSG("unable to find new profile in drop-down");
   }
 }
+
+auto DestroyThreadAndWait = [](wxThread* thread, wxCriticalSection mutex) {
+  bool wait_for_stop = false;
+  { // enter critical section
+    wxCriticalSectionLocker enter(mutex);
+    if (thread) {
+      thread->Delete();
+      wait_for_stop = true;
+    }
+  } // leave critical section
+
+  if (wait_for_stop) {
+    // TODO: set a timeout here? and close app if thread doesn't die
+    while (true) {
+      Sleep(8);
+      wxCriticalSectionLocker enter(mutex);
+      if (thread == NULL) {
+        break;
+      }
+    }
+  }
+};
 
 void
 Frame::OnStart(wxCommandEvent& event)

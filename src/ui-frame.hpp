@@ -68,11 +68,12 @@ public:
 
 public:
   Frame(wxPoint, wxSize);
-  ~Frame(){};
+  ~Frame();
 
   void StartScrollAlternateHooksAndHotkeys();
   void RemoveHooks();
   void UpdateGuiFromSettings();
+  void StopTrackThread();
   // menu handlers
   void OnExit(wxCommandEvent& event);
   void OnAbout(wxCommandEvent& event);
