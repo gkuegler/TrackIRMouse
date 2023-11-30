@@ -34,13 +34,11 @@ class ControlServerThread : public wxThread
 {
 public:
   Frame* p_window_handler_ = nullptr;
+  std::string server_name_ = "defaultname";
 
-  ControlServerThread(Frame* window_handler);
+  ControlServerThread(Frame* window_handler, std::string name);
   ~ControlServerThread();
   ExitCode Entry();
-
-  // private:
-  // std::unique_ptr<Watchdog> watchdog = nullptr;
 };
 
 #endif /* TRACKIRMOUSE_THREADS_H */

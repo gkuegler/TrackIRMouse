@@ -11,6 +11,7 @@
 #include <wx/statline.h>
 #include <wx/wx.h>
 
+#include "log.hpp"
 #include "settings.hpp"
 #include "utility.hpp"
 
@@ -58,6 +59,10 @@ private:
   wxChoice* choice_log_level;
   wxCheckBox* check_auto_find_dll;
   wxTextCtrl* text_dll_folder_location;
+  wxTextCtrl* text_hot_key_name;
+  wxTextCtrl* text_server_name;
+
+  wxString* text_server_name_validator_data;
 
 public:
   SettingsFrame(wxWindow* parent, const settings::Settings& user_data);
@@ -69,30 +74,19 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
                              const settings::Settings& user_data)
   : wxDialog(parent, wxID_ANY, "Track IR - Settings")
 {
-  const wxSize k_default_button_size = wxSize(110, 25);
-  const wxSize k_default_button_size_2 = wxSize(150, 25);
-  const constexpr int k_max_profile_length = 30;
-  const wxTextValidator alphanumeric_validator(wxFILTER_ALPHANUMERIC);
-
-  // colors used for testing
-  const wxColor yellow(255, 255, 0);
-  const wxColor blue(255, 181, 102);
-  const wxColor pink(198, 102, 255);
-  const wxColor green(142, 255, 102);
-  const wxColor orange(102, 201, 255);
-
   // Panels
   auto panel = new wxPanel(
     this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
   auto buttons = new OkayCancelDialogueButtons(panel, this);
 
-  // Logging Window
   auto label_start_up_settings =
     new wxStaticText(panel, wxID_ANY, "Startup Behavior  ");
   auto label_basic_settings =
     new wxStaticText(panel, wxID_ANY, "Basic Settings  ");
   auto label_advanced_settings =
     new wxStaticText(panel, wxID_ANY, "Advanced Settings  ");
+  auto label_pipeserver = new wxStaticText(
+    panel, wxID_ANY, "A change to this requires an application restart.");
 
   auto static_line = new wxStaticLine(
     panel, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
@@ -108,22 +102,40 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
     panel, wxID_ANY, "Quit app when connection is lost to NP TrackIR");
 
   check_mouse_mode_hotkey = new wxCheckBox(
-    panel, wxID_ANY, "Enable alternate mouse modes with hotkey: F18");
+    panel, wxID_ANY, "Enable alternate mouse modes with hotkey:");
 
   check_enable_pipe_server =
     new wxCheckBox(panel,
                    wxID_ANY,
-                   "Enable commands through the named pipe server "
-                   "'\\\\.\\pipe\\watchdog'");
+                   "Enable commands through pipe server named "
+                   "'\\\\.\\pipe\\");
+  // TODO: add validator
+  text_hot_key_name = new wxTextCtrl(panel,
+                                     wxID_ANY,
+                                     user_data.hotkey_name,
+                                     wxDefaultPosition,
+                                     wxSize(50, 20),
+                                     wxTE_LEFT | wxTE_READONLY);
+  text_hot_key_name->SetMaxLength(3);
+  // TODO: add validator
+  text_server_name = new wxTextCtrl(
+    panel,
+    wxID_ANY,
+    user_data.pipe_server_name,
+    wxDefaultPosition,
+    wxSize(150, 20),
+    wxTE_LEFT,
+    wxTextValidator(wxFILTER_ALPHA, text_server_name_validator_data));
 
   // ADVANCED SETTINGS
 
-  const auto log_levels =
-    utility::BuildWxArrayString(std::array<std::string, 7>{
-      "trace", "debug", "info", "warning", "error", "critical", "off" });
   auto label_log_level = new wxStaticText(panel, wxID_ANY, "Log Level:  ");
-  choice_log_level = new wxChoice(
-    panel, wxID_ANY, wxDefaultPosition, wxSize(100, 25), log_levels, 0);
+  choice_log_level =
+    new wxChoice(panel,
+                 wxID_ANY,
+                 wxDefaultPosition,
+                 wxSize(100, 25),
+                 utility::BuildWxArrayString(mylogging::log_levels));
 
   check_auto_find_dll = new wxCheckBox(
     panel, wxID_ANY, "Look up 'NPClient64.dll' location from registry.");
@@ -150,7 +162,8 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
   check_quit_on_loss->SetValue(user_data.quit_on_loss_of_trackir);
   check_mouse_mode_hotkey->SetValue(user_data.hotkey_enabled);
   check_enable_pipe_server->SetValue(user_data.pipe_server_enabled);
-  // user_data.log_level = choice_log_level->GetString();
+  choice_log_level->SetSelection(static_cast<int>(user_data.log_level));
+
   check_auto_find_dll->SetValue(user_data.auto_find_track_ir_dll);
   // user_data.auto_find_track_ir_dll = text_dll_folder_location->IsChecked();
 
@@ -179,6 +192,16 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
   log_levels_sizer->Add(
     choice_log_level, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
+  auto hotkey_sizer = new wxBoxSizer(wxHORIZONTAL);
+  hotkey_sizer->Add(check_mouse_mode_hotkey, 0, wxALIGN_LEFT, 0);
+  hotkey_sizer->Add(text_hot_key_name, 0, wxLEFT | wxALIGN_LEFT, 0);
+
+  auto pipeserver_sizer = new wxBoxSizer(wxHORIZONTAL);
+  pipeserver_sizer->Add(
+    check_enable_pipe_server, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
+  pipeserver_sizer->Add(
+    text_server_name, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 0);
+
   // Main Layout
   auto top_sizer = new wxBoxSizer(wxVERTICAL);
   // start up settings
@@ -188,10 +211,10 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
     check_quit_on_loss, 0, wxLEFT | wxTOP | wxALIGN_LEFT, SMALL_SPACE);
   // basic settings
   top_sizer->Add(label_sizer_2, 0, wxEXPAND | wxTOP | wxBOTTOM, BIG_SPACE);
-  top_sizer->Add(
-    check_mouse_mode_hotkey, 0, wxLEFT | wxALIGN_LEFT, SMALL_SPACE);
-  top_sizer->Add(
-    check_enable_pipe_server, 0, wxLEFT | wxTOP | wxALIGN_LEFT, SMALL_SPACE);
+  top_sizer->Add(hotkey_sizer, 0, wxLEFT | wxTOP | wxBOTTOM, SMALL_SPACE);
+  top_sizer->Add(pipeserver_sizer, 0, wxLEFT | wxTOP, SMALL_SPACE);
+  top_sizer->Add(label_pipeserver, 0, wxLEFT | wxTOP, SMALL_SPACE);
+
   // advanced settings
   top_sizer->Add(label_sizer_3, 0, wxEXPAND | wxTOP | wxBOTTOM, BIG_SPACE);
   top_sizer->Add(log_levels_sizer, 0, wxTOP | wxBOTTOM, SMALL_SPACE);
@@ -221,10 +244,16 @@ SettingsFrame::ApplySettings(settings::Settings& user_data)
   user_data.track_on_start = check_track_on_start->IsChecked();
   user_data.quit_on_loss_of_trackir = check_quit_on_loss->IsChecked();
   user_data.hotkey_enabled = check_mouse_mode_hotkey->IsChecked();
+  // TODO: enable hotkey in settings
+  // user_data.hotkey_name = text_hot_key_name->GetValue().ToStdString();
   user_data.pipe_server_enabled = check_enable_pipe_server->IsChecked();
-  // p_user_data_->log_level =
-  // static_cast<spdlog::level::level_enum>(selection);
-  //  user_data.log_level = choice_log_level->GetString();
+  user_data.pipe_server_name = text_server_name->GetValue().ToStdString();
+  const int log_level_idx = choice_log_level->GetSelection();
+  const auto level_name =
+    choice_log_level->GetString(log_level_idx).ToStdString();
+  user_data.SetLogLevel(level_name);
+
   user_data.auto_find_track_ir_dll = check_auto_find_dll->IsChecked();
-  // user_data.auto_find_track_ir_dll = text_dll_folder_location->IsChecked();
+  user_data.track_ir_dll_folder =
+    text_dll_folder_location->GetValue().ToStdString();
 }

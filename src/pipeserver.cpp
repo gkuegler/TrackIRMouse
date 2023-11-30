@@ -21,16 +21,14 @@
 #include "mouse-modes.hpp"
 #include "trackers.hpp"
 
+#include <format>
+
 constexpr size_t BUFSIZE = 512 * sizeof(unsigned char);
 
 PipeServer::PipeServer()
 {
-  logger_ = mylogging::GetClonedLogger("watchdog");
+  logger_ = mylogging::GetClonedLogger("pipeserver");
 }
-
-// Watchdog::~Watchdog() {
-//  nothing to clean up explicitly
-//}
 
 void
 PipeServer::Serve(std::string name)
@@ -144,7 +142,7 @@ PipeServer::Serve(std::string name)
 void
 PipeServer::HandleConnection(Handle pipe)
 {
-  logger_->trace("starting watchdog server");
+  logger_->trace("starting pipeserver");
 
   // Initialize send and return buffers
   std::vector<char> request_buffer(BUFSIZE, '\0');

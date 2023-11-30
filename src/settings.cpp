@@ -36,6 +36,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,
                                    pipe_server_enabled,
                                    pipe_server_name,
                                    hotkey_enabled,
+                                   hotkey_name,
                                    log_level,
                                    default_padding,
                                    profiles)
@@ -200,6 +201,7 @@ Settings::GetActiveProfile()
 
 void
 Settings::ApplyNecessaryDefaults()
+
 {
   auto& profile = GetActiveProfile();
 
@@ -217,49 +219,31 @@ Settings::SetActProfDisplayMappingParam(int display_number,
 {
 }
 
-bool
-ValidateUserInput(const UserInput& displays)
+auto
+Settings::SetLogLevel(std::string level_name) -> void
 {
-  // compare bounds not more than abs|180|
-  for (int i = 0; i < displays.size(); i++) {
-    for (int j = 0; j < 4; j++) {
-      auto d = displays[i].rotation[j];
-      auto padding = displays[i].padding[j];
-      if (d > 180.0 || d < -180.0) {
-        spdlog::error("rotation bound param \"{}\" on display #{} is outside "
-                      "allowable range of -180° -> 180°.",
-                      k_edge_names[j],
-                      i);
-        return false;
-      }
-    }
+  try {
+    log_level = mylogging::map_name_to_level.at(level_name);
+    // sets global level
+    spdlog::set_level(log_level);
+
+    // Commenting this out to save for future
+    // spdlog::details::registry::instance().apply_all(
+    //   [](auto l) { l->set_level(); });
+  } catch (std::out_of_range& ex) {
+    spdlog::error("Log level '{}' is not valid.", level_name);
   }
-  // see if any rectangles overlap
-  // visualization: https://silentmatt.com/rectangle-intersection/
-  for (int i = 0; i < displays.size(); i++) {
-    int j = i;
-    while (++j < displays.size()) {
-      Degrees A_left = displays[i].rotation[LEFT_EDGE];
-      Degrees A_right = displays[i].rotation[RIGHT_EDGE];
-      Degrees A_top = displays[i].rotation[TOP_EDGE];
-      Degrees A_bottom = displays[i].rotation[BOTTOM_EDGE];
-      Degrees B_left = displays[j].rotation[LEFT_EDGE];
-      Degrees B_right = displays[j].rotation[RIGHT_EDGE];
-      Degrees B_top = displays[j].rotation[TOP_EDGE];
-      Degrees B_bottom = displays[j].rotation[BOTTOM_EDGE];
-      if (A_left < B_right && A_right > B_left && A_top > B_bottom &&
-          A_bottom < B_top) {
-        spdlog::error(
-          "Overlapping rotational bounds between display #{} and #{}", i, j);
-        return false;
-      }
-    }
-  }
-  spdlog::trace("user input validated");
-  return true;
 }
-bool
-Profile::ValidateParameters() const
+
+auto
+Settings::GetLogLevelString() -> std::string
+{
+
+  return mylogging::map_level_to_name.at(log_level);
+}
+
+auto
+Profile::ValidateParameters() const -> bool
 {
   // compare bounds not more than abs|180|
   for (int i = 0; i < displays.size(); i++) {

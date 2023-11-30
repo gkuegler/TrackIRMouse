@@ -1,5 +1,6 @@
 {
     "active_profile_name": "Dual Desktop",
+    "hotkey_name": "F18",
     "auto_find_track_ir_dll": true,
     "default_padding": [
         3,
@@ -8,9 +9,9 @@
         0
     ],
     "hotkey_enabled": true,
-    "log_level": 2,
+    "log_level": 1,
     "pipe_server_enabled": true,
-    "pipe_server_name": "",
+    "pipe_server_name": "trackirmouse",
     "profiles": [
         {
             "displays": [
@@ -71,5 +72,5 @@
     ],
     "quit_on_loss_of_trackir": false,
     "track_ir_dll_folder": "",
-    "track_on_start": true
+    "track_on_start": false
 }

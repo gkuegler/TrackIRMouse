@@ -77,11 +77,14 @@ TrackThread::Entry()
 //                         WatchdogThread                           //
 //////////////////////////////////////////////////////////////////////
 
-ControlServerThread::ControlServerThread(Frame* p_window_handler)
+// TODO: make a restarting service for checkbox ini settings
+ControlServerThread::ControlServerThread(Frame* p_window_handler,
+                                         std::string name)
   : wxThread()
 {
 
   p_window_handler_ = p_window_handler;
+  server_name_ = name;
 }
 
 ControlServerThread::~ControlServerThread()
@@ -98,11 +101,10 @@ wxThread::ExitCode
 ControlServerThread::Entry()
 {
   try {
-    // TODO: make name part of construction
     auto server = PipeServer();
-    server.Serve("watchdog");
-  } catch (const std::runtime_error& e) {
-    spdlog::error(e.what());
+    server.Serve(server_name_);
+  } catch (const std::runtime_error& ex) {
+    spdlog::error(ex.what());
   }
   return NULL;
 }

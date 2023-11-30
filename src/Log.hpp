@@ -8,10 +8,29 @@
 // used to export default logger
 #include "spdlog/spdlog.h"
 
+#include <array>
+#include <map>
 #include <memory>
 #include <string>
 
 namespace mylogging {
+
+inline const auto log_levels =
+  std::array<std::string, 7>{ "trace", "debug",    "info", "warn",
+                              "error", "critical", "off" };
+
+inline const std::map<std::string, spdlog::level::level_enum> map_name_to_level{
+  { "trace", spdlog::level::trace }, { "debug", spdlog::level::debug },
+  { "info", spdlog::level::info },   { "warn", spdlog::level::warn },
+  { "error", spdlog::level::err },   { "critical", spdlog::level::critical },
+  { "off", spdlog::level::off }
+};
+inline const std::map<spdlog::level::level_enum, std::string> map_level_to_name{
+  { spdlog::level::trace, "trace" }, { spdlog::level::debug, "debug" },
+  { spdlog::level::info, "info" },   { spdlog::level::warn, "warn" },
+  { spdlog::level::err, "error" },   { spdlog::level::critical, "critical" },
+  { spdlog::level::off, "off" }
+};
 
 void
 SetUpLogging();

@@ -33,7 +33,6 @@ struct Profile
   bool use_default_padding = true;
   std::vector<UserDisplay> displays = { UserDisplay() };
 
-  int GetDisplayCount() const;
   bool ValidateParameters() const;
 };
 
@@ -46,8 +45,9 @@ public:
   bool auto_find_track_ir_dll = true;
   std::string track_ir_dll_folder = "";
   bool pipe_server_enabled = false;
-  std::string pipe_server_name = "";
+  std::string pipe_server_name = "trackirmouse";
   bool hotkey_enabled = false;
+  std::string hotkey_name = "F18";
   spdlog::level::level_enum log_level = spdlog::level::info;
 
   std::array<Pixels, 4> default_padding = { 0, 0, 0, 0 };
@@ -61,7 +61,7 @@ private:
 public:
   Settings() {} // load with default values
 
-  void SaveToFile();
+  auto SaveToFile() -> void;
 
   // getter interface
   auto GetActiveProfile() -> Profile&;
@@ -69,14 +69,17 @@ public:
   auto GetProfileNames() -> std::vector<std::string>;
 
   // setter interface
-  bool SetActiveProfile(std::string profile_name);
-  void SetActProfDisplayMappingParam(int display_number,
+  auto SetActiveProfile(std::string profile_name) -> bool;
+  auto SetActProfDisplayMappingParam(int display_number,
                                      int param_type,
                                      int param_side,
-                                     double param);
-  void AddProfile(std::string new_profile_name);
-  void RemoveProfile(std::string profile_name);
-  void DuplicateActiveProfile();
+                                     double param) -> void;
+  auto AddProfile(std::string new_profile_name) -> void;
+  auto RemoveProfile(std::string profile_name) -> void;
+  auto DuplicateActiveProfile() -> void;
+
+  auto SetLogLevel(std::string level) -> void;
+  auto GetLogLevelString() -> std::string;
 };
 
 auto

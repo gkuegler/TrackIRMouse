@@ -92,8 +92,8 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   p_text_rich_->SetFont(wxFont(12, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
 
   // Track Controls
-  auto btn_start_mouse = new wxButton(main, myID_START_TRACK, "Start/Restart Mouse", wxDefaultPosition, k_default_button_size);
-  auto btn_stop_mouse = new wxButton(main, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition, k_default_button_size);
+  auto btn_start_mouse = new wxButton(main, myID_START_TRACK, "Start/Restart Mouse", wxDefaultPosition, k_default_button_size_2);
+  auto btn_stop_mouse = new wxButton(main, myID_STOP_TRACK, "Stop Mouse", wxDefaultPosition, k_default_button_size_2);
 
   // Display Graphic
   p_display_graphic_ = new cDisplayGraphic(main, wxSize(650, 200));
@@ -297,7 +297,6 @@ Frame::OnSettings(wxCommandEvent& event)
   auto settings = settings::GetCopy();
 
   // Show the settings pop up while disabling input on main window
-  // cSettingsPopup dlg(this, &usr);
   SettingsFrame dlg(this, settings);
 
   int results = dlg.ShowModal();
@@ -307,14 +306,15 @@ Frame::OnSettings(wxCommandEvent& event)
     dlg.ApplySettings(settings);
     settings::Set(settings);
     if (wxID_APPLY == results) {
-      // TODO: prevent race condition with an immediate load?
       settings.SaveToFile();
     }
 
-    // reload any resources from setting changes:
-    // TODO: make resources reload on setting changes
-    // auto logger_ = spdlog::get("main");
-    // logger_->set_level(usr.log_level);
+    if (settings.hotkey_enabled) {
+      StartScrollAlternateHooksAndHotkeys();
+    } else {
+      RemoveHooks();
+    }
+
   } else if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
   }
@@ -323,7 +323,7 @@ Frame::OnSettings(wxCommandEvent& event)
 void
 Frame::OnScrollAlternateHotkey(wxKeyEvent& event)
 {
-  spdlog::debug("hot key event");
+  spdlog::trace("hot key event");
   wxCriticalSectionLocker enter(p_cs_track_thread);
   if (track_thread_) {
     track_thread_->handler_->toggle_alternate_mode();
@@ -352,6 +352,8 @@ Frame::StartScrollAlternateHooksAndHotkeys()
 void
 Frame::RemoveHooks()
 {
+  hotkey_alternate_mode_.reset();
+  hook_window_changed_.reset();
 }
 
 void

@@ -29,6 +29,7 @@ enum class retcode
   graceful_exit
 };
 
+// Am I using this?
 using HandleFunction = void (*)(Degrees, Degrees);
 
 #endif /* TRACKIRMOUSE_TYPES_HPP */
