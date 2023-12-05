@@ -27,8 +27,8 @@
 // from attaching to NPTrackIR and supersede control
 // #define TEST_NO_TRACK
 //
-// TODO: make track client polymorphic class
-// TODO: check out opentrack for other interfaces
+// TODO: make track client polymorphic class by providing a base class?
+// TODO: check out opentrack for other interfaces?
 
 namespace trackers {
 

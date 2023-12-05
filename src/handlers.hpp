@@ -12,21 +12,27 @@ namespace handlers {
 
 // takes yaw and pitch information then converts it to mouse coordinates.
 // will also move mouse
+// TODO: change mouse handler to some sort of 'MouseStrategy' or
+// 'CursorProtocol'?
 class MouseHandler
 {
-public:
+private:
   std::shared_ptr<std::vector<CDisplay>> displays_;
   std::atomic<bool> normal_mode_ = true;
   std::atomic<mouse_mode> mode_ = mouse_mode::scrollbar_right_small;
 
 public:
+  // TODO: Be more explicit in my data structure than the profile?
   MouseHandler(settings::Profile profile);
   ~MouseHandler(){};
 
-  inline void set_cursor_pos(double x, double y);
   void handle_input(const Degrees yaw, const Degrees pitch);
   void set_alternate_mode(mouse_mode mode);
   void toggle_alternate_mode() { normal_mode_ = !normal_mode_; };
+
+private:
+  // Move out of class definition into its own header file?
+  void set_cursor_pos(double x, double y);
 };
 } // namespace handlers
 

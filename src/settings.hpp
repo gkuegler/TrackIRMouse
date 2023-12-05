@@ -11,6 +11,7 @@
 
 namespace settings {
 
+// TODO: Move global to types?
 struct UserDisplay
 {
   UserDisplay(){};

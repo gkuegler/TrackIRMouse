@@ -17,6 +17,8 @@ namespace trackers {
 class TrackIR
 {
 public:
+  // TODO: This seems clunky to have a separate handler object in the track
+  // class. It should probably be just a pointer to a function?
   handlers::MouseHandler* handler_;
 
 private:
@@ -32,8 +34,9 @@ public:
                   bool auto_find_dll,
                   std::string user_dll_folder,
                   int profile_id);
-  retcode start(); // main tracking loop
-  void toggle_mouse();
+  // TODO: Convert to exceptions
+  retcode start();     // main tracking loop
+  void toggle_mouse(); // for debugging purposes
   void stop();
 
 private:
