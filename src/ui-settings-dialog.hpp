@@ -54,6 +54,7 @@ class SettingsFrame : public wxDialog
 private:
   wxCheckBox* check_track_on_start;
   wxCheckBox* check_quit_on_loss;
+  wxCheckBox* check_auto_retry;
   wxCheckBox* check_mouse_mode_hotkey;
   wxCheckBox* check_enable_pipe_server;
   wxChoice* choice_log_level;
@@ -100,6 +101,9 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
 
   check_quit_on_loss = new wxCheckBox(
     panel, wxID_ANY, "Quit app when connection is lost to NP TrackIR");
+
+  check_auto_retry = new wxCheckBox(
+    panel, wxID_ANY, "Auto retry to connect with NPTrackIR device.");
 
   check_mouse_mode_hotkey = new wxCheckBox(
     panel, wxID_ANY, "Enable alternate mouse modes with hotkey:");
@@ -160,6 +164,7 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
   check_auto_find_dll->SetValue(user_data.auto_find_track_ir_dll);
   check_track_on_start->SetValue(user_data.track_on_start);
   check_quit_on_loss->SetValue(user_data.quit_on_loss_of_trackir);
+  check_auto_retry->SetValue(user_data.auto_retry);
   check_mouse_mode_hotkey->SetValue(user_data.hotkey_enabled);
   check_enable_pipe_server->SetValue(user_data.pipe_server_enabled);
   choice_log_level->SetSelection(static_cast<int>(user_data.log_level));
@@ -209,6 +214,8 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
   top_sizer->Add(check_track_on_start, 0, wxLEFT | wxALIGN_LEFT, SMALL_SPACE);
   top_sizer->Add(
     check_quit_on_loss, 0, wxLEFT | wxTOP | wxALIGN_LEFT, SMALL_SPACE);
+  top_sizer->Add(
+    check_auto_retry, 0, wxLEFT | wxTOP | wxALIGN_LEFT, SMALL_SPACE);
   // basic settings
   top_sizer->Add(label_sizer_2, 0, wxEXPAND | wxTOP | wxBOTTOM, BIG_SPACE);
   top_sizer->Add(hotkey_sizer, 0, wxLEFT, SMALL_SPACE);
@@ -243,6 +250,7 @@ SettingsFrame::ApplySettings(settings::Settings& user_data)
   user_data.auto_find_track_ir_dll = check_auto_find_dll->IsChecked();
   user_data.track_on_start = check_track_on_start->IsChecked();
   user_data.quit_on_loss_of_trackir = check_quit_on_loss->IsChecked();
+  user_data.auto_retry = check_auto_retry->IsChecked();
   user_data.hotkey_enabled = check_mouse_mode_hotkey->IsChecked();
   // TODO: enable hotkey in settings
   // user_data.hotkey_name = text_hot_key_name->GetValue().ToStdString();

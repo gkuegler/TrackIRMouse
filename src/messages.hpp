@@ -16,7 +16,7 @@ enum class msgcode
 };
 
 void
-SendThreadMessage(msgcode code, std::string msg);
+SendThreadMessage(msgcode code, std::string msg = "");
 
 void
 SendThreadMessage(msgcode code, std::string msg, long);

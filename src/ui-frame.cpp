@@ -318,6 +318,11 @@ Frame::OnSettings(wxCommandEvent& event)
     } else {
       RemoveHooks();
     }
+    if (settings.pipe_server_enabled) {
+      StartScrollAlternateHooksAndHotkeys();
+    } else {
+      RemoveHooks();
+    }
 
   } else if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
@@ -358,6 +363,19 @@ Frame::StartScrollAlternateHooksAndHotkeys()
 
 void
 Frame::RemoveHooks()
+{
+  hotkey_alternate_mode_.reset();
+  hook_window_changed_.reset();
+}
+void
+Frame::StartPipeServer()
+{
+  hotkey_alternate_mode_.reset();
+  hook_window_changed_.reset();
+}
+
+void
+Frame::StopServer()
 {
   hotkey_alternate_mode_.reset();
   hook_window_changed_.reset();
@@ -469,7 +487,7 @@ Frame::OnStop(wxCommandEvent& event)
   // destructor.
   if (track_thread_) {
     // Gracefully exit the tracking loop.
-    track_thread_->tracker_->stop();
+    track_thread_->Delete();
   } else {
     spdlog::warn("Track thread not running!");
   }

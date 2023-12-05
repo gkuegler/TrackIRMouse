@@ -7,12 +7,12 @@
 
 #include "log.hpp"
 
-typedef struct RegistryQuery_
-{
-  int result;
-  std::string result_string;
-  std::string value;
-} RegistryQuery;
+// typedef struct RegistryQuery_
+// {
+//   int result;
+//   std::string result_string;
+//   std::string value;
+// } RegistryQuery;
 
 /**
  * [GetStringFromRegistry description]
@@ -21,7 +21,7 @@ typedef struct RegistryQuery_
  * @param  sub_value   [description]
  * @return            [description]
  */
-RegistryQuery
+std::string
 GetStringFromRegistry(HKEY parent_key,
                       const char* sub_key,
                       const char* sub_value)
@@ -40,12 +40,11 @@ GetStringFromRegistry(HKEY parent_key,
                   &hKey);
 
   if (ERROR_FILE_NOT_FOUND == status_key_open) {
-    return RegistryQuery{ ERROR_FILE_NOT_FOUND, "Registry key not found.", "" };
+    std::runtime_error("Registry key not found.");
   }
-
   // Catch all other errors
-  if (ERROR_SUCCESS != status_key_open) {
-    return RegistryQuery{ status_key_open, "Could not open registry key.", "" };
+  else if (ERROR_SUCCESS != status_key_open) {
+    std::runtime_error("Could not open registry key.");
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -65,18 +64,17 @@ GetStringFromRegistry(HKEY parent_key,
     );
 
   if (ERROR_FILE_NOT_FOUND == query_status) {
-    return RegistryQuery{ ERROR_FILE_NOT_FOUND,
-                          "Value not found for key.",
-                          "" };
+    std::runtime_error("Value not found for key.");
   }
 
   // Catch all other errors of RegQueryValueExA
   if (ERROR_SUCCESS != query_status) {
-    return RegistryQuery{ query_status, "RegQueryValueExA failed.", "" };
+    std::runtime_error(std::format(
+      "RegQueryValueExA failed with error code: {}.", query_status));
   }
 
   if (REG_SZ != value_type) {
-    return RegistryQuery{ 1, "Registry value not a string type.", "" };
+    std::runtime_error("Registry value not a string type.");
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -88,7 +86,7 @@ GetStringFromRegistry(HKEY parent_key,
   char* szPath = static_cast<char*>(calloc(1, size_of_buffer + 1));
 
   if (NULL == szPath) {
-    return RegistryQuery{ 1, "Failed to allocate memory.", "" };
+    std::runtime_error("Failed to allocate memory for result buffer.");
   }
 
   LSTATUS status_get_value =
@@ -102,37 +100,12 @@ GetStringFromRegistry(HKEY parent_key,
     );
 
   if (ERROR_SUCCESS == status_get_value) {
-    return RegistryQuery{ 0, "", std::string(szPath) };
+    return std::string(szPath);
   } else {
-    return RegistryQuery{ status_get_value, "Could not get registry key.", "" };
+    std::runtime_error(
+      std::format("Could not retrieve registry key value with error code: {}.",
+                  status_get_value));
   }
-}
-
-std::string
-GetTrackIRDllFolderFromRegistry()
-{
-  std::string dll_path;
-
-  RegistryQuery path = GetStringFromRegistry(
-    HKEY_CURRENT_USER,
-    "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location",
-    "Path");
-
-  if (0 == path.result) {
-    dll_path = path.value;
-    spdlog::info("Acquired DLL location from registry.");
-  } else {
-    spdlog::error(
-      "Could not find registry path. NP TrackIR may not be installed. To "
-      "fix error, try specifying the folder of the \"NPClient64.dll\" in "
-      "edit->settings.");
-    spdlog::info("path.result: {}\n"
-                 "path.resultString: {}",
-                 path.result,
-                 path.result_string);
-  }
-
-  return dll_path;
 }
 
 #endif /* TRACKIRMOUSE_REGISTRY_HPP */

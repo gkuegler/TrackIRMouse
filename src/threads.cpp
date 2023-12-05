@@ -43,6 +43,7 @@ wxThread::ExitCode
 TrackThread::Entry()
 {
   auto profile = settings_.GetActiveProfile();
+  const unsigned long retry_time = 1500; // ms
 
   // TODO: check validation is correct
   if (false == profile.ValidateParameters()) {
@@ -50,37 +51,52 @@ TrackThread::Entry()
     return NULL;
   }
 
-  // initialize resources
-  try {
-    // handler_ = std::make_shared<handlers::MouseHandler>();
-    tracker_->initialize(hWnd_,
-                         settings_.auto_find_track_ir_dll,
-                         settings_.track_ir_dll_folder,
-                         profile.profile_id);
+  while (false == wxThread::TestDestroy()) {
+    try {
+      // handler_ = std::make_shared<handlers::MouseHandler>();return
+      tracker_->initialize(hWnd_,
+                           settings_.auto_find_track_ir_dll,
+                           settings_.track_ir_dll_folder,
+                           profile.profile_id);
 
-    // run the main tracking loop
-    auto result = tracker_->start();
+      // run the main tracking loop
+      tracker_->start();
 
-    if (retcode::track_ir_loss == result && settings_.quit_on_loss_of_trackir) {
-      spdlog::trace("quitting on loss of track ir");
-      SendThreadMessage(msgcode::close_app, "");
+      // I don't think I need to quit on the loss track IR now that I've
+      // implemented a retry strategy.
+      // if (retcode::track_ir_loss == result &&
+      //     settings_.quit_on_loss_of_trackir) {
+      //   spdlog::trace("quitting on loss of track ir");
+      //   SendThreadMessage(msgcode::close_app, "");
+      // }
+    } catch (const trackers::error_device_not_present& ex) {
+      if (settings_.auto_retry) {
+        spdlog::warn("Device not present. Retrying...");
+        Sleep(retry_time);
+        continue;
+      } else {
+        spdlog::error(ex.what());
+        return NULL;
+      }
+    } catch (const std::runtime_error& ex) {
+      // TODO: when dll path is changed by user this doesn't log?
+      spdlog::error("Couldn't start tracker:\n{}", ex.what());
     }
-  } catch (const std::runtime_error& ex) {
-    // TODO: when dll path is changed by user this doesn't log
-    spdlog::error("Couldn't start tracker: {}", ex.what());
-  }
 
-  spdlog::trace("track thread is closing");
-  return NULL;
+    spdlog::trace("track thread is closing");
+    return NULL;
+  }
 }
 wxThreadError
-TrackThread::Delete(ExitCode* rc = NULL,
-                    wxThreadWait waitMode = wxTHREAD_WAIT_DEFAULT)
+TrackThread::Delete(ExitCode* rc, wxThreadWait waitMode)
 {
   // Custom thread stopping hook to keed thread interface consistent.
   // Tracker uses an atomic<bool> instead of calling wxTestDestroy for
   // performace reasons.
   tracker_->stop();
+
+  // Ensure base class works as intended.
+  return wxThread::Delete(rc, waitMode);
 }
 //////////////////////////////////////////////////////////////////////
 //                         WatchdogThread                           //
@@ -101,7 +117,7 @@ ControlServerThread::~ControlServerThread()
   // Threads are detached anddelete themselves when they are done running.
   // TODO: Will need to provide different locks in the future with critical
   // sections https://docs.wxwidgets.org/3.0/classwx_thread.html
-  wxCriticalSectionLocker enter(p_window_handler_->p_cs_track_thread);
+  wxCriticalSectionLocker enter(p_window_handler_->p_cs_pipe_thread);
   p_window_handler_->p_server_thread_ = NULL;
   // end of critical section
 }
@@ -110,8 +126,10 @@ wxThread::ExitCode
 ControlServerThread::Entry()
 {
   try {
-    auto server = PipeServer();
-    server.Serve(server_name_);
+    auto server = PipeServer(server_name_);
+    while (false == wxThread::TestDestroy()) {
+      server.ServeOneClient();
+    }
   } catch (const std::runtime_error& ex) {
     spdlog::error(ex.what());
   }

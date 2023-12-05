@@ -25,26 +25,17 @@
 
 constexpr size_t BUFSIZE = 512 * sizeof(unsigned char);
 
-PipeServer::PipeServer()
+PipeServer::PipeServer(std::string name)
 {
   logger_ = mylogging::GetClonedLogger("pipeserver");
-}
-
-void
-PipeServer::Serve(std::string name)
-{
   std::string full_path = "\\\\.\\pipe\\" + name;
-
-  // Initialize Security Descriptor For Named Pipe
-  // May throw std::bad_alloc
-  std::unique_ptr<SECURITY_DESCRIPTOR> pSD(new SECURITY_DESCRIPTOR);
 
   // The InitializeSecurityDescriptor function initializes a security descriptor
   // to have no system access control list(SACL), no discretionary access
   // control list(DACL), no owner, no primary group, and all control flags set
   // to FALSE(NULL). Thus, except for its revision level, it is empty
   if (NULL ==
-      InitializeSecurityDescriptor(pSD.get(), SECURITY_DESCRIPTOR_REVISION)) {
+      InitializeSecurityDescriptor(&pSD_, SECURITY_DESCRIPTOR_REVISION)) {
     throw std::runtime_error(std::format(
       "Failed to initialize watchdog security descriptor with error code: {}",
       GetLastError()));
@@ -54,54 +45,54 @@ PipeServer::Serve(std::string name)
   // TODO: make this safer, maybe limit to just user processes?
 #pragma warning(disable : 6248) // Allow all unrestricted access to the pipe
   if (!SetSecurityDescriptorDacl(
-        pSD.get(),
+        &pSD_,
         TRUE,       // bDaclPresent flag
         (PACL)NULL, // if a NULL DACL is assigned to the security descriptor,
                     // all access is allowed
         FALSE))     // not a default DACL
   {
-    throw std::runtime_error(
-      std::format("SetSecurityDescriptorDacl Error {}", GetLastError()));
+    throw std::runtime_error(std::format(
+      "SetSecurityDescriptorDacl Initialization Error {}", GetLastError()));
   }
-#pragma warning(default : 4700)
 
   // Initialize a security attributes structure.
-  SECURITY_ATTRIBUTES sa;
-  sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-  sa.lpSecurityDescriptor = pSD.get();
-  sa.bInheritHandle = FALSE;
+  sa_.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sa_.lpSecurityDescriptor = &pSD_;
+  sa_.bInheritHandle = FALSE;
+}
 
+void
+PipeServer::ServeOneClient()
+{
   // Create a new named pipe instance for a new client to handle_.
   // Setting the max number of instances to a reasonable level
   // will prevent rogue clients from freezing my computer.
   // If I was feeling brave I could use PIPE_UNLIMITED_INSTANCES.
-  while (1) {
-    HANDLE hPipe =
-      CreateNamedPipeA(full_path.c_str(),        // pipe name
-                       PIPE_ACCESS_DUPLEX,       // read/write access
-                       PIPE_TYPE_MESSAGE |       // message type pipe
-                         PIPE_READMODE_MESSAGE | // message-read mode
-                         PIPE_WAIT,              // blocking mode
-                       10,      // max. instances, i.e max number of clients
-                       BUFSIZE, // output buffer size
-                       BUFSIZE, // input buffer size
-                       0,       // client time-out
-                       &sa);    // default security attribute
+  HANDLE hPipe =
+    CreateNamedPipeA(full_path_.c_str(),       // pipe name
+                     PIPE_ACCESS_DUPLEX,       // read/write access
+                     PIPE_TYPE_MESSAGE |       // message type pipe
+                       PIPE_READMODE_MESSAGE | // message-read mode
+                       PIPE_WAIT,              // blocking mode
+                     10,      // max. instances, i.e max number of clients
+                     BUFSIZE, // output buffer size
+                     BUFSIZE, // input buffer size
+                     0,       // client time-out
+                     &sa_);   // default security attribute
 
-    if (hPipe == INVALID_HANDLE_VALUE) {
-      DWORD gle = GetLastError();
-      if (gle == ERROR_PIPE_BUSY) {
-        throw std::runtime_error(
-          "CreateNamedPipe failed, all instances are busy.");
-      } else if (gle == ERROR_INVALID_PARAMETER) {
-        throw std::runtime_error(
-          "CreateNamedPipe failed, function called with incorrect "
-          "parameters.");
+  if (hPipe == INVALID_HANDLE_VALUE) {
+    DWORD gle = GetLastError();
+    if (gle == ERROR_PIPE_BUSY) {
+      throw std::runtime_error(
+        "CreateNamedPipe failed, all instances are busy.");
+    } else if (gle == ERROR_INVALID_PARAMETER) {
+      throw std::runtime_error(
+        "CreateNamedPipe failed, function called with incorrect "
+        "parameters.");
 
-      } else {
-        throw std::runtime_error(
-          std::format("CreateNamedPipe failed, GLE={}.", gle));
-      }
+    } else {
+      throw std::runtime_error(
+        std::format("CreateNamedPipe failed, GLE={}.", gle));
     }
 
     // Wait for the client to connect; if it succeeds,
@@ -112,7 +103,6 @@ PipeServer::Serve(std::string name)
                        : (GetLastError() == ERROR_PIPE_CONNECTED);
 
     if (connected) {
-      // printf("client connected, creating a processing thread.\n");
       logger_->debug("client connected");
       HandleConnection(hPipe);
 
@@ -212,7 +202,7 @@ std::string PipeServer::HandleMsg(std::string request) {
   } else if (request == "HEARTBEAT") {
     return request;
   } else if (request == "PAUSE") {
-    SendThreadMessage(msgcode::toggle_tracking, "");
+    SendThreadMessage(msgcode::toggle_tracking);
     return request;
   } else if (request == "SCROLL_LEFT_SMALL") {
     SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_left_small));

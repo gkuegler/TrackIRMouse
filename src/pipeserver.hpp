@@ -1,7 +1,6 @@
 #ifndef TRACKIRMOUSE_WATCHDOG_H
 #define TRACKIRMOUSE_WATCHDOG_H
 
-
 #include "windows-wrapper.hpp"
 
 #include <atomic>
@@ -28,11 +27,14 @@ class PipeServer
 {
 private:
   std::shared_ptr<spdlog::logger> logger_;
+  std::string full_path_;
+  SECURITY_DESCRIPTOR pSD_;
+  SECURITY_ATTRIBUTES sa_;
 
 public:
-  PipeServer();
-  //~PipeServer();
-  void Serve(std::string);
+  PipeServer(std::string name);
+
+  void ServeOneClient();
 
 private:
   void HandleConnection(Handle hPipe);

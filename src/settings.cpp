@@ -6,8 +6,8 @@
  * --License Boilerplate Placeholder--
  */
 
-#include "settings.hpp"
 #include "json.hpp"
+#include "settings.hpp"
 
 #include <filesystem>
 #include <format>
@@ -31,6 +31,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,
                                    active_profile_name,
                                    track_on_start,
                                    quit_on_loss_of_trackir,
+                                   auto_retry,
                                    auto_find_track_ir_dll,
                                    track_ir_dll_folder,
                                    pipe_server_enabled,

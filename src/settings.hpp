@@ -43,6 +43,7 @@ public:
   std::string active_profile_name = Profile().name; // use default profile name
   bool track_on_start = false;
   bool quit_on_loss_of_trackir = false;
+  bool auto_retry = false;
   bool auto_find_track_ir_dll = true;
   std::string track_ir_dll_folder = "";
   bool pipe_server_enabled = false;

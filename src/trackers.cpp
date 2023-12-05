@@ -17,6 +17,8 @@
 #include "registry-access.h"
 #include "types.hpp"
 
+#include <format>
+
 // 7 is a magic number I found through experimentation.
 // It means a hWnd is already registered with NPTrackIR.
 // Calling un-register window handle will unregistered the
@@ -57,15 +59,33 @@ TrackIR::initialize(HWND hWnd,
   //                  Finding NPTrackIR DLL Location                  //
   //////////////////////////////////////////////////////////////////////
 
-  std::string dll_path =
-    auto_find_dll ? GetTrackIRDllFolderFromRegistry() : user_dll_folder;
+  // Windows long path support prefix.
+  // https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry
+  std::string dll_path = "\\\\\?\\";
+
+  if (auto_find_dll) {
+    try {
+      dll_path += GetStringFromRegistry(
+        HKEY_CURRENT_USER,
+        "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location",
+        "Path");
+    } catch (std::runtime_error& ex) {
+      std::runtime_error(std::format(
+        "Could not resolve path from registry. NP TrackIR may not be installed "
+        "or installation may be different than the version used to create this "
+        "software.\nThe folder of the \"NPClient64.dll\" can be manually "
+        "specified in the settings menu.\n\nSpecific Error Condition: {}",
+        ex.what()));
+    }
+  } else {
+    dll_path += user_dll_folder;
+  }
 
   // ensure path has a slash at the end before appending filename
   if (dll_path.back() != '\\') {
     dll_path.push_back('\\');
   }
 
-// Match to the correct bitness of this application
 #if defined(_WIN64) || defined(__amd64__)
   dll_path.append("NPClient64.dll");
 #else
@@ -76,7 +96,8 @@ TrackIR::initialize(HWND hWnd,
 
   // Find and load TrackIR DLL
 #ifdef UNICODE
-  TCHAR sDll[MAX_PATH];
+  // TCHAR sDll[MAX_PATH];
+  TCHAR sDll[32767];
 
   int conversion_result =
     MultiByteToWideChar(CP_UTF8,
@@ -111,7 +132,7 @@ TrackIR::initialize(HWND hWnd,
     case NP_OK:
       break;
     case NP_ERR_DEVICE_NOT_PRESENT:
-      throw std::runtime_error("Device Not Present.");
+      throw error_device_not_present("Device Not Present.");
       break;
     case NP_ERR_HWND_ALREADY_REGISTERED:
       NP_UnregisterWindowHandle();
@@ -146,7 +167,7 @@ TrackIR::~TrackIR()
   disconnect_from_np_trackir();
 }
 
-retcode
+void
 TrackIR::start()
 {
 #ifndef TEST_NO_TRACK
@@ -156,8 +177,7 @@ TrackIR::start()
   if (NP_OK == NP_StartDataTransmission())
     logger_->debug("NP Started data transmission.");
   else {
-    logger_->error("NP Start Data Transmission failed");
-    return retcode::fail;
+    throw std::runtime_error("NP Start Data Transmission failed");
   }
 
 #endif
@@ -204,8 +224,7 @@ TrackIR::start()
 
       last_frame = framesig;
     } else if (NP_ERR_DEVICE_NOT_PRESENT == gdf) {
-      logger_->warn("device not present, tracking stopped");
-      return retcode::track_ir_loss;
+      throw error_device_not_present("Device Not Present.");
     } else {
       throw std::runtime_error(
         std::format("tracking loop exit due to unknown problem.\ncode returned "
@@ -215,7 +234,7 @@ TrackIR::start()
     Sleep(8);
   }
 
-  return retcode::graceful_exit;
+  return;
 }
 // Tracking loop uses this to check if it should break, return to thread, then
 // have thread auto clean up

@@ -35,7 +35,7 @@ public:
                   std::string user_dll_folder,
                   int profile_id);
   // TODO: Convert to exceptions
-  retcode start();     // main tracking loop
+  void start();        // main tracking loop
   void toggle_mouse(); // for debugging purposes
   void stop();
 

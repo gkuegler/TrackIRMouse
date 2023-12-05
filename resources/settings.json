@@ -8,6 +8,7 @@
         0,
         0
     ],
+    "auto_retry": false,
     "hotkey_enabled": true,
     "log_level": 1,
     "pipe_server_enabled": true,
