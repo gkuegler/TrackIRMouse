@@ -27,8 +27,8 @@ constexpr size_t BUFSIZE = 512 * sizeof(unsigned char);
 
 PipeServer::PipeServer(std::string name)
 {
+  full_path_ = "\\\\.\\pipe\\" + name;
   logger_ = mylogging::GetClonedLogger("pipeserver");
-  std::string full_path = "\\\\.\\pipe\\" + name;
 
   // The InitializeSecurityDescriptor function initializes a security descriptor
   // to have no system access control list(SACL), no discretionary access
@@ -94,36 +94,36 @@ PipeServer::ServeOneClient()
       throw std::runtime_error(
         std::format("CreateNamedPipe failed, GLE={}.", gle));
     }
+  }
 
-    // Wait for the client to connect; if it succeeds,
-    // the function returns a nonzero value. If the function
-    // returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
-    bool connected = ConnectNamedPipe(hPipe, NULL)
-                       ? TRUE
-                       : (GetLastError() == ERROR_PIPE_CONNECTED);
+  // Wait for the client to connect; if it succeeds,
+  // the function returns a nonzero value. If the function
+  // returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
+  bool connected = ConnectNamedPipe(hPipe, NULL)
+                     ? TRUE
+                     : (GetLastError() == ERROR_PIPE_CONNECTED);
 
-    if (connected) {
-      logger_->debug("client connected");
-      HandleConnection(hPipe);
+  if (connected) {
+    logger_->debug("client connected");
+    HandleConnection(hPipe);
 
-      // https://learn.microsoft.com/en-us/windows/win32/ipc/multithreaded-pipe-server
-      // Create a thread for this client.
-      // hThread = CreateThread(NULL,            // no security attribute
-      //                        0,               // default stack size
-      //                        InstanceThread,  // thread proc
-      //                        (LPVOID)hPipe,   // thread parameter
-      //                        0,               // not suspended
-      //                        &dwThreadId);    // returns thread ID
+    // https://learn.microsoft.com/en-us/windows/win32/ipc/multithreaded-pipe-server
+    // Create a thread for this client.
+    // hThread = CreateThread(NULL,            // no security attribute
+    //                        0,               // default stack size
+    //                        InstanceThread,  // thread proc
+    //                        (LPVOID)hPipe,   // thread parameter
+    //                        0,               // not suspended
+    //                        &dwThreadId);    // returns thread ID
 
-      // if (hThread == NULL) {
-      //_tprintf(TEXT("CreateThread failed, GLE=%d.\n"), GetLastError());
-      // return -1;
-      //} else
-      // CloseHandle(hThread);
-      //} else
-      // The client could not connect, so close the pipe.
-      // CloseHandle(hPipe);
-    }
+    // if (hThread == NULL) {
+    //_tprintf(TEXT("CreateThread failed, GLE=%d.\n"), GetLastError());
+    // return -1;
+    //} else
+    // CloseHandle(hThread);
+    //} else
+    // The client could not connect, so close the pipe.
+    CloseHandle(hPipe);
   }
 }
 

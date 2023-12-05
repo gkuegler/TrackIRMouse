@@ -318,11 +318,11 @@ Frame::OnSettings(wxCommandEvent& event)
     } else {
       RemoveHooks();
     }
-    if (settings.pipe_server_enabled) {
+    /*if (settings.pipe_server_enabled) {
       StartScrollAlternateHooksAndHotkeys();
     } else {
       RemoveHooks();
-    }
+    }*/
 
   } else if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
@@ -367,19 +367,19 @@ Frame::RemoveHooks()
   hotkey_alternate_mode_.reset();
   hook_window_changed_.reset();
 }
-void
-Frame::StartPipeServer()
-{
-  hotkey_alternate_mode_.reset();
-  hook_window_changed_.reset();
-}
-
-void
-Frame::StopServer()
-{
-  hotkey_alternate_mode_.reset();
-  hook_window_changed_.reset();
-}
+// void
+// Frame::StartPipeServer()
+//{
+//   hotkey_alternate_mode_.reset();
+//   hook_window_changed_.reset();
+// }
+//
+// void
+// Frame::StopServer()
+//{
+//   hotkey_alternate_mode_.reset();
+//   hook_window_changed_.reset();
+// }
 
 void
 Frame::PopulateComboBoxWithProfiles()

@@ -50,11 +50,12 @@ WindowChangeHook(HWINEVENTHOOK hWinEventHook,
       SendThreadMessage(msgcode::notify_app, name.string());
 
     } else {
-      spdlog::debug("GetModuleFileNameXxA failed. GLE={}", GetLastError());
+      spdlog::debug("Hooks: GetModuleFileNameXxA failed. GLE={}",
+                    GetLastError());
     }
     CloseHandle(hProcess);
   } else {
-    spdlog::debug("failed to open process. GLE={}", GetLastError());
+    spdlog::debug("Hooks: failed to open process. GLE={}", GetLastError());
   }
 }
 // enum mouse_mode

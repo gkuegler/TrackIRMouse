@@ -1,6 +1,5 @@
 #include "environment.hpp"
 
-
 #include "windows-wrapper.hpp"
 
 #include "Log.hpp"
@@ -41,7 +40,7 @@ PopulateVirtMonitorBounds(HMONITOR hMonitor,
 WinDisplayInfo
 GetHardwareDisplayInformation()
 {
-  spdlog::trace("entering WinSetup");
+  spdlog::trace("entering GetHardwareDisplayInformation");
   g_displays.clear();
 
   // Use a callback to go through each monitor
