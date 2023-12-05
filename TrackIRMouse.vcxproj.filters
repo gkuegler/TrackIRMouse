@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\environment.hpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ui-graphic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -144,6 +141,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\environment.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

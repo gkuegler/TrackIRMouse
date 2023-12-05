@@ -197,7 +197,7 @@ NPRESULT __stdcall NP_StopDataTransmission(void);
 #pragma pack(pop, npclient_h)  // Ensure previous pack value is restored
 
 // added by GK
-NPRESULT NPClient_Init(LPTSTR pszDLLPath);
+void NP_InitializeClient(LPTSTR pszDLLPath);
 
 #endif  // #ifdef NPCLIENT_H_DEFINED_
 

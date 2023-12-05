@@ -138,49 +138,67 @@ NPRESULT __stdcall NP_StopDataTransmission() {
 
 // clang-format on
 // Load the DLL and resolved dll function pointers
-NPRESULT
-NPClient_Init(LPTSTR pszDLLPath)
+void
+NP_InitializeClient(LPTSTR pszDLLPath)
 {
   ghNPClientDLL = LoadLibrary(pszDLLPath);
 
   if (NULL == ghNPClientDLL) {
     if (GetLastError() == ERROR_MOD_NOT_FOUND) {
-      return NP_ERR_DLL_NOT_FOUND;
+      throw std::runtime_error("Couldn't find the DLL.");
     } else {
-      spdlog::error("NP DLL load failed with error code: {}", GetLastError());
-      return NP_ERR;
+      throw std::runtime_error(
+        std::format("When loading the NPClientDLL, the call to "
+                    "'LoadLibrary' failed with error code: {}",
+                    GetLastError()));
     }
   }
+
+  /**
+   * Verification of the signature is not necessary for the program to run.
+   * I omit this process for two reasons:
+   * 1. There isn't a security aspect I'm concerned about.
+   * 2. Even if there was, I don't think this signature would do anything about
+   * it.
+   * 3. Attempting to verify the signature obscures the error when the device
+   * isn't present or the NPTrackIR software isn't running.
+   * 4. I wouldn't want to hinder users from using a different head tracking
+   * device.
+   */
+  // Resolve address to verify signature to verify integrity of the DLL and that
+  // the application is running.
+  // gpfNP_GetSignature =
+  //   (PF_NP_GETSIGNATURE)::GetProcAddress(ghNPClientDLL, "NP_GetSignature");
+
+  // SIGNATUREDATA signature;
+  // SIGNATUREDATA verify_signature;
+
+  // // initialize the signatures
+  // strcpy_s(verify_signature.DllSignature,
+  //          200,
+  //          "precise head tracking\n put your head into the game\n now go "
+  //          "look around\n\n Copyright EyeControl "
+  //          "Technologies");
+  // strcpy_s(verify_signature.AppSignature,
+  //          200,
+  //          "hardware camera\n software processing data\n track user "
+  //          "movement\n\n Copyright EyeControl Technologies");
+
+  // // query the dll and compare the results
+  // NPRESULT signature_result = NP_GetSignature(&signature);
+
+  // if (NP_GetSignature(&signature) != NP_OK) {
+  //   throw std::exception("NP Get Signature Failed");
+  // }
+
+  // // I'm not sure why there isn't a straightforward way to query if the
+  // // NPTrackIR  application is running or not.
+  // if ((strcmp(verify_signature.DllSignature, signature.DllSignature) != 0) &&
+  //     (strcmp(verify_signature.AppSignature, signature.AppSignature) != 0)) {
+  //   throw std::exception("NP TrackIR Program Not Running");
+  // }
+
   // clang-format off
-  // resolve address to verify signature
-  gpfNP_GetSignature = (PF_NP_GETSIGNATURE)::GetProcAddress(ghNPClientDLL, "NP_GetSignature");
-
-  SIGNATUREDATA signature;
-  SIGNATUREDATA verify_signature;
-
-  // initialize the signatures
-  strcpy_s(verify_signature.DllSignature, 200,
-           "precise head tracking\n put your head into the game\n now go "
-           "look around\n\n Copyright EyeControl "
-           "Technologies");
-  strcpy_s(verify_signature.AppSignature, 200,
-           "hardware camera\n software processing data\n track user "
-           "movement\n\n Copyright EyeControl Technologies");
-
-  // query the dll and compare the results
-  NPRESULT signature_result = NP_GetSignature(&signature);
-
-  if (NP_GetSignature(&signature) != NP_OK) {
-    spdlog::error("NP Get Signature Failed");
-    return NP_ERR;
-  }
-
-  if ((strcmp(verify_signature.DllSignature, signature.DllSignature) != 0) 
-      && (strcmp(verify_signature.AppSignature, signature.AppSignature) != 0)){
-    spdlog::error("NP TrackIR Program Not Running");
-    return NP_ERR;
-  }
-
   // Get addresses of all exported functions
   gpfNP_RegisterWindowHandle = (PF_NP_REGISTERWINDOWHANDLE)::GetProcAddress(ghNPClientDLL, "NP_RegisterWindowHandle");
   gpfNP_UnregisterWindowHandle = (PF_NP_UNREGISTERWINDOWHANDLE)::GetProcAddress(ghNPClientDLL, "NP_UnregisterWindowHandle");
@@ -193,7 +211,7 @@ NPClient_Init(LPTSTR pszDLLPath)
   gpfNP_ReCenter = (PF_NP_RECENTER)::GetProcAddress(ghNPClientDLL, "NP_ReCenter");
   gpfNP_StartDataTransmission = (PF_NP_STARTDATATRANSMISSION)::GetProcAddress(ghNPClientDLL, "NP_StartDataTransmission");
   gpfNP_StopDataTransmission = (PF_NP_STOPDATATRANSMISSION)::GetProcAddress(ghNPClientDLL, "NP_StopDataTransmission");
+  // clang-format on
 
-  return NP_OK;
+  return;
 }
-// clang-format on

@@ -312,7 +312,7 @@
     <ClCompile Include="src\threads.cpp" />
     <ClCompile Include="src\trackers.cpp" />
     <ClCompile Include="src\environment.cpp" />
-    <ClCompile Include="src\environment.hpp" />
+    <ClInclude Include="src\environment.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mouse-modes.hpp" />

@@ -17,6 +17,12 @@
 #include "registry-access.h"
 #include "types.hpp"
 
+// 7 is a magic number I found through experimentation.
+// It means a hWnd is already registered with NPTrackIR.
+// Calling un-register window handle will unregistered the
+// window handle regardless who the hWnd belongs to.
+#define NP_ERR_HWND_ALREADY_REGISTERED 7
+
 // Uncomment this line for testing to prevent program
 // from attaching to NPTrackIR and supersede control
 // #define TEST_NO_TRACK
@@ -93,36 +99,26 @@ TrackIR::initialize(HWND hWnd,
 #endif
 
   // Load the DLL and resolved dll function pointers
-  switch (NPClient_Init(sDll)) {
-    case NP_ERR_DLL_NOT_FOUND:
-      throw std::runtime_error(std::format("dll not found:\n\'{}\'", dll_path));
-      break;
-    case NP_ERR:
-      throw std::runtime_error("couldn't load dll");
-      break;
-    default:
-      // a comment here for breakpoint
-      break;
-  }
+  NP_InitializeClient(sDll);
 
-    // NP software needs a window handle_ to know when it should
-    // stop sending data frames if window is closed.
-    // TEST_NO_TRACK defined so that this program doesn't boot control of NP
-    // software from my local MouseTrackIR instance while developing.
+  // NP software needs a window handle_ to know when it should
+  // stop sending data frames if window is closed.
+  // TEST_NO_TRACK defined so that this program doesn't boot control of NP
+  // software from my local MouseTrackIR instance while developing.
 #ifndef TEST_NO_TRACK
 
   switch (NP_RegisterWindowHandle(hWnd)) {
     case NP_OK:
       break;
-    case 7:
-      // 7 is a magic number I found through experimentation.
-      // It means another program/instance has its window handle_ registered
-      // already.
+    case NP_ERR_DEVICE_NOT_PRESENT:
+      throw std::runtime_error("Device Not Present.");
+      break;
+    case NP_ERR_HWND_ALREADY_REGISTERED:
       NP_UnregisterWindowHandle();
       spdlog::warn("NP Booting control of previous mousetracker instance.");
       Sleep(2);
       if (NP_OK != NP_RegisterWindowHandle(hWnd)) {
-        throw std::runtime_error("Failed to re-register window handle");
+        throw std::runtime_error("Failed to re-register window handle.");
       }
       break;
     default:
@@ -141,8 +137,8 @@ TrackIR::initialize(HWND hWnd,
   if (NP_OK != NP_RegisterProgramProfileID(profile_id)) {
     throw std::runtime_error("NP Register Profile ID failed.");
   }
-  spdlog::info("NPTrackIR Initialization Successful");
 #endif
+  spdlog::info("NPTrackIR Initialization Successful");
 }
 
 TrackIR::~TrackIR()

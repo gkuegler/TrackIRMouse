@@ -1,9 +1,9 @@
 #ifndef TRACKIRMOUSE_TRACK_HPP
 #define TRACKIRMOUSE_TRACK_HPP
 
-
 #include "windows-wrapper.hpp"
 
+#include <exception>
 #include <string>
 
 #include "handlers.hpp"
@@ -13,6 +13,7 @@
 // using HandleFunction = void (*)(Degrees, Degrees);
 
 namespace trackers {
+
 class TrackIR
 {
 public:
@@ -38,6 +39,13 @@ public:
 private:
   void connect_to_np_track_ir();
   void disconnect_from_np_trackir();
+};
+
+class error_device_not_present : public std::exception
+{
+public:
+  error_device_not_present(const char* message)
+    : std::exception(message){};
 };
 } // namespace trackers
 

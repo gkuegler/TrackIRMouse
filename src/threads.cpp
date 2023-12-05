@@ -65,9 +65,9 @@ TrackThread::Entry()
       spdlog::trace("quitting on loss of track ir");
       SendThreadMessage(msgcode::close_app, "");
     }
-  } catch (const std::runtime_error& e) {
+  } catch (const std::runtime_error& ex) {
     // TODO: when dll path is changed by user this doesn't log
-    spdlog::error("Error starting tracker: {}", e.what());
+    spdlog::error("Couldn't start tracker: {}", ex.what());
   }
 
   spdlog::trace("track thread is closing");
