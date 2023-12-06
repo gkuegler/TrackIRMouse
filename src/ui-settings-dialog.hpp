@@ -13,41 +13,8 @@
 
 #include "log.hpp"
 #include "settings.hpp"
+#include "ui-dialog-utilities.hpp"
 #include "utility.hpp"
-
-class OkayCancelDialogueButtons : public wxPanel
-{
-public:
-  wxWindow* parent;
-  wxDialog* dialogue;
-
-  OkayCancelDialogueButtons(wxWindow* parent_, wxDialog* dialogue_)
-    : wxPanel(parent_)
-  {
-    parent = parent_;
-    dialogue = dialogue_;
-    auto okay =
-      new wxButton(this, wxID_ANY, "Apply", wxDefaultPosition, wxSize(110, 25));
-    auto save = new wxButton(
-      this, wxID_ANY, "Apply && Save", wxDefaultPosition, wxSize(110, 25));
-    auto cancel = new wxButton(
-      this, wxID_ANY, "Cancel", wxDefaultPosition, wxSize(110, 25));
-
-    auto top = new wxBoxSizer(wxHORIZONTAL);
-    top->Add(okay, 0, wxALL, 0);
-    top->Add(save, 0, wxALL, 0);
-    top->Add(cancel, 0, wxALL, 0);
-    SetSizer(top);
-
-    okay->Bind(wxEVT_BUTTON, &OkayCancelDialogueButtons::OnOkay, this);
-    save->Bind(wxEVT_BUTTON, &OkayCancelDialogueButtons::OnApply, this);
-    cancel->Bind(wxEVT_BUTTON, &OkayCancelDialogueButtons::OnCancel, this);
-  }
-
-  void OnOkay(wxCommandEvent& event) { dialogue->EndModal(wxID_OK); }
-  void OnApply(wxCommandEvent& event) { dialogue->EndModal(wxID_APPLY); }
-  void OnCancel(wxCommandEvent& event) { dialogue->EndModal(wxID_CANCEL); }
-};
 
 class SettingsFrame : public wxDialog
 {
@@ -78,7 +45,11 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
   // Panels
   auto panel = new wxPanel(
     this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
-  auto buttons = new OkayCancelDialogueButtons(panel, this);
+  // auto buttons = new OkayCancelDialogueButtons(panel, this);
+  auto buttons = new DialogEndModalButtonsPanel(panel, this);
+  buttons->AddButton("Okay", wxID_OK);
+  buttons->AddButton("Okay && Save", wxID_APPLY);
+  buttons->AddButton("Cancel", wxID_CANCEL);
 
   auto label_start_up_settings =
     new wxStaticText(panel, wxID_ANY, "Startup Behavior  ");

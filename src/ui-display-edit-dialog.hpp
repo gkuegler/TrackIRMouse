@@ -38,21 +38,20 @@ DisplayEditDialog::DisplayEditDialog(wxWindow* parent)
     )
 {
   // colors used for testing
-  //const wxColor yellow(255, 255, 0);
-  //const wxColor blue(255, 181, 102);
-  //const wxColor pink(198, 102, 255);
-  //const wxColor green(142, 255, 102);
-  //const wxColor orange(102, 201, 255);
+  // const wxColor yellow(255, 255, 0);
+  // const wxColor blue(255, 181, 102);
+  // const wxColor pink(198, 102, 255);
+  // const wxColor green(142, 255, 102);
+  // const wxColor orange(102, 201, 255);
 
   // Panels
   auto panel = new wxPanel(
     this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
-  // auto buttons =
-  // new OkayApplyCancelDialogButtons(panel, this, wxID_OK | wxID_CANCEL);
-  auto buttons = new OkayApplyCancelDialogButtons(panel, this);
-  buttons->AddButton(wxID_OK, "Okay");
-  buttons->AddButton(wxID_CANCEL, "Cancel");
-  buttons->AddButton(wxID_APPLY, "Apply");
+  auto buttons = new DialogEndModalButtonsPanel(panel, this);
+  buttons->AddButton("Okay", wxID_OK);
+  // Future functionality.
+  // buttons->AddButton("Apply", wxID_APPLY);
+  buttons->AddButton("Cancel", wxID_CANCEL);
 
   // Logging Window
   auto label_description =

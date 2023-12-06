@@ -25,14 +25,14 @@ enum DIALOG_BUTTONS_FLAG
   DIALOG_BUTTON_CANCEL = 4
 };
 
-class OkayApplyCancelDialogButtons : public wxPanel
+class DialogEndModalButtonsPanel : public wxPanel
 {
 public:
   wxWindow* parent;
   wxDialog* dialog;
   std::unordered_map<wxButton*, int> object_ret_code_table_;
 
-  OkayApplyCancelDialogButtons(wxWindow* parent_, wxDialog* dialogue_)
+  DialogEndModalButtonsPanel(wxWindow* parent_, wxDialog* dialogue_)
     : wxPanel(parent_)
   {
     parent = parent_;
@@ -41,7 +41,7 @@ public:
     auto top = new wxBoxSizer(wxHORIZONTAL);
     SetSizer(top);
   }
-  void AddButton(int ret_code, const char* label)
+  void AddButton(const char* label, int ret_code)
   {
     auto button =
       new wxButton(this, wxID_ANY, label, wxDefaultPosition, wxSize(110, 25));
@@ -60,11 +60,10 @@ public:
     auto sizer = this->GetSizer();
     sizer->Add(button, 0, wxALL, 0);
 
-    button->Bind(
-      wxEVT_BUTTON, &OkayApplyCancelDialogButtons::OnButtonWhat, this);
+    button->Bind(wxEVT_BUTTON, &DialogEndModalButtonsPanel::OnClick, this);
   }
 
-  void OnButtonWhat(wxCommandEvent& event)
+  void OnClick(wxCommandEvent& event)
   {
     auto id = event.GetId();
     auto button = (wxButton*)event.GetEventObject();
