@@ -5,7 +5,7 @@
 #define SPDLOG_NO_ATOMIC_LEVELS // code never modifies a logger_'s log levels
                                 // concurrently by different threads.
 
-// used to export default logger
+// used to export logging mechanisms to other files
 #include "spdlog/spdlog.h"
 
 #include <array>

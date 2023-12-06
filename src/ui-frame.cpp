@@ -14,14 +14,17 @@
 #include <string>
 
 #include "config-loader.hpp"
+#include "constants.hpp"
 #include "game-titles.hpp"
 #include "log.hpp"
 #include "pipeserver.hpp"
 #include "settings.hpp"
+#include "shell.hpp"
 #include "threads.hpp"
 #include "trackers.hpp"
 #include "types.hpp"
 #include "ui-control-id.hpp"
+#include "ui-display-edit-dialog.hpp"
 #include "ui-profile-selector-dialog.hpp"
 #include "ui-settings-dialog.hpp"
 #include "utility.hpp"
@@ -49,39 +52,38 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   // TODO: implement open file? this will require use of the registry
   // menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
   // "Open a new settings file from disk.");
-  menuFile->Append(wxID_SAVE, "&Save\tCtrl-S", "Save the configuration file");
-  menuFile->Append(myID_MENU_RELOAD, "&Reload", "Reload the settings file.");
+  menuFile->Append(wxID_PREFERENCES, "&Edit Settings", "Edit app settings.");
+  menuFile->Append(
+    wxID_SAVE, "&Save Settings\tCtrl-S", "Save the configuration file");
+  menuFile->Append(
+    myID_MENU_RELOAD, "&Reload Settings", "Reload the settings file.");
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
-
-  wxMenu* menuEdit = new wxMenu;
-  menuEdit->Append(myID_MENU_SETTINGS, "&Settings", "Edit app settings.");
 
   wxMenu* menuHelp = new wxMenu;
   // TODO: implement a help file
   // menuHelp->Append(wxID_HELP);
+  menuHelp->Append(myID_VIEW_LOGFILE,
+                   "View Log",
+                   "Open the logfile with the default text editor.");
   menuHelp->Append(wxID_ABOUT);
 
   wxMenuBar* menuBar = new wxMenuBar;
   menuBar->Append(menuFile, "&File");
-  menuBar->Append(menuEdit, "&Edit");
   menuBar->Append(menuHelp, "&Help");
 
   SetMenuBar(menuBar);
-  // CreateStatusBar();  // not currently using status bar
-  // SetStatusText("0");
+  CreateStatusBar(); // not currently using status bar
+  SetStatusText("Lorem Ipsum Status Bar Message");
 
   //////////////////////////////////////////////////////////////////////
   //                               Panel                              //
   //////////////////////////////////////////////////////////////////////
 
-  // TODO: make app expand on show log window
-  // TODO: make app retract on hide log window
-  // Layout paneles
   // clang-format off
   
   // Panels 
-  auto main = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
+  auto main = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
   auto p_pnl_profile = new wxPanel(main, wxID_ANY, wxDefaultPosition, wxSize(800, 400), wxBORDER_SIMPLE);
   //p_pnl_profile->SetBackgroundColour(orange);
   
@@ -116,6 +118,7 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   p_text_profile_id_ = new wxTextCtrl(p_pnl_profile, wxID_ANY, "2201576", wxDefaultPosition, wxSize(60, 20), wxTE_LEFT, alphanumeric_validator, "");
   auto btn_pick_title = new wxButton(p_pnl_profile, wxID_ANY, "Pick Title", wxDefaultPosition, k_default_button_size, 0, wxDefaultValidator, "");
   p_check_use_default_padding_ = new wxCheckBox(p_pnl_profile, wxID_ANY, "Use Default Padding", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  auto btn_move_edit = new wxButton(p_pnl_profile, wxID_ANY, "Edit", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
   auto btn_move_up = new wxButton(p_pnl_profile, wxID_ANY, "Up", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
   auto btn_move_down = new wxButton(p_pnl_profile, wxID_ANY, "Down", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
   auto btn_add_display = new wxButton(p_pnl_profile, wxID_ANY, "+", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
@@ -155,6 +158,7 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
 
   // Profile Info Panel
   auto zrDisplayControls = new wxBoxSizer(wxVERTICAL);
+  zrDisplayControls->Add(btn_move_edit);
   zrDisplayControls->Add(btn_move_up);
   zrDisplayControls->Add(btn_move_down);
   zrDisplayControls->Add(btn_add_display);
@@ -222,7 +226,8 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   // Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnOpen, this, wxID_OPEN);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnSave, this, wxID_SAVE);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnReload, this, myID_MENU_RELOAD);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnSettings, this, myID_MENU_SETTINGS);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnSettings, this, wxID_PREFERENCES);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &Frame::OnLogFile, this, myID_VIEW_LOGFILE);
 
   // Set Control Tooltips
   btn_start_mouse->SetToolTip(wxT("Start controlling mouse with head tracking."));
@@ -243,10 +248,11 @@ Frame::Frame(wxPoint origin, wxSize dimensions)
   btn_pick_title->Bind(wxEVT_BUTTON, &Frame::OnPickTitle, this);
   p_check_use_default_padding_->Bind(wxEVT_CHECKBOX, &Frame::OnUseDefaultPadding, this);
   p_view_mapping_data_->Bind(wxEVT_DATAVIEW_ITEM_EDITING_DONE, &Frame::OnMappingData, this);
-  btn_add_display->Bind(wxEVT_BUTTON, &Frame::OnAddDisplay, this);
-  btn_remove_display->Bind(wxEVT_BUTTON, &Frame::OnRemoveDisplay, this);
+  btn_move_edit->Bind(wxEVT_BUTTON, &Frame::OnDisplayEdit, this);
   btn_move_up->Bind(wxEVT_BUTTON, &Frame::OnMoveUp, this);
   btn_move_down->Bind(wxEVT_BUTTON, &Frame::OnMoveDown, this);
+  btn_add_display->Bind(wxEVT_BUTTON, &Frame::OnAddDisplay, this);
+  btn_remove_display->Bind(wxEVT_BUTTON, &Frame::OnRemoveDisplay, this);
 }
 
 Frame::~Frame(){
@@ -326,6 +332,21 @@ Frame::OnSettings(wxCommandEvent& event)
 
   } else if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
+  }
+}
+
+void
+Frame::OnLogFile(wxCommandEvent& event)
+{
+  // open the help file with default editor
+  // windows will prompt the user for a suitable program if not found
+  // auto path = GetFullPath(settings->file_name_);
+
+  const std::string path = LOG_FILE_NAME;
+  try {
+    ExecuteShellCommand(GetHandle(), "open", path);
+  } catch (std::runtime_error& ex) {
+    spdlog::error("Couldn't open '{}':\n", path, ex.what());
   }
 }
 
@@ -469,6 +490,7 @@ Frame::OnStart(wxCommandEvent& event)
 
   if (track_thread_->Run() == wxTHREAD_NO_ERROR) { // returns immediately
     spdlog::info("Started Mouse.");
+    this->SetStatusText("Running");
   } else {
     spdlog::error("Can't run the tracking thread!");
     delete track_thread_;
@@ -820,5 +842,20 @@ Frame::OnMoveDown(wxCommandEvent& event)
     items[0] = item;                      // assumed single selection mode
     p_view_mapping_data_->SetSelections(items);
     p_display_graphic_->PaintNow();
+  }
+}
+
+void
+Frame::OnDisplayEdit(wxCommandEvent& event)
+{
+  // Show the settings pop up while disabling input on main window
+  DisplayEditDialog dlg(this);
+  int results = dlg.ShowModal();
+
+  if (wxID_OK == results) {
+    spdlog::debug("changes accepted");
+    // dlg.ApplySettings(settings);
+  } else if (wxID_CANCEL == results) {
+    spdlog::debug("settings rejected");
   }
 }

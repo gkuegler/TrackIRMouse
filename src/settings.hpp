@@ -108,4 +108,4 @@ bool
 ValidateUserInput(const UserInput& displays);
 } // namespace config
 
-#endif /* TRACKIRMOUSE_CONFIG_HPP */
+#endif // TRACKIRMOUSE_CONFIG_HPP

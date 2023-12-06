@@ -312,6 +312,7 @@
     <ClCompile Include="src\threads.cpp" />
     <ClCompile Include="src\trackers.cpp" />
     <ClCompile Include="src\environment.cpp" />
+    <ClInclude Include="src\constants.hpp" />
     <ClInclude Include="src\environment.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -325,8 +326,11 @@
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\settings.hpp" />
     <ClInclude Include="src\hotkey.hpp" />
+    <ClInclude Include="src\shell.hpp" />
     <ClInclude Include="src\ui-control-id.hpp" />
     <ClInclude Include="src\display.hpp" />
+    <ClInclude Include="src\ui-dialog-utilities.hpp" />
+    <ClInclude Include="src\ui-display-edit-dialog.hpp" />
     <ClInclude Include="src\ui-graphic.hpp" />
     <ClInclude Include="src\ui-profile-selector-dialog.hpp" />
     <ClInclude Include="src\handlers.hpp" />

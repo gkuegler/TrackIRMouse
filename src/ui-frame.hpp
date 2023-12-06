@@ -73,14 +73,15 @@ public:
   void StartScrollAlternateHooksAndHotkeys();
   void RemoveHooks();
   void UpdateGuiFromSettings();
-  void StopTrackThread();
-  // menu handlers
+  // void StopTrackThread();
+  //  menu handlers
   void OnExit(wxCommandEvent& event);
   void OnAbout(wxCommandEvent& event);
   void OnSave(wxCommandEvent& event);
   void OnScrollAlternateHotkey(wxKeyEvent& event);
   void OnReload(wxCommandEvent& event);
   void OnSettings(wxCommandEvent& event);
+  void OnLogFile(wxCommandEvent& event);
   // control handlers
   void OnStart(wxCommandEvent& event);
   void OnStop(wxCommandEvent& event);
@@ -101,6 +102,7 @@ public:
   void OnRemoveDisplay(wxCommandEvent& event);
   void OnMoveUp(wxCommandEvent& event);
   void OnMoveDown(wxCommandEvent& event);
+  void OnDisplayEdit(wxCommandEvent& event);
   // helpers
   void PopulateComboBoxWithProfiles();
   void PopulateSettings();
