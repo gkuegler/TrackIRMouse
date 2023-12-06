@@ -37,17 +37,12 @@ DisplayEditDialog::DisplayEditDialog(wxWindow* parent)
              // wxSize(500, 500)
     )
 {
-  const wxSize k_default_button_size = wxSize(110, 25);
-  const wxSize k_default_button_size_2 = wxSize(150, 25);
-  const constexpr int k_max_profile_length = 30;
-  const wxTextValidator alphanumeric_validator(wxFILTER_ALPHANUMERIC);
-
   // colors used for testing
-  const wxColor yellow(255, 255, 0);
-  const wxColor blue(255, 181, 102);
-  const wxColor pink(198, 102, 255);
-  const wxColor green(142, 255, 102);
-  const wxColor orange(102, 201, 255);
+  //const wxColor yellow(255, 255, 0);
+  //const wxColor blue(255, 181, 102);
+  //const wxColor pink(198, 102, 255);
+  //const wxColor green(142, 255, 102);
+  //const wxColor orange(102, 201, 255);
 
   // Panels
   auto panel = new wxPanel(
