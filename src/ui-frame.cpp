@@ -318,7 +318,8 @@ MainWindow::OnSettings(wxCommandEvent& event)
   // Show the settings pop up while disabling input on main window.
   int results = dlg.ShowModal();
 
-  if (wxID_OK == results) {
+  // Accept the changes.
+  if (wxID_OK == results || wxID_APPLY == results) {
 
     dlg.ApplySettings(settings);
     settings::Set(settings);
@@ -335,6 +336,7 @@ MainWindow::OnSettings(wxCommandEvent& event)
     }
   }
 
+  // Additionally save our new settings to disk.
   if (wxID_APPLY == results) {
     if (wxID_APPLY == results) {
       wxCommandEvent event;
@@ -342,6 +344,7 @@ MainWindow::OnSettings(wxCommandEvent& event)
     }
   }
 
+  // The user pressed the cancel button.
   if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
   }
