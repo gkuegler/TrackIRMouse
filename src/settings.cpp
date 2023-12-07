@@ -22,6 +22,7 @@
 
 namespace settings {
 
+// Declare json serializers.
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(UserDisplay, rotation, padding)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Profile,
                                    name,
@@ -59,9 +60,9 @@ GetCopy() -> Settings
 }
 
 auto
-Set(const Settings c) -> void
+Set(const Settings s) -> void
 {
-  g_settings = std::make_shared<Settings>(c);
+  g_settings = std::make_shared<Settings>(s);
 }
 
 auto
@@ -81,15 +82,18 @@ LoadFromFile(std::string filename)
 
 /**
  * Save current user data to disk.
- * Builds a toml object.
- * Uses toml supplied serializer via ostream operators to write to file.
+ * Builds a json object.
  */
-// TODO: wrap this in exceptions
+// TODO: wrap this in exceptions?
 void
 Settings::SaveToFile()
 {
+  // Convert settings to json.6
   json j = *(Get());
+
   std::ofstream f("settings.json");
+
+  // Using indentation of 4.
   f << j.dump(4);
 }
 

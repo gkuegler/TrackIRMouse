@@ -68,6 +68,7 @@ DialogSettings::DialogSettings(wxWindow* parent,
 
   check_quit_on_loss = new wxCheckBox(
     this, wxID_ANY, "Quit app when connection is lost to NP TrackIR");
+  check_quit_on_loss->Enable(false);
 
   check_auto_retry = new wxCheckBox(
     this, wxID_ANY, "Auto retry to connect with NPTrackIR device.");
@@ -110,6 +111,8 @@ DialogSettings::DialogSettings(wxWindow* parent,
 
   check_auto_find_dll = new wxCheckBox(
     this, wxID_ANY, "Look up 'NPClient64.dll' location from registry.");
+  check_auto_find_dll->SetValue(true);
+  check_auto_find_dll->Enable(false);
 
   auto label_auto_find = new wxStaticText(
     this,
@@ -126,18 +129,18 @@ DialogSettings::DialogSettings(wxWindow* parent,
 
   text_dll_folder_location = new wxTextCtrl(
     this, wxID_ANY, "", wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
+  check_auto_find_dll->Enable(false);
 
   // Set Defaults
   check_auto_find_dll->SetValue(user_data.auto_find_track_ir_dll);
   check_track_on_start->SetValue(user_data.track_on_start);
-  check_quit_on_loss->SetValue(user_data.quit_on_loss_of_trackir);
+  // check_quit_on_loss->SetValue(user_data.quit_on_loss_of_trackir);
   check_auto_retry->SetValue(user_data.auto_retry);
   check_mouse_mode_hotkey->SetValue(user_data.hotkey_enabled);
   check_enable_pipe_server->SetValue(user_data.pipe_server_enabled);
   choice_log_level->SetSelection(static_cast<int>(user_data.log_level));
-
-  check_auto_find_dll->SetValue(user_data.auto_find_track_ir_dll);
-  // user_data.auto_find_track_ir_dll = text_dll_folder_location->IsChecked();
+  // check_auto_find_dll->SetValue(user_data.auto_find_track_ir_dll);
+  // text_dll_folder_location->SetValue(user_data.track_ir_dll_folder);
 
   constexpr int SPACE_SM = 6;
   constexpr int BIG_SPACE = 12;

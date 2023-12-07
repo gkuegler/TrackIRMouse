@@ -5,9 +5,9 @@
 static std::map<wxString, enum mouse_mode> g_modes;
 static std::mutex g_modes_mutex;
 
-// put in Toml file
-// [ScrollModesByApp]
-// scroll_left_mini_map = ["sublime_text"]
+// TODO: put default  scroll modes in settings file
+//  scroll_modes_by_app:{
+//  "sublime_text": "SCROLL_LEFT_MINI_MAP"}
 
 mouse_mode
 GetModeByExecutableName(wxString name)

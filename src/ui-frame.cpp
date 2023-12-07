@@ -30,17 +30,20 @@
 #include "ui-dialog-settings.hpp"
 #include "utility.hpp"
 
-static const constexpr std::string_view k_version_no = "1.0.0";
+static const constexpr std::string_view k_version_no = "1.1.0";
+static const constexpr std::string_view k_build_date = __DATE__;
 static const wxSize k_default_button_size = wxSize(110, 25);
 static const wxSize k_default_button_size_2 = wxSize(150, 25);
 static const constexpr int k_max_profile_length = 30;
 static const wxTextValidator alphanumeric_validator(wxFILTER_ALPHANUMERIC);
-static const std::string k_about_message = fmt::format(
-  "Version No.  {}\n\nThis is a mouse control application using head "
-  "tracking.\n\n"
-  "Author: George Kuegler\n"
-  "E-mail: georgekuegler@gmail.com",
-  k_version_no);
+static const std::string k_about_message =
+  fmt::format("Version No:  {}\n"
+              "Build Date:  {}\n\n"
+              "This is a mouse control application using head tracking.\n\n"
+              "Author: George Kuegler\n"
+              "E-mail: georgekuegler@gmail.com",
+              k_version_no,
+              k_build_date);
 
 // colors used for testing
 const wxColor yellow(255, 255, 0);
@@ -288,7 +291,11 @@ MainWindow::OnAbout(wxCommandEvent& event)
 void
 MainWindow::OnSave(wxCommandEvent& event)
 {
-  settings::Get()->SaveToFile();
+  try {
+    settings::Get()->SaveToFile();
+  } catch (std::exception& ex) {
+    spdlog::error("Couldn't save settings to file.\n\n{}", ex.what());
+  }
 }
 
 void
@@ -303,22 +310,18 @@ MainWindow::OnReload(wxCommandEvent& event)
 void
 MainWindow::OnSettings(wxCommandEvent& event)
 {
-  // Only modify local copy.
-  // Update settings in one go with 'make_shared'.
+  // Get a copy we can freely modify.
   auto settings = settings::GetCopy();
 
-  // Show the settings pop up while disabling input on main window
   DialogSettings dlg(this, settings);
 
+  // Show the settings pop up while disabling input on main window.
   int results = dlg.ShowModal();
 
-  if (wxID_OK == results || wxID_APPLY == results) {
-    spdlog::debug("settings accepted");
+  if (wxID_OK == results) {
+
     dlg.ApplySettings(settings);
     settings::Set(settings);
-    if (wxID_APPLY == results) {
-      settings.SaveToFile();
-    }
 
     if (settings.hotkey_enabled) {
       StartScrollAlternateHooksAndHotkeys();
@@ -330,8 +333,16 @@ MainWindow::OnSettings(wxCommandEvent& event)
     } else {
       StopPipeServer();
     }
+  }
 
-  } else if (wxID_CANCEL == results) {
+  if (wxID_APPLY == results) {
+    if (wxID_APPLY == results) {
+      wxCommandEvent event;
+      OnSave(event);
+    }
+  }
+
+  if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
   }
 }
