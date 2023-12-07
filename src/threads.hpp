@@ -44,29 +44,44 @@ public:
   ExitCode Entry();
 };
 
-// void
-// DestroyThreadAndWait(wxThread* thread, wxCriticalSection mutex)
-// {
-//   bool wait_for_stop = false;
-//   { // enter critical section
-//     wxCriticalSectionLocker enter(mutex);
-//     if (thread) {
-//       thread->Delete();
-//       wait_for_stop = true;
-//     }
-//   } // leave critical section
+template<typename T>
+void
+GracefullyDeleteThreadAndWait(T*& thread, wxCriticalSection& cs)
+{
+  // Threads run in detached mode by default.
+  // The thread is responsible for setting '*thread' to NULL in its
+  // destructor.
+  bool wait_for_stop = false;
+  { // enter critical section
+    wxCriticalSectionLocker enter(cs);
+    if (thread) {
+      thread->Delete();
+      wait_for_stop = true;
+    }
+  } // leave critical section
 
-//   if (wait_for_stop) {
-//     // TODO: set a timeout here? and close app if thread doesn't die
-//     while (true) {
-//       Sleep(8);
-//       wxCriticalSectionLocker enter(mutex);
-//       if (thread == NULL) {
-//         break;
-//       }
-//     }
-//   }
-// };
+  if (wait_for_stop) {
+
+    // A crude one second timeout.
+    constexpr const int time_cs = 100; // in centi-seconds
+    int i = 0;
+    for (; i < 100; i++) {
+      Sleep(8);
+      wxCriticalSectionLocker enter(cs);
+      if (thread == NULL) {
+        break;
+      }
+    }
+    if (i == time_cs) {
+      spdlog::error("Thread not stoped within timeout. Thread may still be "
+                    "running and not responsive.");
+    }
+    wxCriticalSectionLocker enter(cs);
+    if (thread) {
+      thread->Kill();
+    }
+  }
+};
 
 // template<typename ThreadType>
 // void

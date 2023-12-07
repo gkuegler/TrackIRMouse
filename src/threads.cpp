@@ -14,8 +14,8 @@
 //////////////////////////////////////////////////////////////////////
 
 ThreadHeadTracking::ThreadHeadTracking(MainWindow* p_window_handler,
-                         HWND hWnd,
-                         settings::Settings settings)
+                                       HWND hWnd,
+                                       settings::Settings settings)
   : wxThread()
 {
   p_window_handler_ = p_window_handler;
@@ -35,7 +35,7 @@ ThreadHeadTracking::~ThreadHeadTracking()
   // Threads run detached and delete themselves when they complete their entry
   // method. Make sure thread object does not
   // https://docs.wxwidgets.org/3.0/classwx_thread.html
-  wxCriticalSectionLocker enter(p_window_handler_->p_cs_track_thread);
+  wxCriticalSectionLocker enter(p_window_handler_->cs_track_thread_);
   p_window_handler_->track_thread_ = NULL;
 }
 
@@ -96,7 +96,8 @@ ThreadHeadTracking::Delete(ExitCode* rc, wxThreadWait waitMode)
   tracker_->stop();
 
   // Ensure base class works as intended.
-  return wxThread::Delete(rc, waitMode);
+  // return wxThread::Delete(rc, waitMode);
+  return wxTHREAD_NO_ERROR;
 }
 //////////////////////////////////////////////////////////////////////
 //                         WatchdogThread                           //
@@ -104,22 +105,21 @@ ThreadHeadTracking::Delete(ExitCode* rc, wxThreadWait waitMode)
 
 // TODO: make a restarting service for checkbox ini settings
 ThreadPipeServer::ThreadPipeServer(MainWindow* p_window_handler,
-                                         std::string name)
+                                   std::string name)
   : wxThread()
 {
 
   p_window_handler_ = p_window_handler;
   server_name_ = name;
+  spdlog::trace("pipe server constructed");
 }
 
 ThreadPipeServer::~ThreadPipeServer()
 {
-  // Threads are detached anddelete themselves when they are done running.
-  // TODO: Will need to provide different locks in the future with critical
-  // sections https://docs.wxwidgets.org/3.0/classwx_thread.html
-  wxCriticalSectionLocker enter(p_window_handler_->p_cs_pipe_thread);
-  p_window_handler_->p_server_thread_ = NULL;
-  // end of critical section
+  spdlog::trace("pipe server destructed");
+  // Threads are detached and delete themselves when they are done running.
+  wxCriticalSectionLocker enter(p_window_handler_->cs_pipe_thread_);
+  p_window_handler_->pipe_server_thread_ = NULL;
 }
 
 wxThread::ExitCode

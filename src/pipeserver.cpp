@@ -99,6 +99,8 @@ PipeServer::ServeOneClient()
   // Wait for the client to connect; if it succeeds,
   // the function returns a nonzero value. If the function
   // returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
+  // TODO: make this nonblocking so my server actually stops instead of waiting
+  // for another connection
   bool connected = ConnectNamedPipe(hPipe, NULL)
                      ? TRUE
                      : (GetLastError() == ERROR_PIPE_CONNECTED);

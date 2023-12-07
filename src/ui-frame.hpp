@@ -43,9 +43,9 @@ public:
 
   // threads
   ThreadHeadTracking* track_thread_ = nullptr;
-  ThreadPipeServer* p_server_thread_ = nullptr;
-  wxCriticalSection p_cs_track_thread; // protects track thread
-  wxCriticalSection p_cs_pipe_thread;  // protects pipe server thread
+  ThreadPipeServer* pipe_server_thread_ = nullptr;
+  wxCriticalSection cs_track_thread_; // protects track thread
+  wxCriticalSection cs_pipe_thread_;  // protects pipe server thread
 
   // components
   PanelDisplayGraphic* p_display_graphic_;
@@ -71,8 +71,11 @@ public:
   ~MainWindow();
 
   void StartScrollAlternateHooksAndHotkeys();
+  void StartPipeServer();
+  void StopPipeServer();
   void RemoveHooks();
   void UpdateGuiFromSettings();
+
   // void StopTrackThread();
   //  menu handlers
   void OnExit(wxCommandEvent& event);

@@ -325,11 +325,11 @@ MainWindow::OnSettings(wxCommandEvent& event)
     } else {
       RemoveHooks();
     }
-    /*if (settings.pipe_server_enabled) {
-      StartScrollAlternateHooksAndHotkeys();
+    if (settings.pipe_server_enabled) {
+      StartPipeServer();
     } else {
-      RemoveHooks();
-    }*/
+      StopPipeServer();
+    }
 
   } else if (wxID_CANCEL == results) {
     spdlog::debug("settings rejected");
@@ -358,7 +358,7 @@ void
 MainWindow::OnScrollAlternateHotkey(wxKeyEvent& event)
 {
   spdlog::trace("hot key event");
-  wxCriticalSectionLocker enter(p_cs_track_thread);
+  wxCriticalSectionLocker enter(cs_track_thread_);
   if (track_thread_) {
     track_thread_->handler_->toggle_alternate_mode();
   }
@@ -392,19 +392,32 @@ MainWindow::RemoveHooks()
   hotkey_alternate_mode_.reset();
   hook_window_changed_.reset();
 }
-// void
-// MainWindow::StartPipeServer()
-//{
-//   hotkey_alternate_mode_.reset();
-//   hook_window_changed_.reset();
-// }
-//
-// void
-// MainWindow::StopPipeServer()
-//{
-//   hotkey_alternate_mode_.reset();
-//   hook_window_changed_.reset();
-// }
+
+void
+MainWindow::StartPipeServer()
+{
+  wxCriticalSectionLocker enter(cs_pipe_thread_);
+
+  // Check to see if the pipe server is currently running.
+  if (pipe_server_thread_) {
+    return;
+  }
+
+  auto name = settings::Get()->pipe_server_name;
+  pipe_server_thread_ = new ThreadPipeServer(this, name);
+  if (pipe_server_thread_->Run() != wxTHREAD_NO_ERROR) {
+    spdlog::error("Can't run pipe server thread.");
+    delete pipe_server_thread_;
+    pipe_server_thread_ = NULL;
+  }
+}
+
+void
+MainWindow::StopPipeServer()
+{
+  GracefullyDeleteThreadAndWait<ThreadPipeServer>(pipe_server_thread_,
+                                                  cs_pipe_thread_);
+}
 
 void
 MainWindow::PopulateComboBoxWithProfiles()
@@ -425,28 +438,6 @@ MainWindow::PopulateComboBoxWithProfiles()
   }
 }
 
-auto DestroyThreadAndWait = [](wxThread* thread, wxCriticalSection mutex) {
-  bool wait_for_stop = false;
-  { // enter critical section
-    wxCriticalSectionLocker enter(mutex);
-    if (thread) {
-      thread->Delete();
-      wait_for_stop = true;
-    }
-  } // leave critical section
-
-  if (wait_for_stop) {
-    // TODO: set a timeout here? and close app if thread doesn't die
-    while (true) {
-      Sleep(8);
-      wxCriticalSectionLocker enter(mutex);
-      if (thread == NULL) {
-        break;
-      }
-    }
-  }
-};
-
 void
 MainWindow::OnStart(wxCommandEvent& event)
 {
@@ -458,30 +449,8 @@ MainWindow::OnStart(wxCommandEvent& event)
   // To avoid dangling pointers, ~MyThread() will enter the critical section and
   // set track_thread_ to nullptr.
 
-  bool wait_for_stop = false;
-  { // scope for critical section locker limited oh lifetime
-    // TODO: find a better way to enter critical section
-    wxCriticalSectionLocker enter(p_cs_track_thread);
-    if (track_thread_) {
-      track_thread_->tracker_->stop();
-      wait_for_stop = true;
-    }
-  } // leave critical section
-
-  if (wait_for_stop) {
-    // TODO: set a timeout here? and close app if thread doesn't die
-    while (true) {
-      Sleep(8);
-
-      { // scope for critical section locker limited oh lifetime
-        // TODO: find a better way to enter critical section
-        wxCriticalSectionLocker enter(p_cs_track_thread);
-        if (track_thread_ == NULL) {
-          break;
-        }
-      } // leave critical section
-    }
-  }
+  GracefullyDeleteThreadAndWait<ThreadHeadTracking>(track_thread_,
+                                                    cs_track_thread_);
 
   try {
     auto settings = settings::GetCopy();
@@ -494,7 +463,7 @@ MainWindow::OnStart(wxCommandEvent& event)
 
   if (track_thread_->Run() == wxTHREAD_NO_ERROR) { // returns immediately
     spdlog::info("Started Mouse.");
-    this->SetStatusText("Running");
+    // this->SetStatusText("Running");
   } else {
     spdlog::error("Can't run the tracking thread!");
     delete track_thread_;
@@ -508,15 +477,10 @@ MainWindow::OnStart(wxCommandEvent& event)
 void
 MainWindow::OnStop(wxCommandEvent& event)
 {
-  // Threads run in detached mode by default.
-  // The thread is responsible for setting track_thread_ to nullptr in its
-  // destructor.
-  if (track_thread_) {
-    // Gracefully exit the tracking loop.
-    track_thread_->Delete();
-  } else {
-    spdlog::warn("Track thread not running!");
-  }
+
+  GracefullyDeleteThreadAndWait<ThreadHeadTracking>(track_thread_,
+                                                    cs_track_thread_);
+  return;
 }
 
 void

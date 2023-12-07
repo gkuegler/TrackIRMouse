@@ -266,7 +266,6 @@ TrackIR::toggle_mouse()
 void
 TrackIR::stop()
 {
-  logger_->trace("stop tracking called into");
   tracking_allowed_to_run_ = false;
 }
 

@@ -193,13 +193,7 @@ App::OnInit()
   // Start the pipe server thread.
   // Pipe server is only started at first application startup.
   if (settings->pipe_server_enabled) {
-    main_window_->p_server_thread_ =
-      new ThreadPipeServer(main_window_, settings->pipe_server_name);
-    if (main_window_->p_server_thread_->Run() != wxTHREAD_NO_ERROR) {
-      spdlog::error("Can't run server thread.");
-      delete main_window_->p_server_thread_;
-      main_window_->p_server_thread_ = nullptr;
-    }
+    main_window_->StartPipeServer();
   }
 
   return true;
