@@ -817,14 +817,26 @@ MainWindow::OnMoveDown(wxCommandEvent& event)
 void
 MainWindow::OnDisplayEdit(wxCommandEvent& event)
 {
-  // Show the settings pop up while disabling input on main window
-  DialogDisplayEdit dlg(this);
+  // Get the index of the selected row.
+  const auto index = p_view_mapping_data_->GetSelectedRow();
+  if (wxNOT_FOUND == index) {
+    spdlog::warn("row not selected");
+    return;
+  }
+
+  auto& display = settings::Get()->GetActiveProfile().displays[index];
+  // Show the edit pop up while disabling input on main window
+  DialogDisplayEdit dlg(this, display);
   int results = dlg.ShowModal();
 
   if (wxID_OK == results) {
     spdlog::debug("changes accepted");
-    // dlg.ApplySettings(settings);
-  } else if (wxID_CANCEL == results) {
+    dlg.ApplyChanges(display);
+
+    // Update the GUI.
+    UpdateProfilePanelFromSettings();
+    p_display_graphic_->PaintNow();
+  } else {
     spdlog::debug("settings rejected");
   }
 }
