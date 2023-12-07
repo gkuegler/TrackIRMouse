@@ -13,7 +13,7 @@
 //                           TrackThread                            //
 //////////////////////////////////////////////////////////////////////
 
-TrackThread::TrackThread(Frame* p_window_handler,
+ThreadHeadTracking::ThreadHeadTracking(MainWindow* p_window_handler,
                          HWND hWnd,
                          settings::Settings settings)
   : wxThread()
@@ -30,7 +30,7 @@ TrackThread::TrackThread(Frame* p_window_handler,
   tracker_ = std::make_shared<trackers::TrackIR>(handler_.get());
 }
 
-TrackThread::~TrackThread()
+ThreadHeadTracking::~ThreadHeadTracking()
 {
   // Threads run detached and delete themselves when they complete their entry
   // method. Make sure thread object does not
@@ -40,7 +40,7 @@ TrackThread::~TrackThread()
 }
 
 wxThread::ExitCode
-TrackThread::Entry()
+ThreadHeadTracking::Entry()
 {
   auto profile = settings_.GetActiveProfile();
   const unsigned long retry_time = 1500; // ms
@@ -88,7 +88,7 @@ TrackThread::Entry()
   }
 }
 wxThreadError
-TrackThread::Delete(ExitCode* rc, wxThreadWait waitMode)
+ThreadHeadTracking::Delete(ExitCode* rc, wxThreadWait waitMode)
 {
   // Custom thread stopping hook to keed thread interface consistent.
   // Tracker uses an atomic<bool> instead of calling wxTestDestroy for
@@ -103,7 +103,7 @@ TrackThread::Delete(ExitCode* rc, wxThreadWait waitMode)
 //////////////////////////////////////////////////////////////////////
 
 // TODO: make a restarting service for checkbox ini settings
-ControlServerThread::ControlServerThread(Frame* p_window_handler,
+ThreadPipeServer::ThreadPipeServer(MainWindow* p_window_handler,
                                          std::string name)
   : wxThread()
 {
@@ -112,7 +112,7 @@ ControlServerThread::ControlServerThread(Frame* p_window_handler,
   server_name_ = name;
 }
 
-ControlServerThread::~ControlServerThread()
+ThreadPipeServer::~ThreadPipeServer()
 {
   // Threads are detached anddelete themselves when they are done running.
   // TODO: Will need to provide different locks in the future with critical
@@ -123,7 +123,7 @@ ControlServerThread::~ControlServerThread()
 }
 
 wxThread::ExitCode
-ControlServerThread::Entry()
+ThreadPipeServer::Entry()
 {
   try {
     auto server = PipeServer(server_name_);

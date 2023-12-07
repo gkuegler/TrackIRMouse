@@ -13,7 +13,7 @@
 #include <memory>
 #include <string>
 
-namespace mylogging {
+namespace logging {
 
 inline const auto log_levels =
   std::array<std::string, 7>{ "trace", "debug",    "info", "warn",

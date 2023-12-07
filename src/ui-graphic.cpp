@@ -10,7 +10,7 @@
 #include "settings.hpp"
 #include "types.hpp"
 
-cDisplayGraphic::cDisplayGraphic(wxWindow* parent, wxSize size)
+PanelDisplayGraphic::PanelDisplayGraphic(wxWindow* parent, wxSize size)
   : wxPanel(parent,
             wxID_ANY,
             wxDefaultPosition,
@@ -20,14 +20,14 @@ cDisplayGraphic::cDisplayGraphic(wxWindow* parent, wxSize size)
 {
   p_parent_ = parent;
   // TODO: initialize logger_ here
-  Bind(wxEVT_PAINT, &cDisplayGraphic::PaintEvent, this);
+  Bind(wxEVT_PAINT, &PanelDisplayGraphic::PaintEvent, this);
 }
 
 // Called by the system of by wxWidgets when the panel_ needs
 // to be redrawn. You can also trigger this call by
 // calling Refresh()/Update().
 void
-cDisplayGraphic::PaintEvent(wxPaintEvent& evt)
+PanelDisplayGraphic::PaintEvent(wxPaintEvent& evt)
 {
   wxPaintDC dc(this);
   Render(dc);
@@ -47,7 +47,7 @@ cDisplayGraphic::PaintEvent(wxPaintEvent& evt)
  */
 // TODO: call paint now on settings change
 void
-cDisplayGraphic::PaintNow()
+PanelDisplayGraphic::PaintNow()
 {
   wxClientDC dc(this);
   Render(dc);
@@ -60,7 +60,7 @@ cDisplayGraphic::PaintNow()
  */
 
 void
-cDisplayGraphic::Render(wxDC& dc)
+PanelDisplayGraphic::Render(wxDC& dc)
 {
   // set canvas space or querry space?
   // get monitor rectangles
@@ -103,7 +103,7 @@ cDisplayGraphic::Render(wxDC& dc)
   const double area_y = cheight - 50;
 
   // get array of monitor bounds
-  const auto hdi = environment::GetHardwareDisplayInformation();
+  const auto hdi = GetHardwareDisplayInformation();
   const auto usrDisplays = settings::Get()->GetActiveProfile().displays;
 
   // offset all rectangles so that 0,0 as top left most value

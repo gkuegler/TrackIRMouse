@@ -42,7 +42,7 @@ TrackIR::TrackIR(handlers::MouseHandler* handler)
   , tracking_allowed_to_run_(true)
   , pause_mouse_(false)
 {
-  logger_ = mylogging::GetClonedLogger("trackir");
+  logger_ = logging::GetClonedLogger("trackir");
 }
 
 void

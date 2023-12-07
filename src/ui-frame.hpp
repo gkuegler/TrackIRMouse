@@ -11,22 +11,22 @@
 #include "ui-graphic.hpp"
 
 // forward decl of thread classes
-class TrackThread;
-class ControlServerThread;
+class ThreadHeadTracking;
+class ThreadPipeServer;
 
 //////////////////////////////////////////////////////////////////////
 //                Text Control Status Output Window                 //
 //////////////////////////////////////////////////////////////////////
 
-class LogWindow : public wxTextCtrl
+class LogOutputControl : public wxTextCtrl
 {
 public:
-  LogWindow(wxWindow* parent,
-            wxWindowID p_profile_id_,
-            const wxString& value,
-            const wxPoint& pos,
-            const wxSize& size,
-            int style = 0)
+  LogOutputControl(wxWindow* parent,
+                   wxWindowID p_profile_id_,
+                   const wxString& value,
+                   const wxPoint& pos,
+                   const wxSize& size,
+                   int style = 0)
     : wxTextCtrl(parent, p_profile_id_, value, pos, size, style){};
 };
 
@@ -35,21 +35,21 @@ public:
 //////////////////////////////////////////////////////////////////////
 
 // Main frame of program
-class Frame : public wxFrame
+class MainWindow : public wxFrame
 {
 public:
   std::unique_ptr<game_title_map_t> p_titles_map_;
   GameTitleVector titles_;
 
   // threads
-  TrackThread* track_thread_ = nullptr;
-  ControlServerThread* p_server_thread_ = nullptr;
+  ThreadHeadTracking* track_thread_ = nullptr;
+  ThreadPipeServer* p_server_thread_ = nullptr;
   wxCriticalSection p_cs_track_thread; // protects track thread
   wxCriticalSection p_cs_pipe_thread;  // protects pipe server thread
 
   // components
-  cDisplayGraphic* p_display_graphic_;
-  LogWindow* p_text_rich_;
+  PanelDisplayGraphic* p_display_graphic_;
+  LogOutputControl* p_text_rich_;
 
   // controls
   wxStaticText* label_text_rich_;
@@ -60,15 +60,15 @@ public:
   wxCheckBox* p_check_use_default_padding_;
   wxDataViewListCtrl* p_view_mapping_data_;
 
-  // global hotkey has to be wrapped in a smart pointer to avoid a bug
+  // Global hotkey has to be wrapped in a smart pointer to avoid a bug
   // where my same object would be deleted following the initialization of my
-  // frame
+  // frame.
   std::unique_ptr<GlobalHotkey> hotkey_alternate_mode_;
-  std::unique_ptr<WindowChangedHook> hook_window_changed_;
+  std::unique_ptr<HookWindowChanged> hook_window_changed_;
 
 public:
-  Frame(wxPoint, wxSize);
-  ~Frame();
+  MainWindow(wxPoint, wxSize);
+  ~MainWindow();
 
   void StartScrollAlternateHooksAndHotkeys();
   void RemoveHooks();
@@ -85,7 +85,6 @@ public:
   // control handlers
   void OnStart(wxCommandEvent& event);
   void OnStop(wxCommandEvent& event);
-  void OnShowLog(wxCommandEvent& event);
   void OnActiveProfile(wxCommandEvent& event);
   void OnAddProfile(wxCommandEvent& event);
   void OnRemoveProfile(wxCommandEvent& event);

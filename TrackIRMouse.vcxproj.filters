@@ -57,10 +57,10 @@
     <ClCompile Include="src\mouse-modes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\config-loader.cpp">
+    <ClCompile Include="src\game-titles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\game-titles.cpp">
+    <ClCompile Include="src\settings-loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -74,7 +74,7 @@
     <ClInclude Include="src\ui-control-id.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui-profile-selector-dialog.hpp">
+    <ClInclude Include="src\ui-dialog-profile-selector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ui-graphic.hpp">
@@ -125,9 +125,6 @@
     <ClInclude Include="src\messages.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\config-loader.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\game-titles.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -137,7 +134,7 @@
     <ClInclude Include="src\windows-wrapper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui-settings-dialog.hpp">
+    <ClInclude Include="src\ui-dialog-settings.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\json.hpp">
@@ -155,7 +152,10 @@
     <ClInclude Include="src\ui-dialog-utilities.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui-display-edit-dialog.hpp">
+    <ClInclude Include="src\ui-dialog-display-edit.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\settings-loader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

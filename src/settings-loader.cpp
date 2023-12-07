@@ -1,11 +1,21 @@
-#include "config-loader.hpp"
+/**
+ * Main app entry and GUI components.
+ *
+ * --License Boilerplate Placeholder--
+ *
+ */
 
-#include "settings.hpp"
+#include "settings-loader.hpp"
 
 #include <wx/msgdlg.h>
 #include <wx/string.h>
 
 #include <string>
+
+#include "constants.hpp"
+#include "log.hpp"
+#include "settings.hpp"
+#include "utility.hpp"
 
 /**
  * Returns true if application should continue loading.
@@ -16,21 +26,21 @@
 bool
 LoadSettingsFile()
 {
-  const std::string filename = "settings.json";
-  auto result = settings::LoadFromFile(filename);
-  if (result.success) {
-    return true;
-  } else {
+  try {
+
+    settings::LoadFromFile(
+      utility::GetAbsolutePathBasedFromExeFolder(SETTINGS_FILE_NAME));
+  } catch (std::exception& ex) {
+    settings::SetToDefaults();
+
     // press okay to keep empty settings.
     const wxString ok = "Overwrite with Default Settings";
     const wxString cancel = "Exit Program";
-    const wxString prefix = "Error opening settings file.\n\n";
 
-    auto dlg =
-      wxMessageDialog(nullptr,
-                      "Error opening settings file.\n\n" + result.err_msg,
-                      "TrackIRMouse Error",
-                      wxICON_ERROR | wxOK | wxCANCEL);
+    auto dlg = wxMessageDialog(nullptr,
+                               ex.what(),
+                               "TrackIRMouse - Error opening settings file.",
+                               wxICON_ERROR | wxOK | wxCANCEL);
     dlg.SetOKCancelLabels(ok, cancel);
 
     // display reason for error to user

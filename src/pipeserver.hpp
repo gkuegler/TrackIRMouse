@@ -9,17 +9,18 @@
 
 #include "Log.hpp"
 
-class Handle
+class WindowsHandle
 {
 public:
   HANDLE handle = INVALID_HANDLE_VALUE;
-  Handle(HANDLE h) { handle = h; };
+  WindowsHandle(HANDLE h) { handle = h; };
 
-  Handle() = delete;                        // default constructor
-  Handle(const Handle&) = delete;           // copy constructor
-  Handle& operator=(Handle other) = delete; // copy assignment constructor
+  WindowsHandle() = delete;                     // default constructor
+  WindowsHandle(const WindowsHandle&) = delete; // copy constructor
+  WindowsHandle& operator=(WindowsHandle other) =
+    delete; // copy assignment constructor
 
-  ~Handle() { CloseHandle(handle); };
+  ~WindowsHandle() { CloseHandle(handle); };
 };
 
 // Single threaded pipe server
@@ -37,7 +38,7 @@ public:
   void ServeOneClient();
 
 private:
-  void HandleConnection(Handle hPipe);
+  void HandleConnection(WindowsHandle hPipe);
   std::string HandleMsg(std::string);
 };
 

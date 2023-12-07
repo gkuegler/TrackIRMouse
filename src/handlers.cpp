@@ -15,7 +15,7 @@ namespace handlers {
 
 MouseHandler::MouseHandler(settings::Profile profile)
 {
-  const auto info = environment::GetHardwareDisplayInformation();
+  const auto info = GetHardwareDisplayInformation();
 
   auto hardware_display_count = info.rectangles.size();
   auto user_display_count = profile.displays.size();
@@ -36,14 +36,14 @@ MouseHandler::MouseHandler(settings::Profile profile)
                   hardware_display_count));
   }
 
-  std::vector<CDisplay> displays;
+  std::vector<Display> displays;
 
   // Build display objects
   for (size_t i = 0; i < profile.displays.size(); i++) {
     auto& d = profile.displays[i];
     auto& rect = info.rectangles[i];
     // transfer config data to internal strucuture
-    CDisplay display(rect, d.rotation, d.padding);
+    Display display(rect, d.rotation, d.padding);
     display.setAbsBounds(info.origin_offset_x,
                          info.origin_offset_y,
                          info.short_to_pixels_ratio_x,
@@ -51,7 +51,7 @@ MouseHandler::MouseHandler(settings::Profile profile)
     displays.push_back(display);
   }
 
-  displays_ = std::make_shared<std::vector<CDisplay>>(displays);
+  displays_ = std::make_shared<std::vector<Display>>(displays);
 }
 
 inline void
@@ -106,7 +106,7 @@ MouseHandler::handle_input(const Degrees yaw, const Degrees pitch)
   double x;
   double y;
 
-  CDisplay& dlast = (*displays_)[last_screen];
+  Display& dlast = (*displays_)[last_screen];
   const double left = dlast.rotation_boundaries[LEFT_EDGE];
   const double right = dlast.rotation_boundaries[RIGHT_EDGE];
   const double top = dlast.rotation_boundaries[TOP_EDGE];

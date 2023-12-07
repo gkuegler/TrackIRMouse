@@ -10,13 +10,12 @@
 #include "settings.hpp"
 #include "trackers.hpp"
 
-class Frame;
-class Panel;
+class MainWindow;
 
-class TrackThread : public wxThread
+class ThreadHeadTracking : public wxThread
 {
 public:
-  Frame* p_window_handler_ = nullptr;
+  MainWindow* p_window_handler_ = nullptr;
   std::shared_ptr<trackers::TrackIR> tracker_;
   std::shared_ptr<handlers::MouseHandler> handler_;
 
@@ -25,21 +24,23 @@ private:
   settings::Settings settings_;
 
 public:
-  TrackThread(Frame* window_handler, HWND hWnd, settings::Settings settings);
-  ~TrackThread();
+  ThreadHeadTracking(MainWindow* window_handler,
+                     HWND hWnd,
+                     settings::Settings settings);
+  ~ThreadHeadTracking();
   ExitCode Entry();
   wxThreadError Delete(ExitCode* rc = NULL,
                        wxThreadWait waitMode = wxTHREAD_WAIT_DEFAULT);
 };
 
-class ControlServerThread : public wxThread
+class ThreadPipeServer : public wxThread
 {
 public:
-  Frame* p_window_handler_ = nullptr;
-  std::string server_name_ = "defaultname";
+  MainWindow* p_window_handler_ = nullptr;
+  std::string server_name_ = "LoremIpsum";
 
-  ControlServerThread(Frame* window_handler, std::string name);
-  ~ControlServerThread();
+  ThreadPipeServer(MainWindow* window_handler, std::string name);
+  ~ThreadPipeServer();
   ExitCode Entry();
 };
 

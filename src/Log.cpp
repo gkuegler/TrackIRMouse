@@ -22,7 +22,7 @@
 // TODO: high dpi support, and text size
 // TODO: test dpi support on 4K monitor
 
-namespace mylogging {
+namespace logging {
 
 template<typename Mutex>
 class WxSink : public spdlog::sinks::base_sink<Mutex>

@@ -88,7 +88,7 @@ ScrollHook(HWINEVENTHOOK hWinEventHook,
   // if (OBJID_VSCROLL == idObject)
 }
 
-WindowChangedHook::WindowChangedHook()
+HookWindowChanged::HookWindowChanged()
 {
   hook = SetWinEventHook(EVENT_OBJECT_FOCUS,
                          EVENT_OBJECT_FOCUS,
@@ -100,7 +100,7 @@ WindowChangedHook::WindowChangedHook()
 }
 
 auto
-WindowChangedHook::Disable() -> void
+HookWindowChanged::Disable() -> void
 {
   if (hook) {
     UnhookWinEvent(hook);
@@ -108,7 +108,7 @@ WindowChangedHook::Disable() -> void
   }
 }
 
-WindowChangedHook::~WindowChangedHook()
+HookWindowChanged::~HookWindowChanged()
 {
   if (hook) {
     UnhookWinEvent(hook);

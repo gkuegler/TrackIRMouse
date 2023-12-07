@@ -6,8 +6,8 @@
  * --License Boilerplate Placeholder--
  */
 
-#include "json.hpp"
 #include "settings.hpp"
+#include "json.hpp"
 
 #include <filesystem>
 #include <format>
@@ -15,6 +15,7 @@
 #include <iostream>
 #include <string>
 
+#include "constants.hpp"
 #include "log.hpp"
 #include "types.hpp"
 #include "utility.hpp"
@@ -43,43 +44,39 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,
                                    profiles)
 
 // settings singleton
-static std::shared_ptr<Settings> g_config;
+static std::shared_ptr<Settings> g_settings;
 
 auto
 Get() -> std::shared_ptr<Settings>
 {
-  return g_config;
+  return g_settings;
 }
 
 auto
 GetCopy() -> Settings
 {
-  return Settings(*g_config);
+  return Settings(*g_settings);
 }
 
 auto
 Set(const Settings c) -> void
 {
-  g_config = std::make_shared<Settings>(c);
+  g_settings = std::make_shared<Settings>(c);
 }
 
-LoadResults
+auto
+SetToDefaults() -> void
+{
+  g_settings = std::make_shared<Settings>(Settings());
+}
+
+void
 LoadFromFile(std::string filename)
 {
-  try {
-    auto settings = LoadJsonFromFileIntoObject<Settings>("settings.json");
-    Set(settings);
-    return LoadResults{ true, "" };
-  } catch (const std::exception& ex) {
-    // I catch any exceptions here because It gives me the flexibility to handle
-    // library specific exceptions without exposing library.
-    // json::exception inherits from std::exception build a default
-    // configuration object
-
-    // Make default settings.
-    settings::Set(settings::Settings());
-    return LoadResults{ false, ex.what() };
-  }
+  // Let any exceptions through.
+  // All of the 'json' exceptions inherit from std::exception
+  auto settings = LoadJsonFromFileIntoObject<Settings>(filename);
+  Set(settings);
 }
 
 /**
@@ -224,7 +221,7 @@ auto
 Settings::SetLogLevel(std::string level_name) -> void
 {
   try {
-    log_level = mylogging::map_name_to_level.at(level_name);
+    log_level = logging::map_name_to_level.at(level_name);
     // sets global level
     spdlog::set_level(log_level);
 
@@ -240,7 +237,7 @@ auto
 Settings::GetLogLevelString() -> std::string
 {
 
-  return mylogging::map_level_to_name.at(log_level);
+  return logging::map_level_to_name.at(log_level);
 }
 
 auto

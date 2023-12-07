@@ -1,18 +1,18 @@
 #ifndef TRACKIRMOUSE_HOTKEY_HPP
 #define TRACKIRMOUSE_HOTKEY_HPP
 
-
 #include "windows-wrapper.hpp"
 
 #include "log.hpp"
 
-enum
-{ // Windows: For applications this must be between 0 and 0xBFFF
+enum HotKeyId
+/*  Windows : For applications this must be between 0 and 0xBFFF */
+{
   HOTKEY_ID_SCROLL_ALTERNATE = 5,
 };
 
 /**
- * map a global windows hotkey
+ * map a desktop-wide windows hotkey for the current user
  */
 class GlobalHotkey
 {

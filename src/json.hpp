@@ -13,8 +13,7 @@ LoadJsonFromFileIntoObject(std::string filename) -> T
   std::ifstream f(filename);
 
   if (!f.good()) {
-    auto message = "can't access file '" + filename + "'.";
-    throw std::exception(message.c_str());
+    throw std::runtime_error("can't access file '" + filename + "'.");
   }
 
   json j = json::parse(f);

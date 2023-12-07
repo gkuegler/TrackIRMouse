@@ -3,14 +3,14 @@
 
 #include "types.hpp"
 
-typedef struct mouse_values_
+struct CursorCoordinates
 {
   bool contains = false;
   double x = -1;
   double y = -1;
-} CursorPosition;
+};
 
-class CDisplay
+class Display
 {
 public:
   RectDegrees rotation_boundaries; // User-specified
@@ -25,9 +25,9 @@ public:
   double m_short_to_pixels_ratio_x{ 0.0 };
   double m_short_to_pixels_ratio_y{ 0.0 };
 
-  CDisplay(const RectPixels pixel_edges,
-           const RectDegrees rotation_values,
-           const RectPixels padding_values)
+  Display(const RectPixels pixel_edges,
+          const RectDegrees rotation_values,
+          const RectPixels padding_values)
   {
     rel_edge_pixel = pixel_edges;
     rotation_boundaries = rotation_values;
@@ -97,7 +97,7 @@ public:
                                      (pitch - rotation_boundaries[TOP_EDGE]);
   }
 
-  const CursorPosition get_cursor_coordinates(const Degrees yaw,
+  const CursorCoordinates get_cursor_coordinates(const Degrees yaw,
                                               const Degrees pitch)
   {
     const double left = rotation_boundaries[LEFT_EDGE];
@@ -110,7 +110,7 @@ public:
     if ((yaw < left) && (yaw > right) && (pitch > top) && (pitch < bottom)) {
       return { true, get_horizontal_value(yaw), get_vertical_value(pitch) };
     } else {
-      return { false, -1, -1 };
+      return {};
     }
   }
 

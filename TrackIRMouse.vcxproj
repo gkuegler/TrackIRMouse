@@ -296,7 +296,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\config-loader.cpp" />
+    <ClCompile Include="src\settings-loader.cpp" />
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\game-titles.cpp" />
     <ClCompile Include="src\hooks.cpp" />
@@ -317,22 +317,22 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mouse-modes.hpp" />
-    <ClInclude Include="src\config-loader.hpp" />
     <ClInclude Include="src\game-titles.hpp" />
     <ClInclude Include="src\hooks.hpp" />
     <ClInclude Include="src\json.hpp" />
     <ClInclude Include="src\messages.hpp" />
     <ClInclude Include="src\mouse-modes.hpp" />
     <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\settings-loader.hpp" />
     <ClInclude Include="src\settings.hpp" />
     <ClInclude Include="src\hotkey.hpp" />
     <ClInclude Include="src\shell.hpp" />
     <ClInclude Include="src\ui-control-id.hpp" />
     <ClInclude Include="src\display.hpp" />
     <ClInclude Include="src\ui-dialog-utilities.hpp" />
-    <ClInclude Include="src\ui-display-edit-dialog.hpp" />
+    <ClInclude Include="src\ui-dialog-display-edit.hpp" />
     <ClInclude Include="src\ui-graphic.hpp" />
-    <ClInclude Include="src\ui-profile-selector-dialog.hpp" />
+    <ClInclude Include="src\ui-dialog-profile-selector.hpp" />
     <ClInclude Include="src\handlers.hpp" />
     <ClInclude Include="src\log.hpp" />
     <ClInclude Include="src\np-client.h" />
@@ -342,7 +342,7 @@
     <ClInclude Include="src\trackers.hpp" />
     <ClInclude Include="src\types.hpp" />
     <ClInclude Include="src\ui-frame.hpp" />
-    <ClInclude Include="src\ui-settings-dialog.hpp" />
+    <ClInclude Include="src\ui-dialog-settings.hpp" />
     <ClInclude Include="src\utility.hpp" />
     <ClInclude Include="src\windows-wrapper.hpp" />
   </ItemGroup>

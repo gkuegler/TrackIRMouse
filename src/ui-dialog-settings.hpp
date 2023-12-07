@@ -16,7 +16,7 @@
 #include "ui-dialog-utilities.hpp"
 #include "utility.hpp"
 
-class SettingsFrame : public wxDialog
+class DialogSettings : public wxDialog
 {
 private:
   wxCheckBox* check_track_on_start;
@@ -33,59 +33,55 @@ private:
   wxString* text_server_name_validator_data;
 
 public:
-  SettingsFrame(wxWindow* parent, const settings::Settings& user_data);
-  ~SettingsFrame(){};
+  DialogSettings(wxWindow* parent, const settings::Settings& user_data);
+  ~DialogSettings(){};
   void ApplySettings(settings::Settings& user_data);
 };
 
-SettingsFrame::SettingsFrame(wxWindow* parent,
-                             const settings::Settings& user_data)
+DialogSettings::DialogSettings(wxWindow* parent,
+                               const settings::Settings& user_data)
   : wxDialog(parent, wxID_ANY, "Track IR - Settings")
 {
-  // Panels
-  auto panel = new wxPanel(
-    this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
-  // auto buttons = new OkayCancelDialogueButtons(panel, this);
-  auto buttons = new DialogEndModalButtonsPanel(panel, this);
+  auto buttons = new PanelEndModalDialogButtons(this, this);
   buttons->AddButton("Okay", wxID_OK);
   buttons->AddButton("Okay && Save", wxID_APPLY);
   buttons->AddButton("Cancel", wxID_CANCEL);
 
   auto label_start_up_settings =
-    new wxStaticText(panel, wxID_ANY, "Startup Behavior  ");
+    new wxStaticText(this, wxID_ANY, "Startup Behavior  ");
   auto label_basic_settings =
-    new wxStaticText(panel, wxID_ANY, "Basic Settings  ");
+    new wxStaticText(this, wxID_ANY, "Basic Settings  ");
   auto label_advanced_settings =
-    new wxStaticText(panel, wxID_ANY, "Advanced Settings  ");
+    new wxStaticText(this, wxID_ANY, "Advanced Settings  ");
   auto label_pipeserver = new wxStaticText(
-    panel, wxID_ANY, "A change to this requires an application restart.");
+    this, wxID_ANY, "A change to this requires an application restart.");
 
   auto static_line = new wxStaticLine(
-    panel, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
+    this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
   auto static_line_2 = new wxStaticLine(
-    panel, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
+    this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
   auto static_line_3 = new wxStaticLine(
-    panel, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
+    this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
 
   check_track_on_start =
-    new wxCheckBox(panel, wxID_ANY, "Start mouse control when app starts");
+    new wxCheckBox(this, wxID_ANY, "Start mouse control when app starts");
 
   check_quit_on_loss = new wxCheckBox(
-    panel, wxID_ANY, "Quit app when connection is lost to NP TrackIR");
+    this, wxID_ANY, "Quit app when connection is lost to NP TrackIR");
 
   check_auto_retry = new wxCheckBox(
-    panel, wxID_ANY, "Auto retry to connect with NPTrackIR device.");
+    this, wxID_ANY, "Auto retry to connect with NPTrackIR device.");
 
-  check_mouse_mode_hotkey = new wxCheckBox(
-    panel, wxID_ANY, "Enable alternate mouse modes with hotkey:");
+  check_mouse_mode_hotkey =
+    new wxCheckBox(this, wxID_ANY, "Enable alternate mouse modes with hotkey:");
 
   check_enable_pipe_server =
-    new wxCheckBox(panel,
+    new wxCheckBox(this,
                    wxID_ANY,
                    "Enable commands through pipe server named "
                    "'\\\\.\\pipe\\");
   // TODO: add validator
-  text_hot_key_name = new wxTextCtrl(panel,
+  text_hot_key_name = new wxTextCtrl(this,
                                      wxID_ANY,
                                      user_data.hotkey_name,
                                      wxDefaultPosition,
@@ -94,7 +90,7 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
   text_hot_key_name->SetMaxLength(3);
   // TODO: add validator
   text_server_name = new wxTextCtrl(
-    panel,
+    this,
     wxID_ANY,
     user_data.pipe_server_name,
     wxDefaultPosition,
@@ -104,19 +100,19 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
 
   // ADVANCED SETTINGS
 
-  auto label_log_level = new wxStaticText(panel, wxID_ANY, "Log Level:  ");
+  auto label_log_level = new wxStaticText(this, wxID_ANY, "Log Level:  ");
   choice_log_level =
-    new wxChoice(panel,
+    new wxChoice(this,
                  wxID_ANY,
                  wxDefaultPosition,
                  wxSize(100, 25),
-                 utility::BuildWxArrayString(mylogging::log_levels));
+                 utility::BuildWxArrayString(logging::log_levels));
 
   check_auto_find_dll = new wxCheckBox(
-    panel, wxID_ANY, "Look up 'NPClient64.dll' location from registry.");
+    this, wxID_ANY, "Look up 'NPClient64.dll' location from registry.");
 
   auto label_auto_find = new wxStaticText(
-    panel,
+    this,
     wxID_ANY,
     "Uncheck this option to manually specify the folder where 'NPClient64.dll' "
     "is installed.\n"
@@ -126,10 +122,10 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
     "provide their own data source.");
 
   auto label_dll_folder_location = new wxStaticText(
-    panel, wxID_ANY, "Manual Folder Location of 'NPClient64.dll':");
+    this, wxID_ANY, "Manual Folder Location of 'NPClient64.dll':");
 
   text_dll_folder_location = new wxTextCtrl(
-    panel, wxID_ANY, "", wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
+    this, wxID_ANY, "", wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
 
   // Set Defaults
   check_auto_find_dll->SetValue(user_data.auto_find_track_ir_dll);
@@ -143,9 +139,11 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
   check_auto_find_dll->SetValue(user_data.auto_find_track_ir_dll);
   // user_data.auto_find_track_ir_dll = text_dll_folder_location->IsChecked();
 
-  constexpr int SMALL_SPACE = 6;
+  constexpr int SPACE_SM = 6;
   constexpr int BIG_SPACE = 12;
   constexpr int BORDER_SPACE = 12;
+  const int CTRL_FIRST = wxLEFT | wxALIGN_LEFT;
+  const int CTRL_NOT_FIRST = wxLEFT | wxTOP | wxALIGN_LEFT;
 
   // Static Line Titles
   auto label_sizer_1 = new wxBoxSizer(wxHORIZONTAL);
@@ -164,59 +162,57 @@ SettingsFrame::SettingsFrame(wxWindow* parent,
   // Horizontal Sub-Sizers
   auto log_levels_sizer = new wxBoxSizer(wxHORIZONTAL);
   log_levels_sizer->Add(
-    label_log_level, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, SMALL_SPACE);
+    label_log_level, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, SPACE_SM);
   log_levels_sizer->Add(
     choice_log_level, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
   auto hotkey_sizer = new wxBoxSizer(wxHORIZONTAL);
-  hotkey_sizer->Add(check_mouse_mode_hotkey, 0, wxALIGN_LEFT, 0);
-  hotkey_sizer->Add(text_hot_key_name, 0, wxLEFT | wxALIGN_LEFT, 0);
+  hotkey_sizer->Add(
+    check_mouse_mode_hotkey, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
+  hotkey_sizer->Add(text_hot_key_name, 0, wxALIGN_LEFT);
 
   auto pipeserver_sizer = new wxBoxSizer(wxHORIZONTAL);
   pipeserver_sizer->Add(
     check_enable_pipe_server, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
-  pipeserver_sizer->Add(
-    text_server_name, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 0);
+  pipeserver_sizer->Add(text_server_name, 0, wxLEFT);
 
   // Main Layout
-  auto top_sizer = new wxBoxSizer(wxVERTICAL);
+  auto sizer = new wxBoxSizer(wxVERTICAL);
   // start up settings
-  top_sizer->Add(label_sizer_1, 0, wxEXPAND | wxBOTTOM, BIG_SPACE);
-  top_sizer->Add(check_track_on_start, 0, wxLEFT | wxALIGN_LEFT, SMALL_SPACE);
-  top_sizer->Add(
-    check_quit_on_loss, 0, wxLEFT | wxTOP | wxALIGN_LEFT, SMALL_SPACE);
-  top_sizer->Add(
-    check_auto_retry, 0, wxLEFT | wxTOP | wxALIGN_LEFT, SMALL_SPACE);
+  sizer->Add(label_sizer_1, 0, wxEXPAND | wxBOTTOM, BIG_SPACE);
+  sizer->Add(check_track_on_start, 0, CTRL_FIRST, SPACE_SM);
+  sizer->Add(check_quit_on_loss, 0, CTRL_NOT_FIRST, SPACE_SM);
+  sizer->Add(check_auto_retry, 0, CTRL_NOT_FIRST, SPACE_SM);
   // basic settings
-  top_sizer->Add(label_sizer_2, 0, wxEXPAND | wxTOP | wxBOTTOM, BIG_SPACE);
-  top_sizer->Add(hotkey_sizer, 0, wxLEFT, SMALL_SPACE);
-  top_sizer->Add(pipeserver_sizer, 0, wxLEFT | wxTOP, SMALL_SPACE);
-  top_sizer->Add(label_pipeserver, 0, wxLEFT | wxTOP, SMALL_SPACE);
+  sizer->Add(label_sizer_2, 0, wxEXPAND | wxTOP | wxBOTTOM, BIG_SPACE);
+  sizer->Add(hotkey_sizer, 0, wxLEFT, SPACE_SM);
+  sizer->Add(pipeserver_sizer, 0, wxLEFT | wxTOP, SPACE_SM);
+  sizer->Add(label_pipeserver, 0, wxLEFT | wxTOP, SPACE_SM);
 
   // advanced settings
-  top_sizer->Add(label_sizer_3, 0, wxEXPAND | wxTOP | wxBOTTOM, BIG_SPACE);
-  top_sizer->Add(log_levels_sizer, 0, wxTOP | wxBOTTOM, SMALL_SPACE);
-  top_sizer->Add(
-    check_auto_find_dll, 0, wxLEFT | wxTOP | wxALIGN_LEFT, SMALL_SPACE);
-  top_sizer->Add(
-    label_auto_find, 0, wxLEFT | wxTOP | wxALIGN_LEFT, SMALL_SPACE);
-  top_sizer->Add(
-    label_dll_folder_location, 0, wxALL | wxALIGN_LEFT, SMALL_SPACE);
-  top_sizer->Add(text_dll_folder_location, 0, wxALL | wxEXPAND, SMALL_SPACE);
+  sizer->Add(label_sizer_3, 0, wxEXPAND | wxTOP | wxBOTTOM, BIG_SPACE);
+  sizer->Add(log_levels_sizer, 0, wxTOP | wxBOTTOM, SPACE_SM);
+  sizer->Add(check_auto_find_dll, 0, CTRL_NOT_FIRST, SPACE_SM);
+  sizer->Add(label_auto_find, 0, CTRL_NOT_FIRST, SPACE_SM);
+  sizer->Add(label_dll_folder_location, 0, wxALL | wxALIGN_LEFT, SPACE_SM);
+  sizer->Add(text_dll_folder_location, 0, wxALL | wxEXPAND, SPACE_SM);
 
-  auto* border_sizer = new wxBoxSizer(wxVERTICAL);
-  border_sizer->Add(top_sizer, 0, wxALL | wxEXPAND, BORDER_SPACE);
-  border_sizer->Add(
-    buttons, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, BORDER_SPACE);
+  auto* top_sizer = new wxBoxSizer(wxVERTICAL);
+  top_sizer->Add(sizer, 0, wxALL | wxEXPAND, BORDER_SPACE);
+  top_sizer->Add(
+    buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, BORDER_SPACE);
 
-  panel->SetSizer(border_sizer);
+  // this->SetSizer(top_sizer);
+  SetSizer(top_sizer);
 
   // Fit the frame around the size of my controls.
-  border_sizer->Fit(this);
+  top_sizer->Fit(this);
+
+  this->CenterOnParent();
 }
 
 void
-SettingsFrame::ApplySettings(settings::Settings& user_data)
+DialogSettings::ApplySettings(settings::Settings& user_data)
 {
   user_data.auto_find_track_ir_dll = check_auto_find_dll->IsChecked();
   user_data.track_on_start = check_track_on_start->IsChecked();

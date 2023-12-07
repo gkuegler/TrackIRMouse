@@ -21,15 +21,7 @@ constexpr static const int RIGHT_EDGE = 1;
 constexpr static const int TOP_EDGE = 2;
 constexpr static const int BOTTOM_EDGE = 3;
 
-enum class retcode
-{
-  success,
-  fail,
-  track_ir_loss,
-  graceful_exit
-};
-
 // Am I using this?
-using HandleFunction = void (*)(Degrees, Degrees);
+// using HandleFunction = void (*)(Degrees, Degrees);
 
 #endif /* TRACKIRMOUSE_TYPES_HPP */

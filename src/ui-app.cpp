@@ -36,14 +36,17 @@
 //  TODO: example monitors don't automatically update with the rest of the GUI
 //  TODO: remove duplicate windows hardware methods
 
+#include <wx/msgdlg.h>
+#include <wx/string.h>
 #include <wx/wx.h>
 
 #include <string>
 
-#include "config-loader.hpp"
 #include "log.hpp"
 #include "messages.hpp"
 #include "mouse-modes.hpp"
+#include "settings-loader.hpp"
+#include "settings.hpp"
 #include "threads.hpp"
 #include "types.hpp"
 #include "ui-frame.hpp"
@@ -71,7 +74,7 @@ public:
   virtual void OnUnhandledException();
 
 private:
-  Frame* main_window_ = nullptr;
+  MainWindow* main_window_ = nullptr;
   wxString top_app_name_;
 };
 
@@ -89,7 +92,7 @@ bool
 App::OnInit()
 {
   // Initialize global default loggers
-  mylogging::SetUpLogging();
+  logging::SetUpLogging();
 
   // App initialization constants
   constexpr int app_width = 1200;
@@ -97,8 +100,8 @@ App::OnInit()
 
   // Construct child elements first. The main panel_ contains a text control
   // that is a log target.
-  main_window_ =
-    new Frame(GetOrigin(app_width, app_height), wxSize(app_width, app_height));
+  main_window_ = new MainWindow(GetOrigin(app_width, app_height),
+                                wxSize(app_width, app_height));
   main_window_->Show();
   main_window_->StartScrollAlternateHooksAndHotkeys();
 
@@ -107,7 +110,7 @@ App::OnInit()
   //////////////////////////////////////////////////////////////////////
 
   Bind(wxEVT_THREAD, [this](wxThreadEvent& event) {
-    LogWindow* textrich = main_window_->p_text_rich_;
+    LogOutputControl* textrich = main_window_->p_text_rich_;
     switch (static_cast<msgcode>(event.GetInt())) {
 
       // exposes gui dependent logging from outside threads.
@@ -191,7 +194,7 @@ App::OnInit()
   // Pipe server is only started at first application startup.
   if (settings->pipe_server_enabled) {
     main_window_->p_server_thread_ =
-      new ControlServerThread(main_window_, settings->pipe_server_name);
+      new ThreadPipeServer(main_window_, settings->pipe_server_name);
     if (main_window_->p_server_thread_->Run() != wxTHREAD_NO_ERROR) {
       spdlog::error("Can't run server thread.");
       delete main_window_->p_server_thread_;

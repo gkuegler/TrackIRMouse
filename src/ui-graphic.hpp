@@ -3,10 +3,10 @@
 
 #include <wx/wx.h>
 
-class cDisplayGraphic : public wxPanel
+class PanelDisplayGraphic : public wxPanel
 {
 public:
-  cDisplayGraphic(wxWindow* parent, wxSize size);
+  PanelDisplayGraphic(wxWindow* parent, wxSize size);
   wxWindow* p_parent_;
 
   void PaintEvent(wxPaintEvent& evt);

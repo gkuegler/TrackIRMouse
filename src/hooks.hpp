@@ -5,12 +5,12 @@
 
 #include "windows-wrapper.hpp"
 
-class WindowChangedHook
+class HookWindowChanged
 {
 public:
-  WindowChangedHook();
-  ~WindowChangedHook();
-  auto Disable() -> void;
+  HookWindowChanged();
+  ~HookWindowChanged();
+  void Disable();
 
 private:
   HWINEVENTHOOK hook = 0;

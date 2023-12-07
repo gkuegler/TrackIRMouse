@@ -28,7 +28,7 @@ constexpr size_t BUFSIZE = 512 * sizeof(unsigned char);
 PipeServer::PipeServer(std::string name)
 {
   full_path_ = "\\\\.\\pipe\\" + name;
-  logger_ = mylogging::GetClonedLogger("pipeserver");
+  logger_ = logging::GetClonedLogger("pipeserver");
 
   // The InitializeSecurityDescriptor function initializes a security descriptor
   // to have no system access control list(SACL), no discretionary access
@@ -130,7 +130,7 @@ PipeServer::ServeOneClient()
 // Handle a client on an instance of a main pipe.
 // Handle closed on destruction.
 void
-PipeServer::HandleConnection(Handle pipe)
+PipeServer::HandleConnection(WindowsHandle pipe)
 {
   logger_->trace("starting pipeserver");
 

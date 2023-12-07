@@ -93,13 +93,10 @@ GetCopy() -> Settings;
 auto
 Set(Settings c) -> void;
 
-// TODO: changed to std::optional or something
-struct LoadResults
-{
-  bool success = false;
-  std::string err_msg = "";
-};
-LoadResults
+auto
+SetToDefaults() -> void;
+
+void
 LoadFromFile(std::string filename);
 
 using UserInput = std::vector<UserDisplay>;

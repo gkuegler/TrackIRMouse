@@ -17,7 +17,7 @@ namespace handlers {
 class MouseHandler
 {
 private:
-  std::shared_ptr<std::vector<CDisplay>> displays_;
+  std::shared_ptr<std::vector<Display>> displays_;
   std::atomic<bool> normal_mode_ = true;
   std::atomic<mouse_mode> mode_ = mouse_mode::scrollbar_right_small;
 

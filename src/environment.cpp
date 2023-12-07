@@ -4,8 +4,6 @@
 
 #include "Log.hpp"
 
-namespace environment {
-
 // SendInput with absolute mouse movement flag takes a short int
 constexpr static double USHORT_MAX_VAL = 65535;
 
@@ -81,4 +79,3 @@ GetHardwareDisplayInformation()
     GetSystemMetrics(SM_CYVIRTUALSCREEN),
   };
 }
-} // namespace environment

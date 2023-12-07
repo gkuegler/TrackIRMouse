@@ -3,8 +3,6 @@
 
 #include "types.hpp"
 
-namespace environment {
-
 struct WinDisplayInfo
 {
   int count = 0;
@@ -19,6 +17,5 @@ struct WinDisplayInfo
 
 WinDisplayInfo
 GetHardwareDisplayInformation();
-} // namespace environment
 
 #endif /* TRACKIRMOUSE_WINDISPLAY_HPP */
