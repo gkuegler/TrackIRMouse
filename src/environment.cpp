@@ -1,36 +1,43 @@
 #include "environment.hpp"
 
+#include "utility.hpp"
 #include "windows-wrapper.hpp"
+#include <vector>
 
 #include "Log.hpp"
 
 // SendInput with absolute mouse movement flag takes a short int
 constexpr static double USHORT_MAX_VAL = 65535;
 
-static std::vector<RectPixels> g_displays;
-
 // windows api callback
 BOOL
-PopulateVirtMonitorBounds(HMONITOR hMonitor,
-                          HDC hdcMonitor,
-                          LPRECT lprcMonitor,
-                          LPARAM lParam)
+MonitorProc(HMONITOR hMonitor,  // handle to the display monitor.
+            HDC hdc,            // handle to the device context.
+            LPRECT lprcMonitor, // pointer to a RECT structure in
+                                // virtual screen coordinates.
+            LPARAM lParam)      // value passed from 'EnumDisplayMonitors'
 {
+  auto rectangles = reinterpret_cast<std::vector<RectPixels>*>(lParam);
+
+  // Use the static count to know which monitor
+  // failed if logging errors.
   static int count{ 0 };
-  MONITORINFOEX monitor;
-  monitor.cbSize = sizeof(MONITORINFOEX);
-  if (!GetMonitorInfo(hMonitor, &monitor)) {
+
+  MONITORINFOEX info;
+  info.cbSize = sizeof(MONITORINFOEX);
+
+  if (!GetMonitorInfo(hMonitor, &info)) {
     throw std::runtime_error(
       std::format("Couldn't get display info for display #: {}", count));
   }
 
   // Monitor Pixel Bounds in the Virtual Desktop
   // static_cast: long -> signed int
-  RectPixels r = { static_cast<Pixels>(monitor.rcMonitor.left),
-                   static_cast<Pixels>(monitor.rcMonitor.right),
-                   static_cast<Pixels>(monitor.rcMonitor.top),
-                   static_cast<Pixels>(monitor.rcMonitor.bottom) };
-  g_displays.push_back(r);
+  RectPixels r = { static_cast<Pixels>(info.rcMonitor.left),
+                   static_cast<Pixels>(info.rcMonitor.right),
+                   static_cast<Pixels>(info.rcMonitor.top),
+                   static_cast<Pixels>(info.rcMonitor.bottom) };
+  rectangles->push_back(r);
   count++;
   return true;
 }
@@ -38,21 +45,26 @@ PopulateVirtMonitorBounds(HMONITOR hMonitor,
 WinDisplayInfo
 GetHardwareDisplayInformation()
 {
-  spdlog::trace("entering GetHardwareDisplayInformation");
-  g_displays.clear();
+
+  // g_displays.clear();
+  std::vector<RectPixels> rectangles;
 
   // Use a callback to go through each monitor
-  if (0 == EnumDisplayMonitors(NULL, NULL, PopulateVirtMonitorBounds, NULL)) {
+  if (0 == EnumDisplayMonitors(NULL, NULL, MonitorProc, (LPARAM)&rectangles))
+
+  {
     throw std::runtime_error("failed to enumerate displays");
   }
-  if (g_displays.size() == 0) {
+  if (rectangles.size() == 0) {
     throw std::runtime_error("0 displays enumerated");
   }
 
   // in the event that the top-left most point may start out above or below 0, 0
-  Pixels origin_offset_x_ = g_displays[0][0]; // left
-  Pixels origin_offset_y_ = g_displays[0][2]; // top
-  for (const auto& d : g_displays) {
+  // TODO: make an actual display class to represent hardware info?
+  // TODO: just use the microsoft profided 'RECT', it has members 'left' etc...
+  Pixels origin_offset_x_ = rectangles[0][0]; // left
+  Pixels origin_offset_y_ = rectangles[0][2]; // top
+  for (const auto& d : rectangles) {
     origin_offset_x_ = d[0] ? d[0] < origin_offset_x_ : origin_offset_x_;
     origin_offset_y_ = d[2] ? d[2] < origin_offset_y_ : origin_offset_y_;
   }
@@ -70,7 +82,7 @@ GetHardwareDisplayInformation()
 
   return {
     GetSystemMetrics(SM_CMONITORS),
-    g_displays,
+    rectangles,
     origin_offset_x_,
     origin_offset_y_,
     USHORT_MAX_VAL / static_cast<double>(virtual_desktop_width),
