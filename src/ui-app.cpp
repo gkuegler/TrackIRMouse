@@ -76,6 +76,7 @@ public:
 private:
   MainWindow* main_window_ = nullptr;
   wxString top_app_name_;
+  wxTimer* timer_minimize;
 };
 
 wxIMPLEMENT_APP(App);
@@ -91,50 +92,68 @@ App::OnUnhandledException()
 bool
 App::OnInit()
 {
-  // Initialize global default loggers
+  // Initialize global default loggers[
   logging::SetUpLogging();
 
   // App initialization constants
   constexpr int app_width = 1200;
   constexpr int app_height = 900;
 
-  // Construct child elements first. The main panel_ contains a text control
-  // that is a log target.
+  // Construct child windows first. The 'main_window_' contains
+  // a text control that is used as a log target.
   main_window_ = new MainWindow(GetOrigin(app_width, app_height),
                                 wxSize(app_width, app_height));
   main_window_->Show();
   main_window_->StartScrollAlternateHooksAndHotkeys();
+
+  // Argument Parsing.
+  // Iterate over arguments for flags.
+  for (const auto& warg : wxApp::argv.GetArguments()) {
+
+    // Minimize after startup flag.
+    if (L"-m" == warg || L"--minimize" == warg) {
+      main_window_->Iconize();
+    }
+  }
 
   //////////////////////////////////////////////////////////////////////
   //               Messages From Threads Outside Of GUI               //
   //////////////////////////////////////////////////////////////////////
 
   Bind(wxEVT_THREAD, [this](wxThreadEvent& event) {
-    LogOutputControl* textrich = main_window_->p_text_rich_;
+    LogOutputControl* log_ctrl = main_window_->p_text_rich_;
+
     switch (static_cast<msgcode>(event.GetInt())) {
 
-      // exposes gui dependent logging from outside threads.
+      // Enables outside threads to send log messages to the log window
+      // and trigger gui messageboxes.
       // Log messages (lvl: error & critical) launch an error message dialog.
-      // log messages (lvl: warning) appear as written text in the output
-      // window. log messages (lvl: <=info) appear as written text in the
-      // output window.
+      // log messages (lvl: warning) appear as red text in the log window.
+      // log messages (lvl: <=info) appear as black text in the log window.
       case msgcode::log: {
-        const auto& level = event.GetExtraLong();
+        const auto level =
+          static_cast<spdlog::level::level_enum>(event.GetExtraLong());
         const auto& msg = event.GetString();
+
         if (spdlog::level::critical == level) {
           wxLogFatalError(msg);
         } else if (spdlog::level::err == level) {
           wxLogError(msg);
         } else if (spdlog::level::warn == level) {
-          const auto existing_style = textrich->GetDefaultStyle();
-          textrich->SetDefaultStyle(wxTextAttr(*wxRED));
-          textrich->AppendText(msg);
-          textrich->SetDefaultStyle(existing_style);
+          const auto existing_style = log_ctrl->GetDefaultStyle();
+
+          // Append red text.
+          log_ctrl->SetDefaultStyle(wxTextAttr(*wxRED));
+          log_ctrl->AppendText(msg);
+
+          // Reset default style on log controlm
+          log_ctrl->SetDefaultStyle(existing_style);
         } else {
-          textrich->AppendText(msg);
+          log_ctrl->AppendText(msg);
         }
       } break;
       case msgcode::toggle_tracking: {
+
         if (main_window_->track_thread_) {
           main_window_->track_thread_->tracker_->toggle_mouse();
         }
