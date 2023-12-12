@@ -371,7 +371,7 @@ MainWindow::OnLogFile(wxCommandEvent& event)
 void
 MainWindow::OnScrollAlternateHotkey(wxKeyEvent& event)
 {
-  spdlog::trace("hot key event");
+  SPDLOG_TRACE("hot key event");
   wxCriticalSectionLocker enter(cs_track_thread_);
   if (track_thread_) {
     track_thread_->handler_->toggle_alternate_mode();
@@ -469,6 +469,11 @@ MainWindow::OnStart(wxCommandEvent& event)
   try {
     auto settings = settings::GetCopy();
     settings.ApplyNecessaryDefaults();
+
+    if (track_thread_) {
+      throw std::logic_error("track thread should not exist");
+    }
+
     track_thread_ = new ThreadHeadTracking(this, this->GetHandle(), settings);
   } catch (const std::runtime_error& e) {
     spdlog::error(e.what());
@@ -481,9 +486,9 @@ MainWindow::OnStart(wxCommandEvent& event)
   } else {
     spdlog::error("Can't run the tracking thread!");
     delete track_thread_;
-    // If I leave this commented memory leaks will manifest as bugs during the
-    // track restart where I can catch them?
-    // track_thread_ = nullptr; // thread destructor should do this anyway?
+    // Don't set 'track_thread_ = nullptr'.
+    // The thread's destructor is responsible for setting
+    // it's pointer do 'nullptr'.
     return;
   }
 }

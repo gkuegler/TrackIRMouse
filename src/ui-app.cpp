@@ -30,6 +30,7 @@
 // TODO: change the function styling?
 // TODO: add documentation?
 // TODO: prune includes
+// TODO: mark as dpi aware on manifest in project options
 
 // bug list
 //  TODO: empty profile created by default
@@ -153,19 +154,20 @@ App::OnInit()
         }
       } break;
       case msgcode::toggle_tracking: {
-
+        wxCriticalSectionLocker enter(main_window_->cs_track_thread_);
         if (main_window_->track_thread_) {
           main_window_->track_thread_->tracker_->toggle_mouse();
         }
       } break;
 
-      // retrieve alternate mouse mode by application.
+      // Retrieve alternate mouse mode by application.
       // currently locks the mouse the different scrollbar x positions by
       // application.
       // this message is generated (using a global hook procedure) every
       // time a new window takes focus.
       case msgcode::notify_app: {
         top_app_name_ = wxString(event.GetString());
+        wxCriticalSectionLocker enter(main_window_->cs_track_thread_);
         if (main_window_->track_thread_) {
           main_window_->track_thread_->tracker_->handler_->set_alternate_mode(
             GetModeByExecutableName(top_app_name_));
@@ -177,6 +179,7 @@ App::OnInit()
       case msgcode::set_mode: {
         auto mode = static_cast<mouse_mode>(event.GetExtraLong());
         UpdateModesbyExecutableName(top_app_name_, mode);
+        wxCriticalSectionLocker enter(main_window_->cs_track_thread_);
         if (main_window_->track_thread_) {
           main_window_->track_thread_->tracker_->handler_->set_alternate_mode(
             mode);

@@ -49,18 +49,23 @@ void
 GracefullyDeleteThreadAndWait(T*& thread, wxCriticalSection& cs)
 {
   // Threads run in detached mode by default.
-  // The thread is responsible for setting '*thread' to NULL in its
+  // The thread is responsible for setting '*thread' to 'nullptr' in its
   // destructor.
-  bool wait_for_stop = false;
+
+  // A flag is used because we have to enter the mutex to
+  // stop the thread and then leave the mutex to allow it to stop.
+  bool thread_was_alive = false;
+
   { // enter critical section
     wxCriticalSectionLocker enter(cs);
     if (thread) {
       thread->Delete();
-      wait_for_stop = true;
+      thread_was_alive = true;
     }
   } // leave critical section
 
-  if (wait_for_stop) {
+  // Allow thread a timeout to gracefully exit.
+  if (thread_was_alive) {
 
     // A crude one second timeout.
     constexpr const int time_cs = 100; // in centi-seconds
@@ -73,8 +78,9 @@ GracefullyDeleteThreadAndWait(T*& thread, wxCriticalSection& cs)
       }
     }
     if (i == time_cs) {
-      spdlog::error("Thread not stoped within timeout. Thread may still be "
-                    "running and not responsive.");
+      spdlog::error(
+        "Thread not stoped gracefully within timeout. Thread may still be "
+        "running and not responsive. Attempting to kill thread.");
     }
     wxCriticalSectionLocker enter(cs);
     if (thread) {
@@ -82,32 +88,5 @@ GracefullyDeleteThreadAndWait(T*& thread, wxCriticalSection& cs)
     }
   }
 };
-
-// template<typename ThreadType>
-// void
-// StartThread(wxThread* thread, wxCriticalSection mutex)
-// {
-//   try {
-//     auto settings = settings::GetCopy();
-//     settings.ApplyNecessaryDefaults();
-//     // TODO: How to forward these arguments?
-//     thread = new ThreadType(this, this->GetHandle(), settings);
-//   } catch (const std::runtime_error& e) {
-//     spdlog::error(e.what());
-//     return;
-//   }
-
-//   if (track_thread_->Run() == wxTHREAD_NO_ERROR) { // returns immediately
-//     spdlog::info("Started Mouse.");
-//   } else {
-//     spdlog::error("Can't run the tracking thread!");
-//     delete track_thread_;
-//     // If I leave this commented memory leaks will manifest as bugs during
-//     the
-//     // track restart where I can catch them?
-//     // track_thread_ = nullptr; // thread destructor should do this anyway?
-//     return;
-//   }
-// };
 
 #endif /* TRACKIRMOUSE_THREADS_H */
