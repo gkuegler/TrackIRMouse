@@ -15,7 +15,7 @@ namespace handlers {
 
 MouseHandler::MouseHandler(settings::Profile profile)
 {
-  const auto info = GetHardwareDisplayInformation();
+  const auto info = GetHardwareDisplayInformation(true);
 
   auto hardware_display_count = info.rectangles.size();
   auto user_display_count = profile.displays.size();

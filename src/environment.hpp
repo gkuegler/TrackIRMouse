@@ -18,6 +18,6 @@ struct WinDisplayInfo
 };
 
 WinDisplayInfo
-GetHardwareDisplayInformation();
+GetHardwareDisplayInformation(bool);
 
 #endif /* TRACKIRMOUSE_WINDISPLAY_HPP */

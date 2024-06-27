@@ -1,10 +1,12 @@
 #include "environment.hpp"
 
-#include "utility.hpp"
-#include "windows-wrapper.hpp"
+#include <algorithm>
 #include <vector>
 
-#include "Log.hpp"
+#include "log.hpp"
+#include "types.hpp"
+#include "utility.hpp"
+#include "windows-wrapper.hpp"
 
 // SendInput with absolute mouse movement flag takes a short int
 constexpr static double USHORT_MAX_VAL = 65535;
@@ -42,8 +44,18 @@ MonitorProc(HMONITOR hMonitor,  // handle to the display monitor.
   return true;
 }
 
+bool
+compare(const RectPixels& a, const RectPixels& b)
+{
+  if (a[TOP_EDGE] == b[TOP_EDGE]) {
+    return a[LEFT_EDGE] < b[LEFT_EDGE];
+  } else {
+    return a[TOP_EDGE] < b[TOP_EDGE];
+  }
+}
+
 WinDisplayInfo
-GetHardwareDisplayInformation()
+GetHardwareDisplayInformation(bool sort_windows)
 {
 
   // g_displays.clear();
@@ -57,6 +69,10 @@ GetHardwareDisplayInformation()
   }
   if (rectangles.size() == 0) {
     throw std::runtime_error("0 displays enumerated");
+  }
+
+  if (sort_windows) {
+    std::sort(rectangles.begin(), rectangles.end(), compare);
   }
 
   // in the event that the top-left most point may start out above or below 0, 0

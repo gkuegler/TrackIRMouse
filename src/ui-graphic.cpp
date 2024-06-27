@@ -103,7 +103,7 @@ PanelDisplayGraphic::Render(wxDC& dc)
   const double area_y = cheight - 50;
 
   // get array of monitor bounds
-  const auto hdi = GetHardwareDisplayInformation();
+  const auto hdi = GetHardwareDisplayInformation(true);
   const auto usrDisplays = settings::Get()->GetActiveProfile().displays;
 
   // offset all rectangles so that 0,0 as top left most value

@@ -103,7 +103,7 @@ TrackIR::initialize(HWND hWnd,
     MultiByteToWideChar(CP_UTF8,
                         // I feel like this should be the smart choice, but this
                         // causes an error?
-                        MB_ERR_INVALID_CHARS,
+                        //MB_ERR_INVALID_CHARS,
                         MB_COMPOSITE,
                         dll_path.c_str(),
                         MAX_PATH,
