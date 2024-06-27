@@ -95,14 +95,15 @@ TrackIR::initialize(HWND hWnd,
   spdlog::debug("NPTrackIR DLL Path: {}", dll_path);
 
   // Find and load TrackIR DLL
-#ifdef UNICODE
+  // TODO: did i actually enable support for long paths?
   // TCHAR sDll[MAX_PATH];
-  TCHAR sDll[32767];
+  WCHAR sDll[32767];
 
   int conversion_result =
     MultiByteToWideChar(CP_UTF8,
-                        // MB_ERR_INVALID_CHARS, // I feel like this should be
-                        // the smart choice, but this causes an error.
+                        // I feel like this should be the smart choice, but this
+                        // causes an error?
+                        MB_ERR_INVALID_CHARS,
                         MB_COMPOSITE,
                         dll_path.c_str(),
                         MAX_PATH,
@@ -115,17 +116,15 @@ TrackIR::initialize(HWND hWnd,
                   "wchar_t* with error code: {}",
                   GetLastError()));
   }
-#else
-  TCHAR sDLL = dll_path.c_str()
-#endif
 
   // Load the DLL and resolved dll function pointers
   NP_InitializeClient(sDll);
 
-  // NP software needs a window handle_ to know when it should
-  // stop sending data frames if window is closed.
-  // TEST_NO_TRACK defined so that this program doesn't boot control of NP
-  // software from my local MouseTrackIR instance while developing.
+  // Prevent development copy of my program from stealing control of the
+  // TrackIR5. NP software needs a window handle to know when it should stop
+  // sending data frames if the window is closed. TEST_NO_TRACK defined so that
+  // this program doesn't steal control of NP software from my local
+  // MouseTrackIR instance while developing.
 #ifndef TEST_NO_TRACK
 
   switch (NP_RegisterWindowHandle(hWnd)) {
@@ -171,12 +170,18 @@ void
 TrackIR::start()
 {
 #ifndef TEST_NO_TRACK
-  // Skipping this api call. I think this is for legacy games.
+  // Skipping 'NP_StopCursor' api call.
+  //
+  // This stopped cursor control in Natural Point's included 'TIRMouse.exe' so
+  // that the cursor wouldn't move when you started a game.
+  // My program is mouse emulation, so the user wouldn't be running the other
+  // program.
+  //
   // NP_StopCursor();
 
-  if (NP_OK == NP_StartDataTransmission())
+  if (NP_OK == NP_StartDataTransmission()) {
     logger_->debug("NP Started data transmission.");
-  else {
+  } else {
     throw std::runtime_error("NP Start Data Transmission failed");
   }
 
@@ -194,9 +199,9 @@ TrackIR::start()
     if (NP_OK == gdf) {
       // unsigned short status = (*pTIRData).wNPStatus;
       unsigned short framesig = (*pTIRData).wPFrameSignature;
-      // TODO: apply negative sign on startup to avoid extra operation here
-      // yaw and pitch come reversed relative to GUI program for some reason
-      // from trackIR
+      // TODO: apply negative sign on startup to avoid extra operation here?
+      // Yaw and pitch come reversed relative to their GUI program for some
+      // reason.
 
       // head down is pitch increasing
       // head left is yaw increaseing

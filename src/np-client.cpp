@@ -139,9 +139,9 @@ NPRESULT __stdcall NP_StopDataTransmission() {
 // clang-format on
 // Load the DLL and resolved dll function pointers
 void
-NP_InitializeClient(LPTSTR pszDLLPath)
+NP_InitializeClient(LPWSTR pszDLLPath)
 {
-  ghNPClientDLL = LoadLibrary(pszDLLPath);
+  ghNPClientDLL = LoadLibraryW(pszDLLPath);
 
   if (NULL == ghNPClientDLL) {
     if (GetLastError() == ERROR_MOD_NOT_FOUND) {
@@ -160,8 +160,6 @@ NP_InitializeClient(LPTSTR pszDLLPath)
    * 1. There isn't a security aspect I'm concerned about.
    * 2. Even if there was, I don't think this signature would do anything about
    * it.
-   * 3. Attempting to verify the signature obscures the error when the device
-   * isn't present or the NPTrackIR software isn't running.
    * 4. I wouldn't want to hinder users from using a different head tracking
    * device.
    */
