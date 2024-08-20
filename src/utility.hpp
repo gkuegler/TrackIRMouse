@@ -80,7 +80,7 @@ WideToUtf8String(std::wstring wtext)
 inline std::string
 GetExecutableFolder()
 {
-  // TODO: use unicode
+  // TODO: use unicode for users with a different multilingual plane
   // TODO: avoid maximum path length, see ExecuteShellCommand
   char full_path[MAX_PATH];
   auto n_char = GetModuleFileNameA(nullptr, full_path, MAX_PATH);

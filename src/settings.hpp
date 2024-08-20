@@ -14,7 +14,7 @@ namespace settings {
 // TODO: Move global to types?
 struct UserDisplay
 {
-  UserDisplay(){};
+  UserDisplay() {};
   UserDisplay(RectDegrees r, RectPixels p)
     : rotation(r)
     , padding(p)

@@ -30,7 +30,7 @@
 #include "ui-dialog-settings.hpp"
 #include "utility.hpp"
 
-static const constexpr std::string_view k_version_no = "1.1.1";
+static const constexpr std::string_view k_version_no = "1.1.2";
 static const constexpr std::string_view k_build_date = __DATE__;
 static const wxSize k_default_button_size = wxSize(110, 25);
 static const wxSize k_default_button_size_2 = wxSize(150, 25);

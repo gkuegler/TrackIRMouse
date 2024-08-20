@@ -74,6 +74,8 @@ SetToDefaults() -> void
 void
 LoadFromFile(std::string filename)
 {
+  spdlog::debug("load settings: {}", filename);
+
   // Let any exceptions through.
   // All of the 'json' exceptions inherit from std::exception
   auto settings = LoadJsonFromFileIntoObject<Settings>(filename);
@@ -88,10 +90,13 @@ LoadFromFile(std::string filename)
 void
 Settings::SaveToFile()
 {
-  // Convert settings to json.6
+  std::string filename =
+    utility::GetAbsolutePathBasedFromExeFolder("settings.json");
+
+  // Convert settings to json.
   json j = *(Get());
 
-  std::ofstream f("settings.json");
+  std::ofstream f(filename);
 
   // Using indentation of 4.
   f << j.dump(4);
