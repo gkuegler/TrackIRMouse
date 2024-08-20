@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_WINDISPLAY_HPP
-#define TRACKIRMOUSE_WINDISPLAY_HPP
+#pragma once
+#ifndef TIRMOUSE_WINDISPLAY_HPP
+#define TIRMOUSE_WINDISPLAY_HPP
 
 #include "types.hpp"
 
@@ -20,4 +21,4 @@ struct WinDisplayInfo
 WinDisplayInfo
 GetHardwareDisplayInformation(bool);
 
-#endif /* TRACKIRMOUSE_WINDISPLAY_HPP */
+#endif /* TIRMOUSE_WINDISPLAY_HPP */

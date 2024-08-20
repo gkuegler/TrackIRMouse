@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_CONTROL_IDS_H
-#define TRACKIRMOUSE_CONTROL_IDS_H
+#pragma once
+#ifndef TIRMOUSE_CONTROL_IDS_H
+#define TIRMOUSE_CONTROL_IDS_H
 
 #include <wx/wx.h>
 
@@ -9,4 +10,4 @@ enum ControlId
   myID_MENU_VIEW_LOGFILE
 };
 
-#endif /* TRACKIRMOUSE_CONTROL_IDS_H */
+#endif /* TIRMOUSE_CONTROL_IDS_H */

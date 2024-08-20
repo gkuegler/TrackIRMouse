@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_HANDLERS_HPP
-#define TRACKIRMOUSE_HANDLERS_HPP
+#pragma once
+#ifndef TIRMOUSE_HANDLERS_HPP
+#define TIRMOUSE_HANDLERS_HPP
 
 #include <memory>
 
@@ -36,4 +37,4 @@ private:
 };
 } // namespace handlers
 
-#endif /* TRACKIRMOUSE_HANDLERS_HPP */
+#endif /* TIRMOUSE_HANDLERS_HPP */

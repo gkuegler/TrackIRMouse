@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_GAME_TITLES_HPP
-#define TRACKIRMOUSE_GAME_TITLES_HPP
+#pragma once
+#ifndef TIRMOUSE_GAME_TITLES_HPP
+#define TIRMOUSE_GAME_TITLES_HPP
 
 #include <map>
 #include <string>
@@ -12,4 +13,4 @@ using game_title_map_t = std::map<std::string, std::string>;
 
 game_title_map_t
 GetTitleIds();
-#endif /* TRACKIRMOUSE_GAME_TITLES_HPP */
+#endif /* TIRMOUSE_GAME_TITLES_HPP */

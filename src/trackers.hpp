@@ -1,7 +1,6 @@
-#ifndef TRACKIRMOUSE_TRACK_HPP
-#define TRACKIRMOUSE_TRACK_HPP
-
-#include "windows-wrapper.hpp"
+#pragma once
+#ifndef TIRMOUSE_TRACK_HPP
+#define TIRMOUSE_TRACK_HPP
 
 #include <exception>
 #include <string>
@@ -9,6 +8,8 @@
 #include "handlers.hpp"
 #include "log.hpp"
 #include "types.hpp"
+#include "windows-wrapper.hpp"
+
 
 // using HandleFunction = void (*)(Degrees, Degrees);
 
@@ -52,4 +53,4 @@ public:
 };
 } // namespace trackers
 
-#endif /* TRACKIRMOUSE_TRACK_HPP */
+#endif /* TIRMOUSE_TRACK_HPP */

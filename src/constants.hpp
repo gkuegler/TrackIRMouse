@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_CONSTANTS_H
-#define TRACKIRMOUSE_CONSTANTS_H
+#pragma once
+#ifndef TIRMOUSE_CONSTANTS_H
+#define TIRMOUSE_CONSTANTS_H
 
 /**
  * Global constants that are required to be used
@@ -11,4 +12,4 @@ constexpr static const int BORDER_SPACING_LG = 18;
 constexpr static const int BORDER_SPACING_MD = 12;
 constexpr static const int BORDER_SPACING_SM = 6;
 
-#endif /* TRACKIRMOUSE_CONSTANTS_H */
+#endif /* TIRMOUSE_CONSTANTS_H */

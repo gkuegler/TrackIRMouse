@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_LOG_H
-#define TRACKIRMOUSE_LOG_H
+#pragma once
+#ifndef TIRMOUSE_LOG_H
+#define TIRMOUSE_LOG_H
 
 #define SPDLOG_NO_THREAD_ID
 #define SPDLOG_NO_ATOMIC_LEVELS // code never modifies a logger_'s log levels
@@ -40,4 +41,4 @@ GetClonedLogger(std::string name);
 
 } // namespace mylogging
 
-#endif /* TRACKIRMOUSE_LOG_H */
+#endif /* TIRMOUSE_LOG_H */

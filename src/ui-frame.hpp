@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_UI_FRAME_H
-#define TRACKIRMOUSE_UI_FRAME_H
+#pragma once
+#ifndef TIRMOUSE_UI_FRAME_H
+#define TIRMOUSE_UI_FRAME_H
 
 #include <wx/dataview.h>
 #include <wx/wx.h>
@@ -110,4 +111,4 @@ public:
   void PopulateSettings();
 };
 
-#endif /* TRACKIRMOUSE_UI_FRAME_H */
+#endif /* TIRMOUSE_UI_FRAME_H */

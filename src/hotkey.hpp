@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_HOTKEY_HPP
-#define TRACKIRMOUSE_HOTKEY_HPP
+#pragma once
+#ifndef TIRMOUSE_HOTKEY_HPP
+#define TIRMOUSE_HOTKEY_HPP
 
 #include "windows-wrapper.hpp"
 
@@ -41,4 +42,4 @@ private:
   bool is_registered_ = false;
 };
 
-#endif /* TRACKIRMOUSE_HOTKEY_HPP */
+#endif /* TIRMOUSE_HOTKEY_HPP */

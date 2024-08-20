@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_JSON_HPP
-#define TRACKIRMOUSE_JSON_HPP
+#pragma once
+#ifndef TIRMOUSE_JSON_HPP
+#define TIRMOUSE_JSON_HPP
 
 #define JSON_DIAGNOSTICS 1
 #include <nlohmann/json.hpp>
@@ -20,4 +21,4 @@ LoadJsonFromFileIntoObject(std::string filename) -> T
   return j.template get<T>();
 }
 
-#endif /* TRACKIRMOUSE_JSON_HPP */
+#endif /* TIRMOUSE_JSON_HPP */

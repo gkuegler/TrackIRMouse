@@ -15,10 +15,11 @@
 
 // added by GK
 // clang-format off
-#include "windows-wrapper.hpp"
-
+#pragma once
 #ifndef _NPCLIENT_H_DEFINED_
 #define _NPCLIENT_H_DEFINED_
+
+#include "windows-wrapper.hpp"
 
 #pragma pack(push, npclient_h)  // Save current pack value
 #pragma pack(1)

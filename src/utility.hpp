@@ -1,6 +1,7 @@
 
-#ifndef TRACKIRMOUSE_UTIL_H
-#define TRACKIRMOUSE_UTIL_H
+#pragma once
+#ifndef TIRMOUSE_UTIL_H
+#define TIRMOUSE_UTIL_H
 
 #include <spdlog/spdlog.h>
 #include <wx/arrstr.h>
@@ -180,4 +181,4 @@ GetAbsolutePathBasedFromExeFolderUnicode(std::string base_path)
   }
 }
 } // namespace util
-#endif /* TRACKIRMOUSE_UTIL_H */
+#endif /* TIRMOUSE_UTIL_H */

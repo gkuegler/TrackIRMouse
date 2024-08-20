@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_TYPES_HPP
-#define TRACKIRMOUSE_TYPES_HPP
+#pragma once
+#ifndef TIRMOUSE_TYPES_HPP
+#define TIRMOUSE_TYPES_HPP
 
 #include <array>
 #include <string>
@@ -24,4 +25,4 @@ constexpr static const int BOTTOM_EDGE = 3;
 // Am I using this?
 // using HandleFunction = void (*)(Degrees, Degrees);
 
-#endif /* TRACKIRMOUSE_TYPES_HPP */
+#endif /* TIRMOUSE_TYPES_HPP */

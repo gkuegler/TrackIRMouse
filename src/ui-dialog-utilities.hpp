@@ -4,9 +4,9 @@
  * --License Boilerplate Placeholder--
  *
  */
-
-#ifndef TRACKIRMOUSE_DIALOG_UTILITIES_HPP
-#define TRACKIRMOUSE_DIALOG_UTILITIES_HPP
+#pragma once
+#ifndef TIRMOUSE_DIALOG_UTILITIES_HPP
+#define TIRMOUSE_DIALOG_UTILITIES_HPP
 
 #include <array>
 #include <string>
@@ -16,7 +16,6 @@
 
 #include "log.hpp"
 #include "settings.hpp"
-
 #include "utility.hpp"
 
 constexpr static const int BORDER_SPACING = 12;
@@ -76,4 +75,4 @@ public:
     dialog->EndModal(ret_code);
   }
 };
-#endif // TRACKIRMOUSE_DIALOG_UTILITIES_HPP
+#endif // TIRMOUSE_DIALOG_UTILITIES_HPP

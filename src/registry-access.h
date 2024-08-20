@@ -1,11 +1,12 @@
-#ifndef TRACKIRMOUSE_REGISTRY_HPP
-#define TRACKIRMOUSE_REGISTRY_HPP
-
-#include "windows-wrapper.hpp"
+#pragma once
+#ifndef TIRMOUSE_REGISTRY_HPP
+#define TIRMOUSE_REGISTRY_HPP
 
 #include <string>
 
 #include "log.hpp"
+#include "windows-wrapper.hpp"
+
 
 // typedef struct RegistryQuery_
 // {
@@ -108,4 +109,4 @@ GetStringFromRegistry(HKEY parent_key,
   }
 }
 
-#endif /* TRACKIRMOUSE_REGISTRY_HPP */
+#endif /* TIRMOUSE_REGISTRY_HPP */

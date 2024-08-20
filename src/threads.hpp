@@ -1,7 +1,7 @@
-#ifndef TRACKIRMOUSE_THREADS_H
-#define TRACKIRMOUSE_THREADS_H
+#pragma once
+#ifndef TIRMOUSE_THREADS_H
+#define TIRMOUSE_THREADS_H
 
-#include "windows-wrapper.hpp"
 #include <wx/thread.h>
 
 #include <memory>
@@ -9,6 +9,8 @@
 #include "handlers.hpp"
 #include "settings.hpp"
 #include "trackers.hpp"
+#include "windows-wrapper.hpp"
+
 
 class MainWindow;
 
@@ -89,4 +91,4 @@ GracefullyDeleteThreadAndWait(T*& thread, wxCriticalSection& cs)
   }
 };
 
-#endif /* TRACKIRMOUSE_THREADS_H */
+#endif /* TIRMOUSE_THREADS_H */

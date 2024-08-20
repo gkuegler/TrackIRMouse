@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_WATCHDOG_H
-#define TRACKIRMOUSE_WATCHDOG_H
+#pragma once
+#ifndef TIRMOUSE_WATCHDOG_H
+#define TIRMOUSE_WATCHDOG_H
 
 #include "windows-wrapper.hpp"
 
@@ -42,4 +43,4 @@ private:
   std::string HandleMsg(std::string);
 };
 
-#endif /* TRACKIRMOUSE_WATCHDOG_H */
+#endif /* TIRMOUSE_WATCHDOG_H */

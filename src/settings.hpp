@@ -1,12 +1,12 @@
-#ifndef TRACKIRMOUSE_CONFIG_HPP
-#define TRACKIRMOUSE_CONFIG_HPP
+#pragma once
+#ifndef TIRMOUSE_CONFIG_HPP
+#define TIRMOUSE_CONFIG_HPP
 
 #include <array>
 #include <map>
 #include <string>
 
 #include "log.hpp"
-
 #include "types.hpp"
 
 namespace settings {
@@ -14,7 +14,7 @@ namespace settings {
 // TODO: Move global to types?
 struct UserDisplay
 {
-  UserDisplay() {};
+  UserDisplay(){};
   UserDisplay(RectDegrees r, RectPixels p)
     : rotation(r)
     , padding(p)
@@ -105,4 +105,4 @@ bool
 ValidateUserInput(const UserInput& displays);
 } // namespace config
 
-#endif // TRACKIRMOUSE_CONFIG_HPP
+#endif // TIRMOUSE_CONFIG_HPP

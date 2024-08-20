@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_HOOKS_HPP
-#define TRACKIRMOUSE_HOOKS_HPP
+#pragma once
+#ifndef TIRMOUSE_HOOKS_HPP
+#define TIRMOUSE_HOOKS_HPP
 
 #include "handlers.hpp"
 
@@ -26,4 +27,4 @@ private:
 //   HWINEVENTHOOK hook = 0;
 // };
 
-#endif /* TRACKIRMOUSE_HOOKS_HPP */
+#endif /* TIRMOUSE_HOOKS_HPP */

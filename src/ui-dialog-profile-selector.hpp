@@ -1,12 +1,13 @@
-#ifndef TRACKIRMOUSE_GUIDIALOGS_H
-#define TRACKIRMOUSE_GUIDIALOGS_H
-
-#include <wx/listctrl.h>
-#include <wx/wx.h>
+#pragma once
+#ifndef TIRMOUSE_GUIDIALOGS_H
+#define TIRMOUSE_GUIDIALOGS_H
 
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <wx/listctrl.h>
+#include <wx/wx.h>
 
 #include "ui-dialog-utilities.hpp"
 
@@ -99,4 +100,4 @@ public:
   int GetSelectedProfileId() { return profile_id_; }
 };
 
-#endif /* TRACKIRMOUSE_GUIDIALOGS_H */
+#endif /* TIRMOUSE_GUIDIALOGS_H */

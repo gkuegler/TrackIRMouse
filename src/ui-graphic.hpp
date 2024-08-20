@@ -1,5 +1,6 @@
-#ifndef TRACKIRMOUSE_DISPLAYGRAPHIC_H
-#define TRACKIRMOUSE_DISPLAYGRAPHIC_H
+#pragma once
+#ifndef TIRMOUSE_DISPLAYGRAPHIC_H
+#define TIRMOUSE_DISPLAYGRAPHIC_H
 
 #include <wx/wx.h>
 
@@ -19,4 +20,4 @@ private:
   int gap_ = 20;
 };
 
-#endif /* TRACKIRMOUSE_DISPLAYGRAPHIC_H */
+#endif /* TIRMOUSE_DISPLAYGRAPHIC_H */

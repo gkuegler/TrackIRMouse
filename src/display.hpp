@@ -1,5 +1,5 @@
-#ifndef TRACKIRMOUSE_DISPLAY_H
-#define TRACKIRMOUSE_DISPLAY_H
+#ifndef TIRMOUSE_DISPLAY_H
+#define TIRMOUSE_DISPLAY_H
 
 #include "types.hpp"
 
@@ -98,7 +98,7 @@ public:
   }
 
   const CursorCoordinates get_cursor_coordinates(const Degrees yaw,
-                                              const Degrees pitch)
+                                                 const Degrees pitch)
   {
     const double left = rotation_boundaries[LEFT_EDGE];
     const double right = rotation_boundaries[RIGHT_EDGE];
@@ -143,4 +143,4 @@ public:
   }
 };
 
-#endif // TRACKIRMOUSE_DISPLAY_H
+#endif // TIRMOUSE_DISPLAY_H

@@ -1,10 +1,13 @@
+#pragma once
 #ifndef FINDIR_SHELL_H
 #define FINDIR_SHELL_H
-#include "log.hpp"
-#include "windows-wrapper.hpp"
+
 #include <optional>
 #include <shellapi.h>
 #include <string>
+
+#include "log.hpp"
+#include "windows-wrapper.hpp"
 
 void
 ExecuteShellCommand(HWND hWnd,
