@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <string>
+#include <string_view>
 
 #include "constants.hpp"
 #include "game-titles.hpp"
@@ -29,13 +30,17 @@
 #include "ui-dialog-profile-selector.hpp"
 #include "ui-dialog-settings.hpp"
 #include "utility.hpp"
+#include "version.hpp"
 
-static const constexpr std::string_view k_version_no = "1.1.2";
-static const constexpr std::string_view k_build_date = __DATE__;
 static const wxSize k_default_button_size = wxSize(110, 25);
 static const wxSize k_default_button_size_2 = wxSize(150, 25);
-static const constexpr int k_max_profile_length = 30;
 static const wxTextValidator alphanumeric_validator(wxFILTER_ALPHANUMERIC);
+static constexpr int k_max_profile_length = 30;
+
+// static constexpr std::string_view k_version_no = "1.1.2";
+static constexpr std::string_view k_version_no = STR(
+  TIRMOUSE_VER_MAJOR) "." STR(TIRMOUSE_VER_MINOR) "." STR(TIRMOUSE_VER_PATCH);
+static constexpr std::string_view k_build_date = __DATE__;
 static const std::string k_about_message =
   fmt::format("Version No:  {}\n"
               "Build Date:  {}\n\n"

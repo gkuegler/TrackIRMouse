@@ -322,6 +322,7 @@
     <ClCompile Include="src\environment.cpp" />
     <ClInclude Include="src\constants.hpp" />
     <ClInclude Include="src\environment.hpp" />
+    <ClInclude Include="src\version.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mouse-modes.hpp" />
