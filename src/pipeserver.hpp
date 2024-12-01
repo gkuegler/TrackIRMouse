@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_WATCHDOG_H
-#define TIRMOUSE_WATCHDOG_H
 
 #include "windows-wrapper.hpp"
 
@@ -42,5 +40,3 @@ private:
   void HandleConnection(WindowsHandle hPipe);
   std::string HandleMsg(std::string);
 };
-
-#endif /* TIRMOUSE_WATCHDOG_H */

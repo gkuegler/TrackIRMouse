@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_JSON_HPP
-#define TIRMOUSE_JSON_HPP
 
 #define JSON_DIAGNOSTICS 1
 #include <nlohmann/json.hpp>
@@ -20,5 +18,3 @@ LoadJsonFromFileIntoObject(std::string filename) -> T
   json j = json::parse(f);
   return j.template get<T>();
 }
-
-#endif /* TIRMOUSE_JSON_HPP */

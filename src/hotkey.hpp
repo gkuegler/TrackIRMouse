@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_HOTKEY_HPP
-#define TIRMOUSE_HOTKEY_HPP
 
 #include "windows-wrapper.hpp"
 
@@ -41,5 +39,3 @@ private:
   HWND hWnd_ = NULL;
   bool is_registered_ = false;
 };
-
-#endif /* TIRMOUSE_HOTKEY_HPP */

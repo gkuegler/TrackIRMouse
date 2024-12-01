@@ -5,8 +5,7 @@
  *
  */
 
-#ifndef EDIT_DISPLAY_HPP
-#define EDIT_DISPLAY_HPP
+#pragma once
 
 #include <array>
 #include <string>
@@ -206,5 +205,3 @@ public:
     };
   }
 };
-
-#endif // EDIT_DISPLAY_HPP

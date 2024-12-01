@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_CONFIG_HPP
-#define TIRMOUSE_CONFIG_HPP
 
 #include <array>
 #include <map>
@@ -104,5 +102,3 @@ using UserInput = std::vector<UserDisplay>;
 bool
 ValidateUserInput(const UserInput& displays);
 } // namespace config
-
-#endif // TIRMOUSE_CONFIG_HPP

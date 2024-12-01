@@ -5,8 +5,6 @@
  *
  */
 #pragma once
-#ifndef TIRMOUSE_DIALOG_UTILITIES_HPP
-#define TIRMOUSE_DIALOG_UTILITIES_HPP
 
 #include <array>
 #include <string>
@@ -75,4 +73,3 @@ public:
     dialog->EndModal(ret_code);
   }
 };
-#endif // TIRMOUSE_DIALOG_UTILITIES_HPP

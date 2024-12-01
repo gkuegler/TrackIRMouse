@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_THREADS_H
-#define TIRMOUSE_THREADS_H
 
 #include <wx/thread.h>
 
@@ -90,5 +88,3 @@ GracefullyDeleteThreadAndWait(T*& thread, wxCriticalSection& cs)
     }
   }
 };
-
-#endif /* TIRMOUSE_THREADS_H */

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_HANDLERS_HPP
-#define TIRMOUSE_HANDLERS_HPP
 
 #include <memory>
 
@@ -36,5 +34,3 @@ private:
   void set_cursor_pos(double x, double y);
 };
 } // namespace handlers
-
-#endif /* TIRMOUSE_HANDLERS_HPP */

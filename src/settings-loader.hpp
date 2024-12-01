@@ -5,8 +5,6 @@
  *
  */
 #pragma once
-#ifndef TIRMOUSE_SETTINGS_LOAD_HPP
-#define TIRMOUSE_SETTINGS_LOAD_HPP
 
 /**
  * Returns true if application should continue loading.
@@ -16,5 +14,3 @@
  */
 bool
 LoadSettingsFile();
-
-#endif // TIRMOUSE_SETTINGS_LOAD_HPP

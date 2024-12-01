@@ -1,5 +1,4 @@
-#ifndef TIRMOUSE_MOUSE_MODES_HPP
-#define TIRMOUSE_MOUSE_MODES_HPP
+#pragma once
 
 // #include <map>
 #include <wx/string.h>
@@ -30,4 +29,3 @@ mouse_mode
 GetModeByExecutableName(wxString name);
 void
 UpdateModesbyExecutableName(wxString name, mouse_mode mode);
-#endif /* TIRMOUSE_MOUSE_MODES_HPP */

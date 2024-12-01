@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_TRACK_HPP
-#define TIRMOUSE_TRACK_HPP
 
 #include <exception>
 #include <string>
@@ -52,5 +50,3 @@ public:
     : std::exception(message){};
 };
 } // namespace trackers
-
-#endif /* TIRMOUSE_TRACK_HPP */

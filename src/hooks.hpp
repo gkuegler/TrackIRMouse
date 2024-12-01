@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_HOOKS_HPP
-#define TIRMOUSE_HOOKS_HPP
 
 #include "handlers.hpp"
 
@@ -26,5 +24,3 @@ private:
 // private:
 //   HWINEVENTHOOK hook = 0;
 // };
-
-#endif /* TIRMOUSE_HOOKS_HPP */

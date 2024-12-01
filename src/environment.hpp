@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_WINDISPLAY_HPP
-#define TIRMOUSE_WINDISPLAY_HPP
 
 #include "types.hpp"
 
@@ -20,5 +18,3 @@ struct WinDisplayInfo
 
 WinDisplayInfo
 GetHardwareDisplayInformation(bool);
-
-#endif /* TIRMOUSE_WINDISPLAY_HPP */

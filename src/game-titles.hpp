@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_GAME_TITLES_HPP
-#define TIRMOUSE_GAME_TITLES_HPP
 
 #include <map>
 #include <string>
@@ -13,4 +11,3 @@ using game_title_map_t = std::map<std::string, std::string>;
 
 game_title_map_t
 GetTitleIds();
-#endif /* TIRMOUSE_GAME_TITLES_HPP */

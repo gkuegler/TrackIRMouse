@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_GUIDIALOGS_H
-#define TIRMOUSE_GUIDIALOGS_H
 
 #include <string>
 #include <utility>
@@ -99,5 +97,3 @@ public:
   }
   int GetSelectedProfileId() { return profile_id_; }
 };
-
-#endif /* TIRMOUSE_GUIDIALOGS_H */

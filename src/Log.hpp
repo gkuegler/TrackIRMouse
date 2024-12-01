@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_LOG_H
-#define TIRMOUSE_LOG_H
 
 #define SPDLOG_NO_THREAD_ID
 #define SPDLOG_NO_ATOMIC_LEVELS // code never modifies a logger_'s log levels
@@ -40,5 +38,3 @@ std::shared_ptr<spdlog::logger>
 GetClonedLogger(std::string name);
 
 } // namespace mylogging
-
-#endif /* TIRMOUSE_LOG_H */

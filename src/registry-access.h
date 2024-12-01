@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_REGISTRY_HPP
-#define TIRMOUSE_REGISTRY_HPP
 
 #include <string>
 
@@ -108,5 +106,3 @@ GetStringFromRegistry(HKEY parent_key,
                   status_get_value));
   }
 }
-
-#endif /* TIRMOUSE_REGISTRY_HPP */

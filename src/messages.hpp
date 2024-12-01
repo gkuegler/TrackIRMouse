@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_MESSAGES_HPP
-#define TIRMOUSE_MESSAGES_HPP
 
 #include <string>
 
@@ -21,5 +19,3 @@ SendThreadMessage(msgcode code, std::string msg = "");
 
 void
 SendThreadMessage(msgcode code, std::string msg, long);
-
-#endif /* TIRMOUSE_MESSAGES_HPP */

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_UI_FRAME_H
-#define TIRMOUSE_UI_FRAME_H
 
 #include <wx/dataview.h>
 #include <wx/wx.h>
@@ -110,5 +108,3 @@ public:
   void PopulateComboBoxWithProfiles();
   void PopulateSettings();
 };
-
-#endif /* TIRMOUSE_UI_FRAME_H */

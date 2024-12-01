@@ -1,6 +1,4 @@
 #pragma once
-#ifndef FINDIR_SHELL_H
-#define FINDIR_SHELL_H
 
 #include <optional>
 #include <shellapi.h>
@@ -127,5 +125,3 @@ ExecuteCommand(std::string path)
     return;
   }
 }
-
-#endif /* FINDIR_SHELL_H */

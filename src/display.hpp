@@ -1,5 +1,4 @@
-#ifndef TIRMOUSE_DISPLAY_H
-#define TIRMOUSE_DISPLAY_H
+#pragma once
 
 #include "types.hpp"
 
@@ -142,5 +141,3 @@ public:
     }
   }
 };
-
-#endif // TIRMOUSE_DISPLAY_H

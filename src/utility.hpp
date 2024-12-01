@@ -1,7 +1,4 @@
-
 #pragma once
-#ifndef TIRMOUSE_UTIL_H
-#define TIRMOUSE_UTIL_H
 
 #include <spdlog/spdlog.h>
 #include <wx/arrstr.h>
@@ -181,4 +178,3 @@ GetAbsolutePathBasedFromExeFolderUnicode(std::string base_path)
   }
 }
 } // namespace util
-#endif /* TIRMOUSE_UTIL_H */

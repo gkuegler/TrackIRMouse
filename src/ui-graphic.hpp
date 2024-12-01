@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TIRMOUSE_DISPLAYGRAPHIC_H
-#define TIRMOUSE_DISPLAYGRAPHIC_H
 
 #include <wx/wx.h>
 
@@ -19,5 +17,3 @@ private:
   int height_ = 100;
   int gap_ = 20;
 };
-
-#endif /* TIRMOUSE_DISPLAYGRAPHIC_H */
