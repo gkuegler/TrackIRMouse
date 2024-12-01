@@ -116,9 +116,6 @@
     <ClInclude Include="src\ui-frame.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mouse-modes.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\hooks.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

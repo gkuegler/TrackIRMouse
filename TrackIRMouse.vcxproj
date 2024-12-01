@@ -288,11 +288,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_x64_lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);</AdditionalDependencies>
-      <UACExecutionLevel>
-      </UACExecutionLevel>
-      <UACUIAccess>
-      </UACUIAccess>
-      <EnableUAC>true</EnableUAC>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -325,7 +322,6 @@
     <ClInclude Include="src\version.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mouse-modes.hpp" />
     <ClInclude Include="src\game-titles.hpp" />
     <ClInclude Include="src\hooks.hpp" />
     <ClInclude Include="src\json.hpp" />
