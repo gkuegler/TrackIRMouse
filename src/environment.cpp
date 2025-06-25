@@ -44,13 +44,18 @@ MonitorProc(HMONITOR hMonitor,  // handle to the display monitor.
   return true;
 }
 
+/* Function for std::compare.
+ * Returns ​true if the first argument is less than (i.e. is ordered before)
+ * the second.
+ * https://en.cppreference.com/w/cpp/algorithm/sort.html
+ */
 bool
 compare(const RectPixels& a, const RectPixels& b)
 {
-  if (a[TOP_EDGE] == b[TOP_EDGE]) {
-    return a[LEFT_EDGE] < b[LEFT_EDGE];
+  if (a[LEFT_EDGE] < b[LEFT_EDGE]) {
+    return true;
   } else {
-    return a[TOP_EDGE] < b[TOP_EDGE];
+    return false;
   }
 }
 
@@ -59,14 +64,15 @@ GetHardwareDisplayInformation(bool sort_windows)
 {
 
   // g_displays.clear();
+
+  // Container for the WindowsCallbackProc to fill.
   std::vector<RectPixels> rectangles;
 
-  // Use a callback to go through each monitor
-  if (0 == EnumDisplayMonitors(NULL, NULL, MonitorProc, (LPARAM)&rectangles))
-
-  {
+  // Use a callback to go through each monitor.
+  if (0 == EnumDisplayMonitors(NULL, NULL, MonitorProc, (LPARAM)&rectangles)) {
     throw std::runtime_error("failed to enumerate displays");
   }
+
   if (rectangles.size() == 0) {
     throw std::runtime_error("0 displays enumerated");
   }
@@ -75,14 +81,16 @@ GetHardwareDisplayInformation(bool sort_windows)
     std::sort(rectangles.begin(), rectangles.end(), compare);
   }
 
-  // in the event that the top-left most point may start out above or below 0, 0
+  // in the event that the top-left most point may be above or below 0, 0
   // TODO: make an actual display class to represent hardware info?
-  // TODO: just use the microsoft profided 'RECT', it has members 'left' etc...
+  // TODO: just use the microsoft profided 'RECT', it has members 'left'
+  // etc...?
   Pixels origin_offset_x_ = rectangles[0][0]; // left
   Pixels origin_offset_y_ = rectangles[0][2]; // top
+
   for (const auto& d : rectangles) {
-    origin_offset_x_ = d[0] ? d[0] < origin_offset_x_ : origin_offset_x_;
-    origin_offset_y_ = d[2] ? d[2] < origin_offset_y_ : origin_offset_y_;
+    origin_offset_x_ = std::min(d[0], origin_offset_x_);
+    origin_offset_y_ = std::min(d[2], origin_offset_y_);
   }
 
   spdlog::debug("Virtual Origin Offset Horizontal: {:>5d}", origin_offset_x_);
