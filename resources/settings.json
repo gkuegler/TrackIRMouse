@@ -1,5 +1,5 @@
 {
-    "active_profile_name": "Dual Desktop",
+    "active_profile_name": "Rich Basement - Profile = 2.5/",
     "auto_find_track_ir_dll": true,
     "auto_retry": true,
     "default_padding": [
@@ -45,7 +45,7 @@
                     ]
                 }
             ],
-            "name": "Dual Desktop",
+            "name": "Dual Monitor - Close Range",
             "profile_id": 13302,
             "use_default_padding": true
         },
@@ -66,7 +66,7 @@
                     ]
                 }
             ],
-            "name": "Desktop Single Monitor Pams",
+            "name": "Single Monitor",
             "profile_id": 13302,
             "use_default_padding": true
         },
@@ -80,10 +80,10 @@
                         0
                     ],
                     "rotation": [
-                        43.0,
+                        38.0,
                         -50.0,
-                        -20.0,
-                        17.0
+                        -19.0,
+                        19.0
                     ]
                 },
                 {
@@ -95,14 +95,63 @@
                     ],
                     "rotation": [
                         -62.0,
-                        -173.0,
-                        -20.0,
-                        17.0
+                        -170.0,
+                        -19.0,
+                        19.0
                     ]
                 }
             ],
-            "name": "Jarretts Desk",
+            "name": "Dual Monitor - Far Range",
             "profile_id": 13302,
+            "use_default_padding": true
+        },
+        {
+            "displays": [
+                {
+                    "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ],
+                    "rotation": [
+                        80.0,
+                        33.0,
+                        -20.0,
+                        21.0
+                    ]
+                },
+                {
+                    "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ],
+                    "rotation": [
+                        28.0,
+                        -58.0,
+                        -14.0,
+                        14.0
+                    ]
+                },
+                {
+                    "padding": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ],
+                    "rotation": [
+                        -68.0,
+                        -162.0,
+                        -14.0,
+                        14.0
+                    ]
+                }
+            ],
+            "name": "Rich Basement - Profile = 2.5/",
+            "profile_id": 2225,
             "use_default_padding": true
         }
     ],
