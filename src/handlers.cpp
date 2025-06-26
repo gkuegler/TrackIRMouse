@@ -13,6 +13,16 @@
 
 namespace handlers {
 
+#include <cmath> // Required for sqrt() and pow()
+
+double
+CalculateEuclideanDistance2D(double x1, double y1, double x2, double y2)
+{
+  double dx = x2 - x1;
+  double dy = y2 - y1;
+  return std::sqrt(std::pow(dx, 2) + std::pow(dy, 2));
+}
+
 MouseHandler::MouseHandler(settings::Profile profile)
 {
   const auto info = GetHardwareDisplayInformation(true);
@@ -81,6 +91,17 @@ MouseHandler::handle_input(const Degrees yaw, const Degrees pitch)
   static double last_x = 0;
   constexpr static const double small_pix_offset = 5;    // pixels
   constexpr static const double minimap_pix_offset = 60; // pixels
+
+  // Dead Zone Calculation
+  // TODO: change to pitch and yaw
+  auto d =
+    CalculateEuclideanDistance2D(yaw, pitch, last_pos_.yaw, last_pos_.pitch);
+
+  if (d < dead_zone_threshold_) {
+    return;
+  }
+
+  last_pos_ = { yaw, pitch };
 
   if (normal_mode_) {
     // Check if the head is pointing to a screen

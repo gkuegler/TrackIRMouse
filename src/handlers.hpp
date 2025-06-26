@@ -8,6 +8,13 @@
 #include "types.hpp"
 
 namespace handlers {
+template<typename T>
+class Coord
+{
+public:
+  T yaw{ 0 };
+  T pitch{ 0 };
+};
 
 // takes yaw and pitch information then converts it to mouse coordinates.
 // will also move mouse
@@ -19,11 +26,13 @@ private:
   std::shared_ptr<std::vector<Display>> displays_;
   std::atomic<bool> normal_mode_ = true;
   std::atomic<mouse_mode> mode_ = mouse_mode::scrollbar_right_small;
+  Coord<Degrees> last_pos_{ 0.0, 0.0 };
+  Degrees dead_zone_threshold_ = 0.05; // set to zero to disable dead zone
 
 public:
   // TODO: Be more explicit in my data structure than the profile?
   MouseHandler(settings::Profile profile);
-  ~MouseHandler(){};
+  ~MouseHandler() {};
 
   void handle_input(const Degrees yaw, const Degrees pitch);
   void set_alternate_mode(mouse_mode mode);
