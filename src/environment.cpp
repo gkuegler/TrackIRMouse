@@ -8,7 +8,6 @@
 #include "utility.hpp"
 #include "windows-wrapper.hpp"
 
-// SendInput with absolute mouse movement flag takes a short int
 constexpr static double USHORT_MAX_VAL = 65535;
 
 // windows api callback
@@ -50,7 +49,7 @@ MonitorProc(HMONITOR hMonitor,  // handle to the display monitor.
  * https://en.cppreference.com/w/cpp/algorithm/sort.html
  */
 bool
-compare(const RectPixels& a, const RectPixels& b)
+WinDisplayInfo::compare(const RectPixels& a, const RectPixels& b)
 {
   if (a[LEFT_EDGE] < b[LEFT_EDGE]) {
     return true;
@@ -59,59 +58,44 @@ compare(const RectPixels& a, const RectPixels& b)
   }
 }
 
-WinDisplayInfo
-GetHardwareDisplayInformation(bool sort_windows)
+WinDisplayInfo::WinDisplayInfo()
 {
-
-  // g_displays.clear();
-
-  // Container for the WindowsCallbackProc to fill.
-  std::vector<RectPixels> rectangles;
-
   // Use a callback to go through each monitor.
   if (0 == EnumDisplayMonitors(NULL, NULL, MonitorProc, (LPARAM)&rectangles)) {
     throw std::runtime_error("failed to enumerate displays");
   }
 
   if (rectangles.size() == 0) {
-    throw std::runtime_error("0 displays enumerated");
+    throw std::runtime_error(
+      "0 displays enumerated. Something went wrong with Windows.");
   }
 
-  if (sort_windows) {
-    std::sort(rectangles.begin(), rectangles.end(), compare);
-  }
+  // Ensure left most monitor is first in the list.
+  // Windows does not guarantee the order of monitors returned by
+  // 'EnumDisplayMonitors' and the order does change between calls.
+  std::sort(rectangles.begin(), rectangles.end(), compare);
 
-  // in the event that the top-left most point may be above or below 0, 0
-  // TODO: make an actual display class to represent hardware info?
-  // TODO: just use the microsoft profided 'RECT', it has members 'left'
-  // etc...?
-  Pixels origin_offset_x_ = rectangles[0][0]; // left
-  Pixels origin_offset_y_ = rectangles[0][2]; // top
+  // Find the top left-most point of the virtual desktop.
+  auto x = rectangles[0][LEFT_EDGE]; // left
+  auto y = rectangles[0][TOP_EDGE];  // top
 
   for (const auto& d : rectangles) {
-    origin_offset_x_ = std::min(d[0], origin_offset_x_);
-    origin_offset_y_ = std::min(d[2], origin_offset_y_);
+    x = std::min(d[0], x);
+    y = std::min(d[2], y);
   }
 
-  spdlog::debug("Virtual Origin Offset Horizontal: {:>5d}", origin_offset_x_);
-  spdlog::debug("Virtual Origin Offset Vertical:   {:>5d}", origin_offset_y_);
+  top_left_point = { x, y };
 
-  const auto virtual_desktop_width = static_cast<Pixels>(GetSystemMetrics(
-    SM_CXVIRTUALSCREEN)); // width_ of total bounds of all screens
-  const auto virtual_desktop_height = static_cast<Pixels>(GetSystemMetrics(
-    SM_CYVIRTUALSCREEN)); // height_ of total bounds of all screens
+  spdlog::debug("Virtual Origin Offset Horizontal: {:>5d}", x);
+  spdlog::debug("Virtual Origin Offset Vertical:   {:>5d}", y);
 
-  spdlog::debug("Width of Virtual Desktop:  {:>5}", virtual_desktop_width);
-  spdlog::debug("Height of Virtual Desktop: {:>5}", virtual_desktop_height);
+  desktop_width = static_cast<Pixels>(GetSystemMetrics(SM_CXVIRTUALSCREEN));
+  desktop_height = static_cast<Pixels>(GetSystemMetrics(SM_CYVIRTUALSCREEN));
 
-  return {
-    GetSystemMetrics(SM_CMONITORS),
-    rectangles,
-    origin_offset_x_,
-    origin_offset_y_,
-    USHORT_MAX_VAL / static_cast<double>(virtual_desktop_width),
-    USHORT_MAX_VAL / static_cast<double>(virtual_desktop_height),
-    GetSystemMetrics(SM_CXVIRTUALSCREEN),
-    GetSystemMetrics(SM_CYVIRTUALSCREEN),
-  };
+  short_to_pixels_ratio_x = USHORT_MAX_VAL / static_cast<double>(desktop_width);
+  short_to_pixels_ratio_y =
+    USHORT_MAX_VAL / static_cast<double>(desktop_height);
+
+  spdlog::debug("Width of Virtual Desktop:  {:>5}", desktop_width);
+  spdlog::debug("Height of Virtual Desktop: {:>5}", desktop_height);
 }

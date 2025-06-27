@@ -19,7 +19,6 @@ PanelDisplayGraphic::PanelDisplayGraphic(wxWindow* parent, wxSize size)
             "")
 {
   p_parent_ = parent;
-  // TODO: initialize logger_ here
   Bind(wxEVT_PAINT, &PanelDisplayGraphic::PaintEvent, this);
 }
 
@@ -103,7 +102,7 @@ PanelDisplayGraphic::Render(wxDC& dc)
   const double area_y = cheight - 50;
 
   // get array of monitor bounds
-  const auto hdi = GetHardwareDisplayInformation(true);
+  const auto hdi = WinDisplayInfo();
   const auto usrDisplays = settings::Get()->GetActiveProfile().displays;
 
   // offset all rectangles so that 0,0 as top left most value

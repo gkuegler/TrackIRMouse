@@ -2,19 +2,30 @@
 
 #include "types.hpp"
 
-struct WinDisplayInfo
+// TODO: Should this class be more self contained for the mouse control? Like
+// should the send input function be a apart of this. Maybe this should be a
+// class called 'Desktop'?
+class WinDisplayInfo
 {
+public:
   int count = 0;
   // TODO: use regular rectangle with '.left' member variables for access or
-  // redo the math for the 'graphic'
+  // redo the math for the 'graphic'.
   std::vector<RectPixels> rectangles;
-  Pixels origin_offset_x = 0;
-  Pixels origin_offset_y = 0;
-  double short_to_pixels_ratio_x = 0; // short value to desktop pixels ratio
-  double short_to_pixels_ratio_y = 0; // short value to desktop pixels ratio
+  Point<Pixels> top_left_point; // origin offset in pixels from (0, 0)
+
+  // Used in normalized absolute coordinates for Win32 SendInput function.
+  // Coordinate (0,0) maps onto the upper-left corner of the display surface,
+  // (65535,65535) maps onto the lower-right corner.
+  // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-mouse_event
+  double short_to_pixels_ratio_x = 0;
+  double short_to_pixels_ratio_y = 0;
+
   int desktop_width;
   int desktop_height;
-};
 
-WinDisplayInfo
-GetHardwareDisplayInformation(bool);
+  WinDisplayInfo();
+
+private:
+  static bool compare(const RectPixels& a, const RectPixels& b);
+};

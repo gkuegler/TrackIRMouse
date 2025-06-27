@@ -20,5 +20,31 @@ constexpr static const int RIGHT_EDGE = 1;
 constexpr static const int TOP_EDGE = 2;
 constexpr static const int BOTTOM_EDGE = 3;
 
+template<typename T>
+class Point
+{
+public:
+  T x;
+  T y;
+
+  Point(T x_, T y_)
+    : x(x_)
+    , y(y_)
+  {
+  }
+
+  Point()
+    : x(0)
+    , y(0)
+  {
+  }
+
+  bool operator==(const Point& other) const
+  {
+    return (x == other.x && y == other.y);
+  }
+  
+};
+
 // Am I using this?
 // using HandleFunction = void (*)(Degrees, Degrees);

@@ -25,7 +25,7 @@ CalculateEuclideanDistance2D(double x1, double y1, double x2, double y2)
 
 MouseHandler::MouseHandler(settings::Profile profile)
 {
-  const auto info = GetHardwareDisplayInformation(true);
+  const auto info = WinDisplayInfo();
 
   auto hardware_display_count = info.rectangles.size();
   auto user_display_count = profile.displays.size();
@@ -54,8 +54,8 @@ MouseHandler::MouseHandler(settings::Profile profile)
     auto& rect = info.rectangles[i];
     // transfer config data to internal strucuture
     Display display(rect, d.rotation, d.padding);
-    display.setAbsBounds(info.origin_offset_x,
-                         info.origin_offset_y,
+    display.setAbsBounds(info.top_left_point.x,
+                         info.top_left_point.y,
                          info.short_to_pixels_ratio_x,
                          info.short_to_pixels_ratio_y);
     displays.push_back(display);
