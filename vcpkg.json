@@ -3,5 +3,6 @@
         "spdlog",
         "wxwidgets",
         "nlohmann-json"
-    ]
+    ],
+    "builtin-baseline": "7066011e27c97dbcfff739be2b69b592a41fc74a"
 }
