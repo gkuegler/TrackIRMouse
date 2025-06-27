@@ -13,9 +13,7 @@
 //                           TrackThread                            //
 //////////////////////////////////////////////////////////////////////
 
-ThreadHeadTracking::ThreadHeadTracking(MainWindow* p_window_handler,
-                                       HWND hWnd,
-                                       settings::Settings settings)
+ThreadHeadTracking::ThreadHeadTracking(MainWindow* p_window_handler, HWND hWnd, Settings settings)
   : wxThread()
 {
   p_window_handler_ = p_window_handler;
@@ -25,8 +23,7 @@ ThreadHeadTracking::ThreadHeadTracking(MainWindow* p_window_handler,
   settings_ = settings; // create copy of user data for tracking thread
 
   // TODO: use a unique pointer instead
-  handler_ =
-    std::make_shared<handlers::MouseHandler>(settings.GetActiveProfile());
+  handler_ = std::make_shared<handlers::MouseHandler>(settings.GetActiveProfile());
   tracker_ = std::make_shared<trackers::TrackIR>(handler_.get());
 }
 
@@ -54,10 +51,8 @@ ThreadHeadTracking::Entry()
   while (false == wxThread::TestDestroy()) {
     try {
       // handler_ = std::make_shared<handlers::MouseHandler>();return
-      tracker_->initialize(hWnd_,
-                           settings_.auto_find_track_ir_dll,
-                           settings_.track_ir_dll_folder,
-                           profile.profile_id);
+      tracker_->initialize(
+        hWnd_, settings_.auto_find_track_ir_dll, settings_.track_ir_dll_folder, profile.profile_id);
 
       // run the main tracking loop
       tracker_->start();
@@ -104,8 +99,7 @@ ThreadHeadTracking::Delete(ExitCode* rc, wxThreadWait waitMode)
 //////////////////////////////////////////////////////////////////////
 
 // TODO: make a restarting service for checkbox ini settings
-ThreadPipeServer::ThreadPipeServer(MainWindow* p_window_handler,
-                                   std::string name)
+ThreadPipeServer::ThreadPipeServer(MainWindow* p_window_handler, std::string name)
   : wxThread()
 {
 

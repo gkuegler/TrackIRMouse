@@ -33,7 +33,7 @@ private:
   wxSpinCtrl* padding_bottom;
 
 public:
-  DialogDisplayEdit(wxWindow* parent, const settings::UserDisplay display)
+  DialogDisplayEdit(wxWindow* parent, const UserDisplay display)
     : wxDialog(parent, wxID_ANY, "Track IR - Display Edit")
   {
     auto buttons = new PanelEndModalDialogButtons(this, this);
@@ -43,12 +43,10 @@ public:
     buttons->AddButton("Cancel", wxID_CANCEL);
 
     // Logging Window
-    auto label_description = new wxStaticText(
-      this, wxID_ANY, "Choose the boundaries for the display.");
-    auto label_rotation =
-      new wxStaticText(this, wxID_ANY, "Display Bounds in 'Game Degrees'  ");
-    auto label_padding =
-      new wxStaticText(this, wxID_ANY, "Display Bounds in 'Game Degrees'  ");
+    auto label_description =
+      new wxStaticText(this, wxID_ANY, "Choose the boundaries for the display.");
+    auto label_rotation = new wxStaticText(this, wxID_ANY, "Display Bounds in 'Game Degrees'  ");
+    auto label_padding = new wxStaticText(this, wxID_ANY, "Display Bounds in 'Game Degrees'  ");
     auto label_left = new wxStaticText(this, wxID_ANY, "Left:");
     auto label_right = new wxStaticText(this, wxID_ANY, "Right:");
     auto label_top = new wxStaticText(this, wxID_ANY, "Top:");
@@ -95,10 +93,10 @@ public:
                                      180,
                                      display.rotation[BOTTOM_EDGE]);
 
-    auto static_line = new wxStaticLine(
-      this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
-    auto static_line_2 = new wxStaticLine(
-      this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
+    auto static_line =
+      new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
+    auto static_line_2 =
+      new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
 
     padding_left = new wxSpinCtrl(this,
                                   wxID_ANY,
@@ -180,8 +178,7 @@ public:
 
     auto top = new wxBoxSizer(wxVERTICAL);
     top->Add(sizer, 0, wxALL | wxEXPAND, BORDER_SPACING);
-    top->Add(
-      buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, BORDER_SPACING);
+    top->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, BORDER_SPACING);
 
     SetSizer(top);
 
@@ -190,7 +187,7 @@ public:
 
     this->CenterOnParent();
   }
-  void ApplyChanges(settings::UserDisplay& display)
+  void ApplyChanges(UserDisplay& display)
   {
     display.rotation = {
       static_cast<double>(rotation_left->GetValue()),

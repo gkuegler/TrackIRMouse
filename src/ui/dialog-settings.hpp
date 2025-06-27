@@ -15,9 +15,9 @@
 
 #include "log.hpp"
 #include "settings.hpp"
-#include "utility.hpp"
 
 #include "ui/dialog-utilities.hpp"
+#include "ui/utilities.hpp"
 
 class DialogSettings : public wxDialog
 {
@@ -36,13 +36,12 @@ private:
   wxString* text_server_name_validator_data;
 
 public:
-  DialogSettings(wxWindow* parent, const settings::Settings& user_data);
-  ~DialogSettings(){};
-  void ApplySettings(settings::Settings& user_data);
+  DialogSettings(wxWindow* parent, const Settings& user_data);
+  ~DialogSettings() {};
+  void ApplySettings(Settings& user_data);
 };
 
-DialogSettings::DialogSettings(wxWindow* parent,
-                               const settings::Settings& user_data)
+DialogSettings::DialogSettings(wxWindow* parent, const Settings& user_data)
   : wxDialog(parent, wxID_ANY, "Track IR - Settings")
 {
   auto buttons = new PanelEndModalDialogButtons(this, this);
@@ -50,40 +49,34 @@ DialogSettings::DialogSettings(wxWindow* parent,
   buttons->AddButton("Okay && Save", wxID_APPLY);
   buttons->AddButton("Cancel", wxID_CANCEL);
 
-  auto label_start_up_settings =
-    new wxStaticText(this, wxID_ANY, "Startup Behavior  ");
-  auto label_basic_settings =
-    new wxStaticText(this, wxID_ANY, "Basic Settings  ");
-  auto label_advanced_settings =
-    new wxStaticText(this, wxID_ANY, "Advanced Settings  ");
-  auto label_pipeserver = new wxStaticText(
-    this, wxID_ANY, "A change to this requires an application restart.");
+  auto label_start_up_settings = new wxStaticText(this, wxID_ANY, "Startup Behavior  ");
+  auto label_basic_settings = new wxStaticText(this, wxID_ANY, "Basic Settings  ");
+  auto label_advanced_settings = new wxStaticText(this, wxID_ANY, "Advanced Settings  ");
+  auto label_pipeserver =
+    new wxStaticText(this, wxID_ANY, "A change to this requires an application restart.");
 
-  auto static_line = new wxStaticLine(
-    this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
-  auto static_line_2 = new wxStaticLine(
-    this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
-  auto static_line_3 = new wxStaticLine(
-    this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
+  auto static_line =
+    new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
+  auto static_line_2 =
+    new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
+  auto static_line_3 =
+    new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
 
-  check_track_on_start =
-    new wxCheckBox(this, wxID_ANY, "Start mouse control when app starts");
+  check_track_on_start = new wxCheckBox(this, wxID_ANY, "Start mouse control when app starts");
 
-  check_quit_on_loss = new wxCheckBox(
-    this, wxID_ANY, "Quit app when connection is lost to NP TrackIR");
+  check_quit_on_loss =
+    new wxCheckBox(this, wxID_ANY, "Quit app when connection is lost to NP TrackIR");
   check_quit_on_loss->Enable(false);
 
-  check_auto_retry = new wxCheckBox(
-    this, wxID_ANY, "Auto retry to connect with NPTrackIR device.");
+  check_auto_retry = new wxCheckBox(this, wxID_ANY, "Auto retry to connect with NPTrackIR device.");
 
   check_mouse_mode_hotkey =
     new wxCheckBox(this, wxID_ANY, "Enable alternate mouse modes with hotkey:");
 
-  check_enable_pipe_server =
-    new wxCheckBox(this,
-                   wxID_ANY,
-                   "Enable commands through pipe server named "
-                   "'\\\\.\\pipe\\");
+  check_enable_pipe_server = new wxCheckBox(this,
+                                            wxID_ANY,
+                                            "Enable commands through pipe server named "
+                                            "'\\\\.\\pipe\\");
   // TODO: add validator
   text_hot_key_name = new wxTextCtrl(this,
                                      wxID_ANY,
@@ -93,45 +86,44 @@ DialogSettings::DialogSettings(wxWindow* parent,
                                      wxTE_LEFT | wxTE_READONLY);
   text_hot_key_name->SetMaxLength(3);
   // TODO: add validator
-  text_server_name = new wxTextCtrl(
-    this,
-    wxID_ANY,
-    user_data.pipe_server_name,
-    wxDefaultPosition,
-    wxSize(150, 20),
-    wxTE_LEFT,
-    wxTextValidator(wxFILTER_ALPHA, text_server_name_validator_data));
+  text_server_name =
+    new wxTextCtrl(this,
+                   wxID_ANY,
+                   user_data.pipe_server_name,
+                   wxDefaultPosition,
+                   wxSize(150, 20),
+                   wxTE_LEFT,
+                   wxTextValidator(wxFILTER_ALPHA, text_server_name_validator_data));
 
   // ADVANCED SETTINGS
 
   auto label_log_level = new wxStaticText(this, wxID_ANY, "Log Level:  ");
-  choice_log_level =
-    new wxChoice(this,
-                 wxID_ANY,
-                 wxDefaultPosition,
-                 wxSize(100, 25),
-                 utility::BuildWxArrayString(logging::log_levels));
+  choice_log_level = new wxChoice(this,
+                                  wxID_ANY,
+                                  wxDefaultPosition,
+                                  wxSize(100, 25),
+                                  utility::BuildWxArrayString(logging::log_levels));
 
-  check_auto_find_dll = new wxCheckBox(
-    this, wxID_ANY, "Look up 'NPClient64.dll' location from registry.");
+  check_auto_find_dll =
+    new wxCheckBox(this, wxID_ANY, "Look up 'NPClient64.dll' location from registry.");
   check_auto_find_dll->SetValue(true);
   check_auto_find_dll->Enable(false);
 
-  auto label_auto_find = new wxStaticText(
-    this,
-    wxID_ANY,
-    "Uncheck this option to manually specify the folder where 'NPClient64.dll' "
-    "is installed.\n"
-    "This option is default enabled when Natural Point TrackIR 5 is installed "
-    "normally.\n"
-    "This feature is primarily aimed at users who wish to spoof the dll and "
-    "provide their own data source.");
+  auto label_auto_find =
+    new wxStaticText(this,
+                     wxID_ANY,
+                     "Uncheck this option to manually specify the folder where 'NPClient64.dll' "
+                     "is installed.\n"
+                     "This option is default enabled when Natural Point TrackIR 5 is installed "
+                     "normally.\n"
+                     "This feature is primarily aimed at users who wish to spoof the dll and "
+                     "provide their own data source.");
 
-  auto label_dll_folder_location = new wxStaticText(
-    this, wxID_ANY, "Manual Folder Location of 'NPClient64.dll':");
+  auto label_dll_folder_location =
+    new wxStaticText(this, wxID_ANY, "Manual Folder Location of 'NPClient64.dll':");
 
-  text_dll_folder_location = new wxTextCtrl(
-    this, wxID_ANY, "", wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
+  text_dll_folder_location =
+    new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(300, 20), wxTE_LEFT);
   check_auto_find_dll->Enable(false);
 
   // Set Defaults
@@ -161,25 +153,20 @@ DialogSettings::DialogSettings(wxWindow* parent,
   label_sizer_2->Add(static_line_2, 1, wxALIGN_CENTER_VERTICAL, 0);
 
   auto label_sizer_3 = new wxBoxSizer(wxHORIZONTAL);
-  label_sizer_3->Add(
-    label_advanced_settings, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+  label_sizer_3->Add(label_advanced_settings, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
   label_sizer_3->Add(static_line_3, 1, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
   // Horizontal Sub-Sizers
   auto log_levels_sizer = new wxBoxSizer(wxHORIZONTAL);
-  log_levels_sizer->Add(
-    label_log_level, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, SPACE_SM);
-  log_levels_sizer->Add(
-    choice_log_level, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
+  log_levels_sizer->Add(label_log_level, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, SPACE_SM);
+  log_levels_sizer->Add(choice_log_level, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
   auto hotkey_sizer = new wxBoxSizer(wxHORIZONTAL);
-  hotkey_sizer->Add(
-    check_mouse_mode_hotkey, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
+  hotkey_sizer->Add(check_mouse_mode_hotkey, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
   hotkey_sizer->Add(text_hot_key_name, 0, wxALIGN_LEFT);
 
   auto pipeserver_sizer = new wxBoxSizer(wxHORIZONTAL);
-  pipeserver_sizer->Add(
-    check_enable_pipe_server, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
+  pipeserver_sizer->Add(check_enable_pipe_server, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
   pipeserver_sizer->Add(text_server_name, 0, wxLEFT);
 
   // Main Layout
@@ -205,8 +192,7 @@ DialogSettings::DialogSettings(wxWindow* parent,
 
   auto* top_sizer = new wxBoxSizer(wxVERTICAL);
   top_sizer->Add(sizer, 0, wxALL | wxEXPAND, BORDER_SPACE);
-  top_sizer->Add(
-    buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, BORDER_SPACE);
+  top_sizer->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, BORDER_SPACE);
 
   // this->SetSizer(top_sizer);
   SetSizer(top_sizer);
@@ -218,7 +204,7 @@ DialogSettings::DialogSettings(wxWindow* parent,
 }
 
 void
-DialogSettings::ApplySettings(settings::Settings& user_data)
+DialogSettings::ApplySettings(Settings& user_data)
 {
   user_data.auto_find_track_ir_dll = check_auto_find_dll->IsChecked();
   user_data.track_on_start = check_track_on_start->IsChecked();
@@ -230,11 +216,9 @@ DialogSettings::ApplySettings(settings::Settings& user_data)
   user_data.pipe_server_enabled = check_enable_pipe_server->IsChecked();
   user_data.pipe_server_name = text_server_name->GetValue().ToStdString();
   const int log_level_idx = choice_log_level->GetSelection();
-  const auto level_name =
-    choice_log_level->GetString(log_level_idx).ToStdString();
+  const auto level_name = choice_log_level->GetString(log_level_idx).ToStdString();
   user_data.SetLogLevel(level_name);
 
   user_data.auto_find_track_ir_dll = check_auto_find_dll->IsChecked();
-  user_data.track_ir_dll_folder =
-    text_dll_folder_location->GetValue().ToStdString();
+  user_data.track_ir_dll_folder = text_dll_folder_location->GetValue().ToStdString();
 }

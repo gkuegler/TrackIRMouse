@@ -7,6 +7,7 @@
 #include "hooks.hpp"
 #include "hotkey.hpp"
 #include "settings.hpp"
+
 #include "ui/graphic.hpp"
 
 // forward decl of thread classes
@@ -59,6 +60,8 @@ public:
   wxCheckBox* p_check_use_default_padding_;
   wxDataViewListCtrl* p_view_mapping_data_;
 
+  Settings& settings_;
+
   // Global hotkey has to be wrapped in a smart pointer to avoid a bug
   // where my same object would be deleted following the initialization of my
   // frame.
@@ -66,8 +69,10 @@ public:
   std::unique_ptr<HookWindowChanged> hook_window_changed_;
 
 public:
-  MainWindow(wxPoint, wxSize);
+  MainWindow(wxPoint, wxSize, Settings&);
   ~MainWindow();
+
+  void SetupMenubar();
 
   void StartScrollAlternateHooksAndHotkeys();
   void StartPipeServer();

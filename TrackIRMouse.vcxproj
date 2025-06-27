@@ -310,7 +310,6 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\settings-loader.cpp" />
     <ClCompile Include="src\settings.cpp" />
     <ClCompile Include="src\game-titles.cpp" />
     <ClCompile Include="src\hooks.cpp" />
@@ -345,7 +344,6 @@
     <ClInclude Include="src\messages.hpp" />
     <ClInclude Include="src\mouse-modes.hpp" />
     <ClInclude Include="src\resource.h" />
-    <ClInclude Include="src\settings-loader.hpp" />
     <ClInclude Include="src\settings.hpp" />
     <ClInclude Include="src\hotkey.hpp" />
     <ClInclude Include="src\shell.hpp" />

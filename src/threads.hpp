@@ -9,7 +9,6 @@
 #include "trackers.hpp"
 #include "windows-wrapper.hpp"
 
-
 class MainWindow;
 
 class ThreadHeadTracking : public wxThread
@@ -21,16 +20,13 @@ public:
 
 private:
   HWND hWnd_;
-  settings::Settings settings_;
+  Settings settings_;
 
 public:
-  ThreadHeadTracking(MainWindow* window_handler,
-                     HWND hWnd,
-                     settings::Settings settings);
+  ThreadHeadTracking(MainWindow* window_handler, HWND hWnd, Settings settings);
   ~ThreadHeadTracking();
   ExitCode Entry();
-  wxThreadError Delete(ExitCode* rc = NULL,
-                       wxThreadWait waitMode = wxTHREAD_WAIT_DEFAULT);
+  wxThreadError Delete(ExitCode* rc = NULL, wxThreadWait waitMode = wxTHREAD_WAIT_DEFAULT);
 };
 
 class ThreadPipeServer : public wxThread
@@ -78,9 +74,8 @@ GracefullyDeleteThreadAndWait(T*& thread, wxCriticalSection& cs)
       }
     }
     if (i == time_cs) {
-      spdlog::error(
-        "Thread not stoped gracefully within timeout. Thread may still be "
-        "running and not responsive. Attempting to kill thread.");
+      spdlog::error("Thread not stoped gracefully within timeout. Thread may still be "
+                    "running and not responsive. Attempting to kill thread.");
     }
     wxCriticalSectionLocker enter(cs);
     if (thread) {

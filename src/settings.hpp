@@ -7,22 +7,17 @@
 #include "log.hpp"
 #include "types.hpp"
 
-namespace settings {
-
 // TODO: Move global to types?
 struct UserDisplay
 {
-  UserDisplay(){};
+  UserDisplay() {};
   UserDisplay(RectDegrees r, RectPixels p)
     : rotation(r)
     , padding(p)
   {
   }
-  std::array<double, 4> rotation{ 0.0,
-                                  0.0,
-                                  0.0,
-                                  0.0 };           // Left, Right, Top, Bottom
-  std::array<signed int, 4> padding{ 0, 0, 0, 0 }; // Left, Right, Top, Bottom
+  std::array<double, 4> rotation{ 0.0, 0.0, 0.0, 0.0 }; // Left, Right, Top, Bottom
+  std::array<signed int, 4> padding{ 0, 0, 0, 0 };      // Left, Right, Top, Bottom
 };
 
 struct Profile
@@ -56,12 +51,14 @@ public:
   std::vector<Profile> profiles = { Profile() };
 
 private:
-  std::string file_path_ = "";
+  // TODO: make this static?
+  // std::string filename_ = "settings.json";
 
 public:
-  Settings() {} // load with default values
+  Settings() {} // creat with default values
 
   auto SaveToFile() -> void;
+  static auto LoadFromFile() -> Settings;
 
   // getter interface
   auto GetActiveProfile() -> Profile&;
@@ -81,24 +78,3 @@ public:
   auto SetLogLevel(std::string level) -> void;
   auto GetLogLevelString() -> std::string;
 };
-
-auto
-Get() -> std::shared_ptr<Settings>;
-
-auto
-GetCopy() -> Settings;
-
-auto
-Set(Settings c) -> void;
-
-auto
-SetToDefaults() -> void;
-
-void
-LoadFromFile(std::string filename);
-
-using UserInput = std::vector<UserDisplay>;
-
-bool
-ValidateUserInput(const UserInput& displays);
-} // namespace config

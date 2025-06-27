@@ -43,15 +43,17 @@
 
 #include <string>
 
+#include "constants.hpp"
+#include "frame.hpp"
 #include "log.hpp"
 #include "messages.hpp"
 #include "mouse-modes.hpp"
-#include "settings-loader.hpp"
 #include "settings.hpp"
 #include "threads.hpp"
 #include "types.hpp"
-#include "frame.hpp"
 #include "utility.hpp"
+
+#include "ui/dialog-okay-cancel.hpp"
 
 /**
  * Center the app on the main display.
@@ -77,7 +79,10 @@ public:
 private:
   MainWindow* main_window_ = nullptr;
   wxString top_app_name_;
+  // TODO: do i use this?
   wxTimer* timer_minimize;
+  // TODO: do i care about default init overhead? or is it good to test?
+  Settings settings;
 };
 
 void
@@ -94,21 +99,36 @@ App::OnInit()
   // Initialize global default loggers[
   logging::SetUpLogging();
 
+  // Load settings file.
+  // Presents a dialog to the user if loading from file fails.
+  // Initialization function returns false if the user presses cancel.
+  // This should be called before accessing any settings.
+  try {
+    settings = Settings::LoadFromFile();
+  } catch (std::exception& ex) {
+    if (ModalDialogOkayOrCancel(ex.what(),
+                                "TrackIRMouse - Error opening settings file.",
+                                "Overwrite with Default Settings",
+                                "Exit Program")) {
+    } else {
+      return false; // Cancel app initialization.
+    }
+  }
+
   // App initialization constants
   constexpr int app_width = 1200;
   constexpr int app_height = 900;
 
   // Construct child windows first. The 'main_window_' contains
   // a text control that is used as a log target.
-  main_window_ = new MainWindow(GetOrigin(app_width, app_height),
-                                wxSize(app_width, app_height));
+  main_window_ =
+    new MainWindow(GetOrigin(app_width, app_height), wxSize(app_width, app_height), settings);
   main_window_->Show();
   main_window_->StartScrollAlternateHooksAndHotkeys();
 
   // Argument Parsing.
   // Iterate over arguments for flags.
   for (const auto& warg : wxApp::argv.GetArguments()) {
-
     // Minimize after startup flag.
     if (L"-m" == warg || L"--minimize" == warg) {
       main_window_->Iconize();
@@ -130,8 +150,7 @@ App::OnInit()
       // log messages (lvl: warning) appear as red text in the log window.
       // log messages (lvl: <=info) appear as black text in the log window.
       case msgcode::log: {
-        const auto level =
-          static_cast<spdlog::level::level_enum>(event.GetExtraLong());
+        const auto level = static_cast<spdlog::level::level_enum>(event.GetExtraLong());
         const auto& msg = event.GetString();
 
         if (spdlog::level::critical == level) {
@@ -179,8 +198,7 @@ App::OnInit()
         UpdateModesbyExecutableName(top_app_name_, mode);
         wxCriticalSectionLocker enter(main_window_->cs_track_thread_);
         if (main_window_->track_thread_) {
-          main_window_->track_thread_->tracker_->handler_->set_alternate_mode(
-            mode);
+          main_window_->track_thread_->tracker_->handler_->set_alternate_mode(mode);
         }
       } break;
 
@@ -193,26 +211,17 @@ App::OnInit()
     }
   });
 
-  // Presents a dialog to the user if loading from file fails.
-  // Initialization function returns false if the user presses cancel.
-  // This should be called before accessing any settings.
-  if (!LoadSettingsFile()) {
-    return false;
-  }
-
   main_window_->UpdateGuiFromSettings();
 
   // Start the track IR thread if enabled
-  const auto settings = settings::Get();
-
-  if (settings->track_on_start) {
+  if (settings.track_on_start) {
     wxCommandEvent event = {}; // blank event to reuse start handler code
     main_window_->OnStart(event);
   }
 
   // Start the pipe server thread.
   // Pipe server is only started at first application startup.
-  if (settings->pipe_server_enabled) {
+  if (settings.pipe_server_enabled) {
     main_window_->StartPipeServer();
   }
 

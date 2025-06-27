@@ -20,15 +20,10 @@
 #include "types.hpp"
 #include "utility.hpp"
 
-namespace settings {
 
 // Declare json serializers.
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(UserDisplay, rotation, padding)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Profile,
-                                   name,
-                                   profile_id,
-                                   use_default_padding,
-                                   displays)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Profile, name, profile_id, use_default_padding, displays)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,
                                    active_profile_name,
                                    track_on_start,
@@ -44,59 +39,33 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,
                                    default_padding,
                                    profiles)
 
-// settings singleton
-static std::shared_ptr<Settings> g_settings;
-
-auto
-Get() -> std::shared_ptr<Settings>
+Settings
+Settings::LoadFromFile()
 {
-  return g_settings;
-}
-
-auto
-GetCopy() -> Settings
-{
-  return Settings(*g_settings);
-}
-
-auto
-Set(const Settings s) -> void
-{
-  g_settings = std::make_shared<Settings>(s);
-}
-
-auto
-SetToDefaults() -> void
-{
-  g_settings = std::make_shared<Settings>(Settings());
-}
-
-void
-LoadFromFile(std::string filename)
-{
-  spdlog::debug("load settings: {}", filename);
+  // TODO: handle errors for string?
+  // TODO: remove settings namespace, use static functions for json
+  std::string path = utility::GetAbsolutePathBasedFromExeFolder(SETTINGS_FILE_NAME);
+  spdlog::debug("load settings: {}", path);
 
   // Let any exceptions through.
   // All of the 'json' exceptions inherit from std::exception
-  auto settings = LoadJsonFromFileIntoObject<Settings>(filename);
-  Set(settings);
+  return LoadJsonFromFileIntoObject<Settings>(path);
 }
 
 /**
  * Save current user data to disk.
  * Builds a json object.
+ * Will throw if load fails.
  */
-// TODO: wrap this in exceptions?
 void
 Settings::SaveToFile()
 {
-  std::string filename =
-    utility::GetAbsolutePathBasedFromExeFolder("settings.json");
+  std::string path = utility::GetAbsolutePathBasedFromExeFolder(SETTINGS_FILE_NAME);
 
   // Convert settings to json.
-  json j = *(Get());
+  json j = *(this);
 
-  std::ofstream f(filename);
+  std::ofstream f(path);
 
   // Using indentation of 4.
   f << j.dump(4);
@@ -107,17 +76,17 @@ Settings::SaveToFile()
  * assumes active profile is always present within the vector of profiles
  */
 bool
-Settings::SetActiveProfile(std::string profile_name)
+Settings::SetActiveProfile(std::string name)
 {
-  // check if name exists in user data
+  // Check if name exists in user data.
   for (const auto& name : GetProfileNames()) {
-    if (name == profile_name) {
-      active_profile_name = profile_name;
+    if (name == name) {
+      active_profile_name = name;
       return true;
     }
   }
-  spdlog::error("Profile could not be found.");
-  return false;
+  spdlog::critical("Profile could not be found.");
+  throw std::logic_error("Profile name not found in profile list.");
 }
 
 // created default profile with the given name
@@ -202,8 +171,7 @@ Settings::GetActiveProfile()
   }
   // an active profile should exist, code shouldn't be reachable
   // design interface accordingly
-  spdlog::critical(
-    "An internal error has occured. Couldn't find active profile by name.");
+  spdlog::critical("An internal error has occured. Couldn't find active profile by name.");
 }
 
 void
@@ -279,10 +247,8 @@ Profile::ValidateParameters() const -> bool
       Degrees B_right = displays[j].rotation[RIGHT_EDGE];
       Degrees B_top = displays[j].rotation[TOP_EDGE];
       Degrees B_bottom = displays[j].rotation[BOTTOM_EDGE];
-      if (A_left < B_right && A_right > B_left && A_top > B_bottom &&
-          A_bottom < B_top) {
-        spdlog::error(
-          "Overlapping rotational bounds between display #{} and #{}", i, j);
+      if (A_left < B_right && A_right > B_left && A_top > B_bottom && A_bottom < B_top) {
+        spdlog::error("Overlapping rotational bounds between display #{} and #{}", i, j);
         return false;
       }
     }
@@ -290,5 +256,3 @@ Profile::ValidateParameters() const -> bool
   spdlog::trace("user input validated");
   return true;
 }
-
-} // namespace config

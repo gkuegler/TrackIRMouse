@@ -10,13 +10,9 @@
 #include "settings.hpp"
 #include "types.hpp"
 
-PanelDisplayGraphic::PanelDisplayGraphic(wxWindow* parent, wxSize size)
-  : wxPanel(parent,
-            wxID_ANY,
-            wxDefaultPosition,
-            size,
-            wxFULL_REPAINT_ON_RESIZE,
-            "")
+PanelDisplayGraphic::PanelDisplayGraphic(wxWindow* parent, wxSize size, Settings& s)
+  : settings(s)
+  , wxPanel(parent, wxID_ANY, wxDefaultPosition, size, wxFULL_REPAINT_ON_RESIZE, "")
 {
   p_parent_ = parent;
   Bind(wxEVT_PAINT, &PanelDisplayGraphic::PaintEvent, this);
@@ -103,7 +99,7 @@ PanelDisplayGraphic::Render(wxDC& dc)
 
   // get array of monitor bounds
   const auto hdi = WinDisplayInfo();
-  const auto usrDisplays = settings::Get()->GetActiveProfile().displays;
+  const auto usrDisplays = settings.GetActiveProfile().displays;
 
   // offset all rectangles so that 0,0 as top left most value
   std::vector<RectPixels> bounds_offset;
@@ -189,22 +185,18 @@ PanelDisplayGraphic::Render(wxDC& dc)
     const bool userSpecifiedRotationAvailable = (usrDisplays.size() > i);
 
     // Draw text labels
-    const auto text_left =
-      userSpecifiedRotationAvailable
-        ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[0])
-        : wxString("?");
-    const auto text_right =
-      userSpecifiedRotationAvailable
-        ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[1])
-        : wxString("?");
-    const auto text_top =
-      userSpecifiedRotationAvailable
-        ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[2])
-        : wxString("?");
-    const auto text_bottom =
-      userSpecifiedRotationAvailable
-        ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[3])
-        : wxString("?");
+    const auto text_left = userSpecifiedRotationAvailable
+                             ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[0])
+                             : wxString("?");
+    const auto text_right = userSpecifiedRotationAvailable
+                              ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[1])
+                              : wxString("?");
+    const auto text_top = userSpecifiedRotationAvailable
+                            ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[2])
+                            : wxString("?");
+    const auto text_bottom = userSpecifiedRotationAvailable
+                               ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[3])
+                               : wxString("?");
 
     // clang-format off
     const auto middleX = r.x + (r.GetWidth() / 2);

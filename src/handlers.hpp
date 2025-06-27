@@ -31,7 +31,7 @@ private:
 
 public:
   // TODO: Be more explicit in my data structure than the profile?
-  MouseHandler(settings::Profile profile);
+  MouseHandler(Profile profile);
   ~MouseHandler() {};
 
   void handle_input(const Degrees yaw, const Degrees pitch);

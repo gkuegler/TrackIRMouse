@@ -2,4 +2,5 @@
 # Clang Format Style
 BasedOnStyle: Mozilla
 Language: Cpp
+ColumnLimit: 100
 # ---

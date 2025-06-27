@@ -19,7 +19,6 @@
 #include "game-titles.hpp"
 #include "log.hpp"
 #include "pipeserver.hpp"
-#include "settings-loader.hpp"
 #include "settings.hpp"
 #include "shell.hpp"
 #include "threads.hpp"
@@ -39,8 +38,8 @@ static const wxTextValidator alphanumeric_validator(wxFILTER_ALPHANUMERIC);
 static constexpr int k_max_profile_length = 30;
 
 // static constexpr std::string_view k_version_no = "1.1.2";
-static constexpr std::string_view k_version_no = STR(
-  TIRMOUSE_VER_MAJOR) "." STR(TIRMOUSE_VER_MINOR) "." STR(TIRMOUSE_VER_PATCH);
+static constexpr std::string_view k_version_no =
+  STR(TIRMOUSE_VER_MAJOR) "." STR(TIRMOUSE_VER_MINOR) "." STR(TIRMOUSE_VER_PATCH);
 static constexpr std::string_view k_build_date = __DATE__;
 static const std::string k_about_message =
   fmt::format("Version No:  {}\n"
@@ -58,39 +57,11 @@ const wxColor pink(198, 102, 255);
 const wxColor green(142, 255, 102);
 const wxColor orange(102, 201, 255);
 
-MainWindow::MainWindow(wxPoint origin, wxSize dimensions)
-  : wxFrame(nullptr, wxID_ANY, "Track IR Mouse", origin, dimensions)
+MainWindow::MainWindow(wxPoint origin, wxSize dimensions, Settings& s)
+  : settings_(s)
+  , wxFrame(nullptr, wxID_ANY, "Track IR Mouse", origin, dimensions)
 {
-  //////////////////////////////////////////////////////////////////////
-  //                            Menu Bar                              //
-  //////////////////////////////////////////////////////////////////////
-  wxMenu* menuFile = new wxMenu;
-  // TODO: implement open file? this will require use of the registry
-  // menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
-  // "Open a new settings file from disk.");
-  menuFile->Append(wxID_PREFERENCES, "&Edit Settings", "Edit app settings.");
-  menuFile->Append(
-    wxID_SAVE, "&Save Settings\tCtrl-S", "Save the configuration file");
-  menuFile->Append(
-    myID_MENU_RELOAD_SETTINGS, "&Reload Settings", "Reload the settings file.");
-  menuFile->AppendSeparator();
-  menuFile->Append(wxID_EXIT);
-
-  wxMenu* menuHelp = new wxMenu;
-  // TODO: implement a help file
-  // menuHelp->Append(wxID_HELP);
-  menuHelp->Append(myID_MENU_VIEW_LOGFILE,
-                   "View Log",
-                   "Open the logfile with the default text editor.");
-  menuHelp->Append(wxID_ABOUT);
-
-  wxMenuBar* menuBar = new wxMenuBar;
-  menuBar->Append(menuFile, "&File");
-  menuBar->Append(menuHelp, "&Help");
-
-  SetMenuBar(menuBar);
-  // CreateStatusBar(); // not currently using status bar
-  // SetStatusText("Lorem Ipsum Status Bar Message");
+  SetupMenubar();
 
   //////////////////////////////////////////////////////////////////////
   //                               Panel                              //
@@ -114,7 +85,7 @@ MainWindow::MainWindow(wxPoint origin, wxSize dimensions)
   auto btn_stop_mouse = new wxButton(main, wxID_ANY, "Stop Mouse", wxDefaultPosition, k_default_button_size_2);
 
   // Display Graphic
-  p_display_graphic_ = new PanelDisplayGraphic(main, wxSize(650, 200));
+  p_display_graphic_ = new PanelDisplayGraphic(main, wxSize(650, 200), s);
   //p_display_graphic_->SetBackgroundColour(blue);
 
   // Profiles Controls
@@ -236,15 +207,6 @@ MainWindow::MainWindow(wxPoint origin, wxSize dimensions)
   wxAcceleratorEntry k1(wxACCEL_CTRL, WXK_CONTROL_S, wxID_SAVE);
   SetAcceleratorTable(wxAcceleratorTable(1, &k1));
 
-  // Bind Menu Events
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnAbout, this, wxID_ABOUT);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnExit, this, wxID_EXIT);
-  // Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnOpen, this, wxID_OPEN);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnSave, this, wxID_SAVE);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnReload, this, myID_MENU_RELOAD_SETTINGS );
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnSettings, this, wxID_PREFERENCES);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnLogFile, this, myID_MENU_VIEW_LOGFILE);
-
   // Set Control Tooltips
   btn_start_mouse->SetToolTip(wxT("Start controlling mouse with head tracking."));
   btn_stop_mouse->SetToolTip(wxT("Stop control of the mouse."));
@@ -275,6 +237,44 @@ MainWindow::MainWindow(wxPoint origin, wxSize dimensions)
 MainWindow::~MainWindow() {}
 
 void
+MainWindow::SetupMenubar()
+{
+  wxMenu* menuFile = new wxMenu;
+  // TODO: implement open file? this will require use of the registry
+  // menuFile->Append(wxID_OPEN, "&Open\tCtrl-O",
+  // "Open a new settings file from disk.");
+  menuFile->Append(wxID_PREFERENCES, "&Edit Settings", "Edit app settings.");
+  menuFile->Append(wxID_SAVE, "&Save Settings\tCtrl-S", "Save the configuration file");
+  menuFile->Append(myID_MENU_RELOAD_SETTINGS, "&Reload Settings", "Reload the settings file.");
+  menuFile->AppendSeparator();
+  menuFile->Append(wxID_EXIT);
+
+  wxMenu* menuHelp = new wxMenu;
+  // TODO: implement a help file
+  // menuHelp->Append(wxID_HELP);
+  menuHelp->Append(
+    myID_MENU_VIEW_LOGFILE, "View Log", "Open the logfile with the default text editor.");
+  menuHelp->Append(wxID_ABOUT);
+
+  wxMenuBar* menuBar = new wxMenuBar;
+  menuBar->Append(menuFile, "&File");
+  menuBar->Append(menuHelp, "&Help");
+
+  // Bind Menu Events
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnAbout, this, wxID_ABOUT);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnExit, this, wxID_EXIT);
+  // Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnOpen, this, wxID_OPEN);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnSave, this, wxID_SAVE);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnReload, this, myID_MENU_RELOAD_SETTINGS);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnSettings, this, wxID_PREFERENCES);
+  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnLogFile, this, myID_MENU_VIEW_LOGFILE);
+
+  SetMenuBar(menuBar);
+  // CreateStatusBar(); // not currently using status bar
+  // SetStatusText("Lorem Ipsum Status Bar Message");
+}
+
+void
 MainWindow::UpdateGuiFromSettings()
 {
   // Populate GUI With Settings
@@ -298,7 +298,7 @@ void
 MainWindow::OnSave(wxCommandEvent& event)
 {
   try {
-    settings::Get()->SaveToFile();
+    settings_.SaveToFile();
   } catch (std::exception& ex) {
     spdlog::error("Couldn't save settings to file.\n\n{}", ex.what());
   }
@@ -307,19 +307,18 @@ MainWindow::OnSave(wxCommandEvent& event)
 void
 MainWindow::OnReload(wxCommandEvent& event)
 {
-  if (!LoadSettingsFile()) {
-    this->Close();
-  }
-  UpdateGuiFromSettings();
+  // TODO: implement by making frame or app own a ref to settings.
+  // if (!LoadSettingsFile()) {
+  //   this->Close();
+  // }
+  // UpdateGuiFromSettings();
 }
 
 void
 MainWindow::OnSettings(wxCommandEvent& event)
 {
-  // Get a copy we can freely modify.
-  auto settings = settings::GetCopy();
 
-  DialogSettings dlg(this, settings);
+  DialogSettings dlg(this, settings_);
 
   // Show the settings pop up while disabling input on main window.
   int results = dlg.ShowModal();
@@ -327,15 +326,14 @@ MainWindow::OnSettings(wxCommandEvent& event)
   // Accept the changes.
   if (wxID_OK == results || wxID_APPLY == results) {
 
-    dlg.ApplySettings(settings);
-    settings::Set(settings);
+    dlg.ApplySettings(settings_);
 
-    if (settings.hotkey_enabled) {
+    if (settings_.hotkey_enabled) {
       StartScrollAlternateHooksAndHotkeys();
     } else {
       RemoveHooks();
     }
-    if (settings.pipe_server_enabled) {
+    if (settings_.pipe_server_enabled) {
       StartPipeServer();
     } else {
       StopPipeServer();
@@ -388,18 +386,15 @@ void
 MainWindow::StartScrollAlternateHooksAndHotkeys()
 {
   // Bind Global/System-wide Hotkeys
-  Bind(wxEVT_HOTKEY,
-       &MainWindow::OnScrollAlternateHotkey,
-       this,
-       HOTKEY_ID_SCROLL_ALTERNATE);
+  Bind(wxEVT_HOTKEY, &MainWindow::OnScrollAlternateHotkey, this, HOTKEY_ID_SCROLL_ALTERNATE);
 
   // Bind Systemwide Keyboard Hooks
   // Use EVT_HOTKEY(hotkeyId, fnc) in the event table to capture the event.
   // This function is currently only implemented under Windows.
   // It is used in the Windows CE port for detecting hardware button presses.
   if (!hotkey_alternate_mode_) {
-    hotkey_alternate_mode_ = std::make_unique<GlobalHotkey>(
-      GetHandle(), HOTKEY_ID_SCROLL_ALTERNATE, wxMOD_NONE, VK_F18);
+    hotkey_alternate_mode_ =
+      std::make_unique<GlobalHotkey>(GetHandle(), HOTKEY_ID_SCROLL_ALTERNATE, wxMOD_NONE, VK_F18);
   }
   if (!hook_window_changed_) {
     hook_window_changed_ = std::make_unique<HookWindowChanged>();
@@ -423,7 +418,7 @@ MainWindow::StartPipeServer()
     return;
   }
 
-  auto name = settings::Get()->pipe_server_name;
+  auto name = settings_.pipe_server_name;
   pipe_server_thread_ = new ThreadPipeServer(this, name);
   if (pipe_server_thread_->Run() != wxTHREAD_NO_ERROR) {
     spdlog::error("Can't run pipe server thread.");
@@ -435,8 +430,7 @@ MainWindow::StartPipeServer()
 void
 MainWindow::StopPipeServer()
 {
-  GracefullyDeleteThreadAndWait<ThreadPipeServer>(pipe_server_thread_,
-                                                  cs_pipe_thread_);
+  GracefullyDeleteThreadAndWait<ThreadPipeServer>(pipe_server_thread_, cs_pipe_thread_);
 }
 
 void
@@ -444,12 +438,11 @@ MainWindow::PopulateComboBoxWithProfiles()
 {
   spdlog::trace("repopulating profiles combobox");
   p_combo_profiles_->Clear();
-  for (auto& item : settings::Get()->GetProfileNames()) {
+  for (auto& item : settings_.GetProfileNames()) {
     p_combo_profiles_->Append(item);
   }
 
-  int index =
-    p_combo_profiles_->FindString(settings::Get()->GetActiveProfile().name);
+  int index = p_combo_profiles_->FindString(settings_.GetActiveProfile().name);
   if (wxNOT_FOUND != index) {
     p_combo_profiles_->SetSelection(index);
     UpdateProfilePanelFromSettings();
@@ -469,18 +462,20 @@ MainWindow::OnStart(wxCommandEvent& event)
   // To avoid dangling pointers, ~MyThread() will enter the critical section and
   // set track_thread_ to nullptr.
 
-  GracefullyDeleteThreadAndWait<ThreadHeadTracking>(track_thread_,
-                                                    cs_track_thread_);
+  GracefullyDeleteThreadAndWait<ThreadHeadTracking>(track_thread_, cs_track_thread_);
 
   try {
-    auto settings = settings::GetCopy();
-    settings.ApplyNecessaryDefaults();
+    // Make a copy of settings and state.
+    auto s = Settings(settings_);
+
+    // Apply default padding values if necessary.
+    s.ApplyNecessaryDefaults();
 
     if (track_thread_) {
       throw std::logic_error("track thread should not exist");
     }
 
-    track_thread_ = new ThreadHeadTracking(this, this->GetHandle(), settings);
+    track_thread_ = new ThreadHeadTracking(this, this->GetHandle(), s);
   } catch (const std::runtime_error& e) {
     spdlog::error(e.what());
     return;
@@ -503,8 +498,7 @@ void
 MainWindow::OnStop(wxCommandEvent& event)
 {
 
-  GracefullyDeleteThreadAndWait<ThreadHeadTracking>(track_thread_,
-                                                    cs_track_thread_);
+  GracefullyDeleteThreadAndWait<ThreadHeadTracking>(track_thread_, cs_track_thread_);
   return;
 }
 
@@ -515,20 +509,19 @@ MainWindow::OnActiveProfile(wxCommandEvent& event)
   // TODO: make all strings utf-8 and globalization?
   // make a validator that only allows ASCII characters
   const auto name = p_combo_profiles_->GetString(index).ToStdString();
-  settings::Get()->SetActiveProfile(name);
+  settings_.SetActiveProfile(name);
   UpdateProfilePanelFromSettings();
 }
 
 void
 MainWindow::OnAddProfile(wxCommandEvent& event)
 {
-  wxTextEntryDialog dlg(
-    this, "Add Profile", "Specify a Name for the New Profile");
+  wxTextEntryDialog dlg(this, "Add Profile", "Specify a Name for the New Profile");
   // dlg.SetTextValidator(wxFILTER_ALPHANUMERIC);
   dlg.SetMaxLength(k_max_profile_length);
   if (dlg.ShowModal() == wxID_OK) {
     wxString value = dlg.GetValue();
-    settings::Get()->AddProfile(std::string(value.ToStdString()));
+    settings_.AddProfile(std::string(value.ToStdString()));
     UpdateGuiFromSettings();
   } else {
     spdlog::debug("Add profile action canceled.");
@@ -539,19 +532,18 @@ void
 MainWindow::OnRemoveProfile(wxCommandEvent& event)
 {
   wxArrayString choices;
-  for (auto& name : settings::Get()->GetProfileNames()) {
+  for (auto& name : settings_.GetProfileNames()) {
     choices.Add(name);
   }
 
   const wxString msg = "Delete a Profile";
   const wxString msg2 = "Press OK";
-  wxMultiChoiceDialog dlg(
-    this, msg, msg2, choices, wxOK | wxCANCEL, wxDefaultPosition);
+  wxMultiChoiceDialog dlg(this, msg, msg2, choices, wxOK | wxCANCEL, wxDefaultPosition);
 
   if (wxID_OK == dlg.ShowModal()) {
     auto selections = dlg.GetSelections();
     for (auto& index : selections) {
-      settings::Get()->RemoveProfile(choices[index].ToStdString());
+      settings_.RemoveProfile(choices[index].ToStdString());
     }
 
     UpdateGuiFromSettings();
@@ -561,15 +553,14 @@ MainWindow::OnRemoveProfile(wxCommandEvent& event)
 void
 MainWindow::OnDuplicateProfile(wxCommandEvent& event)
 {
-  settings::Get()->DuplicateActiveProfile();
+  settings_.DuplicateActiveProfile();
   UpdateGuiFromSettings();
 }
 
 void
 MainWindow::UpdateProfilePanelFromSettings()
 {
-  const auto config = settings::Get(); // get shared pointer
-  const auto& profile = config->GetActiveProfile();
+  const auto& profile = settings_.GetActiveProfile();
 
   // SetValue causes an event to be sent for text control.
   // SetValue does not cause an event to be sent for checkboxes.
@@ -581,8 +572,7 @@ MainWindow::UpdateProfilePanelFromSettings()
 
   // get the game title from profile id
   auto* titles = p_titles_map_.get();
-  p_text_profile_game_title_->ChangeValue(
-    (*titles)[std::to_string(profile.profile_id)]);
+  p_text_profile_game_title_->ChangeValue((*titles)[std::to_string(profile.profile_id)]);
 
   p_view_mapping_data_->DeleteAllItems();
 
@@ -593,15 +583,13 @@ MainWindow::UpdateProfilePanelFromSettings()
     row.push_back(wxVariant(wxString::Format("%d", i)));
 
     for (int j = 0; j < 4; j++) { // left, right, top, bottom
-      row.push_back(
-        wxVariant(wxString::Format("%7.2f", profile.displays[i].rotation[j])));
+      row.push_back(wxVariant(wxString::Format("%7.2f", profile.displays[i].rotation[j])));
     }
     for (int j = 0; j < 4; j++) { // left, right, top, bottom
       if (p_check_use_default_padding_->IsChecked()) {
         row.push_back(wxVariant(wxString::Format("%s", "(default)")));
       } else {
-        row.push_back(
-          wxVariant(wxString::Format("%d", profile.displays[i].padding[j])));
+        row.push_back(wxVariant(wxString::Format("%d", profile.displays[i].padding[j])));
       }
     }
     p_view_mapping_data_->AppendItem(row);
@@ -613,9 +601,9 @@ void
 MainWindow::OnName(wxCommandEvent& event)
 {
   const auto text = p_text_name_->GetLineText(0).ToStdString();
-  auto& profile = settings::Get()->GetActiveProfile();
+  auto& profile = settings_.GetActiveProfile();
   profile.name = text;
-  settings::Get()->active_profile_name = text;
+  settings_.active_profile_name = text;
   UpdateGuiFromSettings();
 }
 
@@ -629,7 +617,7 @@ MainWindow::OnProfileID(wxCommandEvent& event)
     spdlog::error("Couldn't convert value to integer.");
     return;
   };
-  auto& profile = settings::Get()->GetActiveProfile();
+  auto& profile = settings_.GetActiveProfile();
   profile.profile_id = static_cast<int>(value);
   UpdateProfilePanelFromSettings();
 }
@@ -658,12 +646,11 @@ MainWindow::OnPickTitle(wxCommandEvent& event)
     }
   }
 
-  std::sort(titles_named.begin(),
-            titles_named.end(),
-            [](const std::pair<std::string, std::string>& left,
-               const std::pair<std::string, std::string>& right) {
-              return left.first < right.first;
-            });
+  std::sort(
+    titles_named.begin(),
+    titles_named.end(),
+    [](const std::pair<std::string, std::string>& left,
+       const std::pair<std::string, std::string>& right) { return left.first < right.first; });
 
   std::sort(titles_no_name.begin(),
             titles_no_name.end(),
@@ -679,7 +666,7 @@ MainWindow::OnPickTitle(wxCommandEvent& event)
   int current_profile_id = 0;
   DialogProfileIdSelector dlg(this, current_profile_id, titles);
   if (dlg.ShowModal() == wxID_OK) {
-    auto& profile = settings::Get()->GetActiveProfile();
+    auto& profile = settings_.GetActiveProfile();
     profile.profile_id = dlg.GetSelectedProfileId();
     UpdateProfilePanelFromSettings();
   }
@@ -689,7 +676,7 @@ MainWindow::OnPickTitle(wxCommandEvent& event)
 void
 MainWindow::OnUseDefaultPadding(wxCommandEvent& event)
 {
-  auto& profile = settings::Get()->GetActiveProfile();
+  auto& profile = settings_.GetActiveProfile();
   profile.use_default_padding = p_check_use_default_padding_->IsChecked();
   UpdateProfilePanelFromSettings();
 }
@@ -697,7 +684,7 @@ MainWindow::OnUseDefaultPadding(wxCommandEvent& event)
 void
 MainWindow::OnMappingData(wxDataViewEvent& event)
 {
-  auto& profile = settings::Get()->GetActiveProfile();
+  auto& profile = settings_.GetActiveProfile();
 
   // finding column
   const wxVariant value = event.GetValue();
@@ -705,8 +692,7 @@ MainWindow::OnMappingData(wxDataViewEvent& event)
 
   // finding associated row; there is no event->GetRow()!?
   const wxDataViewItem item = event.GetItem();
-  const wxDataViewIndexListModel* model =
-    (wxDataViewIndexListModel*)(event.GetModel());
+  const wxDataViewIndexListModel* model = (wxDataViewIndexListModel*)(event.GetModel());
   const int row = model->GetRow(item);
 
   // if rotation value was selected
@@ -721,9 +707,8 @@ MainWindow::OnMappingData(wxDataViewEvent& event)
     // this will prevent the value from sticking in the box on non valid
     // input make numbers only allowed too. validate input
     if (number > 180.0) {
-      spdlog::error(
-        "Value can't be greater than 180. This is a limitation of the "
-        "TrackIR software.");
+      spdlog::error("Value can't be greater than 180. This is a limitation of the "
+                    "TrackIR software.");
       return;
     }
     if (number < -180.0) {
@@ -753,7 +738,7 @@ MainWindow::OnMappingData(wxDataViewEvent& event)
 void
 MainWindow::OnAddDisplay(wxCommandEvent& event)
 {
-  auto& profile = settings::Get()->GetActiveProfile();
+  auto& profile = settings_.GetActiveProfile();
   profile.displays.emplace_back();
   UpdateProfilePanelFromSettings();
   p_display_graphic_->PaintNow();
@@ -762,7 +747,7 @@ MainWindow::OnAddDisplay(wxCommandEvent& event)
 void
 MainWindow::OnRemoveDisplay(wxCommandEvent& event)
 {
-  auto& profile = settings::Get()->GetActiveProfile();
+  auto& profile = settings_.GetActiveProfile();
   const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND != index) {
     profile.displays.erase(profile.displays.begin() + index);
@@ -776,7 +761,7 @@ MainWindow::OnRemoveDisplay(wxCommandEvent& event)
 void
 MainWindow::OnMoveUp(wxCommandEvent& event)
 {
-  auto& profile = settings::Get()->GetActiveProfile();
+  auto& profile = settings_.GetActiveProfile();
   const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     spdlog::warn("row not selected");
@@ -789,8 +774,7 @@ MainWindow::OnMoveUp(wxCommandEvent& event)
 
     // Change the selection index to match the item we just moved
     // This is a terrible hack to find the row of the item we just moved
-    const auto model =
-      (wxDataViewIndexListModel*)p_view_mapping_data_->GetModel();
+    const auto model = (wxDataViewIndexListModel*)p_view_mapping_data_->GetModel();
     const auto item = model->GetItem(index - 1);
     wxDataViewItemArray items(size_t(1)); // no braced init constructor :(
     items[0] = item;                      // assumed single selection mode
@@ -802,7 +786,7 @@ MainWindow::OnMoveUp(wxCommandEvent& event)
 void
 MainWindow::OnMoveDown(wxCommandEvent& event)
 {
-  auto& profile = settings::Get()->GetActiveProfile();
+  auto& profile = settings_.GetActiveProfile();
   const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     spdlog::warn("row not selected");
@@ -815,8 +799,7 @@ MainWindow::OnMoveDown(wxCommandEvent& event)
 
     // Change the selection index to match the item we just moved
     // This is a terrible hack to find the row of the item we just moved
-    const auto model =
-      (wxDataViewIndexListModel*)p_view_mapping_data_->GetModel();
+    const auto model = (wxDataViewIndexListModel*)p_view_mapping_data_->GetModel();
     const auto item = (model->GetItem(index + 1));
     wxDataViewItemArray items(size_t(1)); // no braced init constructor :(
     items[0] = item;                      // assumed single selection mode
@@ -835,7 +818,7 @@ MainWindow::OnDisplayEdit(wxCommandEvent& event)
     return;
   }
 
-  auto& display = settings::Get()->GetActiveProfile().displays[index];
+  auto& display = settings_.GetActiveProfile().displays[index];
   // Show the edit pop up while disabling input on main window
   DialogDisplayEdit dlg(this, display);
   int results = dlg.ShowModal();
