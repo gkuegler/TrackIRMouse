@@ -15,8 +15,9 @@
 
 #include "log.hpp"
 #include "settings.hpp"
-#include "ui-dialog-utilities.hpp"
 #include "utility.hpp"
+
+#include "ui/dialog-utilities.hpp"
 
 class DialogSettings : public wxDialog
 {

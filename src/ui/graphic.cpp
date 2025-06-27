@@ -1,4 +1,4 @@
-#include "ui-graphic.hpp"
+#include "ui/graphic.hpp"
 
 #include "windows-wrapper.hpp"
 #include <wx/wx.h>

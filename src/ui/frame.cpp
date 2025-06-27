@@ -5,7 +5,7 @@
  *
  */
 
-#include "ui-frame.hpp"
+#include "frame.hpp"
 
 #include <wx/colour.h>
 #include <wx/dataview.h>
@@ -25,12 +25,13 @@
 #include "threads.hpp"
 #include "trackers.hpp"
 #include "types.hpp"
-#include "ui-control-id.hpp"
-#include "ui-dialog-display-edit.hpp"
-#include "ui-dialog-profile-selector.hpp"
-#include "ui-dialog-settings.hpp"
 #include "utility.hpp"
 #include "version.hpp"
+
+#include "ui/control-id.hpp"
+#include "ui/dialog-display-edit.hpp"
+#include "ui/dialog-profile-selector.hpp"
+#include "ui/dialog-settings.hpp"
 
 static const wxSize k_default_button_size = wxSize(110, 25);
 static const wxSize k_default_button_size_2 = wxSize(150, 25);

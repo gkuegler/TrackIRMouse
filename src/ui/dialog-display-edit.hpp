@@ -16,8 +16,9 @@
 
 #include "settings.hpp"
 #include "types.hpp"
-#include "ui-dialog-utilities.hpp"
 #include "utility.hpp"
+
+#include "ui/dialog-utilities.hpp"
 
 class DialogDisplayEdit : public wxDialog
 {

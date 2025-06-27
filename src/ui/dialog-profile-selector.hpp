@@ -7,7 +7,7 @@
 #include <wx/listctrl.h>
 #include <wx/wx.h>
 
-#include "ui-dialog-utilities.hpp"
+#include "ui/dialog-utilities.hpp"
 
 class DialogProfileIdSelector : public wxDialog
 {

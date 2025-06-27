@@ -50,7 +50,7 @@
 #include "settings.hpp"
 #include "threads.hpp"
 #include "types.hpp"
-#include "ui-frame.hpp"
+#include "frame.hpp"
 #include "utility.hpp"
 
 /**
@@ -67,8 +67,8 @@ GetOrigin(const int w, const int h)
 class App : public wxApp
 {
 public:
-  App(){};
-  ~App(){};
+  App() {};
+  ~App() {};
 
   virtual bool OnInit();
   virtual int OnExit();
@@ -79,8 +79,6 @@ private:
   wxString top_app_name_;
   wxTimer* timer_minimize;
 };
-
-wxIMPLEMENT_APP(App);
 
 void
 App::OnUnhandledException()

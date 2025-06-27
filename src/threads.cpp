@@ -7,7 +7,7 @@
 #include "messages.hpp"
 #include "pipeserver.hpp"
 #include "types.hpp"
-#include "ui-frame.hpp"
+#include "ui/frame.hpp"
 
 //////////////////////////////////////////////////////////////////////
 //                           TrackThread                            //

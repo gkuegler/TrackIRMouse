@@ -85,7 +85,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)3rd-party</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)3rd-party;$(SolutionDir)src</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -96,7 +96,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugNoTrack|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)3rd-party</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)3rd-party;$(SolutionDir)src</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -107,7 +107,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)3rd-party</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)3rd-party;$(SolutionDir)src</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -117,7 +117,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);;$(SolutionDir)src</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -128,7 +128,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);;$(SolutionDir)src</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
@@ -316,9 +316,9 @@
     <ClCompile Include="src\hooks.cpp" />
     <ClCompile Include="src\messages.cpp" />
     <ClCompile Include="src\mouse-modes.cpp" />
-    <ClCompile Include="src\ui-frame.cpp" />
-    <ClCompile Include="src\ui-graphic.cpp" />
-    <ClCompile Include="src\ui-app.cpp" />
+    <ClCompile Include="src\TrackIRMouse.cpp" />
+    <ClCompile Include="src\ui\frame.cpp" />
+    <ClCompile Include="src\ui\graphic.cpp" />
     <ClCompile Include="src\handlers.cpp" />
     <ClCompile Include="src\log.cpp" />
     <ClCompile Include="src\np-client.cpp" />
@@ -328,6 +328,14 @@
     <ClCompile Include="src\environment.cpp" />
     <ClInclude Include="src\constants.hpp" />
     <ClInclude Include="src\environment.hpp" />
+    <ClInclude Include="src\ui\app.hpp" />
+    <ClInclude Include="src\ui\control-id.hpp" />
+    <ClInclude Include="src\ui\dialog-display-edit.hpp" />
+    <ClInclude Include="src\ui\dialog-profile-selector.hpp" />
+    <ClInclude Include="src\ui\dialog-settings.hpp" />
+    <ClInclude Include="src\ui\dialog-utilities.hpp" />
+    <ClInclude Include="src\ui\frame.hpp" />
+    <ClInclude Include="src\ui\graphic.hpp" />
     <ClInclude Include="src\version.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -341,12 +349,12 @@
     <ClInclude Include="src\settings.hpp" />
     <ClInclude Include="src\hotkey.hpp" />
     <ClInclude Include="src\shell.hpp" />
-    <ClInclude Include="src\ui-control-id.hpp" />
+    <ClInclude Include="src\ui\ui-control-id.hpp" />
     <ClInclude Include="src\display.hpp" />
-    <ClInclude Include="src\ui-dialog-utilities.hpp" />
-    <ClInclude Include="src\ui-dialog-display-edit.hpp" />
-    <ClInclude Include="src\ui-graphic.hpp" />
-    <ClInclude Include="src\ui-dialog-profile-selector.hpp" />
+    <ClInclude Include="src\ui\ui-dialog-utilities.hpp" />
+    <ClInclude Include="src\ui\ui-dialog-display-edit.hpp" />
+    <ClInclude Include="src\ui\ui-graphic.hpp" />
+    <ClInclude Include="src\ui\ui-dialog-profile-selector.hpp" />
     <ClInclude Include="src\handlers.hpp" />
     <ClInclude Include="src\log.hpp" />
     <ClInclude Include="src\np-client.h" />
@@ -355,8 +363,8 @@
     <ClInclude Include="src\threads.hpp" />
     <ClInclude Include="src\trackers.hpp" />
     <ClInclude Include="src\types.hpp" />
-    <ClInclude Include="src\ui-frame.hpp" />
-    <ClInclude Include="src\ui-dialog-settings.hpp" />
+    <ClInclude Include="src\ui\ui-frame.hpp" />
+    <ClInclude Include="src\ui\ui-dialog-settings.hpp" />
     <ClInclude Include="src\utility.hpp" />
     <ClInclude Include="src\windows-wrapper.hpp" />
   </ItemGroup>

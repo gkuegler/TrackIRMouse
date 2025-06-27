@@ -7,7 +7,7 @@
 #include "hooks.hpp"
 #include "hotkey.hpp"
 #include "settings.hpp"
-#include "ui-graphic.hpp"
+#include "ui/graphic.hpp"
 
 // forward decl of thread classes
 class ThreadHeadTracking;
@@ -26,7 +26,7 @@ public:
                    const wxPoint& pos,
                    const wxSize& size,
                    int style = 0)
-    : wxTextCtrl(parent, p_profile_id_, value, pos, size, style){};
+    : wxTextCtrl(parent, p_profile_id_, value, pos, size, style) {};
 };
 
 //////////////////////////////////////////////////////////////////////
