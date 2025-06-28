@@ -20,7 +20,6 @@
 #include "types.hpp"
 #include "utility.hpp"
 
-
 // Declare json serializers.
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(UserDisplay, rotation, padding)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Profile, name, profile_id, use_default_padding, displays)
@@ -44,7 +43,7 @@ Settings::LoadFromFile()
 {
   // TODO: handle errors for string?
   // TODO: remove settings namespace, use static functions for json
-  std::string path = utility::GetAbsolutePathBasedFromExeFolder(SETTINGS_FILE_NAME);
+  std::string path = utility::GetAbsolutePathRelativeToExeFolder(SETTINGS_FILE_NAME);
   spdlog::debug("load settings: {}", path);
 
   // Let any exceptions through.
@@ -60,7 +59,7 @@ Settings::LoadFromFile()
 void
 Settings::SaveToFile()
 {
-  std::string path = utility::GetAbsolutePathBasedFromExeFolder(SETTINGS_FILE_NAME);
+  std::string path = utility::GetAbsolutePathRelativeToExeFolder(SETTINGS_FILE_NAME);
 
   // Convert settings to json.
   json j = *(this);

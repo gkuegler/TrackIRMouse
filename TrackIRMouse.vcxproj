@@ -34,33 +34,33 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugNoTrack|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndLaunch|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseNonAdmin|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -325,16 +325,19 @@
     <ClCompile Include="src\threads.cpp" />
     <ClCompile Include="src\trackers.cpp" />
     <ClCompile Include="src\environment.cpp" />
+    <ClCompile Include="src\utility.cpp" />
     <ClInclude Include="src\constants.hpp" />
     <ClInclude Include="src\environment.hpp" />
     <ClInclude Include="src\ui\app.hpp" />
     <ClInclude Include="src\ui\control-id.hpp" />
     <ClInclude Include="src\ui\dialog-display-edit.hpp" />
+    <ClInclude Include="src\ui\dialog-okay-cancel.hpp" />
     <ClInclude Include="src\ui\dialog-profile-selector.hpp" />
     <ClInclude Include="src\ui\dialog-settings.hpp" />
     <ClInclude Include="src\ui\dialog-utilities.hpp" />
     <ClInclude Include="src\ui\frame.hpp" />
     <ClInclude Include="src\ui\graphic.hpp" />
+    <ClInclude Include="src\ui\utilities.hpp" />
     <ClInclude Include="src\version.hpp" />
   </ItemGroup>
   <ItemGroup>

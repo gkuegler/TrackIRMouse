@@ -7,6 +7,7 @@
 
 #include <format>
 #include <fstream>
+#include <spdlog/spdlog.h>
 
 // load game titles by ID number from file
 game_title_map_t
@@ -19,11 +20,10 @@ GetTitleIds()
     "Couldn't load game titles from resource file.\n"
     "A courtesy sub-sample of the title list will provided from source code.";
 
-  auto full_path = utility::GetExecutableFolder() + "\\" + filename;
-
   try {
     // load, parse, and return as std::map
-    return LoadJsonFromFileIntoObject<game_title_map_t>(full_path);
+    return LoadJsonFromFileIntoObject<game_title_map_t>(
+      utility::GetAbsolutePathRelativeToExeFolder(filename));
   } catch (const std::exception& ex) {
     spdlog::error("Error opening game titles file '{}'. A sample file will be "
                   "loaded.\n\n{}",

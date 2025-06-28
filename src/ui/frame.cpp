@@ -245,7 +245,7 @@ MainWindow::SetupMenubar()
   // "Open a new settings file from disk.");
   menuFile->Append(wxID_PREFERENCES, "&Edit Settings", "Edit app settings.");
   menuFile->Append(wxID_SAVE, "&Save Settings\tCtrl-S", "Save the configuration file");
-  menuFile->Append(myID_MENU_RELOAD_SETTINGS, "&Reload Settings", "Reload the settings file.");
+  // menuFile->Append(myID_MENU_RELOAD_SETTINGS, "&Reload Settings", "Reload the settings file.");
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
 
@@ -265,7 +265,7 @@ MainWindow::SetupMenubar()
   Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnExit, this, wxID_EXIT);
   // Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnOpen, this, wxID_OPEN);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnSave, this, wxID_SAVE);
-  Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnReload, this, myID_MENU_RELOAD_SETTINGS);
+  // Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnReload, this, myID_MENU_RELOAD_SETTINGS);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnSettings, this, wxID_PREFERENCES);
   Bind(wxEVT_COMMAND_MENU_SELECTED, &MainWindow::OnLogFile, this, myID_MENU_VIEW_LOGFILE);
 
@@ -357,15 +357,11 @@ MainWindow::OnSettings(wxCommandEvent& event)
 void
 MainWindow::OnLogFile(wxCommandEvent& event)
 {
-  // open the help file with default editor
-  // windows will prompt the user for a suitable program if not found
-  // auto path = GetFullPath(settings->file_name_);
+  auto path = utility::GetAbsolutePathRelativeToExeFolder(LOG_FILE_NAME);
 
-  // const std::string name = LOG_FILE_NAME;
-  //  auto path = std::filesystem::absolute(LOG_FILE_NAME);
-  // const std::string path = utility::GetExecutableFolder() + name;
-  auto path = utility::GetAbsolutePathBasedFromExeFolder(LOG_FILE_NAME);
   try {
+    // Open the help file with default editor.
+    // Windows will prompt the user for a suitable program if not found.
     ExecuteShellCommand(GetHandle(), "open", path);
   } catch (std::runtime_error& ex) {
     spdlog::error("Couldn't open '{}':{}\n", path, ex.what());
