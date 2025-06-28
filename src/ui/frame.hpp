@@ -3,9 +3,9 @@
 #include <wx/dataview.h>
 #include <wx/wx.h>
 
-#include "game-titles.hpp"
 #include "hooks.hpp"
 #include "hotkey.hpp"
+#include "np-titles.hpp"
 #include "settings.hpp"
 
 #include "ui/graphic.hpp"

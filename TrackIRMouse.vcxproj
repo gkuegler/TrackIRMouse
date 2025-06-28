@@ -311,7 +311,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\settings.cpp" />
-    <ClCompile Include="src\game-titles.cpp" />
+    <ClCompile Include="src\np-titles.cpp" />
     <ClCompile Include="src\hooks.cpp" />
     <ClCompile Include="src\messages.cpp" />
     <ClCompile Include="src\mouse-modes.cpp" />
@@ -341,7 +341,7 @@
     <ClInclude Include="src\version.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\game-titles.hpp" />
+    <ClInclude Include="src\np-titles.hpp" />
     <ClInclude Include="src\hooks.hpp" />
     <ClInclude Include="src\json.hpp" />
     <ClInclude Include="src\messages.hpp" />
@@ -378,7 +378,7 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="resources\track-ir-numbers.json">
+    <CopyFileToFolders Include="resources\trackir-game-title-ids.json">
       <FileType>Document</FileType>
     </CopyFileToFolders>
   </ItemGroup>

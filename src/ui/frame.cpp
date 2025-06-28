@@ -16,7 +16,6 @@
 #include <string_view>
 
 #include "constants.hpp"
-#include "game-titles.hpp"
 #include "log.hpp"
 #include "pipeserver.hpp"
 #include "settings.hpp"

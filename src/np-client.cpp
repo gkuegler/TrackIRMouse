@@ -147,14 +147,14 @@ NP_InitializeClient(LPWSTR pszDLLPath)
     if (GetLastError() == ERROR_MOD_NOT_FOUND) {
       throw std::runtime_error("Couldn't find the DLL.");
     } else {
-      throw std::runtime_error(
-        std::format("When loading the NPClientDLL, the call to "
-                    "'LoadLibrary' failed with error code: {}",
-                    GetLastError()));
+      throw std::runtime_error(std::format("When loading the NPClientDLL, the call to "
+                                           "'LoadLibrary' failed with error code: {}",
+                                           GetLastError()));
     }
   }
 
   /**
+   * --------------------------------------------------------------------------
    * Verification of the signature is not necessary for the program to run.
    * I omit this process for two reasons:
    * 1. There isn't a security aspect I'm concerned about.
@@ -162,7 +162,9 @@ NP_InitializeClient(LPWSTR pszDLLPath)
    * it.
    * 4. I wouldn't want to hinder users from using a different head tracking
    * device.
+   * --------------------------------------------------------------------------
    */
+
   // Resolve address to verify signature to verify integrity of the DLL and that
   // the application is running.
   // gpfNP_GetSignature =
@@ -190,7 +192,7 @@ NP_InitializeClient(LPWSTR pszDLLPath)
   // }
 
   // // I'm not sure why there isn't a straightforward way to query if the
-  // // NPTrackIR  application is running or not.
+  // // NPTrackIR application is running or not.
   // if ((strcmp(verify_signature.DllSignature, signature.DllSignature) != 0) &&
   //     (strcmp(verify_signature.AppSignature, signature.AppSignature) != 0)) {
   //   throw std::exception("NP TrackIR Program Not Running");

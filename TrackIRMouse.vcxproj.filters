@@ -48,7 +48,7 @@
     <ClCompile Include="src\mouse-modes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\game-titles.cpp">
+    <ClCompile Include="src\np-titles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\TrackIRMouse.cpp">
@@ -110,7 +110,7 @@
     <ClInclude Include="src\messages.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\game-titles.hpp">
+    <ClInclude Include="src\np-titles.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\mouse-modes.hpp">
@@ -195,8 +195,6 @@
     <CopyFileToFolders Include="resources\settings.json">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="resources\track-ir-numbers.json">
-      <Filter>Resource Files</Filter>
-    </CopyFileToFolders>
+    <CopyFileToFolders Include="resources\trackir-game-title-ids.json" />
   </ItemGroup>
 </Project>
