@@ -23,7 +23,7 @@ static const game_title_map_t default_game_titles{
 };
 
 game_title_map_t
-GetTitleIds()
+GetTitleIdsFromFile()
 {
   constexpr const char* filename = "trackir-game-title-ids.json";
   constexpr const char* instructions = "Couldn't load game titles from local file '{}'.\n"
@@ -38,4 +38,33 @@ GetTitleIds()
   }
 
   return default_game_titles;
+}
+
+GameTitleList
+SortGameTitles(std::shared_ptr<game_title_map_t> titles)
+{
+  GameTitleList named;
+  GameTitleList unnamed;
+  named.reserve(titles->size());
+  unnamed.reserve(titles->size());
+
+  for (auto& [key, item] : *titles) {
+    if (item.empty()) {
+      unnamed.push_back({ item, key });
+    } else {
+      named.push_back({ item, key });
+    }
+  }
+
+  std::sort(named.begin(), named.end(), [](const GameTitle& left, const GameTitle& right) {
+    return left.name < right.name;
+  });
+
+  std::sort(unnamed.begin(), unnamed.end(), [](const GameTitle& left, const GameTitle& right) {
+    return std::stoi(left.id) < std::stoi(right.id);
+  });
+
+  named.insert(named.end(), unnamed.begin(), unnamed.end());
+
+  return named;
 }

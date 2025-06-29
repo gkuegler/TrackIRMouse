@@ -13,31 +13,23 @@ class DialogProfileIdSelector : public wxDialog
 {
 private:
   wxListView* p_list_view_;
-  int profile_id_ = 0;
-  std::vector<std::pair<std::string, std::string>> profile_id_map_;
+  int id_ = 0;
+  GameTitleList titles_;
 
 public:
-  DialogProfileIdSelector(
-    wxWindow* parent,
-    int current_profile_id,
-    // TODO: switch to actual ordered map?
-    const std::vector<std::pair<std::string, std::string>>& game_title_list)
-    : wxDialog(parent,
+  DialogProfileIdSelector(wxWindow* parent, int id, const GameTitleList& titles)
+    : id_(id)
+    , titles_(titles)
+    , wxDialog(parent,
                wxID_ANY,
                "Pick an associated game tile.",
                wxDefaultPosition,
-               wxDefaultSize, //  wxSize(500, 800),
+               wxDefaultSize,
                wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
   {
-
-    /*auto panel = new wxPanel(
-      this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);*/
     auto buttons = new PanelEndModalDialogButtons(this, this);
     buttons->AddButton("Okay", wxID_OK);
     buttons->AddButton("Cancel", wxID_CANCEL);
-
-    profile_id_ = current_profile_id;
-    profile_id_map_ = game_title_list;
 
     p_list_view_ = new wxListView(this,
                                   wxID_ANY,
@@ -47,39 +39,33 @@ public:
                                   wxDefaultValidator,
                                   "");
 
-    // create list control columns
+    // Create list control columns.
     p_list_view_->InsertColumn(0, "Tile", wxLIST_FORMAT_LEFT, 200);
     p_list_view_->InsertColumn(1, "ID", wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 
-    // populate list
-    for (int i = 0; i < profile_id_map_.size(); i++) {
-      const auto& pair = profile_id_map_[i];
-      const auto& title = std::get<0>(pair);
-      const auto& id_string = std::get<1>(pair);
-      p_list_view_->InsertItem(i, title); // don't check for success?
-      p_list_view_->SetItem(i, 1, id_string);
+    // Populate list.
+    for (int i = 0; i < titles_.size(); i++) {
+      const auto& title = titles_[i];
+      p_list_view_->InsertItem(i, title.name); // don't check for success?
+      p_list_view_->SetItem(i, 1, title.id);
     }
 
-    // set selection of current profile id
-    // try {
-    //  if (std::stoi(id_string) == active_id) {
-    //    selection = i;
-    //  }
-    //} catch (std::invalid_argument) {
-    //  spdlog::error("could not convert id: {}, to an integer.", id_string);
-    //}
-    // if (selection > -1) {
-    //  p_list_view_->Select(selection);
-    //}
+    // Need to select item before selection event is bound, because this method generates a
+    // selection event.
+    auto ids = std::to_string(id_);
+    for (size_t i = 0; i < titles.size(); i++) {
+      if (titles[i].id == ids) {
+        p_list_view_->Select(i);
+      }
+    }
 
-    p_list_view_->Bind(
-      wxEVT_LIST_ITEM_SELECTED, &DialogProfileIdSelector::OnSelection, this);
+    p_list_view_->Bind(wxEVT_LIST_ITEM_SELECTED, &DialogProfileIdSelector::OnSelection, this);
 
     wxBoxSizer* top = new wxBoxSizer(wxVERTICAL);
     top->Add(p_list_view_, 1, wxEXPAND | wxALL, BORDER_SPACING);
-    top->Add(
-      buttons, 0, wxEXPAND | wxBOTTOM | wxLEFT | wxRIGHT, BORDER_SPACING);
+    top->Add(buttons, 0, wxEXPAND | wxBOTTOM | wxLEFT | wxRIGHT, BORDER_SPACING);
     SetSizer(top);
+
     // Fit the frame around the size of my controls.
     top->Fit(this);
 
@@ -88,12 +74,8 @@ public:
 
   void OnSelection(wxListEvent& event)
   {
-    auto idx =
-      p_list_view_->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-    // get info from underlying data
-    auto pair = profile_id_map_[idx];
-    profile_id_ = std::stoi(std::get<1>(pair));
-    return;
+    auto idx = p_list_view_->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    id_ = std::stoi(titles_[idx].id);
   }
-  int GetSelectedProfileId() { return profile_id_; }
+  int GetSelectedProfileId() { return id_; }
 };

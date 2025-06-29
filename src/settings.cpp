@@ -25,7 +25,7 @@
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RectDegrees, left, right, top, bottom)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RectPixels, left, right, top, bottom)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DisplayParameters, rotation, padding)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Profile, name, profile_id, use_default_padding, displays)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Profile, name, title_id, use_default_padding, displays)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,
                                    active_profile_name,
                                    track_on_start,
@@ -45,7 +45,6 @@ Settings
 Settings::LoadFromFile()
 {
   // TODO: handle errors for string?
-  // TODO: remove settings namespace, use static functions for json
   std::string path = utility::GetAbsolutePathRelativeToExeFolder(SETTINGS_FILE_NAME);
   spdlog::debug("load settings: {}", path);
 

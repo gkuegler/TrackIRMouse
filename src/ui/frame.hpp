@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <wx/dataview.h>
 #include <wx/wx.h>
 
@@ -38,8 +40,7 @@ public:
 class MainWindow : public wxFrame
 {
 public:
-  std::unique_ptr<game_title_map_t> p_titles_map_;
-  GameTitleVector titles_;
+  std::shared_ptr<game_title_map_t> p_titles_map_;
 
   // threads
   ThreadHeadTracking* track_thread_ = nullptr;

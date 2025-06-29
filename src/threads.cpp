@@ -52,7 +52,7 @@ ThreadHeadTracking::Entry()
     try {
       // handler_ = std::make_shared<handlers::MouseHandler>();return
       tracker_->initialize(
-        hWnd_, settings_.auto_find_track_ir_dll, settings_.track_ir_dll_folder, profile.profile_id);
+        hWnd_, settings_.auto_find_track_ir_dll, settings_.track_ir_dll_folder, profile.title_id);
 
       // run the main tracking loop
       tracker_->start();

@@ -49,7 +49,7 @@ void
 TrackIR::initialize(HWND hWnd,
                     bool auto_find_dll,
                     std::string user_dll_folder,
-                    int profile_id)
+                    int title_id)
 
 {
 
@@ -154,7 +154,7 @@ TrackIR::initialize(HWND hWnd,
   if (NP_OK != NP_RequestData(NPPitch | NPYaw | NPX | NPY | NPZ)) {
     throw std::runtime_error("NP Request Data failed.");
   }
-  if (NP_OK != NP_RegisterProgramProfileID(profile_id)) {
+  if (NP_OK != NP_RegisterProgramProfileID(title_id)) {
     throw std::runtime_error("NP Register Profile ID failed.");
   }
 #endif

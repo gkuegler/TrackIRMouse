@@ -96,7 +96,7 @@ MainWindow::MainWindow(wxPoint origin, wxSize dimensions, Settings& s)
   auto btn_duplicate_profile = new wxButton(p_pnl_profile, wxID_ANY, "Duplicate this Profile", wxDefaultPosition, k_default_button_size_2);
 
   // Profiles Box
-  p_titles_map_ = std::make_unique<game_title_map_t>(GetTitleIds());
+  p_titles_map_ = std::make_unique<game_title_map_t>(GetTitleIdsFromFile());
 	
   p_text_name_ = new wxTextCtrl(p_pnl_profile, wxID_ANY, "Lorem Ipsum", wxDefaultPosition, wxSize(250, 20), wxTE_LEFT);
   p_text_name_->SetMaxLength(k_max_profile_length);
@@ -563,11 +563,11 @@ MainWindow::UpdateProfilePanelFromSettings()
   // We don't want to register event when we're just loading values.
   p_text_name_->ChangeValue(profile.name);
   p_check_use_default_padding_->SetValue(profile.use_default_padding);
-  p_text_profile_id_->ChangeValue(wxString::Format("%d", profile.profile_id));
+  p_text_profile_id_->ChangeValue(wxString::Format("%d", profile.title_id));
 
   // get the game title from profile id
   auto* titles = p_titles_map_.get();
-  p_text_profile_game_title_->ChangeValue((*titles)[std::to_string(profile.profile_id)]);
+  p_text_profile_game_title_->ChangeValue((*titles)[std::to_string(profile.title_id)]);
 
   p_view_mapping_data_->DeleteAllItems();
 
@@ -616,56 +616,26 @@ MainWindow::OnProfileID(wxCommandEvent& event)
     return;
   };
   auto& profile = settings_.GetActiveProfileRef();
-  profile.profile_id = static_cast<int>(value);
+  profile.title_id = static_cast<int>(value);
   UpdateProfilePanelFromSettings();
 }
 
 void
 MainWindow::OnPickTitle(wxCommandEvent& event)
 {
-  // a defaut map should have been provided at load time
-  // if the map failed to load from file
+  // A defaut map should have been provided at load time
+  // if the map failed to load from file.
   wxASSERT((*p_titles_map_).empty() == false);
 
-  // seperate named and unamed for sorting purposes
-  // in this case I would like title ID #'s with names to be sorted
-  // alphabetically up front, while the ID #'s with no name to be sorted
-  // by ID # after.
-  GameTitleVector titles_named;
-  GameTitleVector titles_no_name;
-  titles_named.reserve(p_titles_map_->size());
-  titles_no_name.reserve(p_titles_map_->size());
+  auto titles = SortGameTitles(p_titles_map_);
 
-  for (auto& [key, item] : *p_titles_map_) {
-    if (item.empty()) {
-      titles_no_name.push_back({ item, key });
-    } else {
-      titles_named.push_back({ item, key });
-    }
-  }
+  auto& profile = settings_.GetActiveProfileRef();
+  int current_profile_id = 1;
 
-  std::sort(
-    titles_named.begin(),
-    titles_named.end(),
-    [](const std::pair<std::string, std::string>& left,
-       const std::pair<std::string, std::string>& right) { return left.first < right.first; });
+  DialogProfileIdSelector dlg(this, profile.title_id, titles);
 
-  std::sort(titles_no_name.begin(),
-            titles_no_name.end(),
-            [](const std::pair<std::string, std::string>& left,
-               const std::pair<std::string, std::string>& right) {
-              return std::stoi(left.second) < std::stoi(right.second);
-            });
-
-  // construct array used for displaying game titles to user
-  GameTitleVector titles(titles_named);
-  titles.insert(titles.end(), titles_no_name.begin(), titles_no_name.end());
-
-  int current_profile_id = 0;
-  DialogProfileIdSelector dlg(this, current_profile_id, titles);
   if (dlg.ShowModal() == wxID_OK) {
-    auto& profile = settings_.GetActiveProfileRef();
-    profile.profile_id = dlg.GetSelectedProfileId();
+    profile.title_id = dlg.GetSelectedProfileId();
     UpdateProfilePanelFromSettings();
   }
   return;

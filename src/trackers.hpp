@@ -32,7 +32,7 @@ public:
   void initialize(HWND hWnd,
                   bool auto_find_dll,
                   std::string user_dll_folder,
-                  int profile_id);
+                  int title_id);
   // TODO: Convert to exceptions
   void start();        // main tracking loop
   void toggle_mouse(); // for debugging purposes

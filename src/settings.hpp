@@ -18,7 +18,7 @@ struct DisplayParameters
 struct Profile
 {
   std::string name = "(empty)";
-  int profile_id = 0;
+  int title_id = 0;
   bool use_default_padding = true;
   std::vector<DisplayParameters> displays = { DisplayParameters() };
 
