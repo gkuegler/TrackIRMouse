@@ -437,7 +437,7 @@ MainWindow::PopulateComboBoxWithProfiles()
     p_combo_profiles_->Append(item);
   }
 
-  int index = p_combo_profiles_->FindString(settings_.GetActiveProfile().name);
+  int index = p_combo_profiles_->FindString(settings_.GetActiveProfileRef().name);
   if (wxNOT_FOUND != index) {
     p_combo_profiles_->SetSelection(index);
     UpdateProfilePanelFromSettings();
@@ -464,7 +464,7 @@ MainWindow::OnStart(wxCommandEvent& event)
     auto s = Settings(settings_);
 
     // Apply default padding values if necessary.
-    s.ApplyNecessaryDefaults();
+    s.ApplyDefaultPaddingToAllDisplays();
 
     if (track_thread_) {
       throw std::logic_error("track thread should not exist");
@@ -555,7 +555,7 @@ MainWindow::OnDuplicateProfile(wxCommandEvent& event)
 void
 MainWindow::UpdateProfilePanelFromSettings()
 {
-  const auto& profile = settings_.GetActiveProfile();
+  const auto& profile = settings_.GetActiveProfileRef();
 
   // SetValue causes an event to be sent for text control.
   // SetValue does not cause an event to be sent for checkboxes.
@@ -574,17 +574,20 @@ MainWindow::UpdateProfilePanelFromSettings()
   int displayNum = 0;
 
   for (int i = 0; i < profile.displays.size(); i++) {
+    auto display = profile.displays[i];
     wxVector<wxVariant> row;
     row.push_back(wxVariant(wxString::Format("%d", i)));
 
-    for (int j = 0; j < 4; j++) { // left, right, top, bottom
-      row.push_back(wxVariant(wxString::Format("%7.2f", profile.displays[i].rotation[j])));
+    for (const auto& r : display.rotation.GetArray()) {
+
+      row.push_back(wxVariant(wxString::Format("%7.2f", r)));
     }
-    for (int j = 0; j < 4; j++) { // left, right, top, bottom
+    for (const auto& p : display.rotation.GetArray()) {
+
       if (p_check_use_default_padding_->IsChecked()) {
         row.push_back(wxVariant(wxString::Format("%s", "(default)")));
       } else {
-        row.push_back(wxVariant(wxString::Format("%d", profile.displays[i].padding[j])));
+        row.push_back(wxVariant(wxString::Format("%d", p)));
       }
     }
     p_view_mapping_data_->AppendItem(row);
@@ -596,7 +599,7 @@ void
 MainWindow::OnName(wxCommandEvent& event)
 {
   const auto text = p_text_name_->GetLineText(0).ToStdString();
-  auto& profile = settings_.GetActiveProfile();
+  auto& profile = settings_.GetActiveProfileRef();
   profile.name = text;
   settings_.active_profile_name = text;
   UpdateGuiFromSettings();
@@ -612,7 +615,7 @@ MainWindow::OnProfileID(wxCommandEvent& event)
     spdlog::error("Couldn't convert value to integer.");
     return;
   };
-  auto& profile = settings_.GetActiveProfile();
+  auto& profile = settings_.GetActiveProfileRef();
   profile.profile_id = static_cast<int>(value);
   UpdateProfilePanelFromSettings();
 }
@@ -661,7 +664,7 @@ MainWindow::OnPickTitle(wxCommandEvent& event)
   int current_profile_id = 0;
   DialogProfileIdSelector dlg(this, current_profile_id, titles);
   if (dlg.ShowModal() == wxID_OK) {
-    auto& profile = settings_.GetActiveProfile();
+    auto& profile = settings_.GetActiveProfileRef();
     profile.profile_id = dlg.GetSelectedProfileId();
     UpdateProfilePanelFromSettings();
   }
@@ -671,7 +674,7 @@ MainWindow::OnPickTitle(wxCommandEvent& event)
 void
 MainWindow::OnUseDefaultPadding(wxCommandEvent& event)
 {
-  auto& profile = settings_.GetActiveProfile();
+  auto& profile = settings_.GetActiveProfileRef();
   profile.use_default_padding = p_check_use_default_padding_->IsChecked();
   UpdateProfilePanelFromSettings();
 }
@@ -679,7 +682,7 @@ MainWindow::OnUseDefaultPadding(wxCommandEvent& event)
 void
 MainWindow::OnMappingData(wxDataViewEvent& event)
 {
-  auto& profile = settings_.GetActiveProfile();
+  auto& profile = settings_.GetActiveProfileRef();
 
   // finding column
   const wxVariant value = event.GetValue();
@@ -733,7 +736,7 @@ MainWindow::OnMappingData(wxDataViewEvent& event)
 void
 MainWindow::OnAddDisplay(wxCommandEvent& event)
 {
-  auto& profile = settings_.GetActiveProfile();
+  auto& profile = settings_.GetActiveProfileRef();
   profile.displays.emplace_back();
   UpdateProfilePanelFromSettings();
   p_display_graphic_->PaintNow();
@@ -742,7 +745,7 @@ MainWindow::OnAddDisplay(wxCommandEvent& event)
 void
 MainWindow::OnRemoveDisplay(wxCommandEvent& event)
 {
-  auto& profile = settings_.GetActiveProfile();
+  auto& profile = settings_.GetActiveProfileRef();
   const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND != index) {
     profile.displays.erase(profile.displays.begin() + index);
@@ -756,7 +759,7 @@ MainWindow::OnRemoveDisplay(wxCommandEvent& event)
 void
 MainWindow::OnMoveUp(wxCommandEvent& event)
 {
-  auto& profile = settings_.GetActiveProfile();
+  auto& profile = settings_.GetActiveProfileRef();
   const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     spdlog::warn("row not selected");
@@ -781,7 +784,7 @@ MainWindow::OnMoveUp(wxCommandEvent& event)
 void
 MainWindow::OnMoveDown(wxCommandEvent& event)
 {
-  auto& profile = settings_.GetActiveProfile();
+  auto& profile = settings_.GetActiveProfileRef();
   const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     spdlog::warn("row not selected");
@@ -813,7 +816,7 @@ MainWindow::OnDisplayEdit(wxCommandEvent& event)
     return;
   }
 
-  auto& display = settings_.GetActiveProfile().displays[index];
+  auto& display = settings_.GetActiveProfileRef().displays[index];
   // Show the edit pop up while disabling input on main window
   DialogDisplayEdit dlg(this, display);
   int results = dlg.ShowModal();

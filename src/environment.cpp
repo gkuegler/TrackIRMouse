@@ -28,8 +28,7 @@ MonitorProc(HMONITOR hMonitor,  // handle to the display monitor.
   info.cbSize = sizeof(MONITORINFOEX);
 
   if (!GetMonitorInfo(hMonitor, &info)) {
-    throw std::runtime_error(
-      std::format("Couldn't get display info for display #: {}", count));
+    throw std::runtime_error(std::format("Couldn't get display info for display #: {}", count));
   }
 
   // Monitor Pixel Bounds in the Virtual Desktop
@@ -51,7 +50,7 @@ MonitorProc(HMONITOR hMonitor,  // handle to the display monitor.
 bool
 WinDisplayInfo::compare(const RectPixels& a, const RectPixels& b)
 {
-  if (a[LEFT_EDGE] < b[LEFT_EDGE]) {
+  if (a.left < b.left) {
     return true;
   } else {
     return false;
@@ -66,8 +65,7 @@ WinDisplayInfo::WinDisplayInfo()
   }
 
   if (rectangles.size() == 0) {
-    throw std::runtime_error(
-      "0 displays enumerated. Something went wrong with Windows.");
+    throw std::runtime_error("0 displays enumerated. Something went wrong with Windows.");
   }
 
   // Ensure left most monitor is first in the list.
@@ -76,12 +74,12 @@ WinDisplayInfo::WinDisplayInfo()
   std::sort(rectangles.begin(), rectangles.end(), compare);
 
   // Find the top left-most point of the virtual desktop.
-  auto x = rectangles[0][LEFT_EDGE]; // left
-  auto y = rectangles[0][TOP_EDGE];  // top
+  auto x = rectangles[0].left; // left
+  auto y = rectangles[0].top;  // top
 
   for (const auto& d : rectangles) {
-    x = std::min(d[0], x);
-    y = std::min(d[2], y);
+    x = std::min(d.left, x);
+    y = std::min(d.top, y);
   }
 
   top_left_point = { x, y };
@@ -93,8 +91,7 @@ WinDisplayInfo::WinDisplayInfo()
   desktop_height = static_cast<Pixels>(GetSystemMetrics(SM_CYVIRTUALSCREEN));
 
   short_to_pixels_ratio_x = USHORT_MAX_VAL / static_cast<double>(desktop_width);
-  short_to_pixels_ratio_y =
-    USHORT_MAX_VAL / static_cast<double>(desktop_height);
+  short_to_pixels_ratio_y = USHORT_MAX_VAL / static_cast<double>(desktop_height);
 
   spdlog::debug("Width of Virtual Desktop:  {:>5}", desktop_width);
   spdlog::debug("Height of Virtual Desktop: {:>5}", desktop_height);

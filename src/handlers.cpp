@@ -32,18 +32,16 @@ MouseHandler::MouseHandler(Profile profile)
 
   if (hardware_display_count > user_display_count) {
     // TODO: do wx log error here and pres okay to continue
-    spdlog::error(
-      "Warning: More displays found that were specified by the user. This "
-      "should still work but will limit the mouse to only those displays "
-      "specified.\n{} monitors specified but {} monitors found",
-      user_display_count,
-      hardware_display_count);
-  } else if (hardware_display_count < user_display_count) {
-    throw std::runtime_error(
-      std::format("Incompatible user config: {} monitors specified but {} "
-                  "monitors found",
+    spdlog::error("Warning: More displays found that were specified by the user. This "
+                  "should still work but will limit the mouse to only those displays "
+                  "specified.\n{} monitors specified but {} monitors found",
                   user_display_count,
-                  hardware_display_count));
+                  hardware_display_count);
+  } else if (hardware_display_count < user_display_count) {
+    throw std::runtime_error(std::format("Incompatible user config: {} monitors specified but {} "
+                                         "monitors found",
+                                         user_display_count,
+                                         hardware_display_count));
   }
 
   std::vector<Display> displays;
@@ -67,10 +65,9 @@ MouseHandler::MouseHandler(Profile profile)
 inline void
 MouseHandler::set_cursor_pos(double x, double y)
 {
-  static MOUSEINPUT mi = {
-    0, 0, 0, MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK,
-    0, 0
-  };
+  static MOUSEINPUT mi = { 0, 0,
+                           0, MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK,
+                           0, 0 };
 
   static INPUT ip = { INPUT_MOUSE, mi };
 
@@ -94,8 +91,7 @@ MouseHandler::handle_input(const Degrees yaw, const Degrees pitch)
 
   // Dead Zone Calculation
   // TODO: change to pitch and yaw
-  auto d =
-    CalculateEuclideanDistance2D(yaw, pitch, last_pos_.yaw, last_pos_.pitch);
+  auto d = CalculateEuclideanDistance2D(yaw, pitch, last_pos_.yaw, last_pos_.pitch);
 
   if (d < dead_zone_threshold_) {
     return;
@@ -128,10 +124,10 @@ MouseHandler::handle_input(const Degrees yaw, const Degrees pitch)
   double y;
 
   Display& dlast = (*displays_)[last_screen];
-  const double left = dlast.rotation_boundaries[LEFT_EDGE];
-  const double right = dlast.rotation_boundaries[RIGHT_EDGE];
-  const double top = dlast.rotation_boundaries[TOP_EDGE];
-  const double bottom = dlast.rotation_boundaries[BOTTOM_EDGE];
+  const double left = dlast.rotation_boundaries.left;
+  const double right = dlast.rotation_boundaries.right;
+  const double top = dlast.rotation_boundaries.top;
+  const double bottom = dlast.rotation_boundaries.bottom;
 
   if (yaw >= left) { // yaw is left of last used display
     x = dlast.get_padding_offset_from_edge(LEFT_EDGE);

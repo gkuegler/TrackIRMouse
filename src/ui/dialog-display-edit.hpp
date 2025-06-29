@@ -33,7 +33,7 @@ private:
   wxSpinCtrl* padding_bottom;
 
 public:
-  DialogDisplayEdit(wxWindow* parent, const UserDisplay display)
+  DialogDisplayEdit(wxWindow* parent, const DisplayParameters display)
     : wxDialog(parent, wxID_ANY, "Track IR - Display Edit")
   {
     auto buttons = new PanelEndModalDialogButtons(this, this);
@@ -64,7 +64,7 @@ public:
                                    wxSP_ARROW_KEYS,
                                    -180,
                                    180,
-                                   display.rotation[LEFT_EDGE]);
+                                   display.rotation.left);
     rotation_right = new wxSpinCtrl(this,
                                     wxID_ANY,
                                     "",
@@ -73,7 +73,7 @@ public:
                                     wxSP_ARROW_KEYS,
                                     -180,
                                     180,
-                                    display.rotation[RIGHT_EDGE]);
+                                    display.rotation.right);
     rotation_top = new wxSpinCtrl(this,
                                   wxID_ANY,
                                   "",
@@ -82,7 +82,7 @@ public:
                                   wxSP_ARROW_KEYS,
                                   -180,
                                   180,
-                                  display.rotation[TOP_EDGE]);
+                                  display.rotation.top);
     rotation_bottom = new wxSpinCtrl(this,
                                      wxID_ANY,
                                      "",
@@ -91,7 +91,7 @@ public:
                                      wxSP_ARROW_KEYS,
                                      -180,
                                      180,
-                                     display.rotation[BOTTOM_EDGE]);
+                                     display.rotation.bottom);
 
     auto static_line =
       new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxSize(100, 2), wxLI_HORIZONTAL);
@@ -106,7 +106,7 @@ public:
                                   wxSP_ARROW_KEYS,
                                   -180,
                                   180,
-                                  display.padding[LEFT_EDGE]);
+                                  display.padding.left);
     padding_right = new wxSpinCtrl(this,
                                    wxID_ANY,
                                    "",
@@ -115,7 +115,7 @@ public:
                                    wxSP_ARROW_KEYS,
                                    -180,
                                    180,
-                                   display.padding[RIGHT_EDGE]);
+                                   display.padding.right);
     padding_top = new wxSpinCtrl(this,
                                  wxID_ANY,
                                  "",
@@ -124,7 +124,7 @@ public:
                                  wxSP_ARROW_KEYS,
                                  -180,
                                  180,
-                                 display.padding[TOP_EDGE]);
+                                 display.padding.top);
     padding_bottom = new wxSpinCtrl(this,
                                     wxID_ANY,
                                     "",
@@ -133,7 +133,7 @@ public:
                                     wxSP_ARROW_KEYS,
                                     -180,
                                     180,
-                                    display.padding[BOTTOM_EDGE]);
+                                    display.padding.bottom);
 
     constexpr int SMALL_SPACE = 6;
     constexpr int BIG_SPACE = 12;
@@ -187,7 +187,7 @@ public:
 
     this->CenterOnParent();
   }
-  void ApplyChanges(UserDisplay& display)
+  void ApplyChanges(DisplayParameters& display)
   {
     display.rotation = {
       static_cast<double>(rotation_left->GetValue()),

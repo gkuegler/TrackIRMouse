@@ -23,7 +23,7 @@ ThreadHeadTracking::ThreadHeadTracking(MainWindow* p_window_handler, HWND hWnd, 
   settings_ = settings; // create copy of user data for tracking thread
 
   // TODO: use a unique pointer instead
-  handler_ = std::make_shared<handlers::MouseHandler>(settings.GetActiveProfile());
+  handler_ = std::make_shared<handlers::MouseHandler>(settings.GetActiveProfileRef());
   tracker_ = std::make_shared<trackers::TrackIR>(handler_.get());
 }
 
@@ -39,7 +39,7 @@ ThreadHeadTracking::~ThreadHeadTracking()
 wxThread::ExitCode
 ThreadHeadTracking::Entry()
 {
-  auto profile = settings_.GetActiveProfile();
+  auto profile = settings_.GetActiveProfileRef();
   const unsigned long retry_time = 1500; // ms
 
   // TODO: check validation is correct

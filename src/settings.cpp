@@ -21,7 +21,10 @@
 #include "utility.hpp"
 
 // Declare json serializers.
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(UserDisplay, rotation, padding)
+// using RectDegreesNew = Rect<Degrees>;
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RectDegrees, left, right, top, bottom)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RectPixels, left, right, top, bottom)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DisplayParameters, rotation, padding)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Profile, name, profile_id, use_default_padding, displays)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,
                                    active_profile_name,
@@ -48,7 +51,9 @@ Settings::LoadFromFile()
 
   // Let any exceptions through.
   // All of the 'json' exceptions inherit from std::exception
-  return LoadJsonFromFileIntoObject<Settings>(path);
+  auto s = LoadJsonFromFileIntoObject<Settings>(path);
+
+  return s;
 }
 
 /**
@@ -62,7 +67,7 @@ Settings::SaveToFile()
   std::string path = utility::GetAbsolutePathRelativeToExeFolder(SETTINGS_FILE_NAME);
 
   // Convert settings to json.
-  json j = *(this);
+  nlohmann::ordered_json j = *(this);
 
   std::ofstream f(path);
 
@@ -142,7 +147,7 @@ Settings::RemoveProfile(std::string profile_name)
 void
 Settings::DuplicateActiveProfile()
 {
-  auto new_profile = GetActiveProfile();
+  auto new_profile = GetActiveProfileRef();
   new_profile.name.append("2"); // incremental profile name
   profiles.push_back(new_profile);
   active_profile_name = new_profile.name;
@@ -158,28 +163,23 @@ Settings::GetProfileNames()
   return profile_names;
 }
 
-// return reference the underlying active profile
-// assumes active profile is always present within the vector of profiles
 Profile&
-Settings::GetActiveProfile()
+Settings::GetActiveProfileRef()
 {
   for (auto& profile : profiles) {
     if (profile.name == active_profile_name) {
       return profile;
     }
   }
-  // an active profile should exist, code shouldn't be reachable
-  // design interface accordingly
-  spdlog::critical("An internal error has occured. Couldn't find active profile by name.");
+  throw std::logic_error("Active profile name was not found in list of profiles.");
 }
 
 void
-Settings::ApplyNecessaryDefaults()
+Settings::ApplyDefaultPaddingToAllDisplays()
 
 {
-  auto& profile = GetActiveProfile();
+  auto& profile = GetActiveProfileRef();
 
-  // Apply default padding
   for (auto&& display : profile.displays) {
     display.padding = this->default_padding;
   }
@@ -204,7 +204,7 @@ Settings::SetLogLevel(std::string level_name) -> void
     // Commenting this out to save for future
     // spdlog::details::registry::instance().apply_all(
     //   [](auto l) { l->set_level(); });
-  } catch (std::out_of_range& ex) {
+  } catch (std::out_of_range&) {
     spdlog::error("Log level '{}' is not valid.", level_name);
   }
 }
@@ -219,33 +219,36 @@ Settings::GetLogLevelString() -> std::string
 auto
 Profile::ValidateParameters() const -> bool
 {
-  // compare bounds not more than abs|180|
+  // Rotational bounds should not be outside limits.
+  // TODO: test and validate this
   for (int i = 0; i < displays.size(); i++) {
-    for (int j = 0; j < 4; j++) {
-      auto d = displays[i].rotation[j];
-      auto padding = displays[i].padding[j];
-      if (d > 180.0 || d < -180.0) {
-        spdlog::error("rotation bound param \"{}\" on display #{} is outside "
-                      "allowable range of -180° -> 180°.",
-                      k_edge_names[j],
-                      i);
-        return false;
+    for (const auto& r : displays[i].rotation.GetArray()) {
+      if (r > 180.0 || r < -180.0) {
+        throw std::runtime_error(
+          "A rotation boundry on display '{}' is outside the allowable range of: -180° -> 180°.");
       }
     }
+
+    // Make padding need to be smaller than width of the screen and not negative.
+    /*for (const auto& p : displays[i].padding.GetArray()) {
+
+      throw std::runtime_error(
+        "A rotation boundry on display '{}' is outside the allowable range of: -180° -> 180°.");
+    }*/
   }
   // see if any rectangles overlap
   // visualization: https://silentmatt.com/rectangle-intersection/
   for (int i = 0; i < displays.size(); i++) {
     int j = i;
     while (++j < displays.size()) {
-      Degrees A_left = displays[i].rotation[LEFT_EDGE];
-      Degrees A_right = displays[i].rotation[RIGHT_EDGE];
-      Degrees A_top = displays[i].rotation[TOP_EDGE];
-      Degrees A_bottom = displays[i].rotation[BOTTOM_EDGE];
-      Degrees B_left = displays[j].rotation[LEFT_EDGE];
-      Degrees B_right = displays[j].rotation[RIGHT_EDGE];
-      Degrees B_top = displays[j].rotation[TOP_EDGE];
-      Degrees B_bottom = displays[j].rotation[BOTTOM_EDGE];
+      Degrees A_left = displays[i].rotation.left;
+      Degrees A_right = displays[i].rotation.right;
+      Degrees A_top = displays[i].rotation.top;
+      Degrees A_bottom = displays[i].rotation.bottom;
+      Degrees B_left = displays[j].rotation.left;
+      Degrees B_right = displays[j].rotation.right;
+      Degrees B_top = displays[j].rotation.top;
+      Degrees B_bottom = displays[j].rotation.bottom;
       if (A_left < B_right && A_right > B_left && A_top > B_bottom && A_bottom < B_top) {
         spdlog::error("Overlapping rotational bounds between display #{} and #{}", i, j);
         return false;

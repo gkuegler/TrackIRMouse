@@ -2,12 +2,12 @@
     "active_profile_name": "Rich Basement - Profile = 2.5/",
     "auto_find_track_ir_dll": true,
     "auto_retry": true,
-    "default_padding": [
-        3,
-        3,
-        0,
-        0
-    ],
+    "default_padding": {
+        "left": 3,
+        "right": 3,
+        "top": 0,
+        "bottom": 0
+    },
     "hotkey_enabled": true,
     "hotkey_name": "F18",
     "log_level": 1,
@@ -17,32 +17,32 @@
         {
             "displays": [
                 {
-                    "padding": [
-                        0,
-                        0,
-                        0,
-                        0
-                    ],
-                    "rotation": [
-                        43.0,
-                        -50.0,
-                        -20.0,
-                        19.0
-                    ]
+                    "padding": {
+                        "left": 0,
+                        "right": 0,
+                        "top": 0,
+                        "bottom": 0
+                    },
+                    "rotation": {
+                        "left": 43.0,
+                        "right": -50.0,
+                        "top": -20.0,
+                        "bottom": 19.0
+                    }
                 },
                 {
-                    "padding": [
-                        0,
-                        0,
-                        0,
-                        0
-                    ],
-                    "rotation": [
-                        -62.0,
-                        -180.0,
-                        -20.0,
-                        19.0
-                    ]
+                    "padding": {
+                        "left": 0,
+                        "right": 0,
+                        "top": 0,
+                        "bottom": 0
+                    },
+                    "rotation": {
+                        "left": -62.0,
+                        "right": -180.0,
+                        "top": -20.0,
+                        "bottom": 19.0
+                    }
                 }
             ],
             "name": "Dual Monitor - Close Range",
@@ -52,18 +52,18 @@
         {
             "displays": [
                 {
-                    "padding": [
-                        0,
-                        0,
-                        0,
-                        0
-                    ],
-                    "rotation": [
-                        60.0,
-                        -60.0,
-                        -20.0,
-                        15.0
-                    ]
+                    "padding": {
+                        "left": 0,
+                        "right": 0,
+                        "top": 0,
+                        "bottom": 0
+                    },
+                    "rotation": {
+                        "left": 60.0,
+                        "right": -60.0,
+                        "top": -20.0,
+                        "bottom": 15.0
+                    }
                 }
             ],
             "name": "Single Monitor",
@@ -73,32 +73,32 @@
         {
             "displays": [
                 {
-                    "padding": [
-                        0,
-                        0,
-                        0,
-                        0
-                    ],
-                    "rotation": [
-                        38.0,
-                        -50.0,
-                        -19.0,
-                        19.0
-                    ]
+                    "padding": {
+                        "left": 0,
+                        "right": 0,
+                        "top": 0,
+                        "bottom": 0
+                    },
+                    "rotation": {
+                        "left": 38.0,
+                        "right": -50.0,
+                        "top": -19.0,
+                        "bottom": 19.0
+                    }
                 },
                 {
-                    "padding": [
-                        0,
-                        0,
-                        0,
-                        0
-                    ],
-                    "rotation": [
-                        -62.0,
-                        -170.0,
-                        -19.0,
-                        19.0
-                    ]
+                    "padding": {
+                        "left": 0,
+                        "right": 0,
+                        "top": 0,
+                        "bottom": 0
+                    },
+                    "rotation": {
+                        "left": -62.0,
+                        "right": -170.0,
+                        "top": -19.0,
+                        "bottom": 19.0
+                    }
                 }
             ],
             "name": "Dual Monitor - Far Range",
@@ -108,46 +108,46 @@
         {
             "displays": [
                 {
-                    "padding": [
-                        0,
-                        0,
-                        0,
-                        0
-                    ],
-                    "rotation": [
-                        80.0,
-                        33.0,
-                        -20.0,
-                        21.0
-                    ]
+                    "padding": {
+                        "left": 0,
+                        "right": 0,
+                        "top": 0,
+                        "bottom": 0
+                    },
+                    "rotation": {
+                        "left": 80.0,
+                        "right": 33.0,
+                        "top": -20.0,
+                        "bottom": 21.0
+                    }
                 },
                 {
-                    "padding": [
-                        0,
-                        0,
-                        0,
-                        0
-                    ],
-                    "rotation": [
-                        28.0,
-                        -58.0,
-                        -14.0,
-                        14.0
-                    ]
+                    "padding": {
+                        "left": 0,
+                        "right": 0,
+                        "top": 0,
+                        "bottom": 0
+                    },
+                    "rotation": {
+                        "left": 28.0,
+                        "right": -58.0,
+                        "top": -14.0,
+                        "bottom": 14.0
+                    }
                 },
                 {
-                    "padding": [
-                        0,
-                        0,
-                        0,
-                        0
-                    ],
-                    "rotation": [
-                        -68.0,
-                        -162.0,
-                        -14.0,
-                        14.0
-                    ]
+                    "padding": {
+                        "left": 0,
+                        "right": 0,
+                        "top": 0,
+                        "bottom": 0
+                    },
+                    "rotation": {
+                        "left": -68.0,
+                        "right": -162.0,
+                        "top": -14.0,
+                        "bottom": 14.0
+                    }
                 }
             ],
             "name": "Rich Basement - Profile = 2.5/",

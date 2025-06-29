@@ -9,6 +9,7 @@
 // --- Testing Suites --
 // #include "test-suites/example-fixture.hpp"
 // #include "test-suites/example-simple/example-simple-tests.h"
+#include "test-suites/test-settings.hpp"
 
 /* Entrypoint is defined by linking with 'gtest_main'.
  * I don't think I'll need a reason to specify my own main.

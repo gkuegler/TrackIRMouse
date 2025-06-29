@@ -86,9 +86,6 @@ PanelDisplayGraphic::Render(wxDC& dc)
   const auto text_heigt = dc.GetTextExtent("example").GetHeight();
   const auto half_text_height = text_heigt / 2;
 
-  // test data
-  std::vector<int> padding = { 3, 3, 0, 0 };
-
   int cwidth = 0;
   int cheight = 0;
   this->GetClientSize(&cwidth, &cheight);
@@ -99,45 +96,41 @@ PanelDisplayGraphic::Render(wxDC& dc)
 
   // get array of monitor bounds
   const auto hdi = WinDisplayInfo();
-  const auto usrDisplays = settings.GetActiveProfile().displays;
+  const auto usrDisplays = settings.GetActiveProfileRef().displays;
 
   // offset all rectangles so that 0,0 as top left most value
   std::vector<RectPixels> bounds_offset;
   {
     int l{ 0 }, t{ 0 };
     for (auto& d : hdi.rectangles) {
-      l = (d[0] < l) ? d[0] : l; // get leftmost value
-      t = (d[2] < t) ? d[2] : t; // get topmost value
+      l = (d.left < l) ? d.left : l; // get leftmost value
+      t = (d.top < t) ? d.top : t;   // get topmost value
     }
     for (auto& d : hdi.rectangles) {
       // int x = (dwidth / 2) + l;
       // int y = (dheight / 2) + t;
-      bounds_offset.push_back({ d[0] - l, d[1] - l, d[2] - t, d[3] - t });
+      bounds_offset.push_back({ d.top - l, d.right - l, d.top - t, d.bottom - t });
     }
   }
 
-  // for (auto& d : bounds_offset) {
-  //   spdlog::info("offset -> {}, {}, {}, {}", d[0], d[1], d[2], d[3]);
-  // }
-
   // scale rectangle so they fit in the drawing area, taking up all space
   // available
-  std::vector<std::vector<double>> bounds_norm;
+  std::vector<Rect<double>> bounds_norm;
   {
     const double xratio = area_x / hdi.desktop_width;
     const double yratio = area_y / hdi.desktop_height;
     const double ratio = std::min<double>(xratio, yratio);
     for (auto& d : bounds_offset) {
-      bounds_norm.push_back({ static_cast<double>(d[0]) * ratio,
-                              static_cast<double>(d[1]) * ratio,
-                              static_cast<double>(d[2]) * ratio,
-                              static_cast<double>(d[3]) * ratio });
+      bounds_norm.push_back({ static_cast<double>(d.left) * ratio,
+                              static_cast<double>(d.right) * ratio,
+                              static_cast<double>(d.top) * ratio,
+                              static_cast<double>(d.bottom) * ratio });
     }
   }
 
   // for (auto& d : bounds_norm) {
-  //   spdlog::info("scaled to dwg area -> {}, {}, {}, {}", d[0], d[1], d[2],
-  //                d[3]);
+  //   spdlog::info("scaled to dwg area -> {}, {}, {}, {}", d.left, d.right, d.top,
+  //                d.bottom);
   // }
 
   // reget max height_ and width_
@@ -146,10 +139,11 @@ PanelDisplayGraphic::Render(wxDC& dc)
   {
     double l{ 0 }, r{ 0 }, t{ 0 }, b{ 0 };
     for (auto& d : bounds_norm) {
-      l = (d[0] < l) ? d[0] : l;
-      r = (d[1] > r) ? d[1] : r;
-      t = (d[2] < t) ? d[2] : t;
-      b = (d[3] > b) ? d[3] : b;
+      // TODO: use std::min here
+      l = (d.left < l) ? d.left : l;
+      r = (d.right > r) ? d.right : r;
+      t = (d.top < t) ? d.top : t;
+      b = (d.bottom > b) ? d.bottom : b;
     }
     swidth = r - l;
     sheight = b - t;
@@ -159,25 +153,25 @@ PanelDisplayGraphic::Render(wxDC& dc)
 
   {
     for (auto& d : bounds_norm) {
-      d[0] += x_offset;
-      d[1] += x_offset;
-      d[2] += y_offset;
-      d[3] += y_offset;
+      d.left += x_offset;
+      d.right += x_offset;
+      d.top += y_offset;
+      d.bottom += y_offset;
     }
   }
 
   // for (auto& d : bounds_norm) {
-  //   spdlog::info("centered to dwg area -> {}, {}, {}, {}", d[0], d[1], d[2],
-  //                d[3]);
+  //   spdlog::info("centered to dwg area -> {}, {}, {}, {}", d.left, d.right, d.top,
+  //                d.7);
   // }
 
   for (int i = 0; i < bounds_norm.size(); i++) {
     // Draw the rectangle
     auto r = wxRect();
-    r.SetLeft(bounds_norm[i][0]);
-    r.SetRight(bounds_norm[i][1]);
-    r.SetTop(bounds_norm[i][2]);
-    r.SetBottom(bounds_norm[i][3]);
+    r.SetLeft(bounds_norm[i].left);
+    r.SetRight(bounds_norm[i].right);
+    r.SetTop(bounds_norm[i].top);
+    r.SetBottom(bounds_norm[i].bottom);
     dc.SetBrush(light_gray);        // fill color
     dc.SetPen(wxPen(dark_gray, 3)); // outline
     dc.DrawRectangle(r);
@@ -186,16 +180,16 @@ PanelDisplayGraphic::Render(wxDC& dc)
 
     // Draw text labels
     const auto text_left = userSpecifiedRotationAvailable
-                             ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[0])
+                             ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation.left)
                              : wxString("?");
     const auto text_right = userSpecifiedRotationAvailable
-                              ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[1])
+                              ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation.right)
                               : wxString("?");
     const auto text_top = userSpecifiedRotationAvailable
-                            ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[2])
+                            ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation.top)
                             : wxString("?");
     const auto text_bottom = userSpecifiedRotationAvailable
-                               ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation[3])
+                               ? wxString::Format(wxT("%0.2f"), usrDisplays[i].rotation.bottom)
                                : wxString("?");
 
     // clang-format off

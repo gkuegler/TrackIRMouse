@@ -192,9 +192,9 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
+    <CopyFileToFolders Include="resources\trackir-game-title-ids.json" />
     <CopyFileToFolders Include="resources\settings.json">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="resources\trackir-game-title-ids.json" />
   </ItemGroup>
 </Project>

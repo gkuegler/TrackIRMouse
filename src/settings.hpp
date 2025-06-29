@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <filesystem>
 #include <map>
 #include <string>
 
@@ -8,16 +9,10 @@
 #include "types.hpp"
 
 // TODO: Move global to types?
-struct UserDisplay
+struct DisplayParameters
 {
-  UserDisplay() {};
-  UserDisplay(RectDegrees r, RectPixels p)
-    : rotation(r)
-    , padding(p)
-  {
-  }
-  std::array<double, 4> rotation{ 0.0, 0.0, 0.0, 0.0 }; // Left, Right, Top, Bottom
-  std::array<signed int, 4> padding{ 0, 0, 0, 0 };      // Left, Right, Top, Bottom
+  RectDegrees rotation;
+  RectPixels padding;
 };
 
 struct Profile
@@ -25,7 +20,7 @@ struct Profile
   std::string name = "(empty)";
   int profile_id = 0;
   bool use_default_padding = true;
-  std::vector<UserDisplay> displays = { UserDisplay() };
+  std::vector<DisplayParameters> displays = { DisplayParameters() };
 
   bool ValidateParameters() const;
 };
@@ -45,24 +40,20 @@ public:
   std::string hotkey_name = "F18";
   spdlog::level::level_enum log_level = spdlog::level::info;
 
-  std::array<Pixels, 4> default_padding = { 0, 0, 0, 0 };
+  RectPixels default_padding = { 0, 0, 0, 0 };
   // invariant: the active profile member should always exist in the profiles
   // list
   std::vector<Profile> profiles = { Profile() };
 
-private:
-  // TODO: make this static?
-  // std::string filename_ = "settings.json";
-
 public:
-  Settings() {} // creat with default values
+  Settings() = default; // create with default values
 
   auto SaveToFile() -> void;
   static auto LoadFromFile() -> Settings;
 
   // getter interface
-  auto GetActiveProfile() -> Profile&;
-  auto ApplyNecessaryDefaults() -> void;
+  auto GetActiveProfileRef() -> Profile&;
+  auto ApplyDefaultPaddingToAllDisplays() -> void;
   auto GetProfileNames() -> std::vector<std::string>;
 
   // setter interface

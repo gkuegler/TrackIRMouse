@@ -49,10 +49,10 @@ public:
     // left right top bottom
 		// 
     // find the absolute short_int value of a display edge
-    coordinates[0] = static_cast<double>(rel_edge_pixel[0] - virtual_origin_left) * short_to_pixels_ratio_x;
-    coordinates[1] = static_cast<double>(rel_edge_pixel[1] - virtual_origin_left) * short_to_pixels_ratio_x;
-    coordinates[2] = static_cast<double>(rel_edge_pixel[2] - virtual_origin_top) * short_to_pixels_ratio_y;
-    coordinates[3] = static_cast<double>(rel_edge_pixel[3] - virtual_origin_top) * short_to_pixels_ratio_y;
+    coordinates.left = static_cast<double>(rel_edge_pixel.left - virtual_origin_left) * short_to_pixels_ratio_x;
+    coordinates.right = static_cast<double>(rel_edge_pixel.right - virtual_origin_left) * short_to_pixels_ratio_x;
+    coordinates.top = static_cast<double>(rel_edge_pixel.top - virtual_origin_top) * short_to_pixels_ratio_y;
+    coordinates.bottom = static_cast<double>(rel_edge_pixel.bottom - virtual_origin_top) * short_to_pixels_ratio_y;
 
 		//////////////////////////////////////////////////////////////////////
 		//                      DIRECTION CONVENTIONS                       //
@@ -64,16 +64,16 @@ public:
 		// trackir head down is pitch increasing
 
     // setup linear interpolation parameters
-    const auto rl = rotation_boundaries[LEFT_EDGE];  // left
-    const auto rr = rotation_boundaries[RIGHT_EDGE];  // right
-    const auto al = coordinates[LEFT_EDGE];
-    const auto ar = coordinates[RIGHT_EDGE];
+    const auto rl = rotation_boundaries.left;  // left
+    const auto rr = rotation_boundaries.right;  // right
+    const auto al = coordinates.left;
+    const auto ar = coordinates.right;
     m_slope_coord_over_degrees_x = std::abs(ar - al) / std::abs(rl - rr);
 
-    const double rt = rotation_boundaries[TOP_EDGE];
-    const double rb = rotation_boundaries[BOTTOM_EDGE];
-    const double at = coordinates[TOP_EDGE];
-    const double ab = coordinates[BOTTOM_EDGE];
+    const double rt = rotation_boundaries.top;
+    const double rb = rotation_boundaries.bottom;
+    const double at = coordinates.top;
+    const double ab = coordinates.bottom;
     m_slope_coord_over_degrees_y = std::abs(at - ab) / std::abs(rb - rt);
 
     return;
@@ -83,8 +83,7 @@ public:
   {
     // linearly interpolate horizontal distance from left edge of display
     // note the direction sign conventions in above func
-    return coordinates[LEFT_EDGE] + m_slope_coord_over_degrees_x *
-                                      (rotation_boundaries[LEFT_EDGE] - yaw);
+    return coordinates.left + m_slope_coord_over_degrees_x * (rotation_boundaries.left - yaw);
     ;
   }
 
@@ -92,17 +91,15 @@ public:
   {
     // linearly interpolate vertical distance from top edge of display
     // note the direction sign conventions in above func
-    return coordinates[TOP_EDGE] + m_slope_coord_over_degrees_y *
-                                     (pitch - rotation_boundaries[TOP_EDGE]);
+    return coordinates.top + m_slope_coord_over_degrees_y * (pitch - rotation_boundaries.top);
   }
 
-  const CursorCoordinates get_cursor_coordinates(const Degrees yaw,
-                                                 const Degrees pitch)
+  const CursorCoordinates get_cursor_coordinates(const Degrees yaw, const Degrees pitch)
   {
-    const double left = rotation_boundaries[LEFT_EDGE];
-    const double right = rotation_boundaries[RIGHT_EDGE];
-    const double top = rotation_boundaries[TOP_EDGE];
-    const double bottom = rotation_boundaries[BOTTOM_EDGE];
+    const double left = rotation_boundaries.left;
+    const double right = rotation_boundaries.right;
+    const double top = rotation_boundaries.top;
+    const double bottom = rotation_boundaries.bottom;
 
     // test if degrees are within the displays mapping boundaries
     // note the direction sign conventions in above func
@@ -113,17 +110,18 @@ public:
     }
   }
 
+  // TODO: can i make this return all of the edges or return a coord instead?
   const double get_inside_offset_from_edge(int edge, int pixels)
   {
     switch (edge) {
       case LEFT_EDGE:
-        return coordinates[edge] + pixels * m_short_to_pixels_ratio_x;
+        return coordinates.left + pixels * m_short_to_pixels_ratio_x;
       case RIGHT_EDGE:
-        return coordinates[edge] - pixels * m_short_to_pixels_ratio_x;
+        return coordinates.right - pixels * m_short_to_pixels_ratio_x;
       case TOP_EDGE:
-        return coordinates[edge] + pixels * m_short_to_pixels_ratio_y;
+        return coordinates.top + pixels * m_short_to_pixels_ratio_y;
       case BOTTOM_EDGE:
-        return coordinates[edge] - pixels * m_short_to_pixels_ratio_y;
+        return coordinates.bottom - pixels * m_short_to_pixels_ratio_y;
     }
   }
 
@@ -131,13 +129,13 @@ public:
   {
     switch (edge) {
       case LEFT_EDGE:
-        return coordinates[edge] + padding[edge] * m_short_to_pixels_ratio_x;
+        return coordinates.left + padding.left * m_short_to_pixels_ratio_x;
       case RIGHT_EDGE:
-        return coordinates[edge] - padding[edge] * m_short_to_pixels_ratio_x;
+        return coordinates.right - padding.right * m_short_to_pixels_ratio_x;
       case TOP_EDGE:
-        return coordinates[edge] + padding[edge] * m_short_to_pixels_ratio_y;
+        return coordinates.top + padding.top * m_short_to_pixels_ratio_y;
       case BOTTOM_EDGE:
-        return coordinates[edge] - padding[edge] * m_short_to_pixels_ratio_y;
+        return coordinates.bottom - padding.bottom * m_short_to_pixels_ratio_y;
     }
   }
 };
