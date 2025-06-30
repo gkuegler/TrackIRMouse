@@ -3,19 +3,17 @@
 #include "settings.hpp"
 #include <wx/wx.h>
 
+/* A graphic showing the current arrangement of display monitors and associated info.*/
 class PanelDisplayGraphic : public wxPanel
 {
 public:
-  PanelDisplayGraphic(wxWindow* parent, wxSize size, Settings& s);
-  wxWindow* p_parent_;
+  wxWindow* p_parent;
 
-  void PaintEvent(wxPaintEvent& evt);
-  void PaintNow(); // user method to force redraw
-  void Render(wxDC& dc);
+  PanelDisplayGraphic(wxWindow* parent, Settings& s);
+  void OnPaint(wxPaintEvent& evt);
 
 private:
   Settings& settings;
-  int width_ = 200;
-  int height_ = 100;
-  int gap_ = 20;
+
+  void Render(wxDC& dc);
 };

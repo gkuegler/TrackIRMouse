@@ -10,41 +10,18 @@
 #include "settings.hpp"
 #include "types.hpp"
 
-PanelDisplayGraphic::PanelDisplayGraphic(wxWindow* parent, wxSize size, Settings& s)
-  : settings(s)
-  , wxPanel(parent, wxID_ANY, wxDefaultPosition, size, wxFULL_REPAINT_ON_RESIZE, "")
+PanelDisplayGraphic::PanelDisplayGraphic(wxWindow* parent, Settings& s)
+  : p_parent(parent)
+  , settings(s)
+  , wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE, "")
 {
-  p_parent_ = parent;
-  Bind(wxEVT_PAINT, &PanelDisplayGraphic::PaintEvent, this);
+  Bind(wxEVT_PAINT, &PanelDisplayGraphic::OnPaint, this);
 }
 
-// Called by the system of by wxWidgets when the panel_ needs
-// to be redrawn. You can also trigger this call by
-// calling Refresh()/Update().
 void
-PanelDisplayGraphic::PaintEvent(wxPaintEvent& evt)
+PanelDisplayGraphic::OnPaint(wxPaintEvent& evt)
 {
   wxPaintDC dc(this);
-  Render(dc);
-}
-
-/*
- * Alternatively, you can use a clientDC to paint on the panel_
- * at any time. Using this generally does not free you from
- * catching paint events, since it is possible that e.g. the window
- * manager throws away your drawing when the window comes to the
- * background, and expects you will redraw it when the window comes
- * back (by sending a paint event).
- *
- * In most cases, this will not be needed at all; simply handling
- * paint events and calling Refresh() when a refresh is needed
- * will do the job.
- */
-// TODO: call paint now on settings change
-void
-PanelDisplayGraphic::PaintNow()
-{
-  wxClientDC dc(this);
   Render(dc);
 }
 
@@ -86,97 +63,51 @@ PanelDisplayGraphic::Render(wxDC& dc)
   const auto text_heigt = dc.GetTextExtent("example").GetHeight();
   const auto half_text_height = text_heigt / 2;
 
-  int cwidth = 0;
-  int cheight = 0;
-  this->GetClientSize(&cwidth, &cheight);
-  // spdlog::info("height_, width_ -> {}, {}", cheight, cwidth);
+  int client_width = 0;
+  int client_height = 0;
 
-  const double area_x = cwidth - 50; // drawing area width_
-  const double area_y = cheight - 50;
+  // Determine available space for graphic.
+  wxSize area = this->GetClientSize();
+  spdlog::debug("graphic: client height, client width -> {}x{}", client_height, client_width);
 
   // get array of monitor bounds
   const auto hdi = WinDisplayInfo();
   const auto usrDisplays = settings.GetActiveProfileRef().displays;
 
-  // offset all rectangles so that 0,0 as top left most value
-  std::vector<RectPixels> bounds_offset;
-  {
-    int l{ 0 }, t{ 0 };
-    for (auto& d : hdi.rectangles) {
-      l = (d.left < l) ? d.left : l; // get leftmost value
-      t = (d.top < t) ? d.top : t;   // get topmost value
-    }
-    for (auto& d : hdi.rectangles) {
-      // int x = (dwidth / 2) + l;
-      // int y = (dheight / 2) + t;
-      bounds_offset.push_back({ d.top - l, d.right - l, d.top - t, d.bottom - t });
-    }
-  }
+  /* Note: I opt to use std::transform instead of modifying my container in place simply for the
+   * ease of debugging.
+   */
 
-  // scale rectangle so they fit in the drawing area, taking up all space
-  // available
-  std::vector<Rect<double>> bounds_norm;
-  {
-    const double xratio = area_x / hdi.desktop_width;
-    const double yratio = area_y / hdi.desktop_height;
-    const double ratio = std::min<double>(xratio, yratio);
-    for (auto& d : bounds_offset) {
-      bounds_norm.push_back({ static_cast<double>(d.left) * ratio,
-                              static_cast<double>(d.right) * ratio,
-                              static_cast<double>(d.top) * ratio,
-                              static_cast<double>(d.bottom) * ratio });
-    }
-  }
+  // Normalize all coordinates to 0,0 as the top-left corner.
+  std::vector<RectPixels> normalized = hdi.Normalize();
 
-  // for (auto& d : bounds_norm) {
-  //   spdlog::info("scaled to dwg area -> {}, {}, {}, {}", d.left, d.right, d.top,
-  //                d.bottom);
-  // }
+  const double xratio = static_cast<double>(area.GetWidth()) / hdi.desktop_width;
+  const double yratio = static_cast<double>(area.GetHeight()) / hdi.desktop_height;
+  const double ratio = std::min(xratio, yratio);
 
-  // reget max height_ and width_
-  double swidth = 0;
-  double sheight = 0;
-  {
-    double l{ 0 }, r{ 0 }, t{ 0 }, b{ 0 };
-    for (auto& d : bounds_norm) {
-      // TODO: use std::min here
-      l = (d.left < l) ? d.left : l;
-      r = (d.right > r) ? d.right : r;
-      t = (d.top < t) ? d.top : t;
-      b = (d.bottom > b) ? d.bottom : b;
-    }
-    swidth = r - l;
-    sheight = b - t;
-  }
-  const double x_offset = (area_x / 2) - (swidth / 2);
-  const double y_offset = (area_y / 2) - (sheight / 2);
+  // Scale rectangle so they fit in the drawing area, taking up all space
+  // available.
+  std::vector<RectPixels> scaled(normalized.size());
 
-  {
-    for (auto& d : bounds_norm) {
-      d.left += x_offset;
-      d.right += x_offset;
-      d.top += y_offset;
-      d.bottom += y_offset;
-    }
-  }
+  std::transform(normalized.begin(), normalized.end(), scaled.begin(), [ratio](RectPixels r) {
+    return RectPixels{ static_cast<Pixels>(r.left * ratio),
+                       static_cast<Pixels>(r.right * ratio),
+                       static_cast<Pixels>(r.top * ratio),
+                       static_cast<Pixels>(r.bottom * ratio) };
+  });
 
-  // for (auto& d : bounds_norm) {
-  //   spdlog::info("centered to dwg area -> {}, {}, {}, {}", d.left, d.right, d.top,
-  //                d.7);
-  // }
-
-  for (int i = 0; i < bounds_norm.size(); i++) {
-    // Draw the rectangle
+  for (int i = 0; i < scaled.size(); i++) {
+    // Draw rectangle.
     auto r = wxRect();
-    r.SetLeft(bounds_norm[i].left);
-    r.SetRight(bounds_norm[i].right);
-    r.SetTop(bounds_norm[i].top);
-    r.SetBottom(bounds_norm[i].bottom);
+    r.SetLeft(scaled[i].left);
+    r.SetRight(scaled[i].right);
+    r.SetTop(scaled[i].top);
+    r.SetBottom(scaled[i].bottom);
     dc.SetBrush(light_gray);        // fill color
     dc.SetPen(wxPen(dark_gray, 3)); // outline
     dc.DrawRectangle(r);
 
-    const bool userSpecifiedRotationAvailable = (usrDisplays.size() > i);
+    const bool userSpecifiedRotationAvailable = (i < usrDisplays.size());
 
     // Draw text labels
     const auto text_left = userSpecifiedRotationAvailable

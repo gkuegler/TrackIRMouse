@@ -9,8 +9,6 @@ class WinDisplayInfo
 {
 public:
   int count = 0;
-  // TODO: use regular rectangle with '.left' member variables for access or
-  // redo the math for the 'graphic'.
   std::vector<RectPixels> rectangles;
   Point<Pixels> top_left_point; // origin offset in pixels from (0, 0)
 
@@ -25,6 +23,7 @@ public:
   int desktop_height;
 
   WinDisplayInfo();
+  std::vector<RectPixels> Normalize() const;
 
 private:
   static bool compare(const RectPixels& a, const RectPixels& b);

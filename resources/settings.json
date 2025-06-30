@@ -46,7 +46,7 @@
                 }
             ],
             "name": "Dual Monitor - Close Range",
-            "profile_id": 13302,
+            "title_id": 13302,
             "use_default_padding": true
         },
         {
@@ -67,7 +67,7 @@
                 }
             ],
             "name": "Single Monitor",
-            "profile_id": 13302,
+            "title_id": 13302,
             "use_default_padding": true
         },
         {
@@ -102,7 +102,7 @@
                 }
             ],
             "name": "Dual Monitor - Far Range",
-            "profile_id": 13302,
+            "title_id": 13302,
             "use_default_padding": true
         },
         {
@@ -151,7 +151,7 @@
                 }
             ],
             "name": "Rich Basement - Profile = 2.5/",
-            "profile_id": 2225,
+            "title_id": 2225,
             "use_default_padding": true
         }
     ],

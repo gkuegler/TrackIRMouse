@@ -40,7 +40,7 @@ public:
 class MainWindow : public wxFrame
 {
 public:
-  std::shared_ptr<game_title_map_t> p_titles_map_;
+  std::shared_ptr<NpTitlesMap> p_titles_map_;
 
   // threads
   ThreadHeadTracking* track_thread_ = nullptr;

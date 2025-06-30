@@ -84,7 +84,7 @@ MainWindow::MainWindow(wxPoint origin, wxSize dimensions, Settings& s)
   auto btn_stop_mouse = new wxButton(main, wxID_ANY, "Stop Mouse", wxDefaultPosition, k_default_button_size_2);
 
   // Display Graphic
-  p_display_graphic_ = new PanelDisplayGraphic(main, wxSize(650, 200), s);
+  p_display_graphic_ = new PanelDisplayGraphic(main, s);
   //p_display_graphic_->SetBackgroundColour(blue);
 
   // Profiles Controls
@@ -96,7 +96,7 @@ MainWindow::MainWindow(wxPoint origin, wxSize dimensions, Settings& s)
   auto btn_duplicate_profile = new wxButton(p_pnl_profile, wxID_ANY, "Duplicate this Profile", wxDefaultPosition, k_default_button_size_2);
 
   // Profiles Box
-  p_titles_map_ = std::make_unique<game_title_map_t>(GetTitleIdsFromFile());
+  p_titles_map_ = std::make_unique<NpTitlesMap>(GetTitleIdsFromFile());
 	
   p_text_name_ = new wxTextCtrl(p_pnl_profile, wxID_ANY, "Lorem Ipsum", wxDefaultPosition, wxSize(250, 20), wxTE_LEFT);
   p_text_name_->SetMaxLength(k_max_profile_length);
@@ -571,8 +571,6 @@ MainWindow::UpdateProfilePanelFromSettings()
 
   p_view_mapping_data_->DeleteAllItems();
 
-  int displayNum = 0;
-
   for (int i = 0; i < profile.displays.size(); i++) {
     auto display = profile.displays[i];
     wxVector<wxVariant> row;
@@ -592,7 +590,6 @@ MainWindow::UpdateProfilePanelFromSettings()
     }
     p_view_mapping_data_->AppendItem(row);
   }
-  // display graphic->PaintNow();
 }
 
 void
@@ -700,7 +697,8 @@ MainWindow::OnMappingData(wxDataViewEvent& event)
   }
 
   UpdateProfilePanelFromSettings();
-  p_display_graphic_->PaintNow();
+  p_display_graphic_->Refresh();
+  p_display_graphic_->Update();
 }
 
 void
@@ -709,7 +707,8 @@ MainWindow::OnAddDisplay(wxCommandEvent& event)
   auto& profile = settings_.GetActiveProfileRef();
   profile.displays.emplace_back();
   UpdateProfilePanelFromSettings();
-  p_display_graphic_->PaintNow();
+  p_display_graphic_->Refresh();
+  p_display_graphic_->Update();
 }
 
 void
@@ -720,7 +719,8 @@ MainWindow::OnRemoveDisplay(wxCommandEvent& event)
   if (wxNOT_FOUND != index) {
     profile.displays.erase(profile.displays.begin() + index);
     UpdateProfilePanelFromSettings();
-    p_display_graphic_->PaintNow();
+    p_display_graphic_->Refresh();
+    p_display_graphic_->Update();
   } else {
     spdlog::warn("row not selected");
   }
@@ -747,7 +747,8 @@ MainWindow::OnMoveUp(wxCommandEvent& event)
     wxDataViewItemArray items(size_t(1)); // no braced init constructor :(
     items[0] = item;                      // assumed single selection mode
     p_view_mapping_data_->SetSelections(items);
-    p_display_graphic_->PaintNow();
+    p_display_graphic_->Refresh();
+    p_display_graphic_->Update();
   }
 }
 
@@ -772,14 +773,14 @@ MainWindow::OnMoveDown(wxCommandEvent& event)
     wxDataViewItemArray items(size_t(1)); // no braced init constructor :(
     items[0] = item;                      // assumed single selection mode
     p_view_mapping_data_->SetSelections(items);
-    p_display_graphic_->PaintNow();
+    p_display_graphic_->Refresh();
+    p_display_graphic_->Update();
   }
 }
 
 void
 MainWindow::OnDisplayEdit(wxCommandEvent& event)
 {
-  // Get the index of the selected row.
   const auto index = p_view_mapping_data_->GetSelectedRow();
   if (wxNOT_FOUND == index) {
     spdlog::warn("row not selected");
@@ -787,17 +788,16 @@ MainWindow::OnDisplayEdit(wxCommandEvent& event)
   }
 
   auto& display = settings_.GetActiveProfileRef().displays[index];
-  // Show the edit pop up while disabling input on main window
-  DialogDisplayEdit dlg(this, display);
-  int results = dlg.ShowModal();
 
-  if (wxID_OK == results) {
-    spdlog::debug("changes accepted");
+  DialogDisplayEdit dlg(this, display);
+
+  if (dlg.ShowModal() == wxID_OK) {
     dlg.ApplyChanges(display);
 
     // Update the GUI.
     UpdateProfilePanelFromSettings();
-    p_display_graphic_->PaintNow();
+    p_display_graphic_->Refresh();
+    p_display_graphic_->Update();
   } else {
     spdlog::debug("settings rejected");
   }

@@ -96,3 +96,18 @@ WinDisplayInfo::WinDisplayInfo()
   spdlog::debug("Width of Virtual Desktop:  {:>5}", desktop_width);
   spdlog::debug("Height of Virtual Desktop: {:>5}", desktop_height);
 }
+
+std::vector<RectPixels>
+WinDisplayInfo::Normalize() const
+{
+  std::vector<RectPixels> rect(rectangles);
+
+  for (auto& r : rect) {
+    r.left -= top_left_point.x;
+    r.right -= top_left_point.x;
+    r.top -= top_left_point.y;
+    r.bottom -= top_left_point.y;
+  }
+
+  return rect;
+}

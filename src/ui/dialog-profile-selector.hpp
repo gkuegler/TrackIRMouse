@@ -12,14 +12,14 @@
 class DialogProfileIdSelector : public wxDialog
 {
 private:
-  wxListView* p_list_view_;
-  int id_ = 0;
-  GameTitleList titles_;
+  wxListView* p_list_view;
+  NpTitleList titles;
+  int id = 0;
 
 public:
-  DialogProfileIdSelector(wxWindow* parent, int id, const GameTitleList& titles)
-    : id_(id)
-    , titles_(titles)
+  DialogProfileIdSelector(wxWindow* parent, int current_id, const NpTitleList& titles)
+    : id(current_id)
+    , titles(titles)
     , wxDialog(parent,
                wxID_ANY,
                "Pick an associated game tile.",
@@ -31,38 +31,38 @@ public:
     buttons->AddButton("Okay", wxID_OK);
     buttons->AddButton("Cancel", wxID_CANCEL);
 
-    p_list_view_ = new wxListView(this,
-                                  wxID_ANY,
-                                  wxDefaultPosition,
-                                  wxSize(325, 600),
-                                  wxLC_REPORT | wxLC_SINGLE_SEL,
-                                  wxDefaultValidator,
-                                  "");
+    p_list_view = new wxListView(this,
+                                 wxID_ANY,
+                                 wxDefaultPosition,
+                                 wxSize(325, 600),
+                                 wxLC_REPORT | wxLC_SINGLE_SEL,
+                                 wxDefaultValidator,
+                                 "");
 
     // Create list control columns.
-    p_list_view_->InsertColumn(0, "Tile", wxLIST_FORMAT_LEFT, 200);
-    p_list_view_->InsertColumn(1, "ID", wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
+    p_list_view->InsertColumn(0, "Tile", wxLIST_FORMAT_LEFT, 200);
+    p_list_view->InsertColumn(1, "ID", wxLIST_FORMAT_LEFT, wxLIST_AUTOSIZE);
 
     // Populate list.
-    for (int i = 0; i < titles_.size(); i++) {
-      const auto& title = titles_[i];
-      p_list_view_->InsertItem(i, title.name); // don't check for success?
-      p_list_view_->SetItem(i, 1, title.id);
+    for (int i = 0; i < titles.size(); i++) {
+      const auto& title = titles[i];
+      auto idx = p_list_view->InsertItem(i, title.name);
+      p_list_view->SetItem(idx, 1, title.id);
     }
 
     // Need to select item before selection event is bound, because this method generates a
     // selection event.
-    auto ids = std::to_string(id_);
+    const auto id_str = std::to_string(id);
     for (size_t i = 0; i < titles.size(); i++) {
-      if (titles[i].id == ids) {
-        p_list_view_->Select(i);
+      if (titles[i].id == id_str) {
+        p_list_view->Select(i);
       }
     }
 
-    p_list_view_->Bind(wxEVT_LIST_ITEM_SELECTED, &DialogProfileIdSelector::OnSelection, this);
+    p_list_view->Bind(wxEVT_LIST_ITEM_SELECTED, &DialogProfileIdSelector::OnSelection, this);
 
     wxBoxSizer* top = new wxBoxSizer(wxVERTICAL);
-    top->Add(p_list_view_, 1, wxEXPAND | wxALL, BORDER_SPACING);
+    top->Add(p_list_view, 1, wxEXPAND | wxALL, BORDER_SPACING);
     top->Add(buttons, 0, wxEXPAND | wxBOTTOM | wxLEFT | wxRIGHT, BORDER_SPACING);
     SetSizer(top);
 
@@ -74,8 +74,8 @@ public:
 
   void OnSelection(wxListEvent& event)
   {
-    auto idx = p_list_view_->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-    id_ = std::stoi(titles_[idx].id);
+    auto idx = p_list_view->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    id = std::stoi(titles[idx].id);
   }
-  int GetSelectedProfileId() { return id_; }
+  int GetSelectedProfileId() { return id; }
 };
