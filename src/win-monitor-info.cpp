@@ -1,4 +1,4 @@
-#include "environment.hpp"
+#include "win-monitor-info.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -48,7 +48,7 @@ MonitorProc(HMONITOR hMonitor,  // handle to the display monitor.
  * https://en.cppreference.com/w/cpp/algorithm/sort.html
  */
 bool
-WinDisplayInfo::compare(const RectPixels& a, const RectPixels& b)
+WinMonitorInfo::compare(const RectPixels& a, const RectPixels& b)
 {
   if (a.left < b.left) {
     return true;
@@ -57,7 +57,7 @@ WinDisplayInfo::compare(const RectPixels& a, const RectPixels& b)
   }
 }
 
-WinDisplayInfo::WinDisplayInfo()
+WinMonitorInfo::WinMonitorInfo()
 {
   // Use a callback to go through each monitor.
   if (0 == EnumDisplayMonitors(NULL, NULL, MonitorProc, (LPARAM)&rectangles)) {
@@ -98,7 +98,7 @@ WinDisplayInfo::WinDisplayInfo()
 }
 
 std::vector<RectPixels>
-WinDisplayInfo::Normalize() const
+WinMonitorInfo::Normalize() const
 {
   std::vector<RectPixels> rect(rectangles);
 

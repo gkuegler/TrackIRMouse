@@ -5,11 +5,11 @@
 #include <memory>
 
 #include "display.hpp"
-#include "environment.hpp"
 #include "log.hpp"
 #include "mouse-modes.hpp"
 #include "settings.hpp"
 #include "types.hpp"
+#include "win-monitor-info.hpp"
 
 namespace handlers {
 
@@ -25,7 +25,7 @@ CalculateEuclideanDistance2D(double x1, double y1, double x2, double y2)
 
 MouseHandler::MouseHandler(Profile profile)
 {
-  const auto info = WinDisplayInfo();
+  const auto info = WinMonitorInfo();
 
   auto hardware_display_count = info.rectangles.size();
   auto user_display_count = profile.displays.size();

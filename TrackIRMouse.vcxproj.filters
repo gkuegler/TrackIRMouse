@@ -63,6 +63,9 @@
     <ClCompile Include="src\utility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\win-monitor-info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\settings.hpp">
@@ -183,6 +186,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\dialog-okay-cancel.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\win-monitor-info.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

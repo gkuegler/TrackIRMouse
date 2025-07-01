@@ -6,9 +6,9 @@
 #include <algorithm>
 #include <vector>
 
-#include "environment.hpp"
 #include "settings.hpp"
 #include "types.hpp"
+#include "win-monitor-info.hpp"
 
 PanelDisplayGraphic::PanelDisplayGraphic(wxWindow* parent, Settings& s)
   : p_parent(parent)
@@ -71,7 +71,7 @@ PanelDisplayGraphic::Render(wxDC& dc)
   spdlog::debug("graphic: client height, client width -> {}x{}", client_height, client_width);
 
   // get array of monitor bounds
-  const auto hdi = WinDisplayInfo();
+  const auto hdi = WinMonitorInfo();
   const auto usrDisplays = settings.GetActiveProfileRef().displays;
 
   /* Note: I opt to use std::transform instead of modifying my container in place simply for the

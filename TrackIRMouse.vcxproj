@@ -325,8 +325,8 @@
     <ClCompile Include="src\pipeserver.cpp" />
     <ClCompile Include="src\threads.cpp" />
     <ClCompile Include="src\trackers.cpp" />
-    <ClCompile Include="src\environment.cpp" />
     <ClCompile Include="src\utility.cpp" />
+    <ClCompile Include="src\win-monitor-info.cpp" />
     <ClInclude Include="src\constants.hpp" />
     <ClInclude Include="src\environment.hpp" />
     <ClInclude Include="src\ui\app.hpp" />
@@ -368,6 +368,7 @@
     <ClInclude Include="src\ui\ui-frame.hpp" />
     <ClInclude Include="src\ui\ui-dialog-settings.hpp" />
     <ClInclude Include="src\utility.hpp" />
+    <ClInclude Include="src\win-monitor-info.hpp" />
     <ClInclude Include="src\windows-wrapper.hpp" />
   </ItemGroup>
   <ItemGroup>

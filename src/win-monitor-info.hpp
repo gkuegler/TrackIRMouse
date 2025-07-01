@@ -5,7 +5,7 @@
 // TODO: Should this class be more self contained for the mouse control? Like
 // should the send input function be a apart of this. Maybe this should be a
 // class called 'Desktop'?
-class WinDisplayInfo
+class WinMonitorInfo
 {
 public:
   int count = 0;
@@ -22,7 +22,7 @@ public:
   int desktop_width;
   int desktop_height;
 
-  WinDisplayInfo();
+  WinMonitorInfo();
   std::vector<RectPixels> Normalize() const;
 
 private:
