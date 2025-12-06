@@ -19,3 +19,6 @@ SendThreadMessage(msgcode code, std::string msg = "");
 
 void
 SendThreadMessage(msgcode code, std::string msg, long);
+
+void
+SendThreadMessage(msgcode code, long);

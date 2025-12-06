@@ -15,15 +15,17 @@ namespace handlers {
 
 #include <cmath> // Required for sqrt() and pow()
 
-double
-CalculateEuclideanDistance2D(double x1, double y1, double x2, double y2)
+template<typename T>
+static double
+CalculateEuclideanDistance2D(T x1, T y1, T x2, T y2)
 {
-  double dx = x2 - x1;
-  double dy = y2 - y1;
+  T dx = x2 - x1;
+  T dy = y2 - y1;
   return std::sqrt(std::pow(dx, 2) + std::pow(dy, 2));
 }
 
-MouseHandler::MouseHandler(Profile profile)
+MouseHandler::MouseHandler(Profile p)
+  : profile(p)
 {
   const auto info = WinMonitorInfo();
 
@@ -31,7 +33,6 @@ MouseHandler::MouseHandler(Profile profile)
   auto user_display_count = profile.displays.size();
 
   if (hardware_display_count > user_display_count) {
-    // TODO: do wx log error here and pres okay to continue
     spdlog::error("Warning: More displays found that were specified by the user. This "
                   "should still work but will limit the mouse to only those displays "
                   "specified.\n{} monitors specified but {} monitors found",
@@ -44,7 +45,7 @@ MouseHandler::MouseHandler(Profile profile)
                                          hardware_display_count));
   }
 
-  std::vector<Display> displays;
+  std::vector<Display> displays_temp;
 
   // Build display objects
   for (size_t i = 0; i < profile.displays.size(); i++) {
@@ -56,14 +57,14 @@ MouseHandler::MouseHandler(Profile profile)
                          info.top_left_point.y,
                          info.short_to_pixels_ratio_x,
                          info.short_to_pixels_ratio_y);
-    displays.push_back(display);
+    displays_temp.push_back(display);
   }
 
-  displays_ = std::make_shared<std::vector<Display>>(displays);
+  displays = std::make_shared<std::vector<Display>>(displays_temp);
 }
 
-inline void
-MouseHandler::set_cursor_pos(double x, double y)
+void
+MouseHandler::SetCursorPosition(double x, double y)
 {
   static MOUSEINPUT mi = { 0, 0,
                            0, MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK,
@@ -71,8 +72,28 @@ MouseHandler::set_cursor_pos(double x, double y)
 
   static INPUT ip = { INPUT_MOUSE, mi };
 
-  ip.mi.dx = static_cast<LONG>(x);
-  ip.mi.dy = static_cast<LONG>(y);
+  // Windows structure takes a LONG, but I don't want to export the entire windows header into my
+  // handler's header.
+  assert(sizeof(LONG) == sizeof(long));
+
+  const Point<long> pos{ static_cast<long>(x), static_cast<long>(y) };
+
+  // Don't send mouse input if position didn't change.
+  if (pos == last_pos_px) {
+    return;
+  }
+  // TODO: undo pixels to short calc till this func
+  //  that way I can apply a deadzone on a pixel basis.
+  // Call it a 'MonitorMapping' class.
+  // else if (CalculateEuclideanDistance2D<long>(last_pos_px.x, last_pos_px.y, pos.x, pos.y) <
+  // profile.deadzone_threshold_px) {
+  // return;
+  //}
+
+  last_pos_px = pos;
+
+  ip.mi.dx = pos.x;
+  ip.mi.dy = pos.y;
 
   if (0 == SendInput(1, &ip, sizeof(INPUT))) {
     spdlog::debug("SendInput was already blocked by another thread.");
@@ -82,7 +103,7 @@ MouseHandler::set_cursor_pos(double x, double y)
 }
 
 void
-MouseHandler::handle_input(const Degrees yaw, const Degrees pitch)
+MouseHandler::HandleInput(const Degrees yaw, const Degrees pitch)
 {
   static int last_screen = 0;
   static double last_x = 0;
@@ -90,23 +111,22 @@ MouseHandler::handle_input(const Degrees yaw, const Degrees pitch)
   constexpr static const double minimap_pix_offset = 60; // pixels
 
   // Dead Zone Calculation
-  // TODO: change to pitch and yaw
-  auto d = CalculateEuclideanDistance2D(yaw, pitch, last_pos_.yaw, last_pos_.pitch);
-
-  if (d < dead_zone_threshold_) {
+  if (profile.enable_deadzone &&
+      CalculateEuclideanDistance2D<Degrees>(yaw, pitch, last_pos.yaw, last_pos.pitch) <
+        profile.deadzone_threshold) {
     return;
   }
 
-  last_pos_ = { yaw, pitch };
+  last_pos = { yaw, pitch };
 
-  if (normal_mode_) {
+  if (is_normal_mode) {
     // Check if the head is pointing to a screen
     // The return statement is never reached if the head is pointing outside
     // the bounds of any of the screense
-    for (int i = 0; i < displays_->size(); i++) {
-      auto pos = (*displays_)[i].get_cursor_coordinates(yaw, pitch);
+    for (int i = 0; i < displays->size(); i++) {
+      auto pos = (*displays)[i].get_cursor_coordinates(yaw, pitch);
       if (pos.contains) {
-        set_cursor_pos(pos.x, pos.y);
+        SetCursorPosition(pos.x, pos.y);
         last_screen = i;
         last_x = pos.x;
         return; // head is pointing within display, move mouse and return
@@ -123,7 +143,7 @@ MouseHandler::handle_input(const Degrees yaw, const Degrees pitch)
   double x;
   double y;
 
-  Display& dlast = (*displays_)[last_screen];
+  Display& dlast = (*displays)[last_screen];
   const double left = dlast.rotation_boundaries.left;
   const double right = dlast.rotation_boundaries.right;
   const double top = dlast.rotation_boundaries.top;
@@ -145,8 +165,8 @@ MouseHandler::handle_input(const Degrees yaw, const Degrees pitch)
     y = dlast.get_vertical_value(pitch);
   }
 
-  if (false == normal_mode_) {
-    switch (mode_) {
+  if (false == is_normal_mode) {
+    switch (alt_mode) {
       case mouse_mode::scrollbar_left_small:
         x = dlast.get_inside_offset_from_edge(LEFT_EDGE, small_pix_offset);
         break;
@@ -169,14 +189,14 @@ MouseHandler::handle_input(const Degrees yaw, const Degrees pitch)
     }
   }
 
-  set_cursor_pos(x, y);
+  SetCursorPosition(x, y);
   return;
 }
 
 void
-MouseHandler::set_alternate_mode(mouse_mode mode)
+MouseHandler::SetAlternateMode(mouse_mode mode)
 {
-  mode_ = mode;
+  alt_mode = mode;
 };
 
 } // namespace handlers

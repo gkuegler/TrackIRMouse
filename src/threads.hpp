@@ -3,6 +3,7 @@
 #include <wx/thread.h>
 
 #include <memory>
+#include <thread>
 
 #include "handlers.hpp"
 #include "settings.hpp"
@@ -11,19 +12,27 @@
 
 class MainWindow;
 
+// class Thread : std::thread
+//{
+// public:
+//   wxCriticalSection lock;
+//   Thread() {};
+// };
+
 class ThreadHeadTracking : public wxThread
 {
 public:
-  MainWindow* p_window_handler_ = nullptr;
-  std::shared_ptr<trackers::TrackIR> tracker_;
+  std::shared_ptr<trackers::TrackIR> tracker;
   std::shared_ptr<handlers::MouseHandler> handler_;
 
 private:
-  HWND hWnd_;
-  Settings settings_;
+  ThreadHeadTracking** self;
+  wxCriticalSection* lock;
+  HWND hWnd;
+  Settings settings;
 
 public:
-  ThreadHeadTracking(MainWindow* window_handler, HWND hWnd, Settings settings);
+  ThreadHeadTracking(ThreadHeadTracking** self, wxCriticalSection* lock, HWND hWnd, Settings s);
   ~ThreadHeadTracking();
   ExitCode Entry();
   wxThreadError Delete(ExitCode* rc = NULL, wxThreadWait waitMode = wxTHREAD_WAIT_DEFAULT);

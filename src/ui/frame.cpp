@@ -9,6 +9,7 @@
 
 #include <wx/colour.h>
 #include <wx/dataview.h>
+#include <wx/valnum.h>
 
 #include <algorithm>
 #include <filesystem>
@@ -96,14 +97,29 @@ MainWindow::MainWindow(wxPoint origin, wxSize dimensions, Settings& s)
   auto btn_duplicate_profile = new wxButton(p_pnl_profile, wxID_ANY, "Duplicate this Profile", wxDefaultPosition, k_default_button_size_2);
 
   // Profiles Box
-  p_titles_map_ = std::make_unique<NpTitlesMap>(GetTitleIdsFromFile());
+
+  // Allow floating point numbers from 0 to 100 with 2 decimal
+  // digits only and handle empty string as 0 by default.
+  wxFloatingPointValidator<double> val_deadzone_thresh(4, &m_validator_deadzone_thresh, wxNUM_VAL_ZERO_AS_BLANK);
+  val_deadzone_thresh.SetRange(0, 100);
+
+  wxIntegerValidator<int> val_deadzone_thresh_px(&m_validator_deadzone_thresh_px);
+  val_deadzone_thresh.SetRange(0, 9999);
+
+  p_titles_map = std::make_unique<NpTitlesMap>(GetTitleIdsFromFile());
 	
   p_text_name_ = new wxTextCtrl(p_pnl_profile, wxID_ANY, "Lorem Ipsum", wxDefaultPosition, wxSize(250, 20), wxTE_LEFT);
   p_text_name_->SetMaxLength(k_max_profile_length);
   p_text_profile_game_title_ = new wxTextCtrl(p_pnl_profile, wxID_ANY, "lorem", wxDefaultPosition, wxSize(200, 20), wxTE_READONLY | wxTE_LEFT);
   p_text_profile_id_ = new wxTextCtrl(p_pnl_profile, wxID_ANY, "2201576", wxDefaultPosition, wxSize(60, 20), wxTE_LEFT, alphanumeric_validator, "");
   auto btn_pick_title = new wxButton(p_pnl_profile, wxID_ANY, "Pick Title", wxDefaultPosition, k_default_button_size, 0, wxDefaultValidator, "");
+  
+  p_enable_deadzone = new wxCheckBox(p_pnl_profile, wxID_ANY, "Enable Deadzone", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  p_deadzone_thresh = new wxTextCtrl(p_pnl_profile, wxID_ANY, "x.xxx", wxDefaultPosition, wxSize(48, 20), wxTE_LEFT, val_deadzone_thresh);
+  p_enable_deadzone_px = new wxCheckBox(p_pnl_profile, wxID_ANY, "Enable Deadzone (px)", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+  p_deadzone_thresh_px = new wxTextCtrl(p_pnl_profile, wxID_ANY, "xx", wxDefaultPosition, wxSize(48, 20), wxTE_LEFT, val_deadzone_thresh_px);
   p_check_use_default_padding_ = new wxCheckBox(p_pnl_profile, wxID_ANY, "Use Default Padding", wxDefaultPosition, wxDefaultSize, wxCHK_2STATE, wxDefaultValidator, "");
+
   auto btn_move_edit = new wxButton(p_pnl_profile, wxID_ANY, "Edit", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
   auto btn_move_up = new wxButton(p_pnl_profile, wxID_ANY, "Up", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
   auto btn_move_down = new wxButton(p_pnl_profile, wxID_ANY, "Down", wxDefaultPosition, wxSize(50, 30), 0, wxDefaultValidator, "");
@@ -171,11 +187,20 @@ MainWindow::MainWindow(wxPoint origin, wxSize dimensions, Settings& s)
   zrProfileCmds->Add(btn_remove_profile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
   zrProfileCmds->Add(btn_duplicate_profile, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
+  auto *zrProfileOptions = new wxBoxSizer(wxHORIZONTAL);
+  zrProfileOptions->Add(p_enable_deadzone, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+  zrProfileOptions->Add(new wxStaticText(p_pnl_profile, wxID_ANY, "Deadzone Threshold:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+  zrProfileOptions->Add(p_deadzone_thresh, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+  zrProfileOptions->Add(p_enable_deadzone_px, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+  zrProfileOptions->Add(new wxStaticText(p_pnl_profile, wxID_ANY, "Deadzone Thresh (px):"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+  zrProfileOptions->Add(p_deadzone_thresh_px, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+  zrProfileOptions->Add(p_check_use_default_padding_, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+
   auto zrProfilePnl = new wxBoxSizer(wxVERTICAL);
   zrProfilePnl->Add(zrProfileCmds, 0, wxBOTTOM | wxEXPAND, 10);
   zrProfilePnl->Add(txtPanelTitle, 0, wxALL, 5);
   zrProfilePnl->Add(zrInfo, 0, wxALL | wxEXPAND, 5);
-  zrProfilePnl->Add(p_check_use_default_padding_, 0, wxALL, 5);
+  zrProfilePnl->Add(zrProfileOptions, 0, wxALL, 5);
   zrProfilePnl->Add(txtHeaders, 0, wxLEFT | wxTOP, 5);
   zrProfilePnl->Add(zrMapping, 0, wxLEFT | wxTOP, 5);
 
@@ -223,6 +248,10 @@ MainWindow::MainWindow(wxPoint origin, wxSize dimensions, Settings& s)
   p_text_name_->Bind(wxEVT_TEXT, &MainWindow::OnName, this);
   p_text_profile_id_->Bind(wxEVT_TEXT, &MainWindow::OnProfileID, this);
   btn_pick_title->Bind(wxEVT_BUTTON, &MainWindow::OnPickTitle, this);
+  p_enable_deadzone->Bind(wxEVT_CHECKBOX, &MainWindow::OnEnableDeadzone, this);
+  p_deadzone_thresh->Bind(wxEVT_TEXT, &MainWindow::OnDeadzoneThreshold, this);
+  p_enable_deadzone_px->Bind(wxEVT_CHECKBOX, &MainWindow::OnEnableDeadzonePx, this);
+  p_deadzone_thresh_px->Bind(wxEVT_TEXT, &MainWindow::OnDeadzoneThresholdPx, this);
   p_check_use_default_padding_->Bind(wxEVT_CHECKBOX, &MainWindow::OnUseDefaultPadding, this);
   p_view_mapping_data_->Bind(wxEVT_DATAVIEW_ITEM_EDITING_DONE, &MainWindow::OnMappingData, this);
   btn_move_edit->Bind(wxEVT_BUTTON, &MainWindow::OnDisplayEdit, this);
@@ -371,9 +400,9 @@ void
 MainWindow::OnScrollAlternateHotkey(wxKeyEvent& event)
 {
   SPDLOG_TRACE("hot key event");
-  wxCriticalSectionLocker enter(cs_track_thread_);
-  if (track_thread_) {
-    track_thread_->handler_->toggle_alternate_mode();
+  wxCriticalSectionLocker enter(cs_track_thread);
+  if (track_thread) {
+    track_thread->handler_->toggle_alternate_mode();
   }
 }
 
@@ -406,26 +435,26 @@ MainWindow::RemoveHooks()
 void
 MainWindow::StartPipeServer()
 {
-  wxCriticalSectionLocker enter(cs_pipe_thread_);
+  wxCriticalSectionLocker enter(cs_pipe_thread);
 
   // Check to see if the pipe server is currently running.
-  if (pipe_server_thread_) {
+  if (pipe_server_thread) {
     return;
   }
 
   auto name = settings_.pipe_server_name;
-  pipe_server_thread_ = new ThreadPipeServer(this, name);
-  if (pipe_server_thread_->Run() != wxTHREAD_NO_ERROR) {
+  pipe_server_thread = new ThreadPipeServer(this, name);
+  if (pipe_server_thread->Run() != wxTHREAD_NO_ERROR) {
     spdlog::error("Can't run pipe server thread.");
-    delete pipe_server_thread_;
-    pipe_server_thread_ = NULL;
+    delete pipe_server_thread;
+    pipe_server_thread = NULL;
   }
 }
 
 void
 MainWindow::StopPipeServer()
 {
-  GracefullyDeleteThreadAndWait<ThreadPipeServer>(pipe_server_thread_, cs_pipe_thread_);
+  GracefullyDeleteThreadAndWait<ThreadPipeServer>(pipe_server_thread, cs_pipe_thread);
 }
 
 void
@@ -442,7 +471,7 @@ MainWindow::PopulateComboBoxWithProfiles()
     p_combo_profiles_->SetSelection(index);
     UpdateProfilePanelFromSettings();
   } else {
-    wxFAIL_MSG("unable to find new profile in drop-down");
+    wxFAIL_MSG("Unable to find profile in drop-down.");
   }
 }
 
@@ -455,9 +484,9 @@ MainWindow::OnStart(wxCommandEvent& event)
   // At any moment the thread may cease to exist (because it completes its work)
   // and cause NULL exceptions upon access.
   // To avoid dangling pointers, ~MyThread() will enter the critical section and
-  // set track_thread_ to nullptr.
+  // set track_thread to nullptr.
 
-  GracefullyDeleteThreadAndWait<ThreadHeadTracking>(track_thread_, cs_track_thread_);
+  GracefullyDeleteThreadAndWait<ThreadHeadTracking>(track_thread, cs_track_thread);
 
   try {
     // Make a copy of settings and state.
@@ -466,23 +495,23 @@ MainWindow::OnStart(wxCommandEvent& event)
     // Apply default padding values if necessary.
     s.ApplyDefaultPaddingToAllDisplays();
 
-    if (track_thread_) {
+    if (track_thread) {
       throw std::logic_error("track thread should not exist");
     }
 
-    track_thread_ = new ThreadHeadTracking(this, this->GetHandle(), s);
+    track_thread = new ThreadHeadTracking(&track_thread, &cs_track_thread, this->GetHandle(), s);
   } catch (const std::runtime_error& e) {
     spdlog::error(e.what());
     return;
   }
 
-  if (track_thread_->Run() == wxTHREAD_NO_ERROR) { // returns immediately
+  if (track_thread->Run() == wxTHREAD_NO_ERROR) { // returns immediately
     spdlog::info("Started Mouse.");
     // this->SetStatusText("Running");
   } else {
     spdlog::error("Can't run the tracking thread!");
-    delete track_thread_;
-    // Don't set 'track_thread_ = nullptr'.
+    delete track_thread;
+    // Don't set 'track_thread = nullptr'.
     // The thread's destructor is responsible for setting
     // it's pointer do 'nullptr'.
     return;
@@ -493,7 +522,7 @@ void
 MainWindow::OnStop(wxCommandEvent& event)
 {
 
-  GracefullyDeleteThreadAndWait<ThreadHeadTracking>(track_thread_, cs_track_thread_);
+  GracefullyDeleteThreadAndWait<ThreadHeadTracking>(track_thread, cs_track_thread);
   return;
 }
 
@@ -562,11 +591,15 @@ MainWindow::UpdateProfilePanelFromSettings()
   // Use ChangeEvent instead.
   // We don't want to register event when we're just loading values.
   p_text_name_->ChangeValue(profile.name);
+  p_enable_deadzone->SetValue(profile.enable_deadzone);
+  p_deadzone_thresh->ChangeValue(wxString::Format("%f", profile.deadzone_threshold));
+  p_enable_deadzone_px->SetValue(profile.enable_deadzone_px);
+  p_deadzone_thresh_px->ChangeValue(wxString::Format("%d", profile.deadzone_threshold_px));
   p_check_use_default_padding_->SetValue(profile.use_default_padding);
   p_text_profile_id_->ChangeValue(wxString::Format("%d", profile.title_id));
 
   // get the game title from profile id
-  auto* titles = p_titles_map_.get();
+  auto* titles = p_titles_map.get();
   p_text_profile_game_title_->ChangeValue((*titles)[std::to_string(profile.title_id)]);
 
   p_view_mapping_data_->DeleteAllItems();
@@ -622,9 +655,9 @@ MainWindow::OnPickTitle(wxCommandEvent& event)
 {
   // A defaut map should have been provided at load time
   // if the map failed to load from file.
-  wxASSERT((*p_titles_map_).empty() == false);
+  wxASSERT((*p_titles_map).empty() == false);
 
-  auto titles = SortGameTitles(p_titles_map_);
+  auto titles = SortGameTitles(p_titles_map);
 
   auto& profile = settings_.GetActiveProfileRef();
   int current_profile_id = 1;
@@ -636,6 +669,47 @@ MainWindow::OnPickTitle(wxCommandEvent& event)
     UpdateProfilePanelFromSettings();
   }
   return;
+}
+
+void
+MainWindow::OnEnableDeadzone(wxCommandEvent& event)
+{
+  auto& profile = settings_.GetActiveProfileRef();
+  profile.enable_deadzone = p_enable_deadzone->IsChecked();
+}
+void
+MainWindow::OnDeadzoneThreshold(wxCommandEvent& event)
+{
+  const wxString text = p_deadzone_thresh->GetLineText(0);
+  double converted;
+  if (text.IsEmpty()) {
+    converted = 0;
+  } else if (!text.ToDouble(&converted)) {
+    spdlog::error("Value could not be converted to a number.");
+    return;
+  }
+  auto& profile = settings_.GetActiveProfileRef();
+  profile.deadzone_threshold = converted;
+}
+void
+MainWindow::OnEnableDeadzonePx(wxCommandEvent& event)
+{
+  auto& profile = settings_.GetActiveProfileRef();
+  profile.enable_deadzone_px = p_enable_deadzone_px->IsChecked();
+}
+void
+MainWindow::OnDeadzoneThresholdPx(wxCommandEvent& event)
+{
+  const wxString text = p_deadzone_thresh_px->GetLineText(0);
+  int converted;
+  if (text.IsEmpty()) {
+    converted = 0;
+  } else if (!text.ToInt(&converted)) {
+    spdlog::error("Value could not be converted to a number.");
+    return;
+  }
+  auto& profile = settings_.GetActiveProfileRef();
+  profile.deadzone_threshold_px = converted;
 }
 
 void

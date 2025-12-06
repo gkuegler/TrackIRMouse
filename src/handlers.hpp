@@ -16,30 +16,29 @@ public:
   T pitch{ 0 };
 };
 
-// takes yaw and pitch information then converts it to mouse coordinates.
-// will also move mouse
-// TODO: change mouse handler to some sort of 'MouseStrategy' or
-// 'CursorProtocol'?
+/*
+ * Handles head tracking data into mouse position.
+ */
 class MouseHandler
 {
 private:
-  std::shared_ptr<std::vector<Display>> displays_;
-  std::atomic<bool> normal_mode_ = true;
-  std::atomic<mouse_mode> mode_ = mouse_mode::scrollbar_right_small;
-  Coord<Degrees> last_pos_{ 0.0, 0.0 };
-  Degrees dead_zone_threshold_ = 0.05; // set to zero to disable dead zone
+  Profile profile;
+  std::shared_ptr<std::vector<Display>> displays;
+  std::atomic<bool> is_normal_mode = true;
+  std::atomic<mouse_mode> alt_mode = mouse_mode::scrollbar_right_small;
+  Coord<Degrees> last_pos{ 0.0, 0.0 };
+  Point<long> last_pos_px{ 0, 0 };
 
 public:
-  // TODO: Be more explicit in my data structure than the profile?
-  MouseHandler(Profile profile);
+  MouseHandler(Profile);
   ~MouseHandler() {};
 
-  void handle_input(const Degrees yaw, const Degrees pitch);
-  void set_alternate_mode(mouse_mode mode);
-  void toggle_alternate_mode() { normal_mode_ = !normal_mode_; };
+  void HandleInput(const Degrees yaw, const Degrees pitch);
+  void SetAlternateMode(mouse_mode mode);
+  void toggle_alternate_mode() { is_normal_mode = !is_normal_mode; };
 
 private:
   // Move out of class definition into its own header file?
-  void set_cursor_pos(double x, double y);
+  void SetCursorPosition(double x, double y);
 };
 } // namespace handlers

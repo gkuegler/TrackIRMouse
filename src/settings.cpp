@@ -22,24 +22,32 @@
 
 // Declare json serializers.
 // using RectDegreesNew = Rect<Degrees>;
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RectDegrees, left, right, top, bottom)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RectPixels, left, right, top, bottom)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DisplayParameters, rotation, padding)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Profile, name, title_id, use_default_padding, displays)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings,
-                                   active_profile_name,
-                                   track_on_start,
-                                   quit_on_loss_of_trackir,
-                                   auto_retry,
-                                   auto_find_track_ir_dll,
-                                   track_ir_dll_folder,
-                                   pipe_server_enabled,
-                                   pipe_server_name,
-                                   hotkey_enabled,
-                                   hotkey_name,
-                                   log_level,
-                                   default_padding,
-                                   profiles)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(RectDegrees, left, right, top, bottom)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(RectPixels, left, right, top, bottom)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(DisplayParameters, rotation, padding)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Profile,
+                                                name,
+                                                title_id,
+                                                enable_deadzone,
+                                                deadzone_threshold,
+                                                enable_deadzone_px,
+                                                deadzone_threshold_px,
+                                                use_default_padding,
+                                                displays)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Settings,
+                                                active_profile_name,
+                                                track_on_start,
+                                                quit_on_loss_of_trackir,
+                                                auto_retry,
+                                                auto_find_track_ir_dll,
+                                                track_ir_dll_folder,
+                                                pipe_server_enabled,
+                                                pipe_server_name,
+                                                hotkey_enabled,
+                                                hotkey_name,
+                                                log_level,
+                                                default_padding,
+                                                profiles)
 
 Settings
 Settings::LoadFromFile()

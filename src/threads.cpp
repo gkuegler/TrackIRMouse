@@ -13,18 +13,19 @@
 //                           TrackThread                            //
 //////////////////////////////////////////////////////////////////////
 
-ThreadHeadTracking::ThreadHeadTracking(MainWindow* p_window_handler, HWND hWnd, Settings settings)
-  : wxThread()
+ThreadHeadTracking::ThreadHeadTracking(ThreadHeadTracking** self,
+                                       wxCriticalSection* lock,
+                                       HWND hWnd,
+                                       Settings s)
+  : self(self)
+  , lock(lock)
+  , hWnd(hWnd)
+  , settings(s)
+  , wxThread()
 {
-  p_window_handler_ = p_window_handler;
-  hWnd_ = hWnd;
-  // TODO: only copy the settings and active
-  // profile for speed and memory optimization.
-  settings_ = settings; // create copy of user data for tracking thread
-
-  // TODO: use a unique pointer instead
+  // TODO: use a unique pointer instead?
   handler_ = std::make_shared<handlers::MouseHandler>(settings.GetActiveProfileRef());
-  tracker_ = std::make_shared<trackers::TrackIR>(handler_.get());
+  tracker = std::make_shared<trackers::TrackIR>(handler_.get());
 }
 
 ThreadHeadTracking::~ThreadHeadTracking()
@@ -32,14 +33,14 @@ ThreadHeadTracking::~ThreadHeadTracking()
   // Threads run detached and delete themselves when they complete their entry
   // method. Make sure thread object does not
   // https://docs.wxwidgets.org/3.0/classwx_thread.html
-  wxCriticalSectionLocker enter(p_window_handler_->cs_track_thread_);
-  p_window_handler_->track_thread_ = NULL;
+  wxCriticalSectionLocker enter(*lock);
+  *self = NULL;
 }
 
 wxThread::ExitCode
 ThreadHeadTracking::Entry()
 {
-  auto profile = settings_.GetActiveProfileRef();
+  auto profile = settings.GetActiveProfileRef();
   const unsigned long retry_time = 1500; // ms
 
   // TODO: check validation is correct
@@ -51,11 +52,11 @@ ThreadHeadTracking::Entry()
   while (false == wxThread::TestDestroy()) {
     try {
       // handler_ = std::make_shared<handlers::MouseHandler>();return
-      tracker_->initialize(
-        hWnd_, settings_.auto_find_track_ir_dll, settings_.track_ir_dll_folder, profile.title_id);
+      tracker->initialize(
+        hWnd, settings.auto_find_track_ir_dll, settings.track_ir_dll_folder, profile.title_id);
 
       // run the main tracking loop
-      tracker_->start();
+      tracker->start();
 
       // I don't think I need to quit on the loss track IR now that I've
       // implemented a retry strategy.
@@ -65,7 +66,7 @@ ThreadHeadTracking::Entry()
       //   SendThreadMessage(msgcode::close_app, "");
       // }
     } catch (const trackers::error_device_not_present& ex) {
-      if (settings_.auto_retry) {
+      if (settings.auto_retry) {
         spdlog::warn("Device not present. Retrying...");
         Sleep(retry_time);
         continue;
@@ -88,7 +89,7 @@ ThreadHeadTracking::Delete(ExitCode* rc, wxThreadWait waitMode)
   // Custom thread stopping hook to keed thread interface consistent.
   // Tracker uses an atomic<bool> instead of calling wxTestDestroy for
   // performace reasons.
-  tracker_->stop();
+  tracker->stop();
 
   // Ensure base class works as intended.
   // return wxThread::Delete(rc, waitMode);
@@ -112,8 +113,8 @@ ThreadPipeServer::~ThreadPipeServer()
 {
   spdlog::trace("pipe server destructed");
   // Threads are detached and delete themselves when they are done running.
-  wxCriticalSectionLocker enter(p_window_handler_->cs_pipe_thread_);
-  p_window_handler_->pipe_server_thread_ = NULL;
+  wxCriticalSectionLocker enter(p_window_handler_->cs_pipe_thread);
+  p_window_handler_->pipe_server_thread = NULL;
 }
 
 wxThread::ExitCode

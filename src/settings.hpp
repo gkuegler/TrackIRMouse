@@ -19,6 +19,10 @@ struct Profile
 {
   std::string name = "(empty)";
   int title_id = 0;
+  bool enable_deadzone = false;
+  Degrees deadzone_threshold = 0.0;
+  bool enable_deadzone_px = false;
+  Pixels deadzone_threshold_px = 0;
   bool use_default_padding = true;
   std::vector<DisplayParameters> displays = { DisplayParameters() };
 

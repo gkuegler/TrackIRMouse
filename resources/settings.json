@@ -1,20 +1,28 @@
 {
-    "active_profile_name": "Rich Basement - Profile = 2.5/",
+    "active_profile_name": "Rich Basement - Profile = 2.5",
     "auto_find_track_ir_dll": true,
     "auto_retry": true,
+    "quit_on_loss_of_trackir": false,
+    "track_ir_dll_folder": "",
+    "track_on_start": true,
+    "hotkey_enabled": true,
+    "hotkey_name": "F18",
+    "log_level": 1,
+    "pipe_server_enabled": true,
+    "pipe_server_name": "trackirmouse",
     "default_padding": {
         "left": 3,
         "right": 3,
         "top": 0,
         "bottom": 0
     },
-    "hotkey_enabled": true,
-    "hotkey_name": "F18",
-    "log_level": 1,
-    "pipe_server_enabled": true,
-    "pipe_server_name": "trackirmouse",
     "profiles": [
         {
+            "name": "Dual Monitor - Close Range",
+            "title_id": 13302,
+            "use_default_padding": true,
+            "enable_deadzone": false,
+            "deadzone_threshold": 0.0,
             "displays": [
                 {
                     "padding": {
@@ -44,12 +52,14 @@
                         "bottom": 19.0
                     }
                 }
-            ],
-            "name": "Dual Monitor - Close Range",
-            "title_id": 13302,
-            "use_default_padding": true
+            ]
         },
         {
+            "name": "Single Monitor",
+            "title_id": 13302,
+            "use_default_padding": true,
+            "enable_deadzone": false,
+            "deadzone_threshold": 0.0,
             "displays": [
                 {
                     "padding": {
@@ -65,12 +75,14 @@
                         "bottom": 15.0
                     }
                 }
-            ],
-            "name": "Single Monitor",
-            "title_id": 13302,
-            "use_default_padding": true
+            ]
         },
         {
+            "name": "Dual Monitor - Far Range",
+            "title_id": 13302,
+            "use_default_padding": true,
+            "enable_deadzone": false,
+            "deadzone_threshold": 0.0,
             "displays": [
                 {
                     "padding": {
@@ -100,12 +112,14 @@
                         "bottom": 19.0
                     }
                 }
-            ],
-            "name": "Dual Monitor - Far Range",
-            "title_id": 13302,
-            "use_default_padding": true
+            ]
         },
         {
+            "name": "Rich Basement - Profile = 2.5",
+            "title_id": 2225,
+            "use_default_padding": true,
+            "enable_deadzone": false,
+            "deadzone_threshold": 0.0,
             "displays": [
                 {
                     "padding": {
@@ -149,13 +163,7 @@
                         "bottom": 14.0
                     }
                 }
-            ],
-            "name": "Rich Basement - Profile = 2.5/",
-            "title_id": 2225,
-            "use_default_padding": true
+            ]
         }
-    ],
-    "quit_on_loss_of_trackir": false,
-    "track_ir_dll_folder": "",
-    "track_on_start": true
+    ]
 }

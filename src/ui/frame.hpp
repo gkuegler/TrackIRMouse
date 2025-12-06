@@ -40,13 +40,13 @@ public:
 class MainWindow : public wxFrame
 {
 public:
-  std::shared_ptr<NpTitlesMap> p_titles_map_;
+  std::shared_ptr<NpTitlesMap> p_titles_map;
 
   // threads
-  ThreadHeadTracking* track_thread_ = nullptr;
-  ThreadPipeServer* pipe_server_thread_ = nullptr;
-  wxCriticalSection cs_track_thread_; // protects track thread
-  wxCriticalSection cs_pipe_thread_;  // protects pipe server thread
+  ThreadHeadTracking* track_thread = nullptr;
+  ThreadPipeServer* pipe_server_thread = nullptr;
+  wxCriticalSection cs_track_thread; // protects track thread
+  wxCriticalSection cs_pipe_thread;  // protects pipe server thread
 
   // components
   PanelDisplayGraphic* p_display_graphic_;
@@ -58,10 +58,18 @@ public:
   wxTextCtrl* p_text_name_;
   wxTextCtrl* p_text_profile_id_;
   wxTextCtrl* p_text_profile_game_title_;
+  wxCheckBox* p_enable_deadzone;
+  wxTextCtrl* p_deadzone_thresh;
+  wxCheckBox* p_enable_deadzone_px;
+  wxTextCtrl* p_deadzone_thresh_px;
+
   wxCheckBox* p_check_use_default_padding_;
   wxDataViewListCtrl* p_view_mapping_data_;
 
   Settings& settings_;
+
+  double m_validator_deadzone_thresh = 0;
+  int m_validator_deadzone_thresh_px = 0;
 
   // Global hotkey has to be wrapped in a smart pointer to avoid a bug
   // where my same object would be deleted following the initialization of my
@@ -103,6 +111,11 @@ public:
   void OnName(wxCommandEvent& event);
   void OnProfileID(wxCommandEvent& event);
   void OnPickTitle(wxCommandEvent& event);
+  void OnEnableDeadzone(wxCommandEvent& event);
+  void OnDeadzoneThreshold(wxCommandEvent& event);
+  void OnEnableDeadzonePx(wxCommandEvent& event);
+  void OnDeadzoneThresholdPx(wxCommandEvent& event);
+
   void OnUseDefaultPadding(wxCommandEvent& event);
   void OnMappingData(wxDataViewEvent& event);
   void OnAddDisplay(wxCommandEvent& event);

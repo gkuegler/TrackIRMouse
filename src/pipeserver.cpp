@@ -3,13 +3,9 @@
  *
  * Send explicit commands via a named pipe to internally pause or kill track our
  * program.
- *  - PAUSE: suspends fetching of track data and mouse send input commands
+ *  - HEARTBEAT: Return the request as is.
  *  - KILL: Shuts down the NPTrackIR program to turn of the TrackIR5.
- *          I had a problem with a then deffective model where the internal
- *          LED's burnt out and thought I need a way to shut down the device
- *          with voice commands. I never really use this command and since then
- *          I have ran my TrackI5 60+ hours per week for over a year with still
- *          no signs of led burnout.
+ *  - PAUSE: suspends fetching of track data and mouse send input commands
  *
  * --License Boilerplate Placeholder--
  *
@@ -34,25 +30,22 @@ PipeServer::PipeServer(std::string name)
   // to have no system access control list(SACL), no discretionary access
   // control list(DACL), no owner, no primary group, and all control flags set
   // to FALSE(NULL). Thus, except for its revision level, it is empty
-  if (NULL ==
-      InitializeSecurityDescriptor(&pSD_, SECURITY_DESCRIPTOR_REVISION)) {
+  if (NULL == InitializeSecurityDescriptor(&pSD_, SECURITY_DESCRIPTOR_REVISION)) {
     throw std::runtime_error(std::format(
-      "Failed to initialize watchdog security descriptor with error code: {}",
-      GetLastError()));
+      "Failed to initialize watchdog security descriptor with error code: {}", GetLastError()));
   }
 
   // Add the Access Control List (ACL) to the security descriptor
   // TODO: make this safer, maybe limit to just user processes?
 #pragma warning(disable : 6248) // Allow all unrestricted access to the pipe
-  if (!SetSecurityDescriptorDacl(
-        &pSD_,
-        TRUE,       // bDaclPresent flag
-        (PACL)NULL, // if a NULL DACL is assigned to the security descriptor,
-                    // all access is allowed
-        FALSE))     // not a default DACL
+  if (!SetSecurityDescriptorDacl(&pSD_,
+                                 TRUE,       // bDaclPresent flag
+                                 (PACL)NULL, // if a NULL DACL is assigned to the security
+                                             // descriptor, all access is allowed
+                                 FALSE))     // not a default DACL
   {
-    throw std::runtime_error(std::format(
-      "SetSecurityDescriptorDacl Initialization Error {}", GetLastError()));
+    throw std::runtime_error(
+      std::format("SetSecurityDescriptorDacl Initialization Error {}", GetLastError()));
   }
 
   // Initialize a security attributes structure.
@@ -68,31 +61,27 @@ PipeServer::ServeOneClient()
   // Setting the max number of instances to a reasonable level
   // will prevent rogue clients from freezing my computer.
   // If I was feeling brave I could use PIPE_UNLIMITED_INSTANCES.
-  HANDLE hPipe =
-    CreateNamedPipeA(full_path_.c_str(),       // pipe name
-                     PIPE_ACCESS_DUPLEX,       // read/write access
-                     PIPE_TYPE_MESSAGE |       // message type pipe
-                       PIPE_READMODE_MESSAGE | // message-read mode
-                       PIPE_WAIT,              // blocking mode
-                     10,      // max. instances, i.e max number of clients
-                     BUFSIZE, // output buffer size
-                     BUFSIZE, // input buffer size
-                     0,       // client time-out
-                     &sa_);   // default security attribute
+  HANDLE hPipe = CreateNamedPipeA(full_path_.c_str(),       // pipe name
+                                  PIPE_ACCESS_DUPLEX,       // read/write access
+                                  PIPE_TYPE_MESSAGE |       // message type pipe
+                                    PIPE_READMODE_MESSAGE | // message-read mode
+                                    PIPE_WAIT,              // blocking mode
+                                  10,      // max. instances, i.e max number of clients
+                                  BUFSIZE, // output buffer size
+                                  BUFSIZE, // input buffer size
+                                  0,       // client time-out
+                                  &sa_);   // default security attribute
 
   if (hPipe == INVALID_HANDLE_VALUE) {
     DWORD gle = GetLastError();
     if (gle == ERROR_PIPE_BUSY) {
-      throw std::runtime_error(
-        "CreateNamedPipe failed, all instances are busy.");
+      throw std::runtime_error("CreateNamedPipe failed, all instances are busy.");
     } else if (gle == ERROR_INVALID_PARAMETER) {
-      throw std::runtime_error(
-        "CreateNamedPipe failed, function called with incorrect "
-        "parameters.");
+      throw std::runtime_error("CreateNamedPipe failed, function called with incorrect "
+                               "parameters.");
 
     } else {
-      throw std::runtime_error(
-        std::format("CreateNamedPipe failed, GLE={}.", gle));
+      throw std::runtime_error(std::format("CreateNamedPipe failed, GLE={}.", gle));
     }
   }
 
@@ -101,9 +90,7 @@ PipeServer::ServeOneClient()
   // returns zero, GetLastError returns ERROR_PIPE_CONNECTED.
   // TODO: make this nonblocking so my server actually stops instead of waiting
   // for another connection
-  bool connected = ConnectNamedPipe(hPipe, NULL)
-                     ? TRUE
-                     : (GetLastError() == ERROR_PIPE_CONNECTED);
+  bool connected = ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 
   if (connected) {
     logger_->debug("client connected");
@@ -171,9 +158,9 @@ PipeServer::HandleConnection(WindowsHandle pipe)
   logger_->debug("reply message formulated: {}", reply);
 
   // Write the reply to the pipe.
-  BOOL write_result = WriteFile(pipe.handle,      // handle_ to pipe
-                                reply.c_str(),    // buffer to write from
-                                reply_byte_count, // number of bytes to write
+  BOOL write_result = WriteFile(pipe.handle,          // handle_ to pipe
+                                reply.c_str(),        // buffer to write from
+                                reply_byte_count,     // number of bytes to write
                                 &bytes_written_count, // number of bytes written
                                 NULL                  // not overlapped I/O
   );
@@ -206,24 +193,24 @@ std::string PipeServer::HandleMsg(std::string request) {
   } else if (request == "PAUSE") {
     SendThreadMessage(msgcode::toggle_tracking);
     return request;
-  } else if (request == "SCROLL_LEFT_SMALL") {
-    SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_left_small));
+  } else if (request == "SET_ALT_MODE_SCROLL_LEFT_SMALL") {
+    SendThreadMessage(msgcode::set_mode, static_cast<long >(mouse_mode::scrollbar_left_small));
 		spdlog::info("set alternate mouse mode: SCROLL_LEFT_SMALL");
     return request;
-  } else if (request == "SCROLL_LEFT_MINI_MAP") {
-    SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_left_mini_map));
+  } else if (request == "SET_ALT_MODE_SCROLL_LEFT_MINI_MAP") {
+    SendThreadMessage(msgcode::set_mode, static_cast<long >(mouse_mode::scrollbar_left_mini_map));
 		spdlog::info("set alternate mouse mode: SCROLL_LEFT_MINI_MAP");
     return request;
-  } else if (request == "SCROLL_RIGHT_SMALL") {
-    SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_right_small));
+  } else if (request == "SET_ALT_MODE_SCROLL_RIGHT_SMALL") {
+    SendThreadMessage(msgcode::set_mode, static_cast<long >(mouse_mode::scrollbar_right_small));
 		spdlog::info("set alternate mouse mode: SCROLL_RIGHT_SMALL");
     return request;
-  } else if (request == "SCROLL_RIGHT_MINI_MAP") {
-    SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_right_mini_map));
+  } else if (request == "SET_ALT_MODE_SCROLL_RIGHT_MINI_MAP") {
+    SendThreadMessage(msgcode::set_mode, static_cast<long >(mouse_mode::scrollbar_right_mini_map));
 		spdlog::info("set alternate mouse mode: SCROLL_RIGHT_MINI_MAP");
     return request;
-  } else if (request == "SCROLL_HOLD_X") {
-    SendThreadMessage(msgcode::set_mode, "", static_cast<long >(mouse_mode::scrollbar_hold_x));
+  } else if (request == "SET_ALT_MODE_SCROLL_HOLD_X") {
+    SendThreadMessage(msgcode::set_mode, static_cast<long >(mouse_mode::scrollbar_hold_x));
 		spdlog::info("set alternate mouse mode: SCROLL_HOLD_X");
     return request;
   } else {

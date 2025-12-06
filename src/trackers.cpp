@@ -46,10 +46,7 @@ TrackIR::TrackIR(handlers::MouseHandler* handler)
 }
 
 void
-TrackIR::initialize(HWND hWnd,
-                    bool auto_find_dll,
-                    std::string user_dll_folder,
-                    int title_id)
+TrackIR::initialize(HWND hWnd, bool auto_find_dll, std::string user_dll_folder, int title_id)
 
 {
 
@@ -66,16 +63,14 @@ TrackIR::initialize(HWND hWnd,
   if (auto_find_dll) {
     try {
       dll_path += GetStringFromRegistry(
-        HKEY_CURRENT_USER,
-        "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location",
-        "Path");
+        HKEY_CURRENT_USER, "Software\\NaturalPoint\\NATURALPOINT\\NPClient Location", "Path");
     } catch (std::runtime_error& ex) {
-      std::runtime_error(std::format(
-        "Could not resolve path from registry. NP TrackIR may not be installed "
-        "or installation may be different than the version used to create this "
-        "software.\nThe folder of the \"NPClient64.dll\" can be manually "
-        "specified in the settings menu.\n\nSpecific Error Condition: {}",
-        ex.what()));
+      std::runtime_error(
+        std::format("Could not resolve path from registry. NP TrackIR may not be installed "
+                    "or installation may be different than the version used to create this "
+                    "software.\nThe folder of the \"NPClient64.dll\" can be manually "
+                    "specified in the settings menu.\n\nSpecific Error Condition: {}",
+                    ex.what()));
     }
   } else {
     dll_path += user_dll_folder;
@@ -99,22 +94,20 @@ TrackIR::initialize(HWND hWnd,
   // TCHAR sDll[MAX_PATH];
   WCHAR sDll[32767];
 
-  int conversion_result =
-    MultiByteToWideChar(CP_UTF8,
-                        // I feel like this should be the smart choice, but this
-                        // causes an error?
-                        //MB_ERR_INVALID_CHARS,
-                        MB_COMPOSITE,
-                        dll_path.c_str(),
-                        MAX_PATH,
-                        sDll,
-                        MAX_PATH);
+  int conversion_result = MultiByteToWideChar(CP_UTF8,
+                                              // I feel like this should be the smart choice, but
+                                              // this causes an error?
+                                              // MB_ERR_INVALID_CHARS,
+                                              MB_COMPOSITE,
+                                              dll_path.c_str(),
+                                              MAX_PATH,
+                                              sDll,
+                                              MAX_PATH);
 
   if (0 == conversion_result) {
-    throw std::runtime_error(
-      std::format("Windows Error: failed to convert track dll location to "
-                  "wchar_t* with error code: {}",
-                  GetLastError()));
+    throw std::runtime_error(std::format("Windows Error: failed to convert track dll location to "
+                                         "wchar_t* with error code: {}",
+                                         GetLastError()));
   }
 
   // Load the DLL and resolved dll function pointers
@@ -224,7 +217,7 @@ TrackIR::start()
       // scripts to send commands to my working copy's pipe server to pause
       // mouse moving before and enabling mouse moving after.
       if (pause_mouse_ == false) {
-        handler_->handle_input(yaw, pitch);
+        handler_->HandleInput(yaw, pitch);
       }
 
       last_frame = framesig;
