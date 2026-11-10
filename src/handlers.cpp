@@ -122,7 +122,7 @@ MouseHandler::HandleInput(const Degrees yaw, const Degrees pitch)
   if (is_normal_mode) {
     // Check if the head is pointing to a screen
     // The return statement is never reached if the head is pointing outside
-    // the bounds of any of the screense
+    // the bounds of any of the screens.
     for (int i = 0; i < displays->size(); i++) {
       auto pos = (*displays)[i].get_cursor_coordinates(yaw, pitch);
       if (pos.contains) {
