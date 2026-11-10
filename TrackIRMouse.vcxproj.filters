@@ -36,9 +36,6 @@
     <ClCompile Include="src\trackers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\environment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\hooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
